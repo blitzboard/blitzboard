@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <title>Network</title>
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script> 
+  <style type="text/css">
+    #mynetwork {
+      width: 600px;
+      height: 400px;
+      border: 1px solid lightgray;
+    }
+  </style> 
+</head>
+<body>
+<div id="mynetwork"></div>
+<input type='file' id='pgfile' size='20'>
+<script type="text/javascript">
+  function handleFileSelect(evt) {
+    var files = evt.target.files; // FileList object
+    // use the 1st file from the list
+    f = files[0];
+    var reader = new FileReader();
+
+    // Closure to capture the file information.
+    reader.onload = (function(theFile) {
+      return function(e) {
+        console.log(e.target.result);
+        let graph = JSON.parse(e.target.result);
+        let nodes = new vis.DataSet(graph.nodes.map((node) => {
+          return {
+            id: node.id,
+            label: node.properties.name[0],
+          };
+        }));
+        let edges = new vis.DataSet(graph.edges);
+        // create a network
+        var container = document.getElementById('mynetwork');
+        var data = {
+          nodes: nodes,
+          edges: edges
+        };
+        var options = {};
+        var network = new vis.Network(container, data, options);        
+      };
+    })(f);
+    // Read in the image file as a data URL.
+    reader.readAsText(f);
+  };
+ document.getElementById('pgfile').addEventListener('change', handleFileSelect, false);
+</script> 
+</body>
+</html>

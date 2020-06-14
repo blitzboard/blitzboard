@@ -1,0 +1,223 @@
+"http://openflights.org/Airport/3395"	->	"http://openflights.org/Airport/3392"	:has_flight_to	airline:"Shenzhen Airlines"	country:China	plane:"Airbus A319"
+"http://openflights.org/Airport/2064"	->	"http://openflights.org/Airport/2061"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/3393"	->	"http://openflights.org/Airport/3394"	:has_flight_to	airline:Huaxia	country:China	plane:"Canadair Regional Jet 200"
+"http://openflights.org/Airport/2061"	->	"http://openflights.org/Airport/2064"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/3394"	->	"http://openflights.org/Airport/3393"	:has_flight_to	airline:Huaxia	country:China	plane:"Canadair Regional Jet 900"
+"http://openflights.org/Airport/3392"	->	"http://openflights.org/Airport/3395"	:has_flight_to	airline:"China Southern Airlines"	country:China	plane:"Airbus A321"
+"http://openflights.org/Airport/533"	->	"http://openflights.org/Airport/535"	:has_flight_to	airline:Flybe	country:"United Kingdom"	plane:"Fairchild Dornier Do.328"
+"http://openflights.org/Airport/666"	->	"http://openflights.org/Airport/668"	:has_flight_to	airline:"Wizz Air"	country:Hungary	plane:"Airbus A320"
+"http://openflights.org/Airport/668"	->	"http://openflights.org/Airport/666"	:has_flight_to	airline:"Wizz Air"	country:Hungary	plane:"Airbus A320"
+"http://openflights.org/Airport/3093"	->	"http://openflights.org/Airport/2997"	:has_flight_to	airline:Spicejet	country:India	plane:"Boeing 737"
+"http://openflights.org/Airport/1825"	->	"http://openflights.org/Airport/1829"	:has_flight_to	airline:"Birmingham European"	country:"United Kingdom"	plane:"Boeing 737-300"
+"http://openflights.org/Airport/2997"	->	"http://openflights.org/Airport/3093"	:has_flight_to	airline:Spicejet	country:India	plane:"Boeing 737"
+"http://openflights.org/Airport/1829"	->	"http://openflights.org/Airport/1825"	:has_flight_to	airline:"Birmingham European"	country:"United Kingdom"	plane:"Boeing 737-300"
+"http://openflights.org/Airport/951"	->	"http://openflights.org/Airport/957"	:has_flight_to	airline:"TAAG Angola Airlines"	country:Angola	plane:"Boeing 737-700"
+"http://openflights.org/Airport/957"	->	"http://openflights.org/Airport/951"	:has_flight_to	airline:"TAAG Angola Airlines"	country:Angola	plane:"Boeing 737-700"
+"http://openflights.org/Airport/348"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Embraer 190"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/348"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Canadair Regional Jet 700"
+"http://openflights.org/Airport/3928"	->	"http://openflights.org/Airport/3920"	:has_flight_to	airline:"Lion Mentari Airlines"	country:Indonesia	plane:"Boeing 737-800"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/429"	:has_flight_to	airline:Finnair	country:Finland	plane:"Aerospatiale/Alenia ATR 72"
+"http://openflights.org/Airport/3920"	->	"http://openflights.org/Airport/3928"	:has_flight_to	airline:"Lion Mentari Airlines"	country:Indonesia	plane:"Boeing 737-800"
+"http://openflights.org/Airport/429"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:Finnair	country:Finland	plane:"Embraer 170"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/2305"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Boeing 777"
+"http://openflights.org/Airport/2789"	->	"http://openflights.org/Airport/3988"	:has_flight_to	airline:"LAN Airlines"	country:Chile	plane:"Boeing 767-300"
+"http://openflights.org/Airport/2305"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Boeing 777"
+"http://openflights.org/Airport/3988"	->	"http://openflights.org/Airport/2789"	:has_flight_to	airline:"LAN Airlines"	country:Chile	plane:"Boeing 767-300"
+"http://openflights.org/Airport/1013"	->	"http://openflights.org/Airport/1016"	:has_flight_to	airline:"Ethiopian Airlines"	country:Ethiopia	plane:"Boeing 737-800"
+"http://openflights.org/Airport/1016"	->	"http://openflights.org/Airport/1013"	:has_flight_to	airline:"Ethiopian Airlines"	country:Ethiopia	plane:"Boeing 737-800"
+"http://openflights.org/Airport/2997"	->	"http://openflights.org/Airport/2994"	:has_flight_to	airline:Spicejet	country:India	plane:"Boeing 737"
+"http://openflights.org/Airport/2359"	->	"http://openflights.org/Airport/2356"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 737"
+"http://openflights.org/Airport/2356"	->	"http://openflights.org/Airport/2359"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 737"
+"http://openflights.org/Airport/1001"	->	"http://openflights.org/Airport/1004"	:has_flight_to	airline:"Air Zimbabwe"	country:Zimbabwe	plane:"Boeing 737-200"
+"http://openflights.org/Airport/1004"	->	"http://openflights.org/Airport/1001"	:has_flight_to	airline:"Air Zimbabwe"	country:Zimbabwe	plane:"Boeing 737-200"
+"http://openflights.org/Airport/1246"	->	"http://openflights.org/Airport/1243"	:has_flight_to	airline:Ryanair	country:Ireland	plane:"Boeing 737-800"
+"http://openflights.org/Airport/1243"	->	"http://openflights.org/Airport/1246"	:has_flight_to	airline:Ryanair	country:Ireland	plane:"Boeing 737-800"
+"http://openflights.org/Airport/5566"	->	"http://openflights.org/Airport/5569"	:has_flight_to	airline:"Linhas A"	country:Mozambique	plane:"Pilatus Britten-Norman BN-2A/B Islander"
+"http://openflights.org/Airport/2994"	->	"http://openflights.org/Airport/2997"	:has_flight_to	airline:Spicejet	country:India	plane:"Boeing 737"
+"http://openflights.org/Airport/3275"	->	"http://openflights.org/Airport/2072"	:has_flight_to	airline:"Nas Air"	country:"Saudi Arabia"	plane:"Airbus A330"
+"http://openflights.org/Airport/2647"	->	"http://openflights.org/Airport/2642"	:has_flight_to	airline:"Sky Airline"	country:Chile	plane:"Airbus A319"
+"http://openflights.org/Airport/2072"	->	"http://openflights.org/Airport/3275"	:has_flight_to	airline:"Garuda Indonesia"	country:Indonesia	plane:"Boeing 777"
+"http://openflights.org/Airport/2642"	->	"http://openflights.org/Airport/2647"	:has_flight_to	airline:"Sky Airline"	country:Chile	plane:"Airbus A319"
+"http://openflights.org/Airport/18"	->	"http://openflights.org/Airport/11"	:has_flight_to	airline:"Air Iceland"	country:Iceland	plane:"Fokker 50"
+"http://openflights.org/Airport/11"	->	"http://openflights.org/Airport/18"	:has_flight_to	airline:"Air Iceland"	country:Iceland	plane:"Fokker 50"
+"http://openflights.org/Airport/345"	->	"http://openflights.org/Airport/342"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A320"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/347"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A319"
+"http://openflights.org/Airport/2387"	->	"http://openflights.org/Airport/2384"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 737-500"
+"http://openflights.org/Airport/1057"	->	"http://openflights.org/Airport/1052"	:has_flight_to	airline:"Binter Canarias"	country:Spain	plane:"Aerospatiale/Alenia ATR 72"
+"http://openflights.org/Airport/2384"	->	"http://openflights.org/Airport/2387"	:has_flight_to	airline:"Skymark Airlines"	country:Japan	plane:"Boeing 737"
+"http://openflights.org/Airport/347"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A319"
+"http://openflights.org/Airport/342"	->	"http://openflights.org/Airport/345"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A320"
+"http://openflights.org/Airport/1052"	->	"http://openflights.org/Airport/1057"	:has_flight_to	airline:"Binter Canarias"	country:Spain	plane:"Aerospatiale/Alenia ATR 72"
+"http://openflights.org/Airport/3395"	->	"http://openflights.org/Airport/3393"	:has_flight_to	airline:"Sichuan Airlines"	country:China	plane:"Airbus A330"
+"http://openflights.org/Airport/3393"	->	"http://openflights.org/Airport/3395"	:has_flight_to	airline:"Sichuan Airlines"	country:China	plane:"Airbus A330"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/345"	:has_flight_to	airline:"Ethiopian Airlines"	country:Ethiopia	plane:"Airbus A319"
+"http://openflights.org/Airport/345"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A319"
+"http://openflights.org/Airport/342"	->	"http://openflights.org/Airport/347"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/347"	->	"http://openflights.org/Airport/342"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/347"	->	"http://openflights.org/Airport/345"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/345"	->	"http://openflights.org/Airport/347"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/342"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A321"
+"http://openflights.org/Airport/342"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A319"
+"http://openflights.org/Airport/3395"	->	"http://openflights.org/Airport/3394"	:has_flight_to	airline:"Air China"	country:China	plane:"Airbus A321"
+"http://openflights.org/Airport/3394"	->	"http://openflights.org/Airport/3395"	:has_flight_to	airline:"Air China"	country:China	plane:"Airbus A320"
+"http://openflights.org/Airport/3093"	->	"http://openflights.org/Airport/2994"	:has_flight_to	airline:Spicejet	country:India	plane:"Boeing 737"
+"http://openflights.org/Airport/2994"	->	"http://openflights.org/Airport/3093"	:has_flight_to	airline:"Air India Limited"	country:India	plane:"Airbus A319"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/2359"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 787-8"
+"http://openflights.org/Airport/2359"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 787-8"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/668"	:has_flight_to	airline:Eurolot	country:Poland	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/668"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:Eurolot	country:Poland	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/2072"	->	"http://openflights.org/Airport/2064"	:has_flight_to	airline:"Nas Air"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/2064"	->	"http://openflights.org/Airport/2072"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/2072"	->	"http://openflights.org/Airport/2061"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/2061"	->	"http://openflights.org/Airport/2072"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/2789"	:has_flight_to	airline:Alitalia	country:Italy	plane:"Boeing 777-300ER"
+"http://openflights.org/Airport/2789"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:Alitalia	country:Italy	plane:"Boeing 777-300ER"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/3988"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Boeing 777"
+"http://openflights.org/Airport/3988"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Boeing 777"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/533"	:has_flight_to	airline:Flybe	country:"United Kingdom"	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/533"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:Flybe	country:"United Kingdom"	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/535"	:has_flight_to	airline:easyJet	country:"United Kingdom"	plane:"Airbus A320"
+"http://openflights.org/Airport/535"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:easyJet	country:"United Kingdom"	plane:"Airbus A320"
+"http://openflights.org/Airport/2359"	->	"http://openflights.org/Airport/2384"	:has_flight_to	airline:"Skymark Airlines"	country:Japan	plane:"Boeing 737"
+"http://openflights.org/Airport/2384"	->	"http://openflights.org/Airport/2359"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 777-200"
+"http://openflights.org/Airport/2359"	->	"http://openflights.org/Airport/2387"	:has_flight_to	airline:"Japan Transocean Air"	country:Japan	plane:"Boeing 737-400"
+"http://openflights.org/Airport/2387"	->	"http://openflights.org/Airport/2359"	:has_flight_to	airline:"Japan Transocean Air"	country:Japan	plane:"Boeing 737-400"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/3093"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Airbus A330"
+"http://openflights.org/Airport/3093"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Airbus A330"
+"http://openflights.org/Airport/3395"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A330"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/3395"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A330"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/2997"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Boeing 747-400"
+"http://openflights.org/Airport/2997"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:"Air India Limited"	country:India	plane:"Boeing 747-400"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/3093"	:has_flight_to	airline:"Air India Limited"	country:India	plane:"Boeing 787-8"
+"http://openflights.org/Airport/3093"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:"Air India Limited"	country:India	plane:"Boeing 787-8"
+"http://openflights.org/Airport/2305"	->	"http://openflights.org/Airport/2387"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 737-500"
+"http://openflights.org/Airport/2387"	->	"http://openflights.org/Airport/2305"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 737-500"
+"http://openflights.org/Airport/2305"	->	"http://openflights.org/Airport/2384"	:has_flight_to	airline:"Skymark Airlines"	country:Japan	plane:"Boeing 737"
+"http://openflights.org/Airport/2384"	->	"http://openflights.org/Airport/2305"	:has_flight_to	airline:"Japan Transocean Air"	country:Japan	plane:"Boeing 737-400"
+"http://openflights.org/Airport/3395"	->	"http://openflights.org/Airport/2997"	:has_flight_to	airline:"Air China"	country:China	plane:"Airbus A319"
+"http://openflights.org/Airport/2997"	->	"http://openflights.org/Airport/3395"	:has_flight_to	airline:"Air China"	country:China	plane:"Airbus A319"
+"http://openflights.org/Airport/535"	->	"http://openflights.org/Airport/342"	:has_flight_to	airline:easyJet	country:"United Kingdom"	plane:"Airbus A319"
+"http://openflights.org/Airport/342"	->	"http://openflights.org/Airport/535"	:has_flight_to	airline:easyJet	country:"United Kingdom"	plane:"Airbus A319"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/535"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A321"
+"http://openflights.org/Airport/535"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A321"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/3988"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Boeing 747-400"
+"http://openflights.org/Airport/3988"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Boeing 747-400"
+"http://openflights.org/Airport/1057"	->	"http://openflights.org/Airport/1243"	:has_flight_to	airline:"Iberia Airlines"	country:Spain	plane:"Canadair Regional Jet 900"
+"http://openflights.org/Airport/1243"	->	"http://openflights.org/Airport/1057"	:has_flight_to	airline:"Iberia Airlines"	country:Spain	plane:"Canadair Regional Jet 900"
+"http://openflights.org/Airport/1057"	->	"http://openflights.org/Airport/1246"	:has_flight_to	airline:"Iberia Airlines"	country:Spain	plane:"Canadair Regional Jet 900"
+"http://openflights.org/Airport/1246"	->	"http://openflights.org/Airport/1057"	:has_flight_to	airline:"Iberia Airlines"	country:Spain	plane:"Canadair Regional Jet 900"
+"http://openflights.org/Airport/2359"	->	"http://openflights.org/Airport/2305"	:has_flight_to	airline:"Japan Airlines"	country:Japan	plane:"Boeing 767"
+"http://openflights.org/Airport/2305"	->	"http://openflights.org/Airport/2359"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 777-300"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Boeing 737-300"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"Ethiopian Airlines"	country:Ethiopia	plane:"Boeing 737-300"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/342"	:has_flight_to	airline:Alitalia	country:Italy	plane:"Boeing 737"
+"http://openflights.org/Airport/342"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:Alitalia	country:Italy	plane:"Boeing 737"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/345"	:has_flight_to	airline:Alitalia	country:Italy	plane:"Fokker 70"
+"http://openflights.org/Airport/345"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Fokker 70"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/348"	:has_flight_to	airline:Flybaboo	country:Switzerland	plane:"Saab 2000"
+"http://openflights.org/Airport/348"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:Flybaboo	country:Switzerland	plane:"Saab 2000"
+"http://openflights.org/Airport/347"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Fokker 70"
+"http://openflights.org/Airport/666"	->	"http://openflights.org/Airport/535"	:has_flight_to	airline:"Scandinavian Airlines System"	country:Sweden	plane:"Boeing 737-800"
+"http://openflights.org/Airport/535"	->	"http://openflights.org/Airport/666"	:has_flight_to	airline:"Scandinavian Airlines System"	country:Sweden	plane:"Boeing 737-800"
+"http://openflights.org/Airport/535"	->	"http://openflights.org/Airport/668"	:has_flight_to	airline:Ryanair	country:Ireland	plane:"Boeing 737-800"
+"http://openflights.org/Airport/668"	->	"http://openflights.org/Airport/535"	:has_flight_to	airline:Ryanair	country:Ireland	plane:"Boeing 737-800"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/1246"	:has_flight_to	airline:"Formosa Airlines"	country:Taiwan	plane:"Airbus A320"
+"http://openflights.org/Airport/1246"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"Formosa Airlines"	country:Taiwan	plane:"Airbus A320"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/666"	:has_flight_to	airline:Alitalia	country:Italy	plane:"Embraer 190"
+"http://openflights.org/Airport/666"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Boeing 737"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/668"	:has_flight_to	airline:Eurolot	country:Poland	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/668"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:Eurolot	country:Poland	plane:"De Havilland Canada DHC-8-400 Dash 8Q"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Boeing 737"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Boeing 737"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/2072"	:has_flight_to	airline:"United Airlines"	country:"United States"	plane:"Airbus A330-300"
+"http://openflights.org/Airport/2072"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:"Air Canada"	country:Canada	plane:"Airbus A330-300"
+"http://openflights.org/Airport/3275"	->	"http://openflights.org/Airport/2359"	:has_flight_to	airline:"All Nippon Airways"	country:Japan	plane:"Boeing 787-8"
+"http://openflights.org/Airport/2359"	->	"http://openflights.org/Airport/3275"	:has_flight_to	airline:"Garuda Indonesia"	country:Indonesia	plane:"Boeing 787-8"
+"http://openflights.org/Airport/3093"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:Finnair	country:Finland	plane:"Airbus A330-300"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/3093"	:has_flight_to	airline:Finnair	country:Finland	plane:"Airbus A330-300"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/951"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A340-300"
+"http://openflights.org/Airport/951"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A340-300"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/951"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Airbus A330"
+"http://openflights.org/Airport/951"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"KLM Royal Dutch Airlines"	country:Netherlands	plane:"Airbus A330"
+"http://openflights.org/Airport/580"	->	"http://openflights.org/Airport/2064"	:has_flight_to	airline:"Delta Air Lines"	country:"United States"	plane:"Airbus A330-200"
+"http://openflights.org/Airport/2064"	->	"http://openflights.org/Airport/580"	:has_flight_to	airline:"Air France"	country:France	plane:"Airbus A330"
+"http://openflights.org/Airport/3393"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:Finnair	country:Finland	plane:"Airbus A330-300"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/3393"	:has_flight_to	airline:Finnair	country:Finland	plane:"Airbus A330-300"
+"http://openflights.org/Airport/3093"	->	"http://openflights.org/Airport/2064"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/2064"	->	"http://openflights.org/Airport/3093"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/2064"	->	"http://openflights.org/Airport/2997"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/2997"	->	"http://openflights.org/Airport/2064"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Airbus A320"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/668"	:has_flight_to	airline:"LOT Polish Airlines"	country:Poland	plane:"Airbus A319"
+"http://openflights.org/Airport/668"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:"LOT Polish Airlines"	country:Poland	plane:"Airbus A319"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/666"	:has_flight_to	airline:"Scandinavian Airlines System"	country:Sweden	plane:"Boeing 737-500"
+"http://openflights.org/Airport/666"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:"Scandinavian Airlines System"	country:Sweden	plane:"Boeing 737-300"
+"http://openflights.org/Airport/2072"	->	"http://openflights.org/Airport/3928"	:has_flight_to	airline:"Garuda Indonesia"	country:Indonesia	plane:"Boeing 747-400"
+"http://openflights.org/Airport/3928"	->	"http://openflights.org/Airport/2072"	:has_flight_to	airline:"Garuda Indonesia"	country:Indonesia	plane:"Boeing 747-400"
+"http://openflights.org/Airport/3275"	->	"http://openflights.org/Airport/3920"	:has_flight_to	airline:"Lion Mentari Airlines"	country:Indonesia	plane:"Boeing 737-800"
+"http://openflights.org/Airport/3920"	->	"http://openflights.org/Airport/3275"	:has_flight_to	airline:"Lion Mentari Airlines"	country:Indonesia	plane:"Boeing 737-800"
+"http://openflights.org/Airport/3275"	->	"http://openflights.org/Airport/3928"	:has_flight_to	airline:"Citilink Indonesia"	country:Indonesia	plane:"Airbus A320"
+"http://openflights.org/Airport/3928"	->	"http://openflights.org/Airport/3275"	:has_flight_to	airline:"Lion Mentari Airlines"	country:Indonesia	plane:"Boeing 737-900"
+"http://openflights.org/Airport/345"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"Embraer 190"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/345"	:has_flight_to	airline:Finnair	country:Finland	plane:"Embraer 190"
+"http://openflights.org/Airport/342"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"Embraer 190"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/342"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"Embraer 190"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/421"	:has_flight_to	airline:"Air Berlin"	country:Germany	plane:"Embraer 190"
+"http://openflights.org/Airport/421"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:Finnair	country:Finland	plane:"Embraer 190"
+"http://openflights.org/Airport/2072"	->	"http://openflights.org/Airport/2997"	:has_flight_to	airline:"Air India Limited"	country:India	plane:"Boeing 777-300ER"
+"http://openflights.org/Airport/2997"	->	"http://openflights.org/Airport/2072"	:has_flight_to	airline:"Saudi Arabian Airlines"	country:"Saudi Arabia"	plane:"Boeing 777-200"
+"http://openflights.org/Airport/2072"	->	"http://openflights.org/Airport/3093"	:has_flight_to	airline:"Air India Limited"	country:India	plane:"Boeing 777-300ER"
+"http://openflights.org/Airport/3093"	->	"http://openflights.org/Airport/2072"	:has_flight_to	airline:"Air India Limited"	country:India	plane:"Boeing 777-300ER"
+"http://openflights.org/Airport/340"	->	"http://openflights.org/Airport/1246"	:has_flight_to	airline:"Air Canada"	country:Canada	plane:"Airbus A319"
+"http://openflights.org/Airport/1246"	->	"http://openflights.org/Airport/340"	:has_flight_to	airline:"Air Canada"	country:Canada	plane:"Airbus A319"
+"http://openflights.org/Airport/345"	->	"http://openflights.org/Airport/1246"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A319"
+"http://openflights.org/Airport/1246"	->	"http://openflights.org/Airport/345"	:has_flight_to	airline:Lufthansa	country:Germany	plane:"Airbus A319"
+"http://openflights.org/Airport/18"	:airport	name:"Reykjavik Airport"	iata:RKV	city:Reykjavik
+"http://openflights.org/Airport/11"	:airport	name:"Akureyri Airport"	iata:AEY	city:Akureyri
+"http://openflights.org/Airport/3395"	:airport	name:"Chengdu Shuangliu International Airport"	iata:CTU	city:Chengdu
+"http://openflights.org/Airport/2064"	:airport	name:"King Fahd International Airport"	iata:DMM	city:Dammam
+"http://openflights.org/Airport/3394"	:airport	name:"Longdongbao Airport"	iata:KWE	city:Guiyang
+"http://openflights.org/Airport/3928"	:airport	name:"Juanda International Airport"	iata:SUB	city:Surabaya
+"http://openflights.org/Airport/3920"	:airport	name:"Juwata Airport"	iata:TRK	city:Taraken
+"http://openflights.org/Airport/3393"	:airport	name:"Chongqing Jiangbei International Airport"	iata:CKG	city:Chongqing
+"http://openflights.org/Airport/2061"	:airport	name:"Al Baha Airport"	iata:ABT	city:El-baha
+"http://openflights.org/Airport/3392"	:airport	name:"Yantai Laishan Airport"	iata:YNT	city:Yantai
+"http://openflights.org/Airport/2997"	:airport	name:"Chhatrapati Shivaji International Airport"	iata:BOM	city:Mumbai
+"http://openflights.org/Airport/2647"	:airport	name:"Pdte. carlos Iba?ez del Campo Airport"	iata:PUQ	city:"Punta Arenas"
+"http://openflights.org/Airport/2642"	:airport	name:"Balmaceda Airport"	iata:BBA	city:Balmaceda
+"http://openflights.org/Airport/2994"	:airport	name:"Sardar Vallabhbhai Patel International Airport"	iata:AMD	city:Ahmedabad
+"http://openflights.org/Airport/3093"	:airport	name:"Indira Gandhi International Airport"	iata:DEL	city:Delhi
+"http://openflights.org/Airport/1004"	:airport	name:"Victoria Falls International Airport"	iata:VFA	city:"Victoria Falls"
+"http://openflights.org/Airport/1001"	:airport	name:"Joshua Mqabuko Nkomo International Airport"	iata:BUQ	city:Bulawayo
+"http://openflights.org/Airport/1829"	:airport	name:"Xoxocotlan International Airport"	iata:OAX	city:Oaxaca
+"http://openflights.org/Airport/429"	:airport	name:"Joensuu Airport"	iata:JOE	city:Joensuu
+"http://openflights.org/Airport/5569"	:airport	name:"Sanday Airport"	iata:NDY	city:Sanday
+"http://openflights.org/Airport/5566"	:airport	name:"North Ronaldsay Airport"	iata:NRL	city:"North Ronaldsay"
+"http://openflights.org/Airport/421"	:airport	name:"Helsinki Vantaa Airport"	iata:HEL	city:Helsinki
+"http://openflights.org/Airport/1825"	:airport	name:"General Mariano Escobedo International Airport"	iata:MTY	city:Monterrey
+"http://openflights.org/Airport/957"	:airport	name:"Saurimo Airport"	iata:VHC	city:Saurimo
+"http://openflights.org/Airport/951"	:airport	name:"Quatro de Fevereiro Airport"	iata:LAD	city:Luanda
+"http://openflights.org/Airport/348"	:airport	name:"Leipzig Halle Airport"	iata:LEJ	city:Leipzig
+"http://openflights.org/Airport/347"	:airport	name:"Nuremberg Airport"	iata:NUE	city:Nuernberg
+"http://openflights.org/Airport/345"	:airport	name:"Dusseldorf International Airport"	iata:DUS	city:Duesseldorf
+"http://openflights.org/Airport/342"	:airport	name:"Hamburg Airport"	iata:HAM	city:Hamburg
+"http://openflights.org/Airport/340"	:airport	name:"Frankfurt am Main International Airport"	iata:FRA	city:Frankfurt
+"http://openflights.org/Airport/2359"	:airport	name:"Tokyo Haneda International Airport"	iata:HND	city:Tokyo
+"http://openflights.org/Airport/1246"	:airport	name:"Valencia Airport"	iata:VLC	city:Valencia
+"http://openflights.org/Airport/1243"	:airport	name:"Santiago de Compostela Airport"	iata:SCQ	city:Santiago
+"http://openflights.org/Airport/2356"	:airport	name:"Oshima Airport"	iata:OIM	city:Oshima
+"http://openflights.org/Airport/1057"	:airport	name:"Tenerife Norte Airport"	iata:TFN	city:Tenerife
+"http://openflights.org/Airport/2387"	:airport	name:"Ishigaki Airport"	iata:ISG	city:Ishigaki
+"http://openflights.org/Airport/535"	:airport	name:"Edinburgh Airport"	iata:EDI	city:Edinburgh
+"http://openflights.org/Airport/668"	:airport	name:"Gdansk Lech Walesa Airport"	iata:GDN	city:Gdansk
+"http://openflights.org/Airport/533"	:airport	name:"Inverness Airport"	iata:INV	city:Inverness
+"http://openflights.org/Airport/666"	:airport	name:"Stavanger Airport Sola"	iata:SVG	city:Stavanger
+"http://openflights.org/Airport/1052"	:airport	name:"Hierro Airport"	iata:VDE	city:Hierro
+"http://openflights.org/Airport/2384"	:airport	name:"Naha Airport"	iata:OKA	city:Okinawa
+"http://openflights.org/Airport/3275"	:airport	name:"Soekarno-Hatta International Airport"	iata:CGK	city:Jakarta
+"http://openflights.org/Airport/2072"	:airport	name:"King Abdulaziz International Airport"	iata:JED	city:Jeddah
+"http://openflights.org/Airport/3988"	:airport	name:"Ministro Pistarini International Airport"	iata:EZE	city:"Buenos Aires"
+"http://openflights.org/Airport/580"	:airport	name:"Amsterdam Airport Schiphol"	iata:AMS	city:Amsterdam
+"http://openflights.org/Airport/2789"	:airport	name:"Jorge Chavez International Airport"	iata:LIM	city:Lima
+"http://openflights.org/Airport/2305"	:airport	name:"Fukuoka Airport"	iata:FUK	city:Fukuoka
+"http://openflights.org/Airport/1016"	:airport	name:"Lilongwe International Airport"	iata:LLW	city:Lilongwe
+"http://openflights.org/Airport/1013"	:airport	name:"Chileka International Airport"	iata:BLZ	city:Blantyre

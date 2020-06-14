@@ -1,0 +1,3970 @@
+{
+  "nodes": [
+    {
+      "id": "http://openflights.org/Airport/18",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Reykjavik Airport"
+        ],
+        "iata": [
+          "RKV"
+        ],
+        "city": [
+          "Reykjavik"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/11",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Akureyri Airport"
+        ],
+        "iata": [
+          "AEY"
+        ],
+        "city": [
+          "Akureyri"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3395",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Chengdu Shuangliu International Airport"
+        ],
+        "iata": [
+          "CTU"
+        ],
+        "city": [
+          "Chengdu"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2064",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "King Fahd International Airport"
+        ],
+        "iata": [
+          "DMM"
+        ],
+        "city": [
+          "Dammam"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3394",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Longdongbao Airport"
+        ],
+        "iata": [
+          "KWE"
+        ],
+        "city": [
+          "Guiyang"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3928",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Juanda International Airport"
+        ],
+        "iata": [
+          "SUB"
+        ],
+        "city": [
+          "Surabaya"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3920",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Juwata Airport"
+        ],
+        "iata": [
+          "TRK"
+        ],
+        "city": [
+          "Taraken"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3393",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Chongqing Jiangbei International Airport"
+        ],
+        "iata": [
+          "CKG"
+        ],
+        "city": [
+          "Chongqing"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2061",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Al Baha Airport"
+        ],
+        "iata": [
+          "ABT"
+        ],
+        "city": [
+          "El-baha"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3392",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Yantai Laishan Airport"
+        ],
+        "iata": [
+          "YNT"
+        ],
+        "city": [
+          "Yantai"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2997",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Chhatrapati Shivaji International Airport"
+        ],
+        "iata": [
+          "BOM"
+        ],
+        "city": [
+          "Mumbai"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2647",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Pdte. carlos Iba?ez del Campo Airport"
+        ],
+        "iata": [
+          "PUQ"
+        ],
+        "city": [
+          "Punta Arenas"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2642",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Balmaceda Airport"
+        ],
+        "iata": [
+          "BBA"
+        ],
+        "city": [
+          "Balmaceda"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2994",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Sardar Vallabhbhai Patel International Airport"
+        ],
+        "iata": [
+          "AMD"
+        ],
+        "city": [
+          "Ahmedabad"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3093",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Indira Gandhi International Airport"
+        ],
+        "iata": [
+          "DEL"
+        ],
+        "city": [
+          "Delhi"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1004",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Victoria Falls International Airport"
+        ],
+        "iata": [
+          "VFA"
+        ],
+        "city": [
+          "Victoria Falls"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1001",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Joshua Mqabuko Nkomo International Airport"
+        ],
+        "iata": [
+          "BUQ"
+        ],
+        "city": [
+          "Bulawayo"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1829",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Xoxocotlan International Airport"
+        ],
+        "iata": [
+          "OAX"
+        ],
+        "city": [
+          "Oaxaca"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/429",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Joensuu Airport"
+        ],
+        "iata": [
+          "JOE"
+        ],
+        "city": [
+          "Joensuu"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/5569",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Sanday Airport"
+        ],
+        "iata": [
+          "NDY"
+        ],
+        "city": [
+          "Sanday"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/5566",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "North Ronaldsay Airport"
+        ],
+        "iata": [
+          "NRL"
+        ],
+        "city": [
+          "North Ronaldsay"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/421",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Helsinki Vantaa Airport"
+        ],
+        "iata": [
+          "HEL"
+        ],
+        "city": [
+          "Helsinki"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1825",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "General Mariano Escobedo International Airport"
+        ],
+        "iata": [
+          "MTY"
+        ],
+        "city": [
+          "Monterrey"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/957",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Saurimo Airport"
+        ],
+        "iata": [
+          "VHC"
+        ],
+        "city": [
+          "Saurimo"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/951",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Quatro de Fevereiro Airport"
+        ],
+        "iata": [
+          "LAD"
+        ],
+        "city": [
+          "Luanda"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/348",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Leipzig Halle Airport"
+        ],
+        "iata": [
+          "LEJ"
+        ],
+        "city": [
+          "Leipzig"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/347",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Nuremberg Airport"
+        ],
+        "iata": [
+          "NUE"
+        ],
+        "city": [
+          "Nuernberg"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/345",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Dusseldorf International Airport"
+        ],
+        "iata": [
+          "DUS"
+        ],
+        "city": [
+          "Duesseldorf"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/342",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Hamburg Airport"
+        ],
+        "iata": [
+          "HAM"
+        ],
+        "city": [
+          "Hamburg"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/340",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Frankfurt am Main International Airport"
+        ],
+        "iata": [
+          "FRA"
+        ],
+        "city": [
+          "Frankfurt"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2359",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Tokyo Haneda International Airport"
+        ],
+        "iata": [
+          "HND"
+        ],
+        "city": [
+          "Tokyo"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1246",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Valencia Airport"
+        ],
+        "iata": [
+          "VLC"
+        ],
+        "city": [
+          "Valencia"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1243",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Santiago de Compostela Airport"
+        ],
+        "iata": [
+          "SCQ"
+        ],
+        "city": [
+          "Santiago"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2356",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Oshima Airport"
+        ],
+        "iata": [
+          "OIM"
+        ],
+        "city": [
+          "Oshima"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1057",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Tenerife Norte Airport"
+        ],
+        "iata": [
+          "TFN"
+        ],
+        "city": [
+          "Tenerife"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2387",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Ishigaki Airport"
+        ],
+        "iata": [
+          "ISG"
+        ],
+        "city": [
+          "Ishigaki"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/535",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Edinburgh Airport"
+        ],
+        "iata": [
+          "EDI"
+        ],
+        "city": [
+          "Edinburgh"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/668",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Gdansk Lech Walesa Airport"
+        ],
+        "iata": [
+          "GDN"
+        ],
+        "city": [
+          "Gdansk"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/533",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Inverness Airport"
+        ],
+        "iata": [
+          "INV"
+        ],
+        "city": [
+          "Inverness"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/666",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Stavanger Airport Sola"
+        ],
+        "iata": [
+          "SVG"
+        ],
+        "city": [
+          "Stavanger"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1052",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Hierro Airport"
+        ],
+        "iata": [
+          "VDE"
+        ],
+        "city": [
+          "Hierro"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2384",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Naha Airport"
+        ],
+        "iata": [
+          "OKA"
+        ],
+        "city": [
+          "Okinawa"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3275",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Soekarno-Hatta International Airport"
+        ],
+        "iata": [
+          "CGK"
+        ],
+        "city": [
+          "Jakarta"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2072",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "King Abdulaziz International Airport"
+        ],
+        "iata": [
+          "JED"
+        ],
+        "city": [
+          "Jeddah"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/3988",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Ministro Pistarini International Airport"
+        ],
+        "iata": [
+          "EZE"
+        ],
+        "city": [
+          "Buenos Aires"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/580",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Amsterdam Airport Schiphol"
+        ],
+        "iata": [
+          "AMS"
+        ],
+        "city": [
+          "Amsterdam"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2789",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Jorge Chavez International Airport"
+        ],
+        "iata": [
+          "LIM"
+        ],
+        "city": [
+          "Lima"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/2305",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Fukuoka Airport"
+        ],
+        "iata": [
+          "FUK"
+        ],
+        "city": [
+          "Fukuoka"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1016",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Lilongwe International Airport"
+        ],
+        "iata": [
+          "LLW"
+        ],
+        "city": [
+          "Lilongwe"
+        ]
+      }
+    },
+    {
+      "id": "http://openflights.org/Airport/1013",
+      "labels": [
+        "airport"
+      ],
+      "properties": {
+        "name": [
+          "Chileka International Airport"
+        ],
+        "iata": [
+          "BLZ"
+        ],
+        "city": [
+          "Blantyre"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "http://openflights.org/Airport/3395",
+      "to": "http://openflights.org/Airport/3392",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Shenzhen Airlines"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2064",
+      "to": "http://openflights.org/Airport/2061",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3393",
+      "to": "http://openflights.org/Airport/3394",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Huaxia"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Canadair Regional Jet 200"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2061",
+      "to": "http://openflights.org/Airport/2064",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3394",
+      "to": "http://openflights.org/Airport/3393",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Huaxia"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Canadair Regional Jet 900"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3392",
+      "to": "http://openflights.org/Airport/3395",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "China Southern Airlines"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A321"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/533",
+      "to": "http://openflights.org/Airport/535",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Flybe"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "Fairchild Dornier Do.328"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/666",
+      "to": "http://openflights.org/Airport/668",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Wizz Air"
+        ],
+        "country": [
+          "Hungary"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/668",
+      "to": "http://openflights.org/Airport/666",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Wizz Air"
+        ],
+        "country": [
+          "Hungary"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3093",
+      "to": "http://openflights.org/Airport/2997",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Spicejet"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1825",
+      "to": "http://openflights.org/Airport/1829",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Birmingham European"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "Boeing 737-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2997",
+      "to": "http://openflights.org/Airport/3093",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Spicejet"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1829",
+      "to": "http://openflights.org/Airport/1825",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Birmingham European"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "Boeing 737-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/951",
+      "to": "http://openflights.org/Airport/957",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "TAAG Angola Airlines"
+        ],
+        "country": [
+          "Angola"
+        ],
+        "plane": [
+          "Boeing 737-700"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/957",
+      "to": "http://openflights.org/Airport/951",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "TAAG Angola Airlines"
+        ],
+        "country": [
+          "Angola"
+        ],
+        "plane": [
+          "Boeing 737-700"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/348",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/348",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Canadair Regional Jet 700"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3928",
+      "to": "http://openflights.org/Airport/3920",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lion Mentari Airlines"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/429",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Aerospatiale/Alenia ATR 72"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3920",
+      "to": "http://openflights.org/Airport/3928",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lion Mentari Airlines"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/429",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Embraer 170"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/2305",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Boeing 777"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2789",
+      "to": "http://openflights.org/Airport/3988",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "LAN Airlines"
+        ],
+        "country": [
+          "Chile"
+        ],
+        "plane": [
+          "Boeing 767-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2305",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Boeing 777"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3988",
+      "to": "http://openflights.org/Airport/2789",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "LAN Airlines"
+        ],
+        "country": [
+          "Chile"
+        ],
+        "plane": [
+          "Boeing 767-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1013",
+      "to": "http://openflights.org/Airport/1016",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ethiopian Airlines"
+        ],
+        "country": [
+          "Ethiopia"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1016",
+      "to": "http://openflights.org/Airport/1013",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ethiopian Airlines"
+        ],
+        "country": [
+          "Ethiopia"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2997",
+      "to": "http://openflights.org/Airport/2994",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Spicejet"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2359",
+      "to": "http://openflights.org/Airport/2356",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2356",
+      "to": "http://openflights.org/Airport/2359",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1001",
+      "to": "http://openflights.org/Airport/1004",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Zimbabwe"
+        ],
+        "country": [
+          "Zimbabwe"
+        ],
+        "plane": [
+          "Boeing 737-200"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1004",
+      "to": "http://openflights.org/Airport/1001",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Zimbabwe"
+        ],
+        "country": [
+          "Zimbabwe"
+        ],
+        "plane": [
+          "Boeing 737-200"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1246",
+      "to": "http://openflights.org/Airport/1243",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ryanair"
+        ],
+        "country": [
+          "Ireland"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1243",
+      "to": "http://openflights.org/Airport/1246",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ryanair"
+        ],
+        "country": [
+          "Ireland"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/5566",
+      "to": "http://openflights.org/Airport/5569",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Linhas A"
+        ],
+        "country": [
+          "Mozambique"
+        ],
+        "plane": [
+          "Pilatus Britten-Norman BN-2A/B Islander"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2994",
+      "to": "http://openflights.org/Airport/2997",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Spicejet"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3275",
+      "to": "http://openflights.org/Airport/2072",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Nas Air"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2647",
+      "to": "http://openflights.org/Airport/2642",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Sky Airline"
+        ],
+        "country": [
+          "Chile"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2072",
+      "to": "http://openflights.org/Airport/3275",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Garuda Indonesia"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 777"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2642",
+      "to": "http://openflights.org/Airport/2647",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Sky Airline"
+        ],
+        "country": [
+          "Chile"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/18",
+      "to": "http://openflights.org/Airport/11",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Iceland"
+        ],
+        "country": [
+          "Iceland"
+        ],
+        "plane": [
+          "Fokker 50"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/11",
+      "to": "http://openflights.org/Airport/18",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Iceland"
+        ],
+        "country": [
+          "Iceland"
+        ],
+        "plane": [
+          "Fokker 50"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/345",
+      "to": "http://openflights.org/Airport/342",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/347",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2387",
+      "to": "http://openflights.org/Airport/2384",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737-500"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1057",
+      "to": "http://openflights.org/Airport/1052",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Binter Canarias"
+        ],
+        "country": [
+          "Spain"
+        ],
+        "plane": [
+          "Aerospatiale/Alenia ATR 72"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2384",
+      "to": "http://openflights.org/Airport/2387",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Skymark Airlines"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/347",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/342",
+      "to": "http://openflights.org/Airport/345",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1052",
+      "to": "http://openflights.org/Airport/1057",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Binter Canarias"
+        ],
+        "country": [
+          "Spain"
+        ],
+        "plane": [
+          "Aerospatiale/Alenia ATR 72"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3395",
+      "to": "http://openflights.org/Airport/3393",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Sichuan Airlines"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3393",
+      "to": "http://openflights.org/Airport/3395",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Sichuan Airlines"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/345",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ethiopian Airlines"
+        ],
+        "country": [
+          "Ethiopia"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/345",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/342",
+      "to": "http://openflights.org/Airport/347",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/347",
+      "to": "http://openflights.org/Airport/342",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/347",
+      "to": "http://openflights.org/Airport/345",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/345",
+      "to": "http://openflights.org/Airport/347",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/342",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A321"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/342",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3395",
+      "to": "http://openflights.org/Airport/3394",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air China"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A321"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3394",
+      "to": "http://openflights.org/Airport/3395",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air China"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3093",
+      "to": "http://openflights.org/Airport/2994",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Spicejet"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2994",
+      "to": "http://openflights.org/Airport/3093",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air India Limited"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/2359",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 787-8"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2359",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 787-8"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/668",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Eurolot"
+        ],
+        "country": [
+          "Poland"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/668",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Eurolot"
+        ],
+        "country": [
+          "Poland"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2072",
+      "to": "http://openflights.org/Airport/2064",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Nas Air"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2064",
+      "to": "http://openflights.org/Airport/2072",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2072",
+      "to": "http://openflights.org/Airport/2061",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2061",
+      "to": "http://openflights.org/Airport/2072",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/2789",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Alitalia"
+        ],
+        "country": [
+          "Italy"
+        ],
+        "plane": [
+          "Boeing 777-300ER"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2789",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Alitalia"
+        ],
+        "country": [
+          "Italy"
+        ],
+        "plane": [
+          "Boeing 777-300ER"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/3988",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Boeing 777"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3988",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Boeing 777"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/533",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Flybe"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/533",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Flybe"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/535",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "easyJet"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/535",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "easyJet"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2359",
+      "to": "http://openflights.org/Airport/2384",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Skymark Airlines"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2384",
+      "to": "http://openflights.org/Airport/2359",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 777-200"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2359",
+      "to": "http://openflights.org/Airport/2387",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Japan Transocean Air"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2387",
+      "to": "http://openflights.org/Airport/2359",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Japan Transocean Air"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/3093",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3093",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3395",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/3395",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/2997",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Boeing 747-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2997",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air India Limited"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 747-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/3093",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air India Limited"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 787-8"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3093",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air India Limited"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 787-8"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2305",
+      "to": "http://openflights.org/Airport/2387",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737-500"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2387",
+      "to": "http://openflights.org/Airport/2305",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737-500"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2305",
+      "to": "http://openflights.org/Airport/2384",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Skymark Airlines"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2384",
+      "to": "http://openflights.org/Airport/2305",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Japan Transocean Air"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 737-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3395",
+      "to": "http://openflights.org/Airport/2997",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air China"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2997",
+      "to": "http://openflights.org/Airport/3395",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air China"
+        ],
+        "country": [
+          "China"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/535",
+      "to": "http://openflights.org/Airport/342",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "easyJet"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/342",
+      "to": "http://openflights.org/Airport/535",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "easyJet"
+        ],
+        "country": [
+          "United Kingdom"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/535",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A321"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/535",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A321"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/3988",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Boeing 747-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3988",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Boeing 747-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1057",
+      "to": "http://openflights.org/Airport/1243",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Iberia Airlines"
+        ],
+        "country": [
+          "Spain"
+        ],
+        "plane": [
+          "Canadair Regional Jet 900"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1243",
+      "to": "http://openflights.org/Airport/1057",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Iberia Airlines"
+        ],
+        "country": [
+          "Spain"
+        ],
+        "plane": [
+          "Canadair Regional Jet 900"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1057",
+      "to": "http://openflights.org/Airport/1246",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Iberia Airlines"
+        ],
+        "country": [
+          "Spain"
+        ],
+        "plane": [
+          "Canadair Regional Jet 900"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1246",
+      "to": "http://openflights.org/Airport/1057",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Iberia Airlines"
+        ],
+        "country": [
+          "Spain"
+        ],
+        "plane": [
+          "Canadair Regional Jet 900"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2359",
+      "to": "http://openflights.org/Airport/2305",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Japan Airlines"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 767"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2305",
+      "to": "http://openflights.org/Airport/2359",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 777-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Boeing 737-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ethiopian Airlines"
+        ],
+        "country": [
+          "Ethiopia"
+        ],
+        "plane": [
+          "Boeing 737-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/342",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Alitalia"
+        ],
+        "country": [
+          "Italy"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/342",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Alitalia"
+        ],
+        "country": [
+          "Italy"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/345",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Alitalia"
+        ],
+        "country": [
+          "Italy"
+        ],
+        "plane": [
+          "Fokker 70"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/345",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Fokker 70"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/348",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Flybaboo"
+        ],
+        "country": [
+          "Switzerland"
+        ],
+        "plane": [
+          "Saab 2000"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/348",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Flybaboo"
+        ],
+        "country": [
+          "Switzerland"
+        ],
+        "plane": [
+          "Saab 2000"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/347",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Fokker 70"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/666",
+      "to": "http://openflights.org/Airport/535",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Scandinavian Airlines System"
+        ],
+        "country": [
+          "Sweden"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/535",
+      "to": "http://openflights.org/Airport/666",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Scandinavian Airlines System"
+        ],
+        "country": [
+          "Sweden"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/535",
+      "to": "http://openflights.org/Airport/668",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ryanair"
+        ],
+        "country": [
+          "Ireland"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/668",
+      "to": "http://openflights.org/Airport/535",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Ryanair"
+        ],
+        "country": [
+          "Ireland"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/1246",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Formosa Airlines"
+        ],
+        "country": [
+          "Taiwan"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1246",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Formosa Airlines"
+        ],
+        "country": [
+          "Taiwan"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/666",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Alitalia"
+        ],
+        "country": [
+          "Italy"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/666",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/668",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Eurolot"
+        ],
+        "country": [
+          "Poland"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/668",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Eurolot"
+        ],
+        "country": [
+          "Poland"
+        ],
+        "plane": [
+          "De Havilland Canada DHC-8-400 Dash 8Q"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Boeing 737"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/2072",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "United Airlines"
+        ],
+        "country": [
+          "United States"
+        ],
+        "plane": [
+          "Airbus A330-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2072",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Canada"
+        ],
+        "country": [
+          "Canada"
+        ],
+        "plane": [
+          "Airbus A330-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3275",
+      "to": "http://openflights.org/Airport/2359",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "All Nippon Airways"
+        ],
+        "country": [
+          "Japan"
+        ],
+        "plane": [
+          "Boeing 787-8"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2359",
+      "to": "http://openflights.org/Airport/3275",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Garuda Indonesia"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 787-8"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3093",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Airbus A330-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/3093",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Airbus A330-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/951",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A340-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/951",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A340-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/951",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/951",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "KLM Royal Dutch Airlines"
+        ],
+        "country": [
+          "Netherlands"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/580",
+      "to": "http://openflights.org/Airport/2064",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Delta Air Lines"
+        ],
+        "country": [
+          "United States"
+        ],
+        "plane": [
+          "Airbus A330-200"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2064",
+      "to": "http://openflights.org/Airport/580",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air France"
+        ],
+        "country": [
+          "France"
+        ],
+        "plane": [
+          "Airbus A330"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3393",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Airbus A330-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/3393",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Airbus A330-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3093",
+      "to": "http://openflights.org/Airport/2064",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2064",
+      "to": "http://openflights.org/Airport/3093",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2064",
+      "to": "http://openflights.org/Airport/2997",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2997",
+      "to": "http://openflights.org/Airport/2064",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/668",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "LOT Polish Airlines"
+        ],
+        "country": [
+          "Poland"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/668",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "LOT Polish Airlines"
+        ],
+        "country": [
+          "Poland"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/666",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Scandinavian Airlines System"
+        ],
+        "country": [
+          "Sweden"
+        ],
+        "plane": [
+          "Boeing 737-500"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/666",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Scandinavian Airlines System"
+        ],
+        "country": [
+          "Sweden"
+        ],
+        "plane": [
+          "Boeing 737-300"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2072",
+      "to": "http://openflights.org/Airport/3928",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Garuda Indonesia"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 747-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3928",
+      "to": "http://openflights.org/Airport/2072",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Garuda Indonesia"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 747-400"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3275",
+      "to": "http://openflights.org/Airport/3920",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lion Mentari Airlines"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3920",
+      "to": "http://openflights.org/Airport/3275",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lion Mentari Airlines"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 737-800"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3275",
+      "to": "http://openflights.org/Airport/3928",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Citilink Indonesia"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Airbus A320"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3928",
+      "to": "http://openflights.org/Airport/3275",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lion Mentari Airlines"
+        ],
+        "country": [
+          "Indonesia"
+        ],
+        "plane": [
+          "Boeing 737-900"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/345",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/345",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/342",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/342",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/421",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Berlin"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/421",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Finnair"
+        ],
+        "country": [
+          "Finland"
+        ],
+        "plane": [
+          "Embraer 190"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2072",
+      "to": "http://openflights.org/Airport/2997",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air India Limited"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 777-300ER"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2997",
+      "to": "http://openflights.org/Airport/2072",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Saudi Arabian Airlines"
+        ],
+        "country": [
+          "Saudi Arabia"
+        ],
+        "plane": [
+          "Boeing 777-200"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/2072",
+      "to": "http://openflights.org/Airport/3093",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air India Limited"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 777-300ER"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/3093",
+      "to": "http://openflights.org/Airport/2072",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air India Limited"
+        ],
+        "country": [
+          "India"
+        ],
+        "plane": [
+          "Boeing 777-300ER"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/340",
+      "to": "http://openflights.org/Airport/1246",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Canada"
+        ],
+        "country": [
+          "Canada"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1246",
+      "to": "http://openflights.org/Airport/340",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Air Canada"
+        ],
+        "country": [
+          "Canada"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/345",
+      "to": "http://openflights.org/Airport/1246",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    },
+    {
+      "from": "http://openflights.org/Airport/1246",
+      "to": "http://openflights.org/Airport/345",
+      "labels": [
+        "has_flight_to"
+      ],
+      "properties": {
+        "airline": [
+          "Lufthansa"
+        ],
+        "country": [
+          "Germany"
+        ],
+        "plane": [
+          "Airbus A319"
+        ]
+      }
+    }
+  ]
+}
