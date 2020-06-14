@@ -27,12 +27,20 @@
         console.log(e.target.result);
         let graph = JSON.parse(e.target.result);
         let nodes = new vis.DataSet(graph.nodes.map((node) => {
+          let label_text = node.labels.concat(Object.values(node.properties).reduce((acc, val) => acc.concat(val), [])).join("\n");
           return {
             id: node.id,
-            label: node.properties.name[0],
+            label: label_text
           };
         }));
-        let edges = new vis.DataSet(graph.edges);
+        let edges = new vis.DataSet(graph.edges.map((edge) => {
+          let label_text = edge.labels.concat(Object.values(edge.properties).reduce((acc, val) => acc.concat(val), [])).join("\n");
+          return {
+            from: edge.from,
+            to: edge.to,
+            label: label_text
+          }
+        }));
         // create a network
         var container = document.getElementById('mynetwork');
         var data = {
