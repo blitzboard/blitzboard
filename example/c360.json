@@ -1,0 +1,461 @@
+{
+  "nodes": [
+    {
+      "id": "c01",
+      "labels": [
+        "customer"
+      ],
+      "properties": {
+        "name": [
+          "John"
+        ],
+        "age": [
+          "10"
+        ],
+        "location": [
+          "Boston"
+        ]
+      }
+    },
+    {
+      "id": "c02",
+      "labels": [
+        "customer"
+      ],
+      "properties": {
+        "name": [
+          "Mary"
+        ],
+        "gender": [
+          "F"
+        ]
+      }
+    },
+    {
+      "id": "c03",
+      "labels": [
+        "customer"
+      ],
+      "properties": {
+        "name": [
+          "Jill"
+        ],
+        "location": [
+          "Boston"
+        ]
+      }
+    },
+    {
+      "id": "c04",
+      "labels": [
+        "customer"
+      ],
+      "properties": {
+        "name": [
+          "Todd"
+        ],
+        "student": [
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "a01",
+      "labels": [
+        "account"
+      ],
+      "properties": {
+        "account_no": [
+          "xxx-yyy-201"
+        ],
+        "open": [
+          "2015-10-04"
+        ],
+        "owner": [
+          "John"
+        ]
+      }
+    },
+    {
+      "id": "a02",
+      "labels": [
+        "account"
+      ],
+      "properties": {
+        "account_no": [
+          "xxx-yyy-202"
+        ],
+        "open": [
+          "2012-09-13"
+        ],
+        "owner": [
+          "Mary"
+        ]
+      }
+    },
+    {
+      "id": "a03",
+      "labels": [
+        "account"
+      ],
+      "properties": {
+        "account_no": [
+          "xxx-yyy-203"
+        ],
+        "open": [
+          "2016-02-04"
+        ],
+        "owner": [
+          "Jill"
+        ]
+      }
+    },
+    {
+      "id": "a04",
+      "labels": [
+        "account"
+      ],
+      "properties": {
+        "account_no": [
+          "xxx-yyy-204"
+        ],
+        "open": [
+          "2018-01-05"
+        ],
+        "owner": [
+          "Todd"
+        ]
+      }
+    },
+    {
+      "id": "m01",
+      "labels": [
+        "merchant"
+      ],
+      "properties": {
+        "name": [
+          "iPhone5"
+        ],
+        "released": [
+          "02/21/2012"
+        ]
+      }
+    },
+    {
+      "id": "m02",
+      "labels": [
+        "merchant"
+      ],
+      "properties": {
+        "name": [
+          "Kindle_Fire"
+        ]
+      }
+    },
+    {
+      "id": "m03",
+      "labels": [
+        "merchant"
+      ],
+      "properties": {
+        "name": [
+          "Fitbit_Flex_Wireless"
+        ]
+      }
+    },
+    {
+      "id": "m04",
+      "labels": [
+        "merchant"
+      ],
+      "properties": {
+        "name": [
+          "Harry_Potter"
+        ]
+      }
+    },
+    {
+      "id": "m05",
+      "labels": [
+        "merchant"
+      ],
+      "properties": {
+        "name": [
+          "Hobbit"
+        ]
+      }
+    },
+    {
+      "id": "a11",
+      "labels": [
+        "account"
+      ],
+      "properties": {
+        "account_no": [
+          "xxx-zzz-001"
+        ]
+      }
+    },
+    {
+      "id": "a12",
+      "labels": [
+        "account"
+      ],
+      "properties": {
+        "account_no": [
+          "xxx-zzz-002"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "a01",
+      "to": "c01",
+      "labels": [
+        "owned_by"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a02",
+      "to": "c02",
+      "labels": [
+        "owned_by"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a03",
+      "to": "c03",
+      "labels": [
+        "owned_by"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a04",
+      "to": "c04",
+      "labels": [
+        "owned_by"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "c03",
+      "to": "c04",
+      "labels": [
+        "parent_of"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a01",
+      "to": "m01",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a01",
+      "to": "m02",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a02",
+      "to": "m01",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a02",
+      "to": "m02",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a02",
+      "to": "m04",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a03",
+      "to": "m01",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a03",
+      "to": "m02",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a03",
+      "to": "m03",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a04",
+      "to": "m03",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a04",
+      "to": "m04",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a04",
+      "to": "m05",
+      "labels": [
+        "purchased"
+      ],
+      "properties": {}
+    },
+    {
+      "from": "a01",
+      "to": "a02",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "200"
+        ],
+        "date": [
+          "2018-10-05"
+        ]
+      }
+    },
+    {
+      "from": "a11",
+      "to": "a02",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "900"
+        ],
+        "date": [
+          "2018-10-06"
+        ]
+      }
+    },
+    {
+      "from": "a02",
+      "to": "a12",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "850"
+        ],
+        "date": [
+          "2018-10-06"
+        ]
+      }
+    },
+    {
+      "from": "a01",
+      "to": "a03",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "500"
+        ],
+        "date": [
+          "2018-10-07"
+        ]
+      }
+    },
+    {
+      "from": "a03",
+      "to": "a04",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "450"
+        ],
+        "date": [
+          "2018-10-08"
+        ]
+      }
+    },
+    {
+      "from": "a04",
+      "to": "a01",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "400"
+        ],
+        "date": [
+          "2018-10-09"
+        ]
+      }
+    },
+    {
+      "from": "a02",
+      "to": "a03",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "100"
+        ],
+        "date": [
+          "2018-10-10"
+        ]
+      }
+    },
+    {
+      "from": "a02",
+      "to": "a01",
+      "labels": [
+        "transfer"
+      ],
+      "properties": {
+        "amount": [
+          "300"
+        ],
+        "date": [
+          "2018-10-10"
+        ]
+      }
+    }
+  ]
+}
