@@ -12,4 +12,4 @@ Open hellograph.html in your web browser.
     $ open hellograph.html     # On macOS
     $ xdg-open hellograph.html # On other unix OS
     
-Upload your json-pg file on the web browser.
+Upload your json-pg file on the web browser (the .json files in examples/ may be good examples!).
