@@ -16,53 +16,57 @@
 <div id="mynetwork"></div>
 <input type='file' id='pgfile' size='20'>
 <script type="text/javascript">
-  "use strict";
-  function createLabelText(elem) {
-    var flattend_props = Object.values(elem.properties).reduce((acc, val) => acc.concat(val), []);
-    return elem.labels.concat(flattend_props).join("\n");
-  }
-  function handleFileSelect(evt) {
-    var files = evt.target.files; // FileList object
-    // use the 1st file from the list
-    const f = files[0];
-    var reader = new FileReader();
+ function createLabelText(elem) {
+   return elem.labels.join("\n");
+ }
+ function createTitleText(elem) {
+   var flattend_props = Object.entries(elem.properties).reduce((acc, prop) => acc.concat(`${prop[0]}:${prop[1].join(',')}`), []);
+   return flattend_props.join("<br>");
+ }
+ function handleFileSelect(evt) {
+   var files = evt.target.files; // FileList object
+   // use the 1st file from the list
+   const f = files[0];
+   var reader = new FileReader();
 
-    // Closure to capture the file information.
-    reader.onload = (function(theFile) {
-      return function(e) {
-        console.log(e.target);
-        let graph;
-        if(f.name.endsWith('.pg')) {
-          graph = pgParser.parse(e.target.result);
-        } else {
-          graph = JSON.parse(e.target.result);
-        }
-        let nodes = new vis.DataSet(graph.nodes.map((node) => {
-          return {
-            id: node.id,
-            label: createLabelText(node)
-          };
-        }));
-        let edges = new vis.DataSet(graph.edges.map((edge) => {
-          return {
-            from: edge.from,
-            to: edge.to,
-            label: createLabelText(edge)
-          }
-        }));
-        // create a network
-        var container = document.getElementById('mynetwork');
-        var data = {
-          nodes: nodes,
-          edges: edges
-        };
-        var options = {};
-        var network = new vis.Network(container, data, options);        
-      };
-    })(f);
-    // Read in the image file as a data URL.
-    reader.readAsText(f);
-  };
+   // Closure to capture the file information.
+   reader.onload = (function(theFile) {
+     return function(e) {
+       console.log(e.target);
+       let graph;
+       if(f.name.endsWith('.pg')) {
+         graph = pgParser.parse(e.target.result);
+       } else {
+         graph = JSON.parse(e.target.result);
+       }
+       let nodes = new vis.DataSet(graph.nodes.map((node) => {
+         return {
+           id: node.id,
+           label: createLabelText(node),
+           title: createTitleText(node)
+         };
+       }));
+       let edges = new vis.DataSet(graph.edges.map((edge) => {
+         return {
+           from: edge.from,
+           to: edge.to,
+           label: createLabelText(edge),
+           title: createTitleText(edge)
+         }
+       }));
+       // create a network
+       var container = document.getElementById('mynetwork');
+       var data = {
+         nodes: nodes,
+         edges: edges
+       };
+       var options = {};
+       var network = new vis.Network(container, data, options);        
+     };
+   })(f);
+   // Read in the image file as a data URL.
+   reader.readAsText(f);
+ };
  document.getElementById('pgfile').addEventListener('change', handleFileSelect, false);
 </script> 
 </body>
