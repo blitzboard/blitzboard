@@ -3,6 +3,7 @@
 <head>
   <title>Network</title>
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script> 
+  <script type="text/javascript" src="./pg_parser_browserified.js"></script> 
   <style type="text/css">
     #mynetwork {
       width: 600px;
@@ -15,6 +16,7 @@
 <div id="mynetwork"></div>
 <input type='file' id='pgfile' size='20'>
 <script type="text/javascript">
+  "use strict";
   function createLabelText(elem) {
     var flattend_props = Object.values(elem.properties).reduce((acc, val) => acc.concat(val), []);
     return elem.labels.concat(flattend_props).join("\n");
@@ -22,14 +24,19 @@
   function handleFileSelect(evt) {
     var files = evt.target.files; // FileList object
     // use the 1st file from the list
-    f = files[0];
+    const f = files[0];
     var reader = new FileReader();
 
     // Closure to capture the file information.
     reader.onload = (function(theFile) {
       return function(e) {
-        console.log(e.target.result);
-        let graph = JSON.parse(e.target.result);
+        console.log(e.target);
+        let graph;
+        if(f.name.endsWith('.pg')) {
+          graph = pgParser.parse(e.target.result);
+        } else {
+          graph = JSON.parse(e.target.result);
+        }
         let nodes = new vis.DataSet(graph.nodes.map((node) => {
           return {
             id: node.id,
