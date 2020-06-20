@@ -23,6 +23,17 @@
    var flattend_props = Object.entries(elem.properties).reduce((acc, prop) => acc.concat(`${prop[0]}:${prop[1].join(',')}`), []);
    return flattend_props.join("<br>");
  }
+
+ function getRandomColor() {
+   var letters = '0123456789ABCDEF';
+   var color = '#';
+   for (var i = 0; i < 6; i++) {
+     color += letters[Math.floor(Math.random() * 16)];
+   }
+   return color;
+ }
+
+ 
  function handleFileSelect(evt) {
    var files = evt.target.files; // FileList object
    // use the 1st file from the list
@@ -34,22 +45,32 @@
      return function(e) {
        console.log(e.target);
        let graph;
+       let groups = new Set();
+       let edgeColorMap = {};
        if(f.name.endsWith('.pg')) {
          graph = pgParser.parse(e.target.result);
        } else {
          graph = JSON.parse(e.target.result);
        }
        let nodes = new vis.DataSet(graph.nodes.map((node) => {
+         const groupName = node.labels.join('_');
+         groups.add(groupName);
          return {
            id: node.id,
+           group: groupName,
            label: createLabelText(node),
            title: createTitleText(node)
          };
        }));
        let edges = new vis.DataSet(graph.edges.map((edge) => {
+         const edgeLabel = edge.labels.join('_');
+         if(!edgeColorMap[edgeLabel]) {
+           edgeColorMap[edgeLabel] = getRandomColor();
+         }
          return {
            from: edge.from,
            to: edge.to,
+           color: edgeColorMap[edgeLabel],
            label: createLabelText(edge),
            title: createTitleText(edge)
          }
@@ -60,7 +81,11 @@
          nodes: nodes,
          edges: edges
        };
-       var options = {};
+       var options = {
+         groups: Object.keys(groups).reduce((acc, group) => {
+           acc[group] = { color: getRandomColor() }
+         }, {})
+       };
        var network = new vis.Network(container, data, options);        
      };
    })(f);
