@@ -4,7 +4,7 @@ HelloGraph is a simple application that can be used as a prototype for your own 
 ## Usage
 Clone this repository and change directory.
  
-    $ git clone git@github.com:g2glab/hellograph.git
+    $ git clone https://github.com/g2glab/hellograph.git
     $ cd hellograph
 
 Open hellograph.html in your web browser.
