@@ -7,7 +7,6 @@
 
 "use strict";
 
-
 function peg$subclass(child, parent) {
   function ctor() { this.constructor = child; }
   ctor.prototype = parent.prototype;
@@ -517,7 +516,7 @@ function peg$parse(input, options) {
   }
 
   function peg$parseNode() {
-    var s0, s1, s2, s3, s4, s5, s6, s7;
+    var s0, s1, s2, s3, s4, s5, s6, s7, s8;
 
     s0 = peg$currPos;
     s1 = [];
@@ -550,16 +549,27 @@ function peg$parse(input, options) {
               s6 = peg$parseProperty();
             }
             if (s5 !== peg$FAILED) {
-              s6 = peg$parseInlineComment();
-              if (s6 === peg$FAILED) {
-                s6 = null;
+              s6 = [];
+              s7 = peg$parseWS();
+              while (s7 !== peg$FAILED) {
+                s6.push(s7);
+                s7 = peg$parseWS();
               }
               if (s6 !== peg$FAILED) {
-                s7 = peg$parseEndOfLine();
+                s7 = peg$parseInlineComment();
+                if (s7 === peg$FAILED) {
+                  s7 = null;
+                }
                 if (s7 !== peg$FAILED) {
-                  peg$savedPos = s0;
-                  s1 = peg$c3(s3, s4, s5);
-                  s0 = s1;
+                  s8 = peg$parseEndOfLine();
+                  if (s8 !== peg$FAILED) {
+                    peg$savedPos = s0;
+                    s1 = peg$c3(s3, s4, s5);
+                    s0 = s1;
+                  } else {
+                    peg$currPos = s0;
+                    s0 = peg$FAILED;
+                  }
                 } else {
                   peg$currPos = s0;
                   s0 = peg$FAILED;
@@ -593,7 +603,7 @@ function peg$parse(input, options) {
   }
 
   function peg$parseEdge() {
-    var s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11;
+    var s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12;
 
     s0 = peg$currPos;
     s1 = [];
@@ -652,16 +662,27 @@ function peg$parse(input, options) {
                       s10 = peg$parseProperty();
                     }
                     if (s9 !== peg$FAILED) {
-                      s10 = peg$parseInlineComment();
-                      if (s10 === peg$FAILED) {
-                        s10 = null;
+                      s10 = [];
+                      s11 = peg$parseWS();
+                      while (s11 !== peg$FAILED) {
+                        s10.push(s11);
+                        s11 = peg$parseWS();
                       }
                       if (s10 !== peg$FAILED) {
-                        s11 = peg$parseEndOfLine();
+                        s11 = peg$parseInlineComment();
+                        if (s11 === peg$FAILED) {
+                          s11 = null;
+                        }
                         if (s11 !== peg$FAILED) {
-                          peg$savedPos = s0;
-                          s1 = peg$c4(s3, s5, s7, s8, s9);
-                          s0 = s1;
+                          s12 = peg$parseEndOfLine();
+                          if (s12 !== peg$FAILED) {
+                            peg$savedPos = s0;
+                            s1 = peg$c4(s3, s5, s7, s8, s9);
+                            s0 = s1;
+                          } else {
+                            peg$currPos = s0;
+                            s0 = peg$FAILED;
+                          }
                         } else {
                           peg$currPos = s0;
                           s0 = peg$FAILED;
@@ -1745,8 +1766,6 @@ module.exports = {
   SyntaxError: peg$SyntaxError,
   parse:       peg$parse
 };
-
-const parsePg = peg$parse
 
 },{}],2:[function(require,module,exports){
 pgParser = require('./pg_parser.js');
