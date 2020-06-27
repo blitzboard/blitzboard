@@ -8,4 +8,4 @@ HelloGraph is the quickest visualizer for your **property graph** data.
 - Upload your `.pg` file from "Choose File" button.
   - Example `.pg` files are in `examples/` directory.
 
-![](https://user-images.githubusercontent.com/4862919/85918400-68738980-b89d-11ea-95ad-6c1a3b5d1dd5.jpg)
+![](https://user-images.githubusercontent.com/4862919/85918445-d15b0180-b89d-11ea-9e0d-88463a39c917.jpg)
