@@ -100,6 +100,9 @@
      groups: Object.keys(groups).reduce((acc, group) => {
        acc[group] = { color: getRandomColor() }
      }, {}),
+     layout: {
+       randomSeed: 1,
+     },
    };
    new vis.Network(container, data, options);        
  }
