@@ -2,14 +2,11 @@
 HelloGraph is a simple application that can be used as a prototype for your own graph visualization tool.
 
 ## Usage
-Clone this repository and change directory.
- 
-    $ git clone https://github.com/g2glab/hellograph.git
-    $ cd hellograph
+
+Download hellograph-master.zip
+
+[![button_download](https://user-images.githubusercontent.com/4862919/85917710-79b99780-b897-11ea-800e-cbdc10268437.png)](https://github.com/g2glab/hellograph/archive/master.zip)
 
 Open hellograph.html in your web browser.
-
-    $ open hellograph.html     # On macOS
-    $ xdg-open hellograph.html # On other unix OS
     
 Upload your json-pg file on the web browser (the .json files in examples/ may be good examples!).
