@@ -128,9 +128,9 @@
  
  $('#pgfile').addEventListener('change', handleFileSelect, false);
  $('#graph-input').value =
- `node1 :you name:"your name"
-node2 :graph type:"graph"
-node1 -> node2 :hello! on:"today"`;
+ `node1 :You name:"your name"
+node2 :Graph type:"graph"
+node1 -> node2 :Hello! on:"today"`;
  updateGraph();
  $('#graph-input').addEventListener('input', () => {
    clearTimeout(timerId);
