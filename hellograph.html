@@ -35,11 +35,16 @@
  let timerId = 0;
  
  function createLabelText(elem) {
-   return elem.labels.join("\n");
+   if(elem.id) // for nodes
+     return elem.id;
+   else // for edges
+     return elem.labels.join("\n");
  }
  
  function createTitleText(elem) {
    let flattend_props = Object.entries(elem.properties).reduce((acc, prop) => acc.concat(`${prop[0]}:${prop[1].join(',')}`), []);
+   if(elem.id) // for nodes
+     flattend_props = elem.labels.map((label) => ':' + label).concat(flattend_props);
    return flattend_props.join("<br>");
  }
 
@@ -104,7 +109,7 @@
        randomSeed: 1,
      },
    };
-   new vis.Network(container, data, options);        
+   let network = new vis.Network(container, data, options);
  }
  
  function handleFileSelect(evt) {
