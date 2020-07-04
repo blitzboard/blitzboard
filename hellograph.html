@@ -2,8 +2,10 @@
 <html>
 <head>
   <title> Hello Graph </title>
-  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script> 
-  <script type="text/javascript" src="./pg_parser_browserified.js"></script> 
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/url-join@4.0.1/lib/url-join.js"></script>
+  <script type="text/javascript" src="./pg_parser_browserified.js"></script>
   <style type="text/css">
     #mynetwork {
       width: 100%;
@@ -26,13 +28,16 @@
   <div id="mynetwork"></div>
   <div id="input-area">
     <input type='file' id='pgfile'>
+    <input id="url-input"/>
     <textarea id="graph-input" style="resize: none; width: 100%; height: 80px;">
     </textarea>
   </div>
+
 <script type="text/javascript">
  'use strict';
  const $ = document.querySelector.bind(document);
  let timerId = 0;
+ let localMode = true;
  
  function createLabelText(elem) {
    if(elem.id) // for nodes
@@ -40,9 +45,17 @@
    else // for edges
      return elem.labels.join("\n");
  }
+
+ function joinIfArray(target, sep) {
+   if(Array.isArray(target))
+     return target.join(sep);
+   return target;
+ }
  
  function createTitleText(elem) {
-   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) => acc.concat(`${prop[0]}:${prop[1].join(',')}`), []);
+   
+   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
+     acc.concat(`${prop[0]}:${joinIfArray(prop[1],',')}`), []);
    if(elem.id) // for nodes
      flattend_props = elem.labels.map((label) => ':' + label).concat(flattend_props);
    return flattend_props.join("<br>");
@@ -57,18 +70,35 @@
    return color;
  }
 
- function updateGraph() {
+ function retrieveGraph(node_id) {
+   node_id = node_id || 1;
+   let domain = $('#url-input').value;
+   if(!domain.endsWith('/'))
+     domain += '/';
+   domain = 'http://' + domain;
+   axios.get(domain + `node_match?node_ids=${node_id}`).then((response) => {
+     updateGraph(response.data.pg);
+   });
+ }
+
+ function updateGraph(input) {
    let graph;
    let groups = new Set();
    let edgeColorMap = {};
-   let input = $('#graph-input').value;
-   try {
-     graph = JSON.parse(input);
-   } catch(err) {
-     if(err instanceof SyntaxError)
-       graph = pgParser.parse(input);
-     else
-       throw err;
+
+   input = input || $('#graph-input').value;
+   if(typeof input === 'string' || input instanceof String) {
+     try {
+       graph = JSON.parse(input);
+     } catch(err) {
+       if(err instanceof SyntaxError)
+         graph = pgParser.parse(input);
+       else
+         throw err;
+     }
+   } else {
+     console.log(input);
+     graph = input;
    }
    
    let nodes = new vis.DataSet(graph.nodes.map((node) => {
@@ -110,6 +140,12 @@
      },
    };
    let network = new vis.Network(container, data, options);
+   if(!localMode)
+   {
+     network.on('click', (e) => {
+       retrieveGraph(e.nodes[0]);
+     });
+   }
  }
  
  function handleFileSelect(evt) {
@@ -139,8 +175,16 @@ node1 -> node2 :Hello! on:"today"`;
  updateGraph();
  $('#graph-input').addEventListener('input', () => {
    clearTimeout(timerId);
+   localMode = true;
    timerId = setTimeout(updateGraph, 1000);
  });
+ $('#url-input').addEventListener('change', () => {
+   clearTimeout(timerId);
+   localMode = false;
+   timerId = setTimeout(retrieveGraph, 1000);
+ });
+ 
+
 </script> 
 </body>
 </html>
