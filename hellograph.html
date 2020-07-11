@@ -38,6 +38,7 @@
  const $ = document.querySelector.bind(document);
  let timerId = 0;
  let localMode = true;
+ let data, nodes, edges, expandedNodes = [];
  
  function createLabelText(elem) {
    if(elem.id) // for nodes
@@ -53,7 +54,6 @@
  }
  
  function createTitleText(elem) {
-   
    let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
      acc.concat(`${prop[0]}:${joinIfArray(prop[1],',')}`), []);
    if(elem.id) // for nodes
@@ -70,14 +70,21 @@
    return color;
  }
 
- function retrieveGraph(node_id) {
+ function retrieveGraph(node_id, add=false) {
    node_id = node_id || 1;
    let domain = $('#url-input').value;
    if(!domain.endsWith('/'))
      domain += '/';
    domain = 'http://' + domain;
    axios.get(domain + `node_match?node_ids=${node_id}`).then((response) => {
-     updateGraph(response.data.pg);
+     if(add) {
+       addGraph(response.data.pg);
+       expandedNodes.push(node_id.toString());
+     }
+     else {
+       expandedNodes = [node_id.toString()];
+       updateGraph(response.data.pg);
+     }
    });
  }
 
@@ -97,11 +104,10 @@
          throw err;
      }
    } else {
-     console.log(input);
      graph = input;
    }
    
-   let nodes = new vis.DataSet(graph.nodes.map((node) => {
+   nodes = new vis.DataSet(graph.nodes.map((node) => {
      const groupName = node.labels.join('_');
      groups.add(groupName);
      return {
@@ -112,7 +118,7 @@
        title: createTitleText(node)
      };
    }));
-   let edges = new vis.DataSet(graph.edges.map((edge) => {
+   edges = new vis.DataSet(graph.edges.map((edge) => {
      const edgeLabel = edge.labels.join('_');
      if(!edgeColorMap[edgeLabel]) {
        edgeColorMap[edgeLabel] = getRandomColor();
@@ -127,7 +133,7 @@
    }));
    // create a network
    let container = document.getElementById('mynetwork');
-   let data = {
+   data = {
      nodes: nodes,
      edges: edges
    };
@@ -138,15 +144,85 @@
      layout: {
        randomSeed: 1,
      },
+     interaction: {
+       hover: true
+     }
    };
    let network = new vis.Network(container, data, options);
    if(!localMode)
    {
-     network.on('click', (e) => {
-       retrieveGraph(e.nodes[0]);
+     let selectTimer = null;
+     network.on('selectNode', (e) => {
+       if(e.nodes.length > 0)
+         selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
+     });
+     network.on('doubleClick', (e) => {
+       if(e.nodes.length > 0)
+         retrieveGraph(e.nodes[0]);
+     });
+     network.on('dragStart', (e)  => {
+       clearTimeout(selectTimer);
+     });
+     network.on("hoverNode", (params) => {
+       network.canvas.body.container.style.cursor = 'pointer'
+     });
+     network.on("blurNode", (params) => {
+       network.canvas.body.container.style.cursor = 'default'
      });
    }
  }
+ 
+ function addGraph(input) {
+   let graph;
+   let groups = new Set();
+   let edgeColorMap = {};
+
+   input = input || $('#graph-input').value;
+   if(typeof input === 'string' || input instanceof String) {
+     try {
+       graph = JSON.parse(input);
+     } catch(err) {
+       if(err instanceof SyntaxError)
+         graph = pgParser.parse(input);
+       else
+         throw err;
+     }
+   } else {
+     graph = input;
+   }
+
+   console.log(graph.edges);
+
+   const newEdges = graph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to))).map((edge) => {
+     const edgeLabel = edge.labels.join('_');
+     if(!edgeColorMap[edgeLabel]) {
+       edgeColorMap[edgeLabel] = getRandomColor();
+     }
+     return {
+       from: edge.from,
+       to: edge.to,
+       color: edgeColorMap[edgeLabel],
+       label: createLabelText(edge),
+       title: createTitleText(edge)
+     }
+   })
+
+
+   nodes.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
+     const groupName = node.labels.join('_');
+     groups.add(groupName);
+     return {
+       id: node.id,
+       group: groupName,
+       label: createLabelText(node),
+       shape: 'dot',
+       title: createTitleText(node)
+     };
+   }));
+
+   edges.add(newEdges);
+ }
+ 
  
  function handleFileSelect(evt) {
    let files = evt.target.files; // FileList object
