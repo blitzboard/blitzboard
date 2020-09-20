@@ -36,9 +36,12 @@
 <script type="text/javascript">
  'use strict';
  const $ = document.querySelector.bind(document);
+ const nodeSize = 25;
  let timerId = 0;
  let localMode = true;
- let data, nodes, edges, expandedNodes = [];
+ let data, nodes, edges, expandedNodes = [], network;
+ let lineStart = null, lineEnd = null, srcNode = null;
+ let graph;
  
  function createLabelText(elem) {
    if(elem.id) // for nodes
@@ -88,8 +91,9 @@
    });
  }
 
- function updateGraph(input) {
-   let graph;
+const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
+
+function updateGraph(input) {
    let groups = new Set();
    let edgeColorMap = {};
 
@@ -148,7 +152,54 @@
        hover: true
      }
    };
-   let network = new vis.Network(container, data, options);
+   network = new vis.Network(container, data, options);
+   network.on("afterDrawing", (ctx) => {
+     if(lineStart) {
+       ctx.beginPath();
+       ctx.moveTo(lineStart.x, lineStart.y);
+       ctx.lineTo(lineEnd.x, lineEnd.y);
+       ctx.stroke();
+     }
+   });
+   network.on("hold", (e) => {
+     console.log(e);
+     if(e.nodes.length == 1) {
+       const position = e.pointer.canvas;
+       const node = e.nodes[0];
+       const dist = distance(network.getPosition(node), position);
+       console.log(dist);
+       if(dist > nodeSize * 0.5){
+         console.log("edgeee");
+         lineStart = position;
+         srcNode = node;
+         nodes.update({id: node, fixed: {x: true, y: true}});
+       }
+       else
+         console.log("innnnnnnnnner");
+     }
+   });
+
+   network.on("dragging", (e) => {
+     lineEnd = e.pointer.canvas;
+   });
+
+   network.on("dragEnd", (e) => {
+
+     if(srcNode && lineStart) {
+       console.log(e);
+       nodes.update({id: srcNode, fixed: {x: false, y: false}});
+       const dstNode = network.getNodeAt(e.pointer.DOM);
+       if(dstNode) {
+         edges.add({
+           from: srcNode,
+           to: dstNode,
+         });
+       }
+     }
+     srcNode = null;
+     lineStart = null;
+   });
+
    if(!localMode)
    {
      let selectTimer = null;
@@ -173,7 +224,6 @@
  }
  
  function addGraph(input) {
-   let graph;
    let groups = new Set();
    let edgeColorMap = {};
 
@@ -212,10 +262,11 @@
      const groupName = node.labels.join('_');
      groups.add(groupName);
      return {
-       id: node.id,
+       id: node.id,       
        group: groupName,
        label: createLabelText(node),
        shape: 'dot',
+       size: nodeSize,
        title: createTitleText(node)
      };
    }));
