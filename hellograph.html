@@ -155,7 +155,7 @@ function updateGraph(input) {
    };
    network = new vis.Network(container, data, options);
    network.on("afterDrawing", (ctx) => {
-     if(lineStart) {
+     if(lineStart && lineEnd) {
        ctx.beginPath();
        ctx.moveTo(lineStart.x, lineStart.y);
        ctx.lineTo(lineEnd.x, lineEnd.y);
@@ -170,13 +170,10 @@ function updateGraph(input) {
        const dist = distance(network.getPosition(node), position);
        console.log(dist);
        if(dist > nodeSize * 0.5){
-         console.log("edgeee");
          lineStart = position;
          srcNode = node;
          nodes.update({id: node, fixed: {x: true, y: true}});
        }
-       else
-         console.log("innnnnnnnnner");
      }
    });
 
@@ -185,20 +182,28 @@ function updateGraph(input) {
    });
 
    network.on("dragEnd", (e) => {
-
      if(srcNode && lineStart) {
        console.log(e);
        nodes.update({id: srcNode, fixed: {x: false, y: false}});
        const dstNode = network.getNodeAt(e.pointer.DOM);
        if(dstNode) {
-         edges.add({
+         let newEdge = {
            from: srcNode,
            to: dstNode,
-         });
+           undirected: false,
+           labels: [],
+           properties: {}
+         };
+         edges.add(newEdge);
+         graph.edges.push(newEdge);
+         $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
        }
+
      }
+     network.stopSimulation();
      srcNode = null;
      lineStart = null;
+     lineEnd = null;
    });
 
    if(!localMode)
@@ -273,6 +278,7 @@ function updateGraph(input) {
    }));
 
    edges.add(newEdges);
+   network.stabilize(5);
  }
  
  
