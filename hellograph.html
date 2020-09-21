@@ -1,349 +1,463 @@
 <!doctype html>
 <html>
 <head>
-  <title> Hello Graph </title>
-  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/url-join@4.0.1/lib/url-join.js"></script>
-  <script type="text/javascript" src="./lib/pg_parser_browserified.js"></script>
-  <script type="text/javascript" src="./lib/json2pg_browserified.js"></script>
-  <style type="text/css">
-    #mynetwork {
-      width: 100%;
-      height: 100%;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: -1;
-    }
-    #input-area {
-      position: fixed;
-      bottom: 5px;
-    }
-    #pgfile {
-      position: relative;
-    }
-  </style> 
+    <title> Hello Graph </title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/url-join@4.0.1/lib/url-join.js"></script>
+    <script type="text/javascript" src="./lib/pg_parser_browserified.js"></script>
+    <script type="text/javascript" src="./lib/json2pg_browserified.js"></script>
+    <style type="text/css">
+        #mynetwork {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        #input-area {
+            position: fixed;
+            bottom: 5px;
+        }
+
+        #pgfile {
+            position: relative;
+        }
+
+        #network-popUp {
+            display: none;
+            position: absolute;
+            top: 350px;
+            left: 170px;
+            z-index: 299;
+            width: 250px;
+            height: 120px;
+            background-color: #f9f9f9;
+            border-style: solid;
+            border-width: 3px;
+            border-color: #5394ed;
+            padding: 10px;
+            text-align: center;
+        }
+
+    </style>
 </head>
 <body>
-  <div id="mynetwork"></div>
-  <div id="input-area">
+<div id="network-popUp">
+    <span id="operation">node</span> <br/>
+    <table style="margin: auto">
+        <tbody>
+        <tr>
+            <td>id</td>
+            <td><input id="node-id" value="new value"/></td>
+        </tr>
+        <tr>
+            <td>label</td>
+            <td><input id="node-label" value="new value"/></td>
+        </tr>
+        </tbody>
+    </table>
+    <input type="button" value="save" id="saveButton"/>
+    <input type="button" value="cancel" id="cancelButton"/>
+</div>
+<div id="mynetwork"></div>
+<div id="input-area">
     <input id='search-input'>
     <input type='file' id='pgfile'>
     <input id="url-input"/>
     <textarea id="graph-input" style="resize: none; width: 100%; height: 80px;">
     </textarea>
-  </div>
+</div>
 
 <script type="text/javascript">
- 'use strict';
- const $ = document.querySelector.bind(document);
- const nodeSize = 25;
- let timerId = 0;
- let localMode = true;
- let data, nodes, edges, expandedNodes = [], network;
- let lineStart = null, lineEnd = null, srcNode = null;
- let graph;
- let domain;
- 
- function createLabelText(elem) {
-   if(elem.id) // for nodes
-     return elem.id;
-   else // for edges
-     return elem.labels.join("\n");
- }
+    'use strict';
+    const $ = document.querySelector.bind(document);
+    const nodeSize = 25;
+    let timerId = 0;
+    let localMode = true;
+    let data, nodes, edges, expandedNodes = [], network;
+    let lineStart = null, lineEnd = null, srcNode = null;
+    let graph;
+    let domain;
 
- function joinIfArray(target, sep) {
-   if(Array.isArray(target))
-     return target.join(sep);
-   return target;
- }
- 
- function createTitleText(elem) {
-   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-     acc.concat(`${prop[0]}:${joinIfArray(prop[1],',')}`), []);
-   if(elem.id) // for nodes
-     flattend_props = elem.labels.map((label) => ':' + label).concat(flattend_props);
-   return flattend_props.join("<br>");
- }
+    function createLabelText(elem) {
+        if (elem.id) // for nodes
+            return elem.id;
+        else // for edges
+            return elem.labels.join("\n");
+    }
 
- function getRandomColor() {
-   let letters = '0123456789ABCDEF';
-   let color = '#';
-   for (let i = 0; i < 6; i++) {
-     color += letters[Math.floor(Math.random() * 16)];
-   }
-   return color;
- }
+    function joinIfArray(target, sep) {
+        if (Array.isArray(target))
+            return target.join(sep);
+        return target;
+    }
 
- function retrieveGraph(node_id, add=false) {
-   node_id = node_id || 1;
-   domain = $('#url-input').value;
-   if(!domain.endsWith('/'))
-     domain += '/';
-   domain = 'http://' + domain;
-   axios.get(domain + `node_match?node_ids=${node_id}&directed=false`).then((response) => {
-     if(add) {
-       addGraph(response.data.pg);
-       expandedNodes.push(node_id.toString());
-     }
-     else {
-       expandedNodes = [node_id.toString()];
-       updateGraph(response.data.pg);
-     }
-   });
- }
+    function createTitleText(elem) {
+        let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
+            acc.concat(`${prop[0]}:${joinIfArray(prop[1], ',')}`), []);
+        if (elem.id) // for nodes
+            flattend_props = elem.labels.map((label) => ':' + label).concat(flattend_props);
+        return flattend_props.join("<br>");
+    }
 
- function searchGraph() {
-   const keyword = $('#search-input').value;
-   domain = $('#url-input').value;
-   if(!domain.endsWith('/'))
-     domain += '/';
-   domain = 'http://' + domain;
-   const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keyword}") YIELD node MATCH p = ((node)-[r]-(another)) RETURN p`;
-   console.log(query);
-   axios.get(domain + `query?q=${query}`).then((response) => {
-     updateGraph(response.data.pg);
-   });
- }
+    function getRandomColor() {
+        let letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
 
+    function retrieveGraph(node_id, add = false) {
+        node_id = node_id || 1;
+        domain = $('#url-input').value;
+        if (!domain.endsWith('/'))
+            domain += '/';
+        domain = 'http://' + domain;
+        axios.get(domain + `node_match?node_ids=${node_id}&directed=false`).then((response) => {
+            if (add) {
+                addGraph(response.data.pg);
+                expandedNodes.push(node_id.toString());
+            } else {
+                expandedNodes = [node_id.toString()];
+                updateGraph(response.data.pg);
+            }
+        });
+    }
 
-const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
-
-function updateGraph(input) {
-   let groups = new Set();
-   let edgeColorMap = {};
-
-   input = input || $('#graph-input').value;
-   if(typeof input === 'string' || input instanceof String) {
-     try {
-       graph = JSON.parse(input);
-     } catch(err) {
-       if(err instanceof SyntaxError)
-         graph = pgParser.parse(input);
-       else
-         throw err;
-     }
-   } else {
-     graph = input;
-   }
-   
-   nodes = new vis.DataSet(graph.nodes.map((node) => {
-     const groupName = node.labels.join('_');
-     groups.add(groupName);
-     return {
-       id: node.id,
-       group: groupName,
-       label: createLabelText(node),
-       shape: 'dot',
-       title: createTitleText(node)
-     };
-   }));
-   edges = new vis.DataSet(graph.edges.map((edge) => {
-     const edgeLabel = edge.labels.join('_');
-     if(!edgeColorMap[edgeLabel]) {
-       edgeColorMap[edgeLabel] = getRandomColor();
-     }
-     return {
-       from: edge.from,
-       to: edge.to,
-       color: edgeColorMap[edgeLabel],
-       label: createLabelText(edge),
-       title: createTitleText(edge)
-     }
-   }));
-   // create a network
-   let container = document.getElementById('mynetwork');
-   data = {
-     nodes: nodes,
-     edges: edges
-   };
-   let options = {
-     groups: Object.keys(groups).reduce((acc, group) => {
-       acc[group] = { color: getRandomColor() }
-     }, {}),
-     layout: {
-       randomSeed: 1,
-     },
-     interaction: {
-       hover: true
-     }
-   };
-   network = new vis.Network(container, data, options);
-   network.on("afterDrawing", (ctx) => {
-     if(lineStart && lineEnd) {
-       ctx.beginPath();
-       ctx.moveTo(lineStart.x, lineStart.y);
-       ctx.lineTo(lineEnd.x, lineEnd.y);
-       ctx.stroke();
-     }
-   });
-   network.on("hold", (e) => {
-     console.log(e);
-     if(e.nodes.length == 1) {
-       const position = e.pointer.canvas;
-       const node = e.nodes[0];
-       const dist = distance(network.getPosition(node), position);
-       console.log(dist);
-       if(dist > nodeSize * 0.5){
-         lineStart = position;
-         srcNode = node;
-         nodes.update({id: node, fixed: {x: true, y: true}});
-       }
-     }
-   });
-
-   network.on("dragging", (e) => {
-     lineEnd = e.pointer.canvas;
-   });
-
-   network.on("dragEnd", (e) => {
-     if(srcNode && lineStart) {
-       console.log(e);
-       nodes.update({id: srcNode, fixed: {x: false, y: false}});
-       const dstNode = network.getNodeAt(e.pointer.DOM);
-       if(dstNode) {
-         let newEdge = {
-           from: srcNode,
-           to: dstNode,
-           undirected: false,
-           labels: [],
-           properties: {}
-         };
-         edges.add(newEdge);
-         graph.edges.push(newEdge);
-         $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
-         let query = `MATCH (a:airport),(b:airport) WHERE id(a) = ${srcNode} and id(b) = ${dstNode} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
-         axios.get(domain + `query?q=${query}`).then((response) => {
-           console.log(response);
-         });
-       }
-     }
-     network.stopSimulation();
-     srcNode = null;
-     lineStart = null;
-     lineEnd = null;
-   });
-
-   if(!localMode)
-   {
-     let selectTimer = null;
-     network.on('selectNode', (e) => {
-       if(e.nodes.length > 0)
-         selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
-     });
-     network.on('doubleClick', (e) => {
-       if(e.nodes.length > 0)
-         retrieveGraph(e.nodes[0]);
-     });
-     network.on('dragStart', (e)  => {
-       clearTimeout(selectTimer);
-     });
-     network.on("hoverNode", (params) => {
-       network.canvas.body.container.style.cursor = 'pointer'
-     });
-     network.on("blurNode", (params) => {
-       network.canvas.body.container.style.cursor = 'default'
-     });
-   }
- }
- 
- function addGraph(input) {
-   let groups = new Set();
-   let edgeColorMap = {};
-
-   input = input || $('#graph-input').value;
-   if(typeof input === 'string' || input instanceof String) {
-     try {
-       graph = JSON.parse(input);
-     } catch(err) {
-       if(err instanceof SyntaxError)
-         graph = pgParser.parse(input);
-       else
-         throw err;
-     }
-   } else {
-     graph = input;
-   }
-
-   console.log(graph.edges);
-
-   const newEdges = graph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to))).map((edge) => {
-     const edgeLabel = edge.labels.join('_');
-     if(!edgeColorMap[edgeLabel]) {
-       edgeColorMap[edgeLabel] = getRandomColor();
-     }
-     return {
-       from: edge.from,
-       to: edge.to,
-       color: edgeColorMap[edgeLabel],
-       label: createLabelText(edge),
-       title: createTitleText(edge)
-     }
-   })
+    function searchGraph() {
+        const keyword = $('#search-input').value;
+        domain = $('#url-input').value;
+        if (!domain.endsWith('/'))
+            domain += '/';
+        domain = 'http://' + domain;
+        const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keyword}") YIELD node MATCH p = ((node)-[r]-(another)) RETURN p`;
+        console.log(query);
+        axios.get(domain + `query?q=${query}`).then((response) => {
+            updateGraph(response.data.pg);
+        });
+    }
 
 
-   nodes.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
-     const groupName = node.labels.join('_');
-     groups.add(groupName);
-     return {
-       id: node.id,       
-       group: groupName,
-       label: createLabelText(node),
-       shape: 'dot',
-       size: nodeSize,
-       title: createTitleText(node)
-     };
-   }));
+    const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
 
-   edges.add(newEdges);
-   network.stabilize(5);
- }
- 
- 
- function handleFileSelect(evt) {
-   let files = evt.target.files; // FileList object
-   // use the 1st file from the list
-   const f = files[0];
-   let reader = new FileReader();
+    function updateGraph(input) {
+        let groups = new Set();
+        let edgeColorMap = {};
+
+        input = input || $('#graph-input').value;
+        if (typeof input === 'string' || input instanceof String) {
+            try {
+                graph = JSON.parse(input);
+            } catch (err) {
+                if (err instanceof SyntaxError)
+                    graph = pgParser.parse(input);
+                else
+                    throw err;
+            }
+        } else {
+            graph = input;
+        }
+
+        nodes = new vis.DataSet(graph.nodes.map((node) => {
+            const groupName = node.labels.join('_');
+            groups.add(groupName);
+            return {
+                id: node.id,
+                group: groupName,
+                label: createLabelText(node),
+                shape: 'dot',
+                title: createTitleText(node)
+            };
+        }));
+        edges = new vis.DataSet(graph.edges.map((edge) => {
+            const edgeLabel = edge.labels.join('_');
+            if (!edgeColorMap[edgeLabel]) {
+                edgeColorMap[edgeLabel] = getRandomColor();
+            }
+            return {
+                from: edge.from,
+                to: edge.to,
+                color: edgeColorMap[edgeLabel],
+                label: createLabelText(edge),
+                title: createTitleText(edge)
+            }
+        }));
+        // create a network
+        let container = document.getElementById('mynetwork');
+        data = {
+            nodes: nodes,
+            edges: edges
+        };
+        let options = {
+            groups: Object.keys(groups).reduce((acc, group) => {
+                acc[group] = {color: getRandomColor()}
+            }, {}),
+            layout: {
+                randomSeed: 1,
+            },
+            interaction: {
+                hover: true
+            },
+            manipulation: {
+                addNode: function (data, callback) {
+                    // filling in the popup DOM elements
+                    document.getElementById("operation").innerHTML = "Add Node";
+                    document.getElementById("node-id").value = data.id;
+                    document.getElementById("node-label").value = data.label;
+                    document.getElementById("saveButton").onclick = saveData.bind(
+                        this,
+                        data,
+                        callback
+                    );
+                    document.getElementById("cancelButton").onclick = clearPopUp.bind();
+                    document.getElementById("network-popUp").style.display = "block";
+                },
+                editNode: function (data, callback) {
+                    // filling in the popup DOM elements
+                    document.getElementById("operation").innerHTML = "Edit Node";
+                    document.getElementById("node-id").value = data.id;
+                    document.getElementById("node-label").value = data.label;
+                    document.getElementById("saveButton").onclick = saveData.bind(
+                        this,
+                        data,
+                        callback
+                    );
+                    document.getElementById("cancelButton").onclick = cancelEdit.bind(
+                        this,
+                        callback
+                    );
+                    document.getElementById("network-popUp").style.display = "block";
+                },
+                addEdge: function (data, callback) {
+                    if (data.from == data.to) {
+                        var r = confirm("Do you want to connect the node to itself?");
+                        if (r == true) {
+                            callback(data);
+                        }
+                    } else {
+                        callback(data);
+                    }
+                },
+            },
+        };
+        network = new vis.Network(container, data, options);
+        network.on("afterDrawing", (ctx) => {
+            if (lineStart && lineEnd) {
+                ctx.beginPath();
+                ctx.moveTo(lineStart.x, lineStart.y);
+                ctx.lineTo(lineEnd.x, lineEnd.y);
+                ctx.stroke();
+            }
+        });
+        network.on("hold", (e) => {
+            console.log(e);
+            if (e.nodes.length == 1) {
+                const position = e.pointer.canvas;
+                const node = e.nodes[0];
+                const dist = distance(network.getPosition(node), position);
+                console.log(dist);
+                if (dist > nodeSize * 0.5) {
+                    lineStart = position;
+                    srcNode = node;
+                    nodes.update({id: node, fixed: {x: true, y: true}});
+                }
+            }
+        });
+
+        network.on("dragging", (e) => {
+            lineEnd = e.pointer.canvas;
+        });
+
+        network.on("dragEnd", (e) => {
+            if (srcNode && lineStart) {
+                console.log(e);
+                nodes.update({id: srcNode, fixed: {x: false, y: false}});
+                const dstNode = network.getNodeAt(e.pointer.DOM);
+                if (dstNode) {
+                    let newEdge = {
+                        from: srcNode,
+                        to: dstNode,
+                        undirected: false,
+                        labels: [],
+                        properties: {}
+                    };
+                    edges.add(newEdge);
+                    graph.edges.push(newEdge);
+                    $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+                    let query = `MATCH (a:airport),(b:airport) WHERE id(a) = ${srcNode} and id(b) = ${dstNode} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
+                    console.log(query);
+                    axios.get(domain + `query?q=${query}`).then((response) => {
+                        console.log(response);
+                    });
+                }
+            }
+            network.stopSimulation();
+            srcNode = null;
+            lineStart = null;
+            lineEnd = null;
+        });
+
+        if (!localMode) {
+            let selectTimer = null;
+            network.on('selectNode', (e) => {
+                if (e.nodes.length > 0)
+                    selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
+            });
+            network.on('doubleClick', (e) => {
+                if (e.nodes.length > 0)
+                    retrieveGraph(e.nodes[0]);
+            });
+            network.on('dragStart', (e) => {
+                clearTimeout(selectTimer);
+            });
+            network.on("hoverNode", (params) => {
+                network.canvas.body.container.style.cursor = 'pointer'
+            });
+            network.on("blurNode", (params) => {
+                network.canvas.body.container.style.cursor = 'default'
+            });
+        }
+    }
+
+    function addGraph(input) {
+        let groups = new Set();
+        let edgeColorMap = {};
+
+        input = input || $('#graph-input').value;
+        if (typeof input === 'string' || input instanceof String) {
+            try {
+                graph = JSON.parse(input);
+            } catch (err) {
+                if (err instanceof SyntaxError)
+                    graph = pgParser.parse(input);
+                else
+                    throw err;
+            }
+        } else {
+            graph = input;
+        }
+
+        console.log(graph.edges);
+
+        const newEdges = graph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to))).map((edge) => {
+            const edgeLabel = edge.labels.join('_');
+            if (!edgeColorMap[edgeLabel]) {
+                edgeColorMap[edgeLabel] = getRandomColor();
+            }
+            return {
+                from: edge.from,
+                to: edge.to,
+                color: edgeColorMap[edgeLabel],
+                label: createLabelText(edge),
+                title: createTitleText(edge)
+            }
+        })
 
 
-   // Closure to capture the file information.
-   reader.onload = (function(theFile) {
-     return function(e) {
-       $('#graph-input').value = e.target.result;
-       updateGraph();
-     };
-   })(f);
-   // Read in the image file as a data URL.
-   reader.readAsText(f);
- };
- 
- 
- $('#pgfile').addEventListener('change', handleFileSelect, false);
- $('#graph-input').value =
- `node1 :You name:"your name"
+        nodes.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
+            const groupName = node.labels.join('_');
+            groups.add(groupName);
+            return {
+                id: node.id,
+                group: groupName,
+                label: createLabelText(node),
+                shape: 'dot',
+                size: nodeSize,
+                title: createTitleText(node)
+            };
+        }));
+
+        edges.add(newEdges);
+        network.stabilize(5);
+    }
+
+
+    function handleFileSelect(evt) {
+        let files = evt.target.files; // FileList object
+        // use the 1st file from the list
+        const f = files[0];
+        let reader = new FileReader();
+
+
+        // Closure to capture the file information.
+        reader.onload = (function (theFile) {
+            return function (e) {
+                $('#graph-input').value = e.target.result;
+                updateGraph();
+            };
+        })(f);
+        // Read in the image file as a data URL.
+        reader.readAsText(f);
+    };
+
+
+    $('#pgfile').addEventListener('change', handleFileSelect, false);
+    $('#graph-input').value =
+        `node1 :You name:"your name"
 node2 :Graph type:"graph"
 node1 -> node2 :Hello! on:"today"`;
- updateGraph();
- $('#graph-input').addEventListener('input', () => {
-   clearTimeout(timerId);
-   localMode = true;
-   timerId = setTimeout(updateGraph, 1000);
- });
- 
- $('#search-input').addEventListener('input', () => {
-   clearTimeout(timerId);
-   timerId = setTimeout(searchGraph, 1000);
- });
+    $('#url-input').value = 'localhost:3000';
+    retrieveGraph();
+    /*  updateGraph(); */
+    $('#graph-input').addEventListener('input', () => {
+        clearTimeout(timerId);
+        localMode = true;
+        timerId = setTimeout(updateGraph, 1000);
+    });
 
- $('#url-input').addEventListener('change', () => {
-   clearTimeout(timerId);
-   localMode = false;
-   timerId = setTimeout(retrieveGraph, 1000);
- });
- 
+    $('#search-input').addEventListener('input', () => {
+        clearTimeout(timerId);
+        timerId = setTimeout(searchGraph, 1000);
+    });
 
-</script> 
+    $('#url-input').addEventListener('change', () => {
+        clearTimeout(timerId);
+        localMode = false;
+        timerId = setTimeout(retrieveGraph, 1000);
+    });
+
+
+    function destroy() {
+        if (network !== null) {
+            network.destroy();
+            network = null;
+        }
+    }
+
+    function draw() {
+        destroy();
+        nodes = [];
+        edges = [];
+
+        // create a network
+        var container = document.getElementById("mynetwork");
+        var options = {};
+        network = new vis.Network(container, data, options);
+    }
+
+    function clearPopUp() {
+        document.getElementById("saveButton").onclick = null;
+        document.getElementById("cancelButton").onclick = null;
+        document.getElementById("network-popUp").style.display = "none";
+    }
+
+    function cancelEdit(callback) {
+        clearPopUp();
+        callback(null);
+    }
+
+    function saveData(data, callback) {
+        data.id = document.getElementById("node-id").value;
+        data.label = document.getElementById("node-label").value;
+        clearPopUp();
+        callback(data);
+    }
+
+</script>
 </body>
 </html>
