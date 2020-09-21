@@ -28,6 +28,7 @@
 <body>
   <div id="mynetwork"></div>
   <div id="input-area">
+    <input id='search-input'>
     <input type='file' id='pgfile'>
     <input id="url-input"/>
     <textarea id="graph-input" style="resize: none; width: 100%; height: 80px;">
@@ -81,7 +82,7 @@
    if(!domain.endsWith('/'))
      domain += '/';
    domain = 'http://' + domain;
-   axios.get(domain + `node_match?node_ids=${node_id}`).then((response) => {
+   axios.get(domain + `node_match?node_ids=${node_id}&directed=false`).then((response) => {
      if(add) {
        addGraph(response.data.pg);
        expandedNodes.push(node_id.toString());
@@ -92,6 +93,20 @@
      }
    });
  }
+
+ function searchGraph() {
+   const keyword = $('#search-input').value;
+   domain = $('#url-input').value;
+   if(!domain.endsWith('/'))
+     domain += '/';
+   domain = 'http://' + domain;
+   const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keyword}") YIELD node MATCH p = ((node)-[r]-(another)) RETURN p`;
+   console.log(query);
+   axios.get(domain + `query?q=${query}`).then((response) => {
+     updateGraph(response.data.pg);
+   });
+ }
+
 
 const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
 
@@ -316,6 +331,12 @@ node1 -> node2 :Hello! on:"today"`;
    localMode = true;
    timerId = setTimeout(updateGraph, 1000);
  });
+ 
+ $('#search-input').addEventListener('input', () => {
+   clearTimeout(timerId);
+   timerId = setTimeout(searchGraph, 1000);
+ });
+
  $('#url-input').addEventListener('change', () => {
    clearTimeout(timerId);
    localMode = false;
