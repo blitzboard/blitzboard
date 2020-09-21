@@ -78,7 +78,6 @@
     let timerId = 0;
     let localMode = true;
     let data, nodes, edges, expandedNodes = [], network;
-    let lineStart = null, lineEnd = null, srcNode = null;
     let graph;
     let domain;
 
@@ -145,6 +144,25 @@
 
     const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
 
+    function saveEdge(data) {
+        console.log(data);
+        let newEdge = {
+            from: data.from,
+            to: data.to,
+            undirected: false,
+            labels: [],
+            properties: {}
+        };
+        edges.add(newEdge);
+        graph.edges.push(newEdge);
+        $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+        let query = `MATCH (a:airport),(b:airport) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
+        console.log(query);
+        axios.get(domain + `query?q=${query}`).then((response) => {
+            console.log(response);
+        });
+    }
+
     function updateGraph(input) {
         let groups = new Set();
         let edgeColorMap = {};
@@ -203,8 +221,14 @@
             interaction: {
                 hover: true
             },
+            physics: {
+                stabilization: {
+                    enabled: true,
+                    iterations: 1    // YMMV
+                }
+            },
             manipulation: {
-                addNode: function (data, callback) {
+                addNode: (data, callback) => {
                     // filling in the popup DOM elements
                     document.getElementById("operation").innerHTML = "Add Node";
                     document.getElementById("node-id").value = data.id;
@@ -234,73 +258,14 @@
                     document.getElementById("network-popUp").style.display = "block";
                 },
                 addEdge: function (data, callback) {
-                    if (data.from == data.to) {
-                        var r = confirm("Do you want to connect the node to itself?");
-                        if (r == true) {
-                            callback(data);
-                        }
-                    } else {
+                    if (data.from != data.to || confirm("Do you want to connect the node to itself?")) {
                         callback(data);
+                        saveEdge(data);
                     }
                 },
             },
         };
         network = new vis.Network(container, data, options);
-        network.on("afterDrawing", (ctx) => {
-            if (lineStart && lineEnd) {
-                ctx.beginPath();
-                ctx.moveTo(lineStart.x, lineStart.y);
-                ctx.lineTo(lineEnd.x, lineEnd.y);
-                ctx.stroke();
-            }
-        });
-        network.on("hold", (e) => {
-            console.log(e);
-            if (e.nodes.length == 1) {
-                const position = e.pointer.canvas;
-                const node = e.nodes[0];
-                const dist = distance(network.getPosition(node), position);
-                console.log(dist);
-                if (dist > nodeSize * 0.5) {
-                    lineStart = position;
-                    srcNode = node;
-                    nodes.update({id: node, fixed: {x: true, y: true}});
-                }
-            }
-        });
-
-        network.on("dragging", (e) => {
-            lineEnd = e.pointer.canvas;
-        });
-
-        network.on("dragEnd", (e) => {
-            if (srcNode && lineStart) {
-                console.log(e);
-                nodes.update({id: srcNode, fixed: {x: false, y: false}});
-                const dstNode = network.getNodeAt(e.pointer.DOM);
-                if (dstNode) {
-                    let newEdge = {
-                        from: srcNode,
-                        to: dstNode,
-                        undirected: false,
-                        labels: [],
-                        properties: {}
-                    };
-                    edges.add(newEdge);
-                    graph.edges.push(newEdge);
-                    $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
-                    let query = `MATCH (a:airport),(b:airport) WHERE id(a) = ${srcNode} and id(b) = ${dstNode} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
-                    console.log(query);
-                    axios.get(domain + `query?q=${query}`).then((response) => {
-                        console.log(response);
-                    });
-                }
-            }
-            network.stopSimulation();
-            srcNode = null;
-            lineStart = null;
-            lineEnd = null;
-        });
 
         if (!localMode) {
             let selectTimer = null;
@@ -315,6 +280,9 @@
             network.on('dragStart', (e) => {
                 clearTimeout(selectTimer);
             });
+            network.on('dragEnd', (e) => {
+                network.stopSimulation();
+            });
             network.on("hoverNode", (params) => {
                 network.canvas.body.container.style.cursor = 'pointer'
             });
@@ -322,6 +290,10 @@
                 network.canvas.body.container.style.cursor = 'default'
             });
         }
+        network.stabilize(3);
+        network.on("dragEnd", (e) => {
+            network.stopSimulation();
+        });
     }
 
     function addGraph(input) {
