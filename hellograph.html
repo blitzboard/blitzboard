@@ -183,6 +183,16 @@
         });
     }
 
+
+    function deleteEdge(data) {
+        const edgeId = edges.get(data.edges[0]).remoteId;
+        let query = `MATCH (n)-[e]-(n2) WHERE id(e) = ${edgeId} DELETE e`;
+        console.log(query);
+        axios.get(domain + `query?q=${query}`).then((response) => {
+            console.log(response);
+        });
+    }
+
     function updateGraph(input) {
         let groups = new Set();
         let edgeColorMap = {};
@@ -216,7 +226,8 @@
                 to: edge.to,
                 color: edgeColorMap[edgeLabel],
                 label: createLabelText(edge),
-                title: createTitleText(edge)
+                title: createTitleText(edge),
+                remoteId: edge.properties.id[0]
             }
         }));
         // create a network
@@ -277,7 +288,11 @@
                     }
                 },
                 deleteNode: (data, callback) => {
-                    deleteNode(data); // defined below
+                    deleteNode(data);
+                    callback(data);
+                },
+                deleteEdge: (data, callback) => {
+                    deleteEdge(data);
                     callback(data);
                 },
             },
