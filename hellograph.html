@@ -94,18 +94,12 @@
             return elem.labels.join("\n");
     }
 
-    function joinIfArray(target, sep) {
-        if (Array.isArray(target))
-            return target.join(sep);
-        return target;
-    }
-
     function createTitleText(elem) {
         let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-            acc.concat(`${prop[0]}:${joinIfArray(prop[1], ',')}`), []);
+            acc.concat(`<tr><td>${prop[0]}</td><td>${prop[1]}</td></tr>`), []);
         if (elem.id) // for nodes
-            flattend_props = elem.labels.map((label) => ':' + label).concat(flattend_props);
-        return flattend_props.join("<br>");
+            flattend_props = elem.labels.map((label) => `<tr><td>label</td><td>${label}</td></tr>`).concat(flattend_props);
+        return `<table>${flattend_props.join('')}</table>`;
     }
 
     function getRandomColor() {
@@ -150,7 +144,10 @@
 
     const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
 
-    function saveNode(data) {
+    function saveNode(data, callback) {
+        data.label = document.getElementById("node-label").value;
+        clearPopUp();
+        callback(null); // manually add nodes
         let query = `CREATE (a:${data.label}) RETURN a`;
         axios.get(domain + `query?q=${query}`).then((response) => {
             const node = response.data.pg.nodes[0];
@@ -173,6 +170,19 @@
         let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
         axios.get(domain + `query?q=${query}`).then((response) => {
             console.log(response);
+        });
+    }
+
+
+    function editNode(data, callback) {
+        const label = document.getElementById("node-label").value;
+        clearPopUp();
+        callback(null); // manually add nodes
+        let query = `MATCH (a) WHERE id(a) = ${data.id} SET a:${label} RETURN a`;
+        axios.get(domain + `query?q=${query}`).then((response) => {
+            // TODO: edit label in PG
+            // graph.nodes.push(node);
+            // $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
         });
     }
 
@@ -249,7 +259,7 @@
             physics: {
                 stabilization: {
                     enabled: true,
-                    iterations: 1000,
+                    iterations: 200,
                     updateInterval: 25
                 }
             },
@@ -258,7 +268,8 @@
                     // filling in the popup DOM elements
                     document.getElementById("operation").innerHTML = "Add Node";
                     document.getElementById("node-label").value = data.label;
-                    document.getElementById("saveButton").onclick = saveData.bind(
+
+                    document.getElementById("saveButton").onclick = saveNode.bind(
                         this,
                         data,
                         callback
@@ -270,7 +281,7 @@
                     // filling in the popup DOM elements
                     document.getElementById("operation").innerHTML = "Edit Node";
                     document.getElementById("node-label").value = data.label;
-                    document.getElementById("saveButton").onclick = saveData.bind(
+                    document.getElementById("saveButton").onclick = editNode.bind(
                         this,
                         data,
                         callback
@@ -321,9 +332,6 @@
             network.on('dragStart', (e) => {
                 clearTimeout(selectTimer);
             });
-            network.on('dragEnd', (e) => {
-                network.stopSimulation();
-            });
             network.on("hoverNode", (params) => {
                 network.canvas.body.container.style.cursor = 'pointer'
             });
@@ -335,7 +343,8 @@
            network.stopSimulation();
         });
         network.on("stabilizationIterationsDone", function () {
-            network.stopSimulation();
+            console.log('stabilized');
+            network.setOptions({physics: {enabled:false}});
         });
     }
 
@@ -465,12 +474,6 @@ node1 -> node2 :Hello! on:"today"`;
         callback(null);
     }
 
-    function saveData(data, callback) {
-        data.label = document.getElementById("node-label").value;
-        saveNode(data);
-        clearPopUp();
-        callback(null); // manually add nodes
-    }
 
 </script>
 </body>
