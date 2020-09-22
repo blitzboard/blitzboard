@@ -176,6 +176,13 @@
         });
     }
 
+    function deleteNode(data) {
+        let query = `MATCH (n) WHERE id(n) IN [${data.nodes.    join(',')}] DETACH DELETE n`;
+        axios.get(domain + `query?q=${query}`).then((response) => {
+            console.log(response);
+        });
+    }
+
     function updateGraph(input) {
         let groups = new Set();
         let edgeColorMap = {};
@@ -268,6 +275,10 @@
                         callback(data);
                         saveEdge(data);
                     }
+                },
+                deleteNode: (data, callback) => {
+                    deleteNode(data); // defined below
+                    callback(data);
                 },
             },
             edges: {
