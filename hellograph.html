@@ -50,10 +50,6 @@
     <table style="margin: auto">
         <tbody>
         <tr>
-            <td>id</td>
-            <td><input id="node-id" value="new value"/></td>
-        </tr>
-        <tr>
             <td>label</td>
             <td><input id="node-label" value="new value"/></td>
         </tr>
@@ -80,6 +76,16 @@
     let data, nodes, edges, expandedNodes = [], network;
     let graph;
     let domain;
+
+    function toVisNode(pgNode, group) {
+        return {
+            id: pgNode.id,
+            group: group,
+            label: createLabelText(pgNode),
+            shape: 'dot',
+            title: createTitleText(pgNode)
+        };
+    }
 
     function createLabelText(elem) {
         if (elem.id) // for nodes
@@ -144,8 +150,17 @@
 
     const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
 
+    function saveNode(data) {
+        let query = `CREATE (a:${data.label}) RETURN a`;
+        axios.get(domain + `query?q=${query}`).then((response) => {
+            const node = response.data.pg.nodes[0];
+            nodes.add(toVisNode(node, ""));
+            graph.nodes.push(node);
+            $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+        });
+    }
+
     function saveEdge(data) {
-        console.log(data);
         let newEdge = {
             from: data.from,
             to: data.to,
@@ -153,11 +168,9 @@
             labels: [],
             properties: {}
         };
-        edges.add(newEdge);
         graph.edges.push(newEdge);
         $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
-        let query = `MATCH (a:airport),(b:airport) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
-        console.log(query);
+        let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
         axios.get(domain + `query?q=${query}`).then((response) => {
             console.log(response);
         });
@@ -184,13 +197,7 @@
         nodes = new vis.DataSet(graph.nodes.map((node) => {
             const groupName = node.labels.join('_');
             groups.add(groupName);
-            return {
-                id: node.id,
-                group: groupName,
-                label: createLabelText(node),
-                shape: 'dot',
-                title: createTitleText(node)
-            };
+            return toVisNode(node, groupName)
         }));
         edges = new vis.DataSet(graph.edges.map((edge) => {
             const edgeLabel = edge.labels.join('_');
@@ -224,14 +231,14 @@
             physics: {
                 stabilization: {
                     enabled: true,
-                    iterations: 1    // YMMV
+                    iterations: 1000,
+                    updateInterval: 25
                 }
             },
             manipulation: {
                 addNode: (data, callback) => {
                     // filling in the popup DOM elements
                     document.getElementById("operation").innerHTML = "Add Node";
-                    document.getElementById("node-id").value = data.id;
                     document.getElementById("node-label").value = data.label;
                     document.getElementById("saveButton").onclick = saveData.bind(
                         this,
@@ -244,7 +251,6 @@
                 editNode: function (data, callback) {
                     // filling in the popup DOM elements
                     document.getElementById("operation").innerHTML = "Edit Node";
-                    document.getElementById("node-id").value = data.id;
                     document.getElementById("node-label").value = data.label;
                     document.getElementById("saveButton").onclick = saveData.bind(
                         this,
@@ -264,6 +270,15 @@
                     }
                 },
             },
+            edges: {
+                arrows: {
+                    to: {
+                        enabled: true,
+                        scaleFactor: 0.3,
+                        type: "arrow"
+                    },
+                }
+            }
         };
         network = new vis.Network(container, data, options);
 
@@ -290,8 +305,10 @@
                 network.canvas.body.container.style.cursor = 'default'
             });
         }
-        network.stabilize(3);
-        network.on("dragEnd", (e) => {
+        network.on("click", (e) => {
+           network.stopSimulation();
+        });
+        network.on("stabilizationIterationsDone", function () {
             network.stopSimulation();
         });
     }
@@ -314,7 +331,6 @@
             graph = input;
         }
 
-        console.log(graph.edges);
 
         const newEdges = graph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to))).map((edge) => {
             const edgeLabel = edge.labels.join('_');
@@ -424,10 +440,10 @@ node1 -> node2 :Hello! on:"today"`;
     }
 
     function saveData(data, callback) {
-        data.id = document.getElementById("node-id").value;
         data.label = document.getElementById("node-label").value;
+        saveNode(data);
         clearPopUp();
-        callback(data);
+        callback(null); // manually add nodes
     }
 
 </script>
