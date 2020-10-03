@@ -5,6 +5,7 @@
 <!-- <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script> -->
 <!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
 <link crossorigin='anonymous' href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css' integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
 <script src='./axios.min.js'></script>
 <script src='./vis-network.min.js'></script>
 <script src='./lib/pg_parser_browserified.js' type='text/javascript'></script>
@@ -50,7 +51,7 @@
 </div>
 <div class='col-2 mx-0 px-0'>
 <button class='mx-0 btn btn-info' id='search-button' type='button'>
-<span class='glyphicon glyphicon-search'></span>
+<span class='fa fa-search' id='search-icon'></span>
 Search
 </button>
 </div>
@@ -125,8 +126,22 @@ Search
               }
           });
       }
+      
+      function setSearchState(searching) {
+        const icon =  $('#search-icon');
+        if(searching) {
+          icon.classList.remove("fa-search");
+          icon.classList.add("fa-spinner");
+          icon.classList.add("fa-spin");
+        } else {
+          icon.classList.add("fa-search");
+          icon.classList.remove("fa-spinner");
+          icon.classList.remove("fa-spin");
+        }
+      }
   
-      function searchGraph() {
+      function searchGraph() {  
+          setSearchState(true);
           const keyword = $('#search-input').value;
           domain = $('#url-input').value;
           if (!domain.endsWith('/'))
@@ -136,6 +151,7 @@ Search
           console.log(query);
           axios.get(domain + `query?q=${query}`).then((response) => {
               updateGraph(response.data.pg);
+              setSearchState(false);
           });
       }
   
