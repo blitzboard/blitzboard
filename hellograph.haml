@@ -8,6 +8,7 @@
     %link{:href => "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css", :rel => "stylesheet"}/
     %script{:src => "./axios.min.js"}
     %script{:src => "./vis-network.min.js"}
+    %script{:src => "./lib/dat.gui.min.js"}
     %script{:src => "./lib/pg_parser_browserified.js", :type => "text/javascript"}
     %script{:src => "./lib/json2pg_browserified.js", :type => "text/javascript"}
     :css
@@ -58,9 +59,13 @@
           const nodeSize = 25;
           let timerId = 0;
           let localMode = true;
-          let data, nodes, edges, expandedNodes = [], network;
+          let data, nodes, nodeDataSet, edgeDataset, expandedNodes = [], network;
           let graph;
           let domain;
+          
+          const gui = new dat.GUI();
+          const nodeFolder = gui.addFolder('Node');
+          const edgeFolder = gui.addFolder('Edge');
       
           function toVisNode(pgNode, group) {
               return {
@@ -72,8 +77,11 @@
               };
           }
       
-          function createLabelText(elem) {
-              if (elem.id) // for nodes
+          function createLabelText(elem, props = null) {
+              if(props) {
+                  return props.map((prop) => elem.properties[prop]).join('\n');
+              }
+              else if (elem.id) // for nodes
                   return elem.id;
               else // for edges
                   return elem.labels.join("\n");
@@ -195,7 +203,7 @@
       
       
           function deleteEdge(data) {
-              const edgeId = edges.get(data.edges[0]).remoteId;
+              const edgeId = edgeDataset.get(data.edges[0]).remoteId;
               let query = `MATCH (n)-[e]-(n2) WHERE id(e) = ${edgeId} DELETE e`;
               console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
@@ -220,13 +228,16 @@
               } else {
                   graph = input;
               }
+              
+              const nodeProps = new Set();
       
-              nodes = new vis.DataSet(graph.nodes.map((node) => {
+              nodeDataSet = new vis.DataSet(graph.nodes.map((node) => {
                   const groupName = node.labels.join('_');
                   groups.add(groupName);
+                  Object.keys(node.properties).forEach(nodeProps.add, nodeProps);
                   return toVisNode(node, groupName)
               }));
-              edges = new vis.DataSet(graph.edges.map((edge) => {
+              edgeDataset = new vis.DataSet(graph.edges.map((edge) => {
                   const edgeLabel = edge.labels.join('_');
                   if (!edgeColorMap[edgeLabel]) {
                       edgeColorMap[edgeLabel] = getRandomColor();
@@ -243,9 +254,25 @@
               // create a network
               let container = document.getElementById('graph');
               data = {
-                  nodes: nodes,
-                  edges: edges
+                  nodes: nodeDataSet,
+                  edges: edgeDataset
               };
+              
+              const onNodeControllerChange = () => {
+                let displayedProps = nodeFolder.__controllers.map((con) =>
+                  con.__checkbox.checked ? con.property : null).filter((prop) => prop);
+                graph.nodes.forEach((node) => {
+                  nodeDataSet.update({id:node.id, label: createLabelText(node, displayedProps) })
+                })
+              }
+              
+              nodeProps.forEach(prop => {
+                  const controller = nodeFolder.add({[prop]: false}, prop)
+                  controller.onChange(onNodeControllerChange);
+                }
+              );
+              
+              
               let options = {
                   groups: Object.keys(groups).reduce((acc, group) => {
                       acc[group] = {color: getRandomColor()}
@@ -382,7 +409,7 @@
               })
       
       
-              nodes.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
+              nodeDataSet.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
                   const groupName = node.labels.join('_');
                   groups.add(groupName);
                   return {
@@ -395,7 +422,7 @@
                   };
               }));
       
-              edges.add(newEdges);
+              edgeDataset.add(newEdges);
               network.stabilize(5);
           }
       
@@ -457,8 +484,8 @@
       
           function draw() {
               destroy();
-              nodes = [];
-              edges = [];
+              nodeDataSet = [];
+              edgeDataset = [];
       
               // create a network
               var container = document.getElementById("graph");
