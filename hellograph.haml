@@ -10,24 +10,6 @@
     %script{:src => "./lib/pg_parser_browserified.js", :type => "text/javascript"}
     %script{:src => "./lib/json2pg_browserified.js", :type => "text/javascript"}
     :css
-      #mynetwork {
-          width: 100%;
-          height: 100%;
-          position: fixed;
-          top: 0;
-          left: 0;
-          z-index: -1;
-      }
-
-      #input-area {
-          position: fixed;
-          bottom: 5px;
-      }
-
-      #pgfile {
-          position: relative;
-      }
-
       #network-popUp {
           display: none;
           position: absolute;
@@ -56,13 +38,20 @@
       %input#saveButton{:type => "button", :value => "save"}/
       %input#cancelButton{:type => "button", :value => "cancel"}/
     .row
-      .col-6
-        %input#search-input.form-control{"aria-label" => "Search", :placeholder => "Search", :type => "text"}/
-    #mynetwork
+      .col-6.pr-0.pl-4
+        %input#search-input.form-control{"aria-label" => "", :placeholder => "Free Search", :type => "text"}/
+      .col-2.mx-0.px-0
+        %button.mx-0.btn.btn-info#search-button{:type => "button"}
+          %span.glyphicon.glyphicon-search
+          Search
+    .row
+      .col-12
+        #graph.vh-100.bg-light
     #input-area
       %input#pgfile{:type => "file"}/
       %input#url-input/
       %textarea#graph-input{:style => "resize: none; width: 100%; height: 80px;"}
+
     :javascript
       'use strict';
           const $ = document.querySelector.bind(document);
@@ -237,7 +226,7 @@
                   }
               }));
               // create a network
-              let container = document.getElementById('mynetwork');
+              let container = document.getElementById('graph');
               data = {
                   nodes: nodes,
                   edges: edges
@@ -421,17 +410,21 @@
       node2 :Graph type:"graph"
       node1 -> node2 :Hello! on:"today"`;
           $('#url-input').value = 'localhost:3000';
-          retrieveGraph();
+          // retrieveGraph();
           /*  updateGraph(); */
           $('#graph-input').addEventListener('input', () => {
               clearTimeout(timerId);
               localMode = true;
               timerId = setTimeout(updateGraph, 1000);
           });
+          
+          $('#search-input').addEventListener('keyup', () => {
+            if (event.keyCode == 13) // Enter
+              $('#search-button').click(); 
+          });
       
-          $('#search-input').addEventListener('input', () => {
-              clearTimeout(timerId);
-              timerId = setTimeout(searchGraph, 1000);
+          $('#search-button').addEventListener('click', () => {
+            searchGraph();
           });
       
           $('#url-input').addEventListener('change', () => {
@@ -439,8 +432,7 @@
               localMode = false;
               timerId = setTimeout(retrieveGraph, 1000);
           });
-      
-      
+          
           function destroy() {
               if (network !== null) {
                   network.destroy();
@@ -454,7 +446,7 @@
               edges = [];
       
               // create a network
-              var container = document.getElementById("mynetwork");
+              var container = document.getElementById("graph");
               var options = {};
               network = new vis.Network(container, data, options);
           }
