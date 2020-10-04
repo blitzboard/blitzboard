@@ -69,12 +69,17 @@
           
           nodeFolder.open();
           edgeFolder.open();
+          
+          const physicsController = gui.add({physics: false}, 'physics');
+          physicsController.onChange(() => 
+            network.setOptions({physics: {enabled:physicsController.getValue()}})
+          );
       
-          function toVisNode(pgNode, group) {
+          function toVisNode(pgNode, group, props) {
               return {
                   id: pgNode.id,
                   group: group,
-                  label: createLabelText(pgNode),
+                  label: createLabelText(pgNode, props),
                   shape: 'dot',
                   title: createTitleText(pgNode)
               };
@@ -83,7 +88,7 @@
           function createLabelText(elem, props = null) {
               if(props != null) {
                   // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
-                  return props.length ? props.map((prop) => elem.properties[prop]).join('\n') : ' ';
+                return props.length ? props.map((prop) => prop == 'label' ? elem.labels : elem.properties[prop]).join('\n') : ' ';
               }
               else if (elem.id) // for nodes
                   return elem.id;
@@ -233,29 +238,40 @@
                   graph = input;
               }
               
-              const nodeProps = new Set();
-              const edgeProps = new Set();
+              const nodeProps = new Set(['label']);
+              const edgeProps = new Set(['label']);
+              graph.nodes.forEach((node) => {
+                  Object.keys(node.properties).forEach(nodeProps.add, nodeProps);
+              });
+              graph.edges.forEach((edge) => {
+                  Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
+              });
+              
+              
+              let defaultPropsFilter = new RegExp('name', 'i');
+              let defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultPropsFilter.test(prop));
+              let defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultPropsFilter.test(prop));
+              
+              if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
+              
       
               nodeDataSet = new vis.DataSet(graph.nodes.map((node) => {
                   const groupName = node.labels.join('_');
                   groups.add(groupName);
-                  Object.keys(node.properties).forEach(nodeProps.add, nodeProps);
-                  return toVisNode(node, groupName)
+                  return toVisNode(node, groupName, defaultNodeProps)
               }));
-              let i = 0;
+
               edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
                   const edgeLabel = edge.labels.join('_');
                   if (!edgeColorMap[edgeLabel]) {
                       edgeColorMap[edgeLabel] = getRandomColor();
                   }
-                  edge.id = ++i;
-                  Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
                   return {
-                      id: edge.id,
+                      id: edge.properties.id[0],
                       from: edge.from,
                       to: edge.to,
                       color: edgeColorMap[edgeLabel],
-                      label: createLabelText(edge),
+                      label: createLabelText(edge, defaultNodeProps),
                       title: createTitleText(edge),
                       remoteId: edge.properties.id[0]
                   }
@@ -275,8 +291,11 @@
                 })
               }
               
+              while(nodeFolder.__controllers.length > 0) nodeFolder.__controllers[0].remove();
+              while(edgeFolder.__controllers.length > 0) edgeFolder.__controllers[0].remove();
+              
               nodeProps.forEach(prop => {
-                  const controller = nodeFolder.add({[prop]: false}, prop)
+                  const controller = nodeFolder.add({[prop]: defaultPropsFilter.test(prop)}, prop)
                   controller.onChange(onNodeControllerChange);
                 }
               );
@@ -285,13 +304,12 @@
                 let displayedProps = edgeFolder.__controllers.map((con) =>
                   con.__checkbox.checked ? con.property : null).filter((prop) => prop);
                 graph.edges.forEach((edge) => {
-                  console.log(createLabelText(edge, displayedProps));
-                  edgeDataSet.update({id:edge.id, label: createLabelText(edge, displayedProps) })
+                  edgeDataSet.update({id:edge.properties.id[0], label: createLabelText(edge, displayedProps) })
                 })
               }
               
               edgeProps.forEach(prop => {
-                  const controller = edgeFolder.add({[prop]: false}, prop)
+                  const controller = edgeFolder.add({[prop]: defaultPropsFilter.test(prop)}, prop)
                   controller.onChange(onEdgeControllerChange);
                 }
               );
@@ -396,7 +414,7 @@
               });
               network.on("stabilizationIterationsDone", function () {
                   console.log('stabilized');
-                  network.setOptions({physics: {enabled:false}});
+                  network.setOptions({physics: {enabled:physicsController.getValue()}});
               });
           }
       
