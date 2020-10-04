@@ -19,7 +19,6 @@
           left: 170px;
           z-index: 299;
           width: 250px;
-          height: 120px;
           background-color: #f9f9f9;
           border-style: solid;
           border-width: 3px;
@@ -32,11 +31,7 @@
       %span#operation node
       %br/
       %table{:style => "margin: auto"}
-        %tbody
-          %tr
-            %td label
-            %td
-              %input#node-label{:value => "new value"}/
+        %tbody#popup-table
       %input#saveButton{:type => "button", :value => "save"}/
       %input#cancelButton{:type => "button", :value => "cancel"}/
     .row
@@ -56,10 +51,12 @@
     :javascript
       'use strict';
           const $ = document.querySelector.bind(document);
+          const qa = document.querySelectorAll.bind(document);
           const nodeSize = 25;
           let timerId = 0;
           let localMode = true;
           let data, nodes, nodeDataSet, edgeDataSet, expandedNodes = [], network;
+          let clickedPosition;
           let graph;
           let domain;
           
@@ -161,14 +158,16 @@
       
           const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
       
-          function saveNode(data, callback) {
-              data.label = document.getElementById("node-label").value;
+          function saveNode(data, callback) {             
               clearPopUp();
               callback(null); // manually add nodes
-              let query = `CREATE (a:${data.label}) RETURN a`;
+              const propText = Array.from(qa('.popup-input')).filter((input) => input.name != 'label' && input.value.trim().length > 0).
+                map((input) => `${input.name}: '${input.value.trim()}'` ).join(','); 
+              let query = `CREATE (a:${$('#label-input').value.trim()} {${propText}}) RETURN a`;
+              console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
                   const node = response.data.pg.nodes[0];
-                  nodes.add(toVisNode(node, ""));
+                  nodeDataSet.add(toVisNode(node, ""));
                   graph.nodes.push(node);
                   $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               });
@@ -336,7 +335,6 @@
               );
               
               
-              
               let options = {
                   groups: Object.keys(groups).reduce((acc, group) => {
                       acc[group] = {color: getRandomColor()}
@@ -358,15 +356,29 @@
                       addNode: (data, callback) => {
                           // filling in the popup DOM elements
                           document.getElementById("operation").innerHTML = "Add Node";
-                          document.getElementById("node-label").value = data.label;
-      
+                          const table = $('#popup-table');
+                          table.innerHTML = '';
+                          nodeProps.forEach((prop) => {
+                            if(prop != 'id') {
+                              table.insertAdjacentHTML('beforeend', `
+                              <tr>
+                              <td>${prop}</td>
+                              <td><input type="text" id='${prop}-input' class='popup-input' name='${prop}'}></td>
+                              </tr>
+                              `)
+                            }
+                          })
                           document.getElementById("saveButton").onclick = saveNode.bind(
                               this,
                               data,
                               callback
                           );
                           document.getElementById("cancelButton").onclick = clearPopUp.bind();
-                          document.getElementById("network-popUp").style.display = "block";
+                          const popup = document.getElementById("network-popUp");
+                          popup.style.left = `${clickedPosition.x}px`;
+                          popup.style.top = `${clickedPosition.y}px`;
+                          popup.style.display = "block";
+                          $('.popup-input').focus();
                       },
                       editNode: function (data, callback) {
                           // filling in the popup DOM elements
@@ -472,7 +484,6 @@
                   }
               })
       
-      
               nodeDataSet.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
                   const groupName = node.labels.join('_');
                   groups.add(groupName);
@@ -509,7 +520,9 @@
               reader.readAsText(f);
           };
       
-      
+          document.addEventListener('mousemove', (e) => { 
+            clickedPosition = {x: e.clientX, y: e.clientY}; 
+          });
           $('#pgfile').addEventListener('change', handleFileSelect, false);
           $('#graph-input').value =
               `node1 :You name:"your name"
@@ -544,17 +557,6 @@
                   network.destroy();
                   network = null;
               }
-          }
-      
-          function draw() {
-              destroy();
-              nodeDataSet = [];
-              edgeDataSet = [];
-      
-              // create a network
-              var container = document.getElementById("graph");
-              var options = {};
-              network = new vis.Network(container, data, options);
           }
       
           function clearPopUp() {
