@@ -50,7 +50,7 @@
       %textarea#graph-input{:style => "resize: none; width: 100%; height: 80px;"}
     :javascript
       'use strict';
-          const $ = document.querySelector.bind(document);
+          const q = document.querySelector.bind(document);
           const qa = document.querySelectorAll.bind(document);
           const nodeSize = 25;
           let timerId = 0;
@@ -112,7 +112,7 @@
       
           function retrieveGraph(node_id, add = false) {
               node_id = node_id || 1;
-              domain = $('#url-input').value;
+              domain = q('#url-input').value;
               if (!domain.endsWith('/'))
                   domain += '/';
               domain = 'http://' + domain;
@@ -128,7 +128,7 @@
           }
           
           function setSearchState(searching) {
-            const icon =  $('#search-icon');
+            const icon =  q('#search-icon');
             if(searching) {
               icon.classList.remove("fa-search");
               icon.classList.add("fa-spinner");
@@ -142,8 +142,8 @@
       
           function searchGraph() {  
               setSearchState(true);
-              const keyword = $('#search-input').value;
-              domain = $('#url-input').value;
+              const keyword = q('#search-input').value;
+              domain = q('#url-input').value;
               if (!domain.endsWith('/'))
                   domain += '/';
               domain = 'http://' + domain;
@@ -163,13 +163,13 @@
               callback(null); // manually add nodes
               const propText = Array.from(qa('.popup-input')).filter((input) => input.name != 'label' && input.value.trim().length > 0).
                 map((input) => `${input.name}: '${input.value.trim()}'` ).join(','); 
-              let query = `CREATE (a:${$('#label-input').value.trim()} {${propText}}) RETURN a`;
+              let query = `CREATE (a:${q('#label-input').value.trim()} {${propText}}) RETURN a`;
               console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
                   const node = response.data.pg.nodes[0];
                   nodeDataSet.add(toVisNode(node, ""));
                   graph.nodes.push(node);
-                  $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+                  q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               });
           }
       
@@ -182,7 +182,7 @@
                   properties: {}
               };
               graph.edges.push(newEdge);
-              $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+              q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
               axios.get(domain + `query?q=${query}`).then((response) => {
                   console.log(response);
@@ -198,7 +198,7 @@
               axios.get(domain + `query?q=${query}`).then((response) => {
                   // TODO: edit label in PG
                   // graph.nodes.push(node);
-                  // $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+                  // q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               });
           }
       
@@ -233,7 +233,7 @@
               let groups = new Set();
               let edgeColorMap = {};
       
-              input = input || $('#graph-input').value;
+              input = input || q('#graph-input').value;
               if (typeof input === 'string' || input instanceof String) {
                   try {
                       graph = JSON.parse(input);
@@ -356,7 +356,7 @@
                       addNode: (data, callback) => {
                           // filling in the popup DOM elements
                           document.getElementById("operation").innerHTML = "Add Node";
-                          const table = $('#popup-table');
+                          const table = q('#popup-table');
                           table.innerHTML = '';
                           nodeProps.forEach((prop) => {
                             if(prop != 'id') {
@@ -378,7 +378,7 @@
                           popup.style.left = `${clickedPosition.x}px`;
                           popup.style.top = `${clickedPosition.y}px`;
                           popup.style.display = "block";
-                          $('.popup-input').focus();
+                          q('.popup-input').focus();
                       },
                       editNode: function (data, callback) {
                           // filling in the popup DOM elements
@@ -455,7 +455,7 @@
               let groups = new Set();
               let edgeColorMap = {};
       
-              input = input || $('#graph-input').value;
+              input = input || q('#graph-input').value;
               if (typeof input === 'string' || input instanceof String) {
                   try {
                       graph = JSON.parse(input);
@@ -512,7 +512,7 @@
               // Closure to capture the file information.
               reader.onload = (function (theFile) {
                   return function (e) {
-                      $('#graph-input').value = e.target.result;
+                      q('#graph-input').value = e.target.result;
                       updateGraph();
                   };
               })(f);
@@ -523,30 +523,30 @@
           document.addEventListener('mousemove', (e) => { 
             clickedPosition = {x: e.clientX, y: e.clientY}; 
           });
-          $('#pgfile').addEventListener('change', handleFileSelect, false);
-          $('#graph-input').value =
+          q('#pgfile').addEventListener('change', handleFileSelect, false);
+          q('#graph-input').value =
               `node1 :You name:"your name"
       node2 :Graph type:"graph"
       node1 -> node2 :Hello! on:"today"`;
-          $('#url-input').value = 'localhost:3000';
+          q('#url-input').value = 'localhost:3000';
           // retrieveGraph();
           /*  updateGraph(); */
-          $('#graph-input').addEventListener('input', () => {
+          q('#graph-input').addEventListener('input', () => {
               clearTimeout(timerId);
               localMode = true;
               timerId = setTimeout(updateGraph, 1000);
           });
           
-          $('#search-input').addEventListener('keyup', () => {
+          q('#search-input').addEventListener('keyup', () => {
             if (event.keyCode == 13) // Enter
-              $('#search-button').click(); 
+              q('#search-button').click(); 
           });
       
-          $('#search-button').addEventListener('click', () => {
+          q('#search-button').addEventListener('click', () => {
             searchGraph();
           });
       
-          $('#url-input').addEventListener('change', () => {
+          q('#url-input').addEventListener('change', () => {
               clearTimeout(timerId);
               localMode = false;
               timerId = setTimeout(retrieveGraph, 1000);
