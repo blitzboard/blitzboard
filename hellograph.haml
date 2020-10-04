@@ -59,13 +59,16 @@
           const nodeSize = 25;
           let timerId = 0;
           let localMode = true;
-          let data, nodes, nodeDataSet, edgeDataset, expandedNodes = [], network;
+          let data, nodes, nodeDataSet, edgeDataSet, expandedNodes = [], network;
           let graph;
           let domain;
           
           const gui = new dat.GUI();
           const nodeFolder = gui.addFolder('Node');
           const edgeFolder = gui.addFolder('Edge');
+          
+          nodeFolder.open();
+          edgeFolder.open();
       
           function toVisNode(pgNode, group) {
               return {
@@ -78,8 +81,9 @@
           }
       
           function createLabelText(elem, props = null) {
-              if(props) {
-                  return props.map((prop) => elem.properties[prop]).join('\n');
+              if(props != null) {
+                  // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
+                  return props.length ? props.map((prop) => elem.properties[prop]).join('\n') : ' ';
               }
               else if (elem.id) // for nodes
                   return elem.id;
@@ -203,7 +207,7 @@
       
       
           function deleteEdge(data) {
-              const edgeId = edgeDataset.get(data.edges[0]).remoteId;
+              const edgeId = edgeDataSet.get(data.edges[0]).remoteId;
               let query = `MATCH (n)-[e]-(n2) WHERE id(e) = ${edgeId} DELETE e`;
               console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
@@ -230,6 +234,7 @@
               }
               
               const nodeProps = new Set();
+              const edgeProps = new Set();
       
               nodeDataSet = new vis.DataSet(graph.nodes.map((node) => {
                   const groupName = node.labels.join('_');
@@ -237,12 +242,16 @@
                   Object.keys(node.properties).forEach(nodeProps.add, nodeProps);
                   return toVisNode(node, groupName)
               }));
-              edgeDataset = new vis.DataSet(graph.edges.map((edge) => {
+              let i = 0;
+              edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
                   const edgeLabel = edge.labels.join('_');
                   if (!edgeColorMap[edgeLabel]) {
                       edgeColorMap[edgeLabel] = getRandomColor();
                   }
+                  edge.id = ++i;
+                  Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
                   return {
+                      id: edge.id,
                       from: edge.from,
                       to: edge.to,
                       color: edgeColorMap[edgeLabel],
@@ -255,7 +264,7 @@
               let container = document.getElementById('graph');
               data = {
                   nodes: nodeDataSet,
-                  edges: edgeDataset
+                  edges: edgeDataSet
               };
               
               const onNodeControllerChange = () => {
@@ -271,6 +280,22 @@
                   controller.onChange(onNodeControllerChange);
                 }
               );
+              
+              const onEdgeControllerChange = () => {
+                let displayedProps = edgeFolder.__controllers.map((con) =>
+                  con.__checkbox.checked ? con.property : null).filter((prop) => prop);
+                graph.edges.forEach((edge) => {
+                  console.log(createLabelText(edge, displayedProps));
+                  edgeDataSet.update({id:edge.id, label: createLabelText(edge, displayedProps) })
+                })
+              }
+              
+              edgeProps.forEach(prop => {
+                  const controller = edgeFolder.add({[prop]: false}, prop)
+                  controller.onChange(onEdgeControllerChange);
+                }
+              );
+              
               
               
               let options = {
@@ -422,7 +447,7 @@
                   };
               }));
       
-              edgeDataset.add(newEdges);
+              edgeDataSet.add(newEdges);
               network.stabilize(5);
           }
       
@@ -485,7 +510,7 @@
           function draw() {
               destroy();
               nodeDataSet = [];
-              edgeDataset = [];
+              edgeDataSet = [];
       
               // create a network
               var container = document.getElementById("graph");
