@@ -219,6 +219,16 @@
                   console.log(response);
               });
           }
+          
+          function displayedNodeProps() {
+            return nodeFolder.__controllers.map((con) =>
+                  con.__checkbox.checked ? con.property : null).filter((prop) => prop);
+          }
+          
+          function displayedEdgeProps() {
+            return edgeFolder.__controllers.map((con) =>
+                  con.__checkbox.checked ? con.property : null).filter((prop) => prop);
+          }
       
           function updateGraph(input) {
               let groups = new Set();
@@ -248,9 +258,16 @@
               });
               
               
-              let defaultPropsFilter = new RegExp('name', 'i');
-              let defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultPropsFilter.test(prop));
-              let defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultPropsFilter.test(prop));
+              
+              const defaultPropsFilter = new RegExp('name', 'i');
+              let defaultNodeProps = displayedNodeProps();
+              let defaultEdgeProps = displayedEdgeProps();
+              
+              if(nodeFolder.__controllers.length == 0) { // Initial value
+                defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultPropsFilter.test(prop));
+                defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultPropsFilter.test(prop));
+              }
+
               
               if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
               
@@ -271,7 +288,7 @@
                       from: edge.from,
                       to: edge.to,
                       color: edgeColorMap[edgeLabel],
-                      label: createLabelText(edge, defaultNodeProps),
+                      label: createLabelText(edge, defaultEdgeProps),
                       title: createTitleText(edge),
                       remoteId: edge.properties.id[0]
                   }
@@ -284,32 +301,36 @@
               };
               
               const onNodeControllerChange = () => {
-                let displayedProps = nodeFolder.__controllers.map((con) =>
-                  con.__checkbox.checked ? con.property : null).filter((prop) => prop);
-                graph.nodes.forEach((node) => {
-                  nodeDataSet.update({id:node.id, label: createLabelText(node, displayedProps) })
-                })
-              }
+                let displayedProps = displayedNodeProps();
+                nodeDataSet.update(graph.nodes.map((node) => {
+                    return {
+                      id: node.id,
+                      label: createLabelText(node, displayedProps)
+                    };
+                  })
+                );
+              };
               
               while(nodeFolder.__controllers.length > 0) nodeFolder.__controllers[0].remove();
               while(edgeFolder.__controllers.length > 0) edgeFolder.__controllers[0].remove();
               
               nodeProps.forEach(prop => {
-                  const controller = nodeFolder.add({[prop]: defaultPropsFilter.test(prop)}, prop)
+                  const controller = nodeFolder.add({[prop]: defaultNodeProps.includes(prop)}, prop)
                   controller.onChange(onNodeControllerChange);
                 }
               );
               
               const onEdgeControllerChange = () => {
-                let displayedProps = edgeFolder.__controllers.map((con) =>
-                  con.__checkbox.checked ? con.property : null).filter((prop) => prop);
-                graph.edges.forEach((edge) => {
-                  edgeDataSet.update({id:edge.properties.id[0], label: createLabelText(edge, displayedProps) })
-                })
+                let displayedProps = displayedEdgeProps();
+                edgeDataSet.update(graph.edges.map((edge) => {
+                    return { id:edge.properties.id[0],
+                     label: createLabelText(edge, displayedProps) };
+                  }
+                ));
               }
               
               edgeProps.forEach(prop => {
-                  const controller = edgeFolder.add({[prop]: defaultPropsFilter.test(prop)}, prop)
+                  const controller = edgeFolder.add({[prop]: defaultEdgeProps.includes(prop)}, prop)
                   controller.onChange(onEdgeControllerChange);
                 }
               );

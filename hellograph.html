@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hello Graph</title>
+<!-- <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
+<link crossorigin='anonymous' href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css' integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
+<script src='./axios.min.js'></script>
+<script src='./vis-network.min.js'></script>
+<script src='./lib/dat.gui.min.js'></script>
+<script src='./lib/pg_parser_browserified.js' type='text/javascript'></script>
+<script src='./lib/json2pg_browserified.js' type='text/javascript'></script>
+<style>
+  #network-popUp {
+      display: none;
+      position: absolute;
+      top: 350px;
+      left: 170px;
+      z-index: 299;
+      width: 250px;
+      height: 120px;
+      background-color: #f9f9f9;
+      border-style: solid;
+      border-width: 3px;
+      border-color: #5394ed;
+      padding: 10px;
+      text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id='network-popUp'>
+<span id='operation'>node</span>
+<br>
+<table style='margin: auto'>
+<tbody>
+<tr>
+<td>label</td>
+<td>
+<input id='node-label' value='new value'>
+</td>
+</tr>
+</tbody>
+</table>
+<input id='saveButton' type='button' value='save'>
+<input id='cancelButton' type='button' value='cancel'>
+</div>
+<div class='row'>
+<div class='col-6 pr-0 pl-4'>
+<input aria-label='' class='form-control' id='search-input' placeholder='Free Search' type='text'>
+</div>
+<div class='col-2 mx-0 px-0'>
+<button class='mx-0 btn btn-info' id='search-button' type='button'>
+<span class='fa fa-search' id='search-icon'></span>
+Search
+</button>
+</div>
+</div>
+<div class='row'>
+<div class='col-12'>
+<div class='vh-100 bg-light' id='graph'></div>
+</div>
+</div>
+<div id='input-area'>
+<input id='pgfile' type='file'>
+<input id='url-input'>
+<textarea id='graph-input' style='resize: none; width: 100%; height: 80px;'></textarea>
+</div>
+<script>
+  'use strict';
+      const $ = document.querySelector.bind(document);
+      const nodeSize = 25;
+      let timerId = 0;
+      let localMode = true;
+      let data, nodes, nodeDataSet, edgeDataSet, expandedNodes = [], network;
+      let graph;
+      let domain;
+      
+      const gui = new dat.GUI();
+      const nodeFolder = gui.addFolder('Node');
+      const edgeFolder = gui.addFolder('Edge');
+      
+      nodeFolder.open();
+      edgeFolder.open();
+      
+      const physicsController = gui.add({physics: false}, 'physics');
+      physicsController.onChange(() => 
+        network.setOptions({physics: {enabled:physicsController.getValue()}})
+      );
+  
+      function toVisNode(pgNode, group, props) {
+          return {
+              id: pgNode.id,
+              group: group,
+              label: createLabelText(pgNode, props),
+              shape: 'dot',
+              title: createTitleText(pgNode)
+          };
+      }
+  
+      function createLabelText(elem, props = null) {
+          if(props != null) {
+              // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
+            return props.length ? props.map((prop) => prop == 'label' ? elem.labels : elem.properties[prop]).join('\n') : ' ';
+          }
+          else if (elem.id) // for nodes
+              return elem.id;
+          else // for edges
+              return elem.labels.join("\n");
+      }
+  
+      function createTitleText(elem) {
+          let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
+              acc.concat(`<tr><td>${prop[0]}</td><td>${prop[1]}</td></tr>`), []);
+          if (elem.id) // for nodes
+              flattend_props = elem.labels.map((label) => `<tr><td>label</td><td>${label}</td></tr>`).concat(flattend_props);
+          return `<table>${flattend_props.join('')}</table>`;
+      }
+  
+      function getRandomColor() {
+          let letters = '0123456789ABCDEF';
+          let color = '#';
+          for (let i = 0; i < 6; i++) {
+              color += letters[Math.floor(Math.random() * 16)];
+          }
+          return color;
+      }
+  
+      function retrieveGraph(node_id, add = false) {
+          node_id = node_id || 1;
+          domain = $('#url-input').value;
+          if (!domain.endsWith('/'))
+              domain += '/';
+          domain = 'http://' + domain;
+          axios.get(domain + `node_match?node_ids=${node_id}&directed=false`).then((response) => {
+              if (add) {
+                  addGraph(response.data.pg);
+                  expandedNodes.push(node_id.toString());
+              } else {
+                  expandedNodes = [node_id.toString()];
+                  updateGraph(response.data.pg);
+              }
+          });
+      }
+      
+      function setSearchState(searching) {
+        const icon =  $('#search-icon');
+        if(searching) {
+          icon.classList.remove("fa-search");
+          icon.classList.add("fa-spinner");
+          icon.classList.add("fa-spin");
+        } else {
+          icon.classList.add("fa-search");
+          icon.classList.remove("fa-spinner");
+          icon.classList.remove("fa-spin");
+        }
+      }
+  
+      function searchGraph() {  
+          setSearchState(true);
+          const keyword = $('#search-input').value;
+          domain = $('#url-input').value;
+          if (!domain.endsWith('/'))
+              domain += '/';
+          domain = 'http://' + domain;
+          const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keyword}") YIELD node MATCH p = ((node)-[r]-(another)) RETURN p`;
+          console.log(query);
+          axios.get(domain + `query?q=${query}`).then((response) => {
+              updateGraph(response.data.pg);
+              setSearchState(false);
+          });
+      }
+  
+  
+      const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
+  
+      function saveNode(data, callback) {
+          data.label = document.getElementById("node-label").value;
+          clearPopUp();
+          callback(null); // manually add nodes
+          let query = `CREATE (a:${data.label}) RETURN a`;
+          axios.get(domain + `query?q=${query}`).then((response) => {
+              const node = response.data.pg.nodes[0];
+              nodes.add(toVisNode(node, ""));
+              graph.nodes.push(node);
+              $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+          });
+      }
+  
+      function saveEdge(data) {
+          let newEdge = {
+              from: data.from,
+              to: data.to,
+              undirected: false,
+              labels: [],
+              properties: {}
+          };
+          graph.edges.push(newEdge);
+          $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+          let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
+          axios.get(domain + `query?q=${query}`).then((response) => {
+              console.log(response);
+          });
+      }
+  
+  
+      function editNode(data, callback) {
+          const label = document.getElementById("node-label").value;
+          clearPopUp();
+          callback(null); // manually add nodes
+          let query = `MATCH (a) WHERE id(a) = ${data.id} SET a:${label} RETURN a`;
+          axios.get(domain + `query?q=${query}`).then((response) => {
+              // TODO: edit label in PG
+              // graph.nodes.push(node);
+              // $('#graph-input').value = json2pg.translate(JSON.stringify(graph));
+          });
+      }
+  
+      function deleteNode(data) {
+          let query = `MATCH (n) WHERE id(n) IN [${data.nodes.    join(',')}] DETACH DELETE n`;
+          axios.get(domain + `query?q=${query}`).then((response) => {
+              console.log(response);
+          });
+      }
+  
+  
+      function deleteEdge(data) {
+          const edgeId = edgeDataSet.get(data.edges[0]).remoteId;
+          let query = `MATCH (n)-[e]-(n2) WHERE id(e) = ${edgeId} DELETE e`;
+          console.log(query);
+          axios.get(domain + `query?q=${query}`).then((response) => {
+              console.log(response);
+          });
+      }
+      
+      function displayedNodeProps() {
+        return nodeFolder.__controllers.map((con) =>
+              con.__checkbox.checked ? con.property : null).filter((prop) => prop);
+      }
+      
+      function displayedEdgeProps() {
+        return edgeFolder.__controllers.map((con) =>
+              con.__checkbox.checked ? con.property : null).filter((prop) => prop);
+      }
+  
+      function updateGraph(input) {
+          let groups = new Set();
+          let edgeColorMap = {};
+  
+          input = input || $('#graph-input').value;
+          if (typeof input === 'string' || input instanceof String) {
+              try {
+                  graph = JSON.parse(input);
+              } catch (err) {
+                  if (err instanceof SyntaxError)
+                      graph = pgParser.parse(input);
+                  else
+                      throw err;
+              }
+          } else {
+              graph = input;
+          }
+          
+          const nodeProps = new Set(['label']);
+          const edgeProps = new Set(['label']);
+          graph.nodes.forEach((node) => {
+              Object.keys(node.properties).forEach(nodeProps.add, nodeProps);
+          });
+          graph.edges.forEach((edge) => {
+              Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
+          });
+          
+          
+          
+          const defaultPropsFilter = new RegExp('name', 'i');
+          let defaultNodeProps = displayedNodeProps();
+          let defaultEdgeProps = displayedEdgeProps();
+          
+          if(nodeFolder.__controllers.length == 0) { // Initial value
+            defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultPropsFilter.test(prop));
+            defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultPropsFilter.test(prop));
+          }
+  
+          
+          if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
+          
+  
+          nodeDataSet = new vis.DataSet(graph.nodes.map((node) => {
+              const groupName = node.labels.join('_');
+              groups.add(groupName);
+              return toVisNode(node, groupName, defaultNodeProps)
+          }));
+  
+          edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
+              const edgeLabel = edge.labels.join('_');
+              if (!edgeColorMap[edgeLabel]) {
+                  edgeColorMap[edgeLabel] = getRandomColor();
+              }
+              return {
+                  id: edge.properties.id[0],
+                  from: edge.from,
+                  to: edge.to,
+                  color: edgeColorMap[edgeLabel],
+                  label: createLabelText(edge, defaultEdgeProps),
+                  title: createTitleText(edge),
+                  remoteId: edge.properties.id[0]
+              }
+          }));
+          // create a network
+          let container = document.getElementById('graph');
+          data = {
+              nodes: nodeDataSet,
+              edges: edgeDataSet
+          };
+          
+          const onNodeControllerChange = () => {
+            let displayedProps = displayedNodeProps();
+            nodeDataSet.update(graph.nodes.map((node) => {
+                return {
+                  id: node.id,
+                  label: createLabelText(node, displayedProps)
+                };
+              })
+            );
+          };
+          
+          while(nodeFolder.__controllers.length > 0) nodeFolder.__controllers[0].remove();
+          while(edgeFolder.__controllers.length > 0) edgeFolder.__controllers[0].remove();
+          
+          nodeProps.forEach(prop => {
+              const controller = nodeFolder.add({[prop]: defaultNodeProps.includes(prop)}, prop)
+              controller.onChange(onNodeControllerChange);
+            }
+          );
+          
+          const onEdgeControllerChange = () => {
+            let displayedProps = displayedEdgeProps();
+            edgeDataSet.update(graph.edges.map((edge) => {
+                return { id:edge.properties.id[0],
+                 label: createLabelText(edge, displayedProps) };
+              }
+            ));
+          }
+          
+          edgeProps.forEach(prop => {
+              const controller = edgeFolder.add({[prop]: defaultEdgeProps.includes(prop)}, prop)
+              controller.onChange(onEdgeControllerChange);
+            }
+          );
+          
+          
+          
+          let options = {
+              groups: Object.keys(groups).reduce((acc, group) => {
+                  acc[group] = {color: getRandomColor()}
+              }, {}),
+              layout: {
+                  randomSeed: 1,
+              },
+              interaction: {
+                  hover: true
+              },
+              physics: {
+                  stabilization: {
+                      enabled: true,
+                      iterations: 200,
+                      updateInterval: 25
+                  }
+              },
+              manipulation: {
+                  addNode: (data, callback) => {
+                      // filling in the popup DOM elements
+                      document.getElementById("operation").innerHTML = "Add Node";
+                      document.getElementById("node-label").value = data.label;
+  
+                      document.getElementById("saveButton").onclick = saveNode.bind(
+                          this,
+                          data,
+                          callback
+                      );
+                      document.getElementById("cancelButton").onclick = clearPopUp.bind();
+                      document.getElementById("network-popUp").style.display = "block";
+                  },
+                  editNode: function (data, callback) {
+                      // filling in the popup DOM elements
+                      document.getElementById("operation").innerHTML = "Edit Node";
+                      document.getElementById("node-label").value = data.label;
+                      document.getElementById("saveButton").onclick = editNode.bind(
+                          this,
+                          data,
+                          callback
+                      );
+                      document.getElementById("cancelButton").onclick = cancelEdit.bind(
+                          this,
+                          callback
+                      );
+                      document.getElementById("network-popUp").style.display = "block";
+                  },
+                  addEdge: function (data, callback) {
+                      if (data.from != data.to || confirm("Do you want to connect the node to itself?")) {
+                          callback(data);
+                          saveEdge(data);
+                      }
+                  },
+                  deleteNode: (data, callback) => {
+                      deleteNode(data);
+                      callback(data);
+                  },
+                  deleteEdge: (data, callback) => {
+                      deleteEdge(data);
+                      callback(data);
+                  },
+              },
+              edges: {
+                  arrows: {
+                      to: {
+                          enabled: true,
+                          scaleFactor: 0.3,
+                          type: "arrow"
+                      },
+                  }
+              }
+          };
+          network = new vis.Network(container, data, options);
+  
+          if (!localMode) {
+              let selectTimer = null;
+              network.on('selectNode', (e) => {
+                  if (e.nodes.length > 0)
+                      selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
+              });
+              network.on('doubleClick', (e) => {
+                  if (e.nodes.length > 0)
+                      retrieveGraph(e.nodes[0]);
+              });
+              network.on('dragStart', (e) => {
+                  clearTimeout(selectTimer);
+              });
+              network.on("hoverNode", (params) => {
+                  network.canvas.body.container.style.cursor = 'pointer'
+              });
+              network.on("blurNode", (params) => {
+                  network.canvas.body.container.style.cursor = 'default'
+              });
+          }
+          network.on("click", (e) => {
+             network.stopSimulation();
+          });
+          network.on("stabilizationIterationsDone", function () {
+              console.log('stabilized');
+              network.setOptions({physics: {enabled:physicsController.getValue()}});
+          });
+      }
+  
+      function addGraph(input) {
+          let groups = new Set();
+          let edgeColorMap = {};
+  
+          input = input || $('#graph-input').value;
+          if (typeof input === 'string' || input instanceof String) {
+              try {
+                  graph = JSON.parse(input);
+              } catch (err) {
+                  if (err instanceof SyntaxError)
+                      graph = pgParser.parse(input);
+                  else
+                      throw err;
+              }
+          } else {
+              graph = input;
+          }
+  
+  
+          const newEdges = graph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to))).map((edge) => {
+              const edgeLabel = edge.labels.join('_');
+              if (!edgeColorMap[edgeLabel]) {
+                  edgeColorMap[edgeLabel] = getRandomColor();
+              }
+              return {
+                  from: edge.from,
+                  to: edge.to,
+                  color: edgeColorMap[edgeLabel],
+                  label: createLabelText(edge),
+                  title: createTitleText(edge)
+              }
+          })
+  
+  
+          nodeDataSet.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
+              const groupName = node.labels.join('_');
+              groups.add(groupName);
+              return {
+                  id: node.id,
+                  group: groupName,
+                  label: createLabelText(node),
+                  shape: 'dot',
+                  size: nodeSize,
+                  title: createTitleText(node)
+              };
+          }));
+  
+          edgeDataSet.add(newEdges);
+          network.stabilize(5);
+      }
+  
+  
+      function handleFileSelect(evt) {
+          let files = evt.target.files; // FileList object
+          // use the 1st file from the list
+          const f = files[0];
+          let reader = new FileReader();
+  
+  
+          // Closure to capture the file information.
+          reader.onload = (function (theFile) {
+              return function (e) {
+                  $('#graph-input').value = e.target.result;
+                  updateGraph();
+              };
+          })(f);
+          // Read in the image file as a data URL.
+          reader.readAsText(f);
+      };
+  
+  
+      $('#pgfile').addEventListener('change', handleFileSelect, false);
+      $('#graph-input').value =
+          `node1 :You name:"your name"
+  node2 :Graph type:"graph"
+  node1 -> node2 :Hello! on:"today"`;
+      $('#url-input').value = 'localhost:3000';
+      // retrieveGraph();
+      /*  updateGraph(); */
+      $('#graph-input').addEventListener('input', () => {
+          clearTimeout(timerId);
+          localMode = true;
+          timerId = setTimeout(updateGraph, 1000);
+      });
+      
+      $('#search-input').addEventListener('keyup', () => {
+        if (event.keyCode == 13) // Enter
+          $('#search-button').click(); 
+      });
+  
+      $('#search-button').addEventListener('click', () => {
+        searchGraph();
+      });
+  
+      $('#url-input').addEventListener('change', () => {
+          clearTimeout(timerId);
+          localMode = false;
+          timerId = setTimeout(retrieveGraph, 1000);
+      });
+      
+      function destroy() {
+          if (network !== null) {
+              network.destroy();
+              network = null;
+          }
+      }
+  
+      function draw() {
+          destroy();
+          nodeDataSet = [];
+          edgeDataSet = [];
+  
+          // create a network
+          var container = document.getElementById("graph");
+          var options = {};
+          network = new vis.Network(container, data, options);
+      }
+  
+      function clearPopUp() {
+          document.getElementById("saveButton").onclick = null;
+          document.getElementById("cancelButton").onclick = null;
+          document.getElementById("network-popUp").style.display = "none";
+      }
+  
+      function cancelEdit(callback) {
+          clearPopUp();
+          callback(null);
+      }
+</script>
+</body>
+</html>
