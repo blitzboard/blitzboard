@@ -57,8 +57,10 @@
           let localMode = true;
           let data, nodes, nodeDataSet, edgeDataSet, expandedNodes = [], network;
           let clickedPosition;
-          let graph;
+          let graph, nodeMap = new Map(), edgeMap = new Map();
           let domain;
+          
+          let nodeProps, edgeProps;
           
           const gui = new dat.GUI();
           const nodeFolder = gui.addFolder('Node');
@@ -99,7 +101,7 @@
               let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
                   acc.concat(`<tr><td>${prop[0]}</td><td>${prop[1]}</td></tr>`), []);
               if (elem.id) // for nodes
-                  flattend_props = elem.labels.map((label) => `<tr><td>label</td><td>${label}</td></tr>`).concat(flattend_props);
+                  flattend_props.push(`<tr><td>label</td><td>${elem.labels.join(':')}</td></tr>`);
               return `<table>${flattend_props.join('')}</table>`;
           }
       
@@ -167,6 +169,7 @@
                   const node = response.data.pg.nodes[0];
                   nodeDataSet.add(toVisNode(node, "", displayedNodeProps(), data));
                   graph.nodes.push(node);
+                  nodeMap[node.id] = node;
                   q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               });
           }
@@ -183,19 +186,26 @@
               console.log(data);
               q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
-              axios.get(domain + `query?q=${query}`).then((response) => {
+              axios.get(domain + `query?q=${query}`).then((response) => { 
+                 // TODO: add new edge to edgeMap
                   console.log(response);
               });
           }
       
       
           function editNode(data, callback) {
-              const label = document.getElementById("node-label").value;
+              const label = document.getElementById("label-input").value.trim();
+              let updateText = `a:${label}`;
+              const propInputs = Array.from(qa('.popup-input')).filter((input) => input.name != 'label' && input.value.trim().length > 0);
+              if(propInputs.length > 0)
+                updateText += ', ' + propInputs.map((input) => `a.${input.name} = '${input.value.trim()}'` ).join(','); 
               clearPopUp();
-              callback(null); // manually add nodes
-              let query = `MATCH (a) WHERE id(a) = ${data.id} SET a:${label} RETURN a`;
+              callback(null); // edit node without vis.js default behavior
+              let query = `MATCH (a) WHERE id(a) = ${data.id} SET ${updateText} RETURN a`;
               axios.get(domain + `query?q=${query}`).then((response) => {
                   // TODO: edit label in PG
+                  // TODO: support removal of existing pg
+                  nodeDataSet.update(toVisNode(response.data.pg.nodes[0], "", displayedNodeProps(), data));
                   // graph.nodes.push(node);
                   // q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               });
@@ -227,6 +237,21 @@
             return edgeFolder.__controllers.map((con) =>
                   con.__checkbox.checked ? con.property : null).filter((prop) => prop);
           }
+          
+          function updateNodePopup(node=null) {
+            const table = q('#popup-table');
+            table.innerHTML = '';
+            nodeProps.forEach((prop) => {
+              if(prop != 'id') {
+                table.insertAdjacentHTML('beforeend', `
+                <tr>
+                <td>${prop}</td>
+                <td><input type="text" id='${prop}-input' class='popup-input' name='${prop}' value='${node ? (prop == 'label' ? node.labels.join(':') : node.properties[prop]) : ''}'></td>
+                </tr>
+                `)
+              }
+            });
+          }
       
           function updateGraph(input) {
               let groups = new Set();
@@ -245,17 +270,17 @@
               } else {
                   graph = input;
               }
+              graph.nodes.forEach(node => nodeMap[node.id] = node);
+              graph.edges.forEach(edge => edgeMap[edge.id] = edge);
               
-              const nodeProps = new Set(['label']);
-              const edgeProps = new Set(['label']);
+              nodeProps = new Set(['label']);
+              edgeProps = new Set(['label']);
               graph.nodes.forEach((node) => {
                   Object.keys(node.properties).forEach(nodeProps.add, nodeProps);
               });
               graph.edges.forEach((edge) => {
                   Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
               });
-              
-              
               
               const defaultPropsFilter = new RegExp('name', 'i');
               let defaultNodeProps = displayedNodeProps();
@@ -355,18 +380,7 @@
                       addNode: (data, callback) => {
                           // filling in the popup DOM elements
                           document.getElementById("operation").innerHTML = "Add Node";
-                          const table = q('#popup-table');
-                          table.innerHTML = '';
-                          nodeProps.forEach((prop) => {
-                            if(prop != 'id') {
-                              table.insertAdjacentHTML('beforeend', `
-                              <tr>
-                              <td>${prop}</td>
-                              <td><input type="text" id='${prop}-input' class='popup-input' name='${prop}'}></td>
-                              </tr>
-                              `)
-                            }
-                          })
+                          updateNodePopup();
                           document.getElementById("saveButton").onclick = saveNode.bind(
                               this,
                               data,
@@ -382,7 +396,7 @@
                       editNode: function (data, callback) {
                           // filling in the popup DOM elements
                           document.getElementById("operation").innerHTML = "Edit Node";
-                          document.getElementById("node-label").value = data.label;
+                          updateNodePopup(nodeMap[data.id]);
                           document.getElementById("saveButton").onclick = editNode.bind(
                               this,
                               data,
@@ -393,6 +407,11 @@
                               callback
                           );
                           document.getElementById("network-popUp").style.display = "block";
+                          const popup = document.getElementById("network-popUp");
+                          popup.style.left = `${clickedPosition.x}px`;
+                          popup.style.top = `${clickedPosition.y}px`;
+                          popup.style.display = "block";
+                          q('.popup-input').focus();
                       },
                       addEdge: function (data, callback) {
                           if (data.from != data.to || confirm("Do you want to connect the node to itself?")) {
