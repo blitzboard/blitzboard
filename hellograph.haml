@@ -58,6 +58,7 @@
           let data, nodes, nodeDataSet, edgeDataSet, expandedNodes = [], network;
           let clickedPosition;
           let graph, nodeMap = new Map(), edgeMap = new Map();
+          let edgeColorMap;
           let domain;
           
           let nodeProps, edgeProps;
@@ -84,6 +85,18 @@
                   x: (data ? data.x : null),
                   y: (data ? data.y : null)
               };
+          }
+          
+          function toVisEdge(pgEdge, group, props) {
+              return {
+                  id: pgEdge.properties.id[0],
+                  from: pgEdge.from,
+                  to: pgEdge.to,
+                  color: edgeColorMap[group],
+                  label: createLabelText(pgEdge, props),
+                  title: createTitleText(pgEdge),
+                  remoteId: pgEdge.properties.id[0]
+              }
           }
       
           function createLabelText(elem, props = null) {
@@ -158,13 +171,20 @@
                   setSearchState(false);
               });
           }
+          
+          function inputLabel() {
+            return q('#label-input').value.trim();
+          }
+          
+          function inputProperties() {
+            return Array.from(qa('.popup-input')).filter((input) => input.name != 'label' && input.value.trim().length > 0);
+          }
       
           function saveNode(data, callback) {             
               clearPopUp();
               callback(null); // manually add nodes
-              const propText = Array.from(qa('.popup-input')).filter((input) => input.name != 'label' && input.value.trim().length > 0).
-                map((input) => `${input.name}: '${input.value.trim()}'` ).join(','); 
-              let query = `CREATE (a:${q('#label-input').value.trim()} {${propText}}) RETURN a`;
+              const propText = inputProperties().map((input) => `${input.name}: '${input.value.trim()}'` ).join(','); 
+              let query = `CREATE (a:${inputLabel()} {${propText}}) RETURN a`;
               axios.get(domain + `query?q=${query}`).then((response) => {
                   const node = response.data.pg.nodes[0];
                   nodeDataSet.add(toVisNode(node, "", displayedNodeProps(), data));
@@ -175,20 +195,24 @@
           }
       
           function saveEdge(data) {
+              const pgProperties = {};
+              inputProperties().forEach((prop) => pgProperties[prop.name] = [prop.value]);
               let newEdge = {
                   from: data.from,
                   to: data.to,
                   undirected: false,
-                  labels: [],
-                  properties: {}
-              };
+                  labels: inputLabel().split(':'),
+                  properties: pgProperties
+              };    
+              clearPopUp();
+              const propText = inputProperties().map((input) => `${input.name}: '${input.value.trim()}'` ).join(','); 
               graph.edges.push(newEdge);
               console.log(data);
               q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
-              let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
+              let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:${inputLabel()} {${propText}}]->(b) RETURN r2`;
               axios.get(domain + `query?q=${query}`).then((response) => { 
-                 // TODO: add new edge to edgeMap
-                  console.log(response);
+                // TODO: add new edge to edgeMap
+                edgeDataSet.add(toVisEdge(response.data.pg.edges[0]))
               });
           }
       
@@ -238,7 +262,7 @@
                   con.__checkbox.checked ? con.property : null).filter((prop) => prop);
           }
           
-          function updateNodePopup(node=null) {
+          function updatePopupForNodes(node=null) {
             const table = q('#popup-table');
             table.innerHTML = '';
             nodeProps.forEach((prop) => {
@@ -252,10 +276,36 @@
               }
             });
           }
+          
+          
+          function updatePopupForEdges(edge=null) {
+            const table = q('#popup-table');
+            table.innerHTML = '';
+            edgeProps.forEach((prop) => {
+              if(prop != 'id') {
+                table.insertAdjacentHTML('beforeend', `
+                <tr>
+                <td>${prop}</td>
+                <td><input type="text" id='${prop}-input' class='popup-input' name='${prop}' value='${edge ? (prop == 'label' ? edge.labels.join(':') : edge.properties[prop]) : ''}'></td>
+                </tr>
+                `)
+              }
+            });
+          }
+          
+          function showPopup() {
+            document.getElementById("network-popUp").style.display = "block";
+            const popup = document.getElementById("network-popUp");
+            popup.style.left = `${clickedPosition.x}px`;
+            popup.style.top = `${clickedPosition.y}px`;
+            popup.style.display = "block";
+            q('.popup-input').focus();
+          }
+      
       
           function updateGraph(input) {
               let groups = new Set();
-              let edgeColorMap = {};
+              edgeColorMap = {};
       
               input = input || q('#graph-input').value;
               if (typeof input === 'string' || input instanceof String) {
@@ -306,15 +356,7 @@
                   if (!edgeColorMap[edgeLabel]) {
                       edgeColorMap[edgeLabel] = getRandomColor();
                   }
-                  return {
-                      id: edge.properties.id[0],
-                      from: edge.from,
-                      to: edge.to,
-                      color: edgeColorMap[edgeLabel],
-                      label: createLabelText(edge, defaultEdgeProps),
-                      title: createTitleText(edge),
-                      remoteId: edge.properties.id[0]
-                  }
+                  return toVisEdge(edge, edgeLabel, defaultEdgeProps);                   
               }));
               // create a network
               let container = document.getElementById('graph');
@@ -380,23 +422,19 @@
                       addNode: (data, callback) => {
                           // filling in the popup DOM elements
                           document.getElementById("operation").innerHTML = "Add Node";
-                          updateNodePopup();
+                          updatePopupForNodes();
                           document.getElementById("saveButton").onclick = saveNode.bind(
                               this,
                               data,
                               callback
                           );
                           document.getElementById("cancelButton").onclick = clearPopUp.bind();
-                          const popup = document.getElementById("network-popUp");
-                          popup.style.left = `${clickedPosition.x}px`;
-                          popup.style.top = `${clickedPosition.y}px`;
-                          popup.style.display = "block";
-                          q('.popup-input').focus();
+                          showPopup();
                       },
                       editNode: function (data, callback) {
                           // filling in the popup DOM elements
                           document.getElementById("operation").innerHTML = "Edit Node";
-                          updateNodePopup(nodeMap[data.id]);
+                          updatePopupForNodes(nodeMap[data.id]);
                           document.getElementById("saveButton").onclick = editNode.bind(
                               this,
                               data,
@@ -407,16 +445,24 @@
                               callback
                           );
                           document.getElementById("network-popUp").style.display = "block";
-                          const popup = document.getElementById("network-popUp");
-                          popup.style.left = `${clickedPosition.x}px`;
-                          popup.style.top = `${clickedPosition.y}px`;
-                          popup.style.display = "block";
-                          q('.popup-input').focus();
+                          showPopup();
                       },
                       addEdge: function (data, callback) {
                           if (data.from != data.to || confirm("Do you want to connect the node to itself?")) {
-                              callback(data);
-                              saveEdge(data);
+                              callback(null);
+                              document.getElementById("operation").innerHTML = "Add Edge";
+                              updatePopupForEdges();
+                              
+                              document.getElementById("saveButton").onclick = saveEdge.bind(
+                                  this,
+                                  data,
+                                  callback
+                              );
+                              document.getElementById("cancelButton").onclick = cancelEdit.bind(
+                                  this,
+                                  callback
+                              );
+                              showPopup();
                           }
                       },
                       deleteNode: (data, callback) => {
@@ -471,7 +517,7 @@
       
           function addGraph(input) {
               let groups = new Set();
-              let edgeColorMap = {};
+              edgeColorMap = {};
       
               input = input || q('#graph-input').value;
               if (typeof input === 'string' || input instanceof String) {
@@ -549,6 +595,7 @@
           q('#url-input').value = 'localhost:3000';
           // retrieveGraph();
           /*  updateGraph(); */
+          
           q('#graph-input').addEventListener('input', () => {
               clearTimeout(timerId);
               localMode = true;
@@ -585,5 +632,8 @@
       
           function cancelEdit(callback) {
               clearPopUp();
-              callback(null);
           }
+          
+          
+          q('#search-input').value = 'hog';
+          searchGraph();
