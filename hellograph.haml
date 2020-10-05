@@ -72,13 +72,15 @@
             network.setOptions({physics: {enabled:physicsController.getValue()}})
           );
       
-          function toVisNode(pgNode, group, props) {
+          function toVisNode(pgNode, group, props, data = null) {
               return {
                   id: pgNode.id,
                   group: group,
                   label: createLabelText(pgNode, props),
                   shape: 'dot',
-                  title: createTitleText(pgNode)
+                  title: createTitleText(pgNode),
+                  x: (data ? data.x : null),
+                  y: (data ? data.y : null)
               };
           }
       
@@ -155,19 +157,15 @@
               });
           }
       
-      
-          const distance = (point1, point2) => Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
-      
           function saveNode(data, callback) {             
               clearPopUp();
               callback(null); // manually add nodes
               const propText = Array.from(qa('.popup-input')).filter((input) => input.name != 'label' && input.value.trim().length > 0).
                 map((input) => `${input.name}: '${input.value.trim()}'` ).join(','); 
               let query = `CREATE (a:${q('#label-input').value.trim()} {${propText}}) RETURN a`;
-              console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
                   const node = response.data.pg.nodes[0];
-                  nodeDataSet.add(toVisNode(node, ""));
+                  nodeDataSet.add(toVisNode(node, "", displayedNodeProps(), data));
                   graph.nodes.push(node);
                   q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               });
@@ -182,6 +180,7 @@
                   properties: {}
               };
               graph.edges.push(newEdge);
+              console.log(data);
               q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
               let query = `MATCH (a),(b) WHERE id(a) = ${data.from} and id(b) = ${data.to} CREATE (a)-[r2:new]->(b) RETURN type(r2)`;
               axios.get(domain + `query?q=${query}`).then((response) => {
