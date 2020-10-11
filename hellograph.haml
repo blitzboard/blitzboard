@@ -60,7 +60,7 @@
           let graph, nodeMap = new Map(), edgeMap = new Map();
           let edgeColorMap;
           let domain;
-          
+          let searchedNodeIds = [];
           let nodeProps, edgeProps;
           
           const gui = new dat.GUI();
@@ -81,7 +81,7 @@
                   id: pgNode.id,
                   group: group,
                   label: createLabelText(pgNode, props),
-                  shape: 'dot',
+                  shape: searchedNodeIds.includes(pgNode.id) ? 'square' : 'dot',
                   title: createTitleText(pgNode),
                   x: (data ? data.x : null),
                   y: (data ? data.y : null)
@@ -166,11 +166,15 @@
                   domain += '/';
               domain = 'http://' + domain;
               const hop = Math.floor(hopController.getValue());
-              const query = `CALL db.index.fulltext.queryNodes("allProperties", "\\"${keyword}\\"") YIELD node MATCH p = ((node)-[r*..${hop}]-(another)) RETURN p`;
+              const query = `CALL db.index.fulltext.queryNodes("allProperties", "\\"${keyword}\\"") YIELD node RETURN node`;
               console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
-                  updateGraph(response.data.pg);
-                  setSearchState(false);
+                  searchedNodeIds = response.data.pg.nodes.map((node) => node.id);
+                  const subquery = `MATCH p=((n)-[r*..${hop}]-(another)) WHERE id(n) in [${searchedNodeIds.join(',')}] RETURN p`;
+                  axios.get(domain + `query?q=${subquery}`).then((subresponse) => {
+                    updateGraph(subresponse.data.pg);
+                    setSearchState(false);
+                  });
               });
           }
           
