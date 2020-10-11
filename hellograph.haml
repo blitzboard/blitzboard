@@ -74,6 +74,7 @@
           physicsController.onChange(() => 
             network.setOptions({physics: {enabled:physicsController.getValue()}})
           );
+          const hopController = gui.add({hop: 1}, 'hop', 1, 10, 1);
       
           function toVisNode(pgNode, group, props, data = null) {
               return {
@@ -102,7 +103,7 @@
           function createLabelText(elem, props = null) {
               if(props != null) {
                   // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
-                return props.length ? props.map((prop) => prop == 'label' ? elem.labels : elem.properties[prop]).join('\n') : ' ';
+                return props.length ? props.map((prop) => prop == 'label' ? elem.labels : elem.properties[prop]).filter((val) => val).join('\n') : ' ';
               }
               else if (elem.id) // for nodes
                   return elem.id;
@@ -164,7 +165,8 @@
               if (!domain.endsWith('/'))
                   domain += '/';
               domain = 'http://' + domain;
-              const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keyword}") YIELD node MATCH p = ((node)-[r]-(another)) RETURN p`;
+              const hop = Math.floor(hopController.getValue());
+              const query = `CALL db.index.fulltext.queryNodes("allProperties", "\\"${keyword}\\"") YIELD node MATCH p = ((node)-[r*..${hop}]-(another)) RETURN p`;
               console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
                   updateGraph(response.data.pg);
