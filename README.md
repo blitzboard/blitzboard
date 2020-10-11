@@ -10,3 +10,18 @@ Download hellograph-master.zip
 Open hellograph.html in your web browser.
     
 Upload your json-pg file on the web browser (the .json files in examples/ may be good examples!).
+
+
+### Full-text search in Neo4j
+
+To query all properties of nodes, first list up all properties and labels by:
+
+```
+MATCH (n) UNWIND labels(n) as label MATCH (n2) UNWIND keys(n2) as key  RETURN collect(DISTINCT label), collect(DISTINCT key)
+```
+
+Using the list of properties and labels, execute:
+
+```
+CALL db.index.fulltext.createNodeIndex('allProperties', <List of labels>, <List of properties>)
+```

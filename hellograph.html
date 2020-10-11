@@ -343,11 +343,11 @@ Search
               Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
           });
           
-          const defaultPropsFilter = new RegExp('name', 'i');
+          const defaultPropsFilter = new RegExp('name|title', 'i');
           let defaultNodeProps = displayedNodeProps();
           let defaultEdgeProps = displayedEdgeProps();
           
-          if(nodeFolder.__controllers.length == 0) { // Initial value
+          if(defaultNodeProps.length == 0) { // Initial value
             defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultPropsFilter.test(prop));
             defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultPropsFilter.test(prop));
           }
