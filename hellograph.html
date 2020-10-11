@@ -170,7 +170,7 @@ Search
   
       function searchGraph() {  
           setSearchState(true);
-          const keyword = q('#search-input').value;
+          const keyword = encodeURI(q('#search-input').value);
           domain = q('#url-input').value;
           if (!domain.endsWith('/'))
               domain += '/';
