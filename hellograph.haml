@@ -61,7 +61,12 @@
           let edgeColorMap;
           let domain;
           let searchedNodeIds = [];
+          let displayedTimeProp = "submittedDate"; 
           let nodeProps, edgeProps;
+          let minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
+          let timeInterval = 1;
+          let timeScale = 100.0;
+
           
           const gui = new dat.GUI();
           const nodeFolder = gui.addFolder('Node');
@@ -77,14 +82,26 @@
           const hopController = gui.add({hop: 1}, 'hop', 1, 10, 1);
       
           function toVisNode(pgNode, group, props, data = null) {
+              let x, fixed;
+              if(displayedTimeProp && pgNode.properties[displayedTimeProp] && timeInterval > 0) {
+                x = timeScale * ((new Date(pgNode.properties[displayedTimeProp]).getTime()) - minTime.getTime()) * 1.0 / timeInterval - timeScale * 0.5;
+                fixed = true;
+              } else {
+                x = (data ? data.x : 0);
+                fixed = false;
+              }
               return {
                   id: pgNode.id,
                   group: group,
                   label: createLabelText(pgNode, props),
                   shape: searchedNodeIds.includes(pgNode.id) ? 'square' : 'dot',
                   title: createTitleText(pgNode),
-                  x: (data ? data.x : null),
-                  y: (data ? data.y : null)
+                  fixed: {
+                    x: fixed,
+                    y: false
+                  },
+                  x: x,
+                  y: (data ? data.y : 0)
               };
           }
           
@@ -160,13 +177,14 @@
       
           function searchGraph() {  
               setSearchState(true);
-              const keyword = encodeURI(q('#search-input').value);
+              const keyword = q('#search-input').value;
               domain = q('#url-input').value;
               if (!domain.endsWith('/'))
                   domain += '/';
               domain = 'http://' + domain;
               const hop = Math.floor(hopController.getValue());
-              const query = `CALL db.index.fulltext.queryNodes("allProperties", "\\"${keyword}\\"") YIELD node RETURN node`;
+              const keywordPart = encodeURI(keyword.split(" ").map((word) => `\\"${word}\\"`).join(' AND '));
+              const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
               console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
                   searchedNodeIds = response.data.pg.nodes.map((node) => node.id);
@@ -326,7 +344,26 @@
               } else {
                   graph = input;
               }
-              graph.nodes.forEach(node => nodeMap[node.id] = node);
+              
+              minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
+              
+              let nodeCountWithTime = 0;
+              
+              graph.nodes.forEach(node => { 
+                nodeMap[node.id] = node;
+                if(displayedTimeProp) {
+                  let time = node.properties[displayedTimeProp];
+                  if(time) {
+                    ++nodeCountWithTime;
+                    time = new Date(time);
+                    minTime = time < minTime ? time : minTime;
+                    maxTime = time > maxTime ? time : maxTime;
+                  }
+                };
+              });
+              timeInterval = maxTime.getTime() - minTime.getTime();
+              timeScale = nodeCountWithTime * 50;
+              
               graph.edges.forEach(edge => edgeMap[edge.id] = edge);
               
               nodeProps = new Set(['label']);
@@ -351,11 +388,36 @@
               if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
               
       
-              nodeDataSet = new vis.DataSet(graph.nodes.map((node) => {
+              nodeDataSet = new vis.DataSet();
+              nodeDataSet.add(graph.nodes.map((node) => {
                   const groupName = node.labels.join('_');
                   groups.add(groupName);
                   return toVisNode(node, groupName, defaultNodeProps)
               }));
+              
+              if(timeInterval > 0) {
+                nodeDataSet.add([
+                  {
+                    id:"hellograph-min",
+                    label: minTime.toString(),
+                    shape: 'star',
+                    physics: false,
+                    x: -timeScale / 2,
+                    y: 15,
+                    color: 'green',
+                  },
+                  {
+                    id:"hellograph-max",
+                    label: maxTime.toString(),
+                    shape: 'star',
+                    physics: false,
+                    x: timeScale / 2,
+                    y: -15,
+                    color: 'green',
+                  },
+                ])
+              }
+              
 
               edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
                   const edgeLabel = edge.labels.join('_');
@@ -418,11 +480,11 @@
                       hover: true
                   },
                   physics: {
-                      stabilization: {
-                          enabled: true,
-                          iterations: 200,
-                          updateInterval: 25
-                      }
+                    stabilization: {
+                        enabled: false,
+                        iterations: 200,
+                        updateInterval: 25
+                    }
                   },
                   manipulation: {
                       addNode: (data, callback) => {
@@ -491,7 +553,21 @@
                   }
               };
               network = new vis.Network(container, data, options);
-      
+              
+              
+              network.on('zoom', (opt) => {
+                nodeDataSet.update([
+                  {
+                    id: 'hellograph-min',
+                    size: 15 / opt.scale,
+                  },
+                  {
+                    id: 'hellograph-max',
+                    size: 15 / opt.scale,
+                  }
+                ]);
+              })
+              
               if (!localMode) {
                   let selectTimer = null;
                   network.on('selectNode', (e) => {
