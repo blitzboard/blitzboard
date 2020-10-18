@@ -27,7 +27,7 @@ timeLineEnabledController.onChange(() => {
     nodeDataSet.update(graph.nodes.map((node) => {
       return {
         id:node.id,
-        fixed: false          
+        fixed: expandedNodes.includes(node.id)          
       }
     }));
   }
