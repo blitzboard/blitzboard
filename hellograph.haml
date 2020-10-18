@@ -124,7 +124,6 @@
               if(timeLineEnabled) {
                 if(pgNode.properties[displayedTimeProp] && timeInterval > 0) {
                   x = timeScale * ((new Date(pgNode.properties[displayedTimeProp]).getTime()) - minTime.getTime()) * 1.0 / timeInterval - timeScale * 0.5; 
-                  console.log(x);
                   fixed = true;
                 } else {
                   x = (data ? data.x : 0);
@@ -170,8 +169,10 @@
                   borderWidth: url ? 3 : 1,
                   url: url,
                   x: x,
-                  y: y
-                  
+                  y: y,
+                  font: {
+                    color: url ? 'blue' : 'black'
+                  },                  
               };
           }
           
@@ -529,16 +530,18 @@
                     network.canvas.body.container.style.cursor = 'pointer';
                     nodeDataSet.update({
                       id: params.node,
-                      color: '#8888ff'
+                      color: '#8888ff',
                     });
                   }
               });
               network.on("blurNode", (params) => {
                   network.canvas.body.container.style.cursor = 'default';
-                  nodeDataSet.update({
-                    id: params.node,
-                    color: null
-                  });
+                  if(nodeDataSet.get(params.node).url) {
+                    nodeDataSet.update({
+                      id: params.node,
+                      color: null,
+                    });
+                  }
               });
           
               network.on("click", (e) => {
