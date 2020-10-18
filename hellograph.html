@@ -150,10 +150,23 @@ Search
           }
           return {x, y, fixed};
       }
+      
+      function retrieveHttpUrl(node) {
+        for(let props of Object.values(node.properties)) { 
+          for(let prop of props) {
+            if(typeof(prop) === 'string' && (prop.startsWith("https://") || prop.startsWith("http://"))) {
+              return prop;
+            }
+          }
+        }
+        return null;
+      }
   
       function toVisNode(pgNode, group, props, data = null) {
-          let x, y, fixed, position;
+          let x, y, fixed;
           ({x, y, fixed} = calcNodePosition(pgNode, data));
+          
+          let url = retrieveHttpUrl(pgNode);
           
           return {
               id: pgNode.id,
@@ -165,8 +178,11 @@ Search
                 x: fixed,
                 y: false
               },
+              borderWidth: url ? 3 : 1,
+              url: url,
               x: x,
               y: y
+              
           };
       }
       
@@ -516,15 +532,33 @@ Search
               network.on('dragStart', (e) => {
                   clearTimeout(selectTimer);
               });
-              network.on("hoverNode", (params) => {
-                  network.canvas.body.container.style.cursor = 'pointer'
-              });
-              network.on("blurNode", (params) => {
-                  network.canvas.body.container.style.cursor = 'default'
-              });
           }
+          
+          network.on("hoverNode", (params) => {
+              network.canvas.body.container.style.cursor = 'default';
+              if(nodeDataSet.get(params.node).url) {
+                network.canvas.body.container.style.cursor = 'pointer';
+                nodeDataSet.update({
+                  id: params.node,
+                  color: '#8888ff'
+                });
+              }
+          });
+          network.on("blurNode", (params) => {
+              network.canvas.body.container.style.cursor = 'default';
+              nodeDataSet.update({
+                id: params.node,
+                color: null
+              });
+          });
+      
           network.on("click", (e) => {
              network.stopSimulation();
+             if(e.nodes.length > 0) {
+                let node = nodeDataSet.get(e.nodes[0]);
+                if(node.url)
+                  window.open(node.url,'_blank');
+             }
           });
           network.on("stabilizationIterationsDone", function () {
               console.log('stabilized');
