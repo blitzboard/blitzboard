@@ -187,11 +187,27 @@
                   remoteId: pgEdge.properties.id[0]
               }
           }
+          
+          function wrapText(str, asHtml) {
+            if(!str)
+              return str;
+            if(Array.isArray(str))
+              str = str[0];
+            const maxWidth = 20;
+            let newLineStr = asHtml ? "<br>" : "\n", res = '';
+            while (str.length > maxWidth) {
+              console.log(str.length);
+              res += str.slice(0, maxWidth) + newLineStr;
+              str = str.slice(maxWidth);
+            }
+            console.log(res + str);
+            return res + str;
+          }
       
           function createLabelText(elem, props = null) {
               if(props != null) {
                   // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
-                return props.length ? props.map((prop) => prop == 'label' ? elem.labels : elem.properties[prop]).filter((val) => val).join('\n') : ' ';
+                return props.length ? props.map((prop) => prop == 'label' ? elem.labels : wrapText(elem.properties[prop])).filter((val) => val).join('\n') : ' ';
               }
               else if (elem.id) // for nodes
                   return elem.id;
@@ -201,7 +217,7 @@
       
           function createTitleText(elem) {
               let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-                  acc.concat(`<tr><td>${prop[0]}</td><td>${prop[1]}</td></tr>`), []);
+                  acc.concat(`<tr><td>${prop[0]}</td><td>${wrapText(prop[1], true)}</td></tr>`), []);
               if (elem.id) // for nodes
                   flattend_props.push(`<tr><td>label</td><td>${elem.labels.join(':')}</td></tr>`);
               return `<table>${flattend_props.join('')}</table>`;
