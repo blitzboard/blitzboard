@@ -1,9 +1,67 @@
+let manipulationOptions =
+    {
+      addNode: (data, callback) => {
+        // filling in the popup DOM elements
+        document.getElementById("operation").innerHTML = "Add Node";
+        updatePopupForNodes();
+        document.getElementById("saveButton").onclick = saveNode.bind(
+          this,
+          data,
+          callback
+        );
+        document.getElementById("cancelButton").onclick = clearPopUp.bind();
+        showPopup();
+      },
+      editNode: function (data, callback) {
+        // filling in the popup DOM elements
+        document.getElementById("operation").innerHTML = "Edit Node";
+        updatePopupForNodes(nodeMap[data.id]);
+        document.getElementById("saveButton").onclick = editNode.bind(
+          this,
+          data,
+          callback
+        );
+        document.getElementById("cancelButton").onclick = cancelEdit.bind(
+          this,
+          callback
+        );
+        document.getElementById("network-popUp").style.display = "block";
+        showPopup();
+      },
+      addEdge: function (data, callback) {
+        if (data.from != data.to || confirm("Do you want to connect the node to itself?")) {
+          callback(null);
+          document.getElementById("operation").innerHTML = "Add Edge";
+          updatePopupForEdges();
 
-function updatePopupForEdges(edge=null) {
+          document.getElementById("saveButton").onclick = saveEdge.bind(
+            this,
+            data,
+            callback
+          );
+          document.getElementById("cancelButton").onclick = cancelEdit.bind(
+            this,
+            callback
+          );
+          showPopup();
+        }
+      },
+      deleteNode: (data, callback) => {
+        deleteNode(data);
+        callback(data);
+      },
+      deleteEdge: (data, callback) => {
+        deleteEdge(data);
+        callback(data);
+      },
+    };
+
+function updatePopupForEdges(edge = null)
+{
   const table = q('#popup-table');
   table.innerHTML = '';
   edgeProps.forEach((prop) => {
-    if(prop != 'id') {
+    if (prop != 'id') {
       table.insertAdjacentHTML('beforeend', `
                 <tr>
                 <td>${prop}</td>
@@ -35,7 +93,7 @@ function inputProperties() {
 function saveNode(data, callback) {
   clearPopUp();
   callback(null); // manually add nodes
-  const propText = inputProperties().map((input) => `${input.name}: '${input.value.trim()}'` ).join(',');
+  const propText = inputProperties().map((input) => `${input.name}: '${input.value.trim()}'`).join(',');
   let query = `CREATE (a:${inputLabel()} {${propText}}) RETURN a`;
   axios.get(domain + `query?q=${query}`).then((response) => {
     const node = response.data.pg.nodes[0];
@@ -57,7 +115,7 @@ function saveEdge(data) {
     properties: pgProperties
   };
   clearPopUp();
-  const propText = inputProperties().map((input) => `${input.name}: '${input.value.trim()}'` ).join(',');
+  const propText = inputProperties().map((input) => `${input.name}: '${input.value.trim()}'`).join(',');
   graph.edges.push(newEdge);
   console.log(data);
   q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
@@ -73,8 +131,8 @@ function editNode(data, callback) {
   const label = document.getElementById("label-input").value.trim();
   let updateText = `a:${label}`;
   const propInputs = Array.from(qa('.popup-input')).filter((input) => input.name != 'label' && input.value.trim().length > 0);
-  if(propInputs.length > 0)
-    updateText += ', ' + propInputs.map((input) => `a.${input.name} = '${input.value.trim()}'` ).join(',');
+  if (propInputs.length > 0)
+    updateText += ', ' + propInputs.map((input) => `a.${input.name} = '${input.value.trim()}'`).join(',');
   clearPopUp();
   callback(null); // edit node without vis.js default behavior
   let query = `MATCH (a) WHERE id(a) = ${data.id} SET ${updateText} RETURN a`;
@@ -88,7 +146,7 @@ function editNode(data, callback) {
 }
 
 function deleteNode(data) {
-  let query = `MATCH (n) WHERE id(n) IN [${data.nodes.    join(',')}] DETACH DELETE n`;
+  let query = `MATCH (n) WHERE id(n) IN [${data.nodes.join(',')}] DETACH DELETE n`;
   axios.get(domain + `query?q=${query}`).then((response) => {
     console.log(response);
   });
@@ -103,3 +161,33 @@ function deleteEdge(data) {
     console.log(response);
   });
 }
+
+
+function clearPopUp() {
+  document.getElementById("saveButton").onclick = null;
+  document.getElementById("cancelButton").onclick = null;
+  document.getElementById("network-popUp").style.display = "none";
+}
+
+function cancelEdit(callback) {
+  clearPopUp();
+}
+
+
+function updatePopupForNodes(node = null) {
+  const table = q('#popup-table');
+  table.innerHTML = '';
+  nodeProps.forEach((prop) => {
+    if (prop != 'id') {
+      table.insertAdjacentHTML('beforeend', `
+                <tr>
+                <td>${prop}</td>
+                <td><input type="text" id='${prop}-input' class='popup-input' name='${prop}' value='${node ? (prop == 'label' ? node.labels.join(':') : node.properties[prop]) : ''}'></td>
+                </tr>
+                `)
+    }
+  });
+}
+          
+          
+      

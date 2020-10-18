@@ -17,8 +17,10 @@ timeLineEnabledController.onChange(() => {
     graph.nodes.forEach((node) => {
       let x, y, fixed;
       ({x, y, fixed} =  calcNodePosition(node));
-      moveNodeWithAnimation(node.id, x, y);
-      if(fixed)  fixedMap.push({id: node.id, fixed: {x: true, y:false }});
+      if(fixed) {
+        moveNodeWithAnimation(node.id, x, y);
+        fixedMap.push({id: node.id, fixed: {x: true, y: false}});
+      }
     });
     nodeDataSet.update(fixedMap);
   } else {

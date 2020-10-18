@@ -66,13 +66,13 @@ Search
       const qa = document.querySelectorAll.bind(document);
       const nodeSize = 25;
       let timerId = 0;
-      let localMode = true;
+      let localMode = false;
+      let groups = new Set();
       let data, nodes, nodeDataSet, edgeDataSet, expandedNodes = [], network;
       let clickedPosition;
       let graph, nodeMap = new Map(), edgeMap = new Map();
       let edgeColorMap;
       let domain;
-      let searchedNodeIds = [];
       let displayedTimeProp = "submittedDate"; 
       let timeLineEnabled = true;
       let nodeProps, edgeProps;
@@ -102,7 +102,7 @@ Search
       };
       
       function updateTimeLineNodes() {
-          if(timeLineEnabled) {
+          if(timeLineEnabled && timeInterval > 0) {
             nodeDataSet.update([
               {
                 id:"hellograph-min",
@@ -171,7 +171,7 @@ Search
               id: pgNode.id,
               group: group,
               label: createLabelText(pgNode, props),
-              shape: searchedNodeIds.includes(pgNode.id) ? 'square' : 'dot',
+              shape: expandedNodes.includes(pgNode.id) ? 'square' : 'dot',
               title: createTitleText(pgNode),
               fixed: {
                 x: fixed,
@@ -269,8 +269,8 @@ Search
           const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
           console.log(query);
           axios.get(domain + `query?q=${query}`).then((response) => {
-              searchedNodeIds = response.data.pg.nodes.map((node) => node.id);
-              const subquery = `MATCH p=((n)-[r*..${hop}]-(another)) WHERE id(n) in [${searchedNodeIds.join(',')}] RETURN p`;
+              expandedNodes = response.data.pg.nodes.map((node) => node.id);
+              const subquery = `MATCH p=((n)-[r*..${hop}]-(another)) WHERE id(n) in [${expandedNodes.join(',')}] RETURN p`;
               axios.get(domain + `query?q=${subquery}`).then((subresponse) => {
                 updateGraph(subresponse.data.pg);
                 setSearchState(false);
@@ -289,26 +289,9 @@ Search
               con.__checkbox.checked ? con.property : null).filter((prop) => prop);
       }
       
-      function updatePopupForNodes(node=null) {
-        const table = q('#popup-table');
-        table.innerHTML = '';
-        nodeProps.forEach((prop) => {
-          if(prop != 'id') {
-            table.insertAdjacentHTML('beforeend', `
-            <tr>
-            <td>${prop}</td>
-            <td><input type="text" id='${prop}-input' class='popup-input' name='${prop}' value='${node ? (prop == 'label' ? node.labels.join(':') : node.properties[prop]) : ''}'></td>
-            </tr>
-            `)
-          }
-        });
-      }
-      
-      
-  
   
       function updateGraph(input) {
-          let groups = new Set();
+          groups = new Set();
           edgeColorMap = {};
   
           input = input || q('#graph-input').value;
@@ -374,10 +357,7 @@ Search
               return toVisNode(node, groupName, defaultNodeProps)
           }));
           
-          if(timeLineEnabled && timeInterval > 0) {
-            updateTimeLineNodes();
-          }
-          
+          updateTimeLineNodes();
   
           edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
               const edgeLabel = edge.labels.join('_');
@@ -436,62 +416,8 @@ Search
                     updateInterval: 25
                 }
               },
-              manipulation: {
-                  addNode: (data, callback) => {
-                      // filling in the popup DOM elements
-                      document.getElementById("operation").innerHTML = "Add Node";
-                      updatePopupForNodes();
-                      document.getElementById("saveButton").onclick = saveNode.bind(
-                          this,
-                          data,
-                          callback
-                      );
-                      document.getElementById("cancelButton").onclick = clearPopUp.bind();
-                      showPopup();
-                  },
-                  editNode: function (data, callback) {
-                      // filling in the popup DOM elements
-                      document.getElementById("operation").innerHTML = "Edit Node";
-                      updatePopupForNodes(nodeMap[data.id]);
-                      document.getElementById("saveButton").onclick = editNode.bind(
-                          this,
-                          data,
-                          callback
-                      );
-                      document.getElementById("cancelButton").onclick = cancelEdit.bind(
-                          this,
-                          callback
-                      );
-                      document.getElementById("network-popUp").style.display = "block";
-                      showPopup();
-                  },
-                  addEdge: function (data, callback) {
-                      if (data.from != data.to || confirm("Do you want to connect the node to itself?")) {
-                          callback(null);
-                          document.getElementById("operation").innerHTML = "Add Edge";
-                          updatePopupForEdges();
-                          
-                          document.getElementById("saveButton").onclick = saveEdge.bind(
-                              this,
-                              data,
-                              callback
-                          );
-                          document.getElementById("cancelButton").onclick = cancelEdit.bind(
-                              this,
-                              callback
-                          );
-                          showPopup();
-                      }
-                  },
-                  deleteNode: (data, callback) => {
-                      deleteNode(data);
-                      callback(data);
-                  },
-                  deleteEdge: (data, callback) => {
-                      deleteEdge(data);
-                      callback(data);
-                  },
-              },
+              manipulation: false,
+  
               edges: {
                   arrows: {
                       to: {
@@ -569,56 +495,28 @@ Search
           });
       }
   
-      function addGraph(input) {
-          let groups = new Set();
-          edgeColorMap = {};
+      function addGraph(newGraph) {
+          let newNodes = newGraph.nodes.filter((n) => !nodeDataSet._data.has(n.id));
+          let newEdges = newGraph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to)));
+          graph.nodes = graph.nodes.concat(newNodes);
+          graph.edges = graph.edges.concat(newEdges);
   
-          input = input || q('#graph-input').value;
-          if (typeof input === 'string' || input instanceof String) {
-              try {
-                  graph = JSON.parse(input);
-              } catch (err) {
-                  if (err instanceof SyntaxError)
-                      graph = pgParser.parse(input);
-                  else
-                      throw err;
-              }
-          } else {
-              graph = input;
-          }
-  
-  
-          const newEdges = graph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to))).map((edge) => {
+          nodeDataSet.add(newNodes.map((node) => {
+              const groupName = node.labels.join('_');
+              groups.add(groupName);
+              return toVisNode(node, groupName, displayedNodeProps());
+          }));
+          
+          edgeDataSet.add(newEdges.map((edge) => {
               const edgeLabel = edge.labels.join('_');
               if (!edgeColorMap[edgeLabel]) {
                   edgeColorMap[edgeLabel] = getRandomColor();
               }
-              return {
-                  from: edge.from,
-                  to: edge.to,
-                  color: edgeColorMap[edgeLabel],
-                  label: createLabelText(edge),
-                  title: createTitleText(edge)
-              }
-          })
-  
-          nodeDataSet.add(graph.nodes.filter((n) => !nodes._data.has(n.id)).map((node) => {
-              const groupName = node.labels.join('_');
-              groups.add(groupName);
-              return {
-                  id: node.id,
-                  group: groupName,
-                  label: createLabelText(node),
-                  shape: 'dot',
-                  size: nodeSize,
-                  title: createTitleText(node)
-              };
+              return toVisEdge(edge, edgeLabel, displayedEdgeProps());     
           }));
   
-          edgeDataSet.add(newEdges);
-          network.stabilize(5);
       }
-  
+      
   
       function handleFileSelect(evt) {
           let files = evt.target.files; // FileList object
@@ -670,17 +568,6 @@ Search
           localMode = false;
           timerId = setTimeout(retrieveGraph, 1000);
       });
-      
-      function clearPopUp() {
-          document.getElementById("saveButton").onclick = null;
-          document.getElementById("cancelButton").onclick = null;
-          document.getElementById("network-popUp").style.display = "none";
-      }
-  
-      function cancelEdit(callback) {
-          clearPopUp();
-      }
-      
       
       q('#search-input').value = '情報通信';
       searchGraph();
