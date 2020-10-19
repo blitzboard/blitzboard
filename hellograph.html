@@ -86,8 +86,6 @@ Search
       const physicsController = gui.add({physics: false}, 'physics');
       const timeLineEnabledController = timeLineFolder.add({enabled: timeLineEnabled}, 'enabled');
       const timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property');
-      const hopController = gui.add({hop: 1}, 'hop', 1, 10, 1);
-  
                 
       
       function onNodeControllerChange(){
@@ -166,12 +164,19 @@ Search
           ({x, y, fixed} = calcNodePosition(pgNode));
           
           let url = retrieveHttpUrl(pgNode);
+          let expanded = expandedNodes.includes(pgNode.id);
+          
+          let degree =  pgNode.properties['degree'];
+          if(degree !== undefined) {
+            degree = degree[0];
+          }
           
           let attrs = {
               id: pgNode.id,
               group: group,
               label: createLabelText(pgNode, props),
-              shape: expandedNodes.includes(pgNode.id) ? 'square' : 'dot',
+              shape: degree === 1 ? 'text' : (expanded ? 'square' : 'dot'),
+              size: expanded ? 25 : (2 + degree * 8),
               title: createTitleText(pgNode),
               fixed: {
                 x: fixed,
@@ -209,11 +214,9 @@ Search
         const maxWidth = 20;
         let newLineStr = asHtml ? "<br>" : "\n", res = '';
         while (str.length > maxWidth) {
-          console.log(str.length);
           res += str.slice(0, maxWidth) + newLineStr;
           str = str.slice(maxWidth);
         }
-        console.log(res + str);
         return res + str;
       }
   
@@ -252,13 +255,18 @@ Search
               domain += '/';
           domain = 'http://' + domain;
           if(add) {
-            nodeDataSet.update({
-              id: node_id,
-              shape: "square",
-              fixed: true
-            });
+            const existing = nodeDataSet.get(node_id);
+            if(existing.shape != 'text') // For nodes with degree > 1
+              nodeDataSet.update({
+                id: node_id,
+                shape: "square",
+                size: 25,
+                fixed: true
+              });
           }
-          axios.get(domain + `node_match?node_ids=${node_id}&directed=false`).then((response) => {
+          // TODO: use query which does not modify of backend
+          const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${node_id}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`;
+          axios.get(domain + `query?q=${subquery}`).then((response) => {
               if (add) {
                   addGraph(response.data.pg);
                   expandedNodes.push(node_id.toString());
@@ -289,13 +297,14 @@ Search
           if (!domain.endsWith('/'))
               domain += '/';
           domain = 'http://' + domain;
-          const hop = Math.floor(hopController.getValue());
           const keywordPart = encodeURI(keyword.split(" ").map((word) => `\\"${word}\\"`).join(' AND '));
           const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
           console.log(query);
           axios.get(domain + `query?q=${query}`).then((response) => {
               expandedNodes = response.data.pg.nodes.map((node) => node.id);
-              const subquery = `MATCH p=((n)-[r*..${hop}]-(another)) WHERE id(n) in [${expandedNodes.join(',')}] RETURN p`;
+              
+              // TODO: use query which does not modify of backend
+              const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${expandedNodes.join(',')}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`
               axios.get(domain + `query?q=${subquery}`).then((subresponse) => {
                 updateGraph(subresponse.data.pg);
                 setSearchState(false);
@@ -356,7 +365,7 @@ Search
           nodeProps = new Set(['label']);
           edgeProps = new Set(['label']);
           graph.nodes.forEach((node) => {
-              Object.keys(node.properties).forEach(nodeProps.add, nodeProps);
+              Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
           });
           graph.edges.forEach((edge) => {
               Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
