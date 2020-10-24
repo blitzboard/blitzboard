@@ -166,6 +166,7 @@
                   label: createLabelText(pgNode, props),
                   shape: degree === 1 ? 'text' : (expanded ? 'square' : 'dot'),
                   size: expanded ? 25 : (2 + degree * 8),
+                  degree: degree,
                   title: createTitleText(pgNode),
                   fixed: {
                     x: fixed,
@@ -486,12 +487,15 @@
               
               network.on("hoverNode", (params) => {
                   network.canvas.body.container.style.cursor = 'default';
-                  if(nodeDataSet.get(params.node).url) {
+                  const node = nodeDataSet.get(params.node);
+                  if(node.url) {
                     network.canvas.body.container.style.cursor = 'pointer';
                     nodeDataSet.update({
                       id: params.node,
                       color: '#8888ff',
                     });
+                  } else if(node.degree > 1 && !expandedNodes.includes(params.node)) {
+                    network.canvas.body.container.style.cursor = 'pointer';
                   }
               });
               network.on("blurNode", (params) => {
