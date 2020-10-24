@@ -67,6 +67,7 @@
           let nodeProps, edgeProps;
           let minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
           let timeInterval = 1;
+          let timeProperties = new Set();
           let timeScale = 100.0;
           const gui = new dat.GUI();
           const nodeFolder = gui.addFolder('Node');
@@ -74,8 +75,7 @@
           const timeLineFolder = gui.addFolder('TimeLine');
           const physicsController = gui.add({physics: false}, 'physics');
           const timeLineEnabledController = timeLineFolder.add({enabled: timeLineEnabled}, 'enabled');
-          const timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property');
-                    
+          const timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property', [displayedTimeProp]);
           
           function onNodeControllerChange(){
             let displayedProps = displayedNodeProps();
@@ -313,6 +313,10 @@
                   con.__checkbox.checked ? con.property : null).filter((prop) => prop);
           }
           
+          function isDateString(str) {
+            return isNaN(str) && !isNaN(Date.parse(str))
+          }
+          
       
           function updateGraph(input) {
               groups = new Set();
@@ -337,6 +341,11 @@
               let nodeCountWithTime = 0;
               
               graph.nodes.forEach(node => { 
+                for(let prop of Object.keys(node.properties)) {
+                  if(!timeProperties.has(prop) && isDateString(node.properties[prop])){
+                    timeProperties.add(prop);
+                  }
+                }
                 nodeMap[node.id] = node;
                 let time = node.properties[displayedTimeProp];
                 if(time) {
@@ -346,6 +355,7 @@
                   maxTime = time > maxTime ? time : maxTime;
                 }
               });
+              timeLinePropertyController.options(Array.from(timeProperties));
               timeInterval = maxTime.getTime() - minTime.getTime();
               timeScale = nodeCountWithTime * 100;
               
