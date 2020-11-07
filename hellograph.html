@@ -525,6 +525,23 @@ Search
               });
               network.on('dragStart', (e) => {
                   clearTimeout(selectTimer);
+                  if(e.nodes.length > 0) {
+                    const node = nodeDataSet.get(e.nodes[0]);
+                    nodeDataSet.update({
+                      id: e.nodes[0],
+                      fixed: false
+                    });
+                  }
+              });
+              network.on('dragEnd', (e) => {
+                  if(e.nodes.length > 0) {
+                    const node = nodeDataSet.get(e.nodes[0]);
+                    if(!node.fixed && expandedNodes.includes(e.nodes[0]) )
+                    nodeDataSet.update({
+                      id: e.nodes[0],
+                      fixed: true
+                    });
+                  }
               });
           }
           
