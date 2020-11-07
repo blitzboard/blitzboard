@@ -558,6 +558,48 @@ Search
                 network.canvas.body.container.style.cursor = 'pointer';
               }
           });
+          
+          function plotTimes(startTime, interval, timeForOnePixel, offsetX, offsetY, rightMostX, context) {
+            for(let i = 0; true; i++){
+              const nextTime = new Date(startTime.getTime() + i * interval);
+              const nextPosition = -offsetX + i * interval / timeForOnePixel;
+              if(nextPosition > rightMostX) break;
+              context.fillText(nextTime.toLocaleDateString(), nextPosition, -offsetY);
+              context.storoke(nextTime.toLocaleDateString(), nextPosition, -offsetY);
+            }
+          }
+          
+          network.on("afterDrawing", (e) => {
+            if(timeLineEnabled){
+              const context = network.canvas.getContext("2d");
+              const view = network.canvas.body.view;
+              const offsetY = view.translation.y / view.scale;
+              const offsetX = view.translation.x / view.scale;
+              const timeForOnePixel = (maxTime - minTime) / timeScale;
+              const timeOnLeftEdge = new Date(((maxTime.getTime() + minTime.getTime()) / 2) - timeForOnePixel * offsetX);
+              const clientWidth = network.canvas.body.container.clientWidth;
+              const rightMost = -offsetX + clientWidth / view.scale;
+              const oneMonth = 31 * 24 * 60 * 60 * 1000;
+              const oneDay = 24 * 60 * 60 * 1000;
+              const twoMonth = oneMonth * 2;
+              const fourMonth = twoMonth * 2;
+              const minDistance = 300;
+              context.font = (20 / view.scale).toString() + "px Arial";
+              if(timeForOnePixel / view.scale > fourMonth / (minDistance / view.scale) ) {
+                plotTimes(timeOnLeftEdge, fourMonth, timeForOnePixel, offsetX, offsetY, rightMost, context);
+              }
+              else if(timeForOnePixel / view.scale > twoMonth / (minDistance / view.scale) ) {
+                plotTimes(timeOnLeftEdge, twoMonth, timeForOnePixel, offsetX, offsetY, rightMost, context);
+              }
+              else if(timeForOnePixel / view.scale > oneMonth / (minDistance / view.scale) ) {
+                plotTimes(timeOnLeftEdge, oneMonth, timeForOnePixel, offsetX, offsetY, rightMost, context);
+              } else {
+                plotTimes(timeOnLeftEdge, oneDay, timeForOnePixel, offsetX, offsetY, rightMost, context);
+              }
+              // context.fillText(minTime.toLocaleDateString(), -timeScale / 2, -offsetY);
+              // context.fillText(maxTime.toLocaleDateString(), timeScale / 2, -offsetY);
+            }
+          });
           network.on("blurNode", (params) => {
               network.canvas.body.container.style.cursor = 'default';
               if(nodeDataSet.get(params.node).url) {
