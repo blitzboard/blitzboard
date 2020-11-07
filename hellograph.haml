@@ -152,14 +152,17 @@
           }
           
           function retrieveHttpUrl(node) {
-            for(let props of Object.values(node.properties)) { 
-              for(let prop of props) {
+            let candidates = [];
+            for(let entry of Object.entries(node.properties)) { 
+              for(let prop of entry[1]) {
                 if(typeof(prop) === 'string' && (prop.startsWith("https://") || prop.startsWith("http://"))) {
-                  return prop;
+                  if(entry[0].toLowerCase() == 'url')
+                    return prop;
+                  candidates.push([entry[0], prop]);
                 }
               }
             }
-            return null;
+            return candidates[0];
           }
       
           function toVisNode(pgNode, group, props, extraOptions = null) {
