@@ -74,8 +74,8 @@
           const edgeFolder = gui.addFolder('Edge');
           const timeLineFolder = gui.addFolder('TimeLine');
           const physicsController = gui.add({physics: false}, 'physics');
-          const timeLineEnabledController = timeLineFolder.add({enabled: timeLineEnabled}, 'enabled');
-          const timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property', [displayedTimeProp]);
+          let timeLineEnabledController = timeLineFolder.add({enabled: timeLineEnabled}, 'enabled');
+          let timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property', [displayedTimeProp]);
           
           function onNodeControllerChange(){
             let displayedProps = displayedNodeProps();
@@ -90,6 +90,20 @@
           
           function updateTimeLineNodes() {
               if(timeLineEnabled && timeInterval > 0) {
+                let nodeCountWithTime = 0;
+                graph.nodes.forEach(node => { 
+                  nodeMap[node.id] = node;
+                  let time = node.properties[displayedTimeProp];
+                  if(time) {
+                    ++nodeCountWithTime;
+                    time = new Date(time);
+                    minTime = time < minTime ? time : minTime;
+                    maxTime = time > maxTime ? time : maxTime;
+                  }
+                  
+                });
+                timeInterval = maxTime.getTime() - minTime.getTime();
+                timeScale = nodeCountWithTime * 100;
                 nodeDataSet.update([
                   {
                     id:"hellograph-min",
@@ -283,6 +297,7 @@
           function searchGraph() {  
               setSearchState(true);
               const keyword = q('#search-input').value;
+              // timeProperties.clear();
               domain = q('#url-input').value;
               if (!domain.endsWith('/'))
                   domain += '/';
@@ -338,7 +353,6 @@
               
               minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
               
-              let nodeCountWithTime = 0;
               
               graph.nodes.forEach(node => { 
                 for(let prop of Object.keys(node.properties)) {
@@ -346,18 +360,9 @@
                     timeProperties.add(prop);
                   }
                 }
-                nodeMap[node.id] = node;
-                let time = node.properties[displayedTimeProp];
-                if(time) {
-                  ++nodeCountWithTime;
-                  time = new Date(time);
-                  minTime = time < minTime ? time : minTime;
-                  maxTime = time > maxTime ? time : maxTime;
-                }
               });
-              timeLinePropertyController.options(Array.from(timeProperties));
-              timeInterval = maxTime.getTime() - minTime.getTime();
-              timeScale = nodeCountWithTime * 100;
+              timeLinePropertyController = timeLinePropertyController.options(Array.from(timeProperties));
+              timeLinePropertyController.onChange(onTimeLinePropertyController);
               
               
               graph.edges.forEach(edge => edgeMap[edge.id] = edge);

@@ -9,8 +9,7 @@ physicsController.onChange(() =>
   network.setOptions({physics: {enabled:physicsController.getValue()}})
 );
 
-timeLineEnabledController.onChange(() => {
-  timeLineEnabled = timeLineEnabledController.getValue();
+function updateForTime() {
   updateTimeLineNodes();
   if(timeLineEnabled) {
     fixedMap = [];
@@ -27,14 +26,22 @@ timeLineEnabledController.onChange(() => {
     nodeDataSet.update(graph.nodes.map((node) => {
       return {
         id:node.id,
-        fixed: expandedNodes.includes(node.id)          
+        fixed: expandedNodes.includes(node.id)
       }
     }));
   }
+}
+
+function onTimeLinePropertyController() {
+  displayedTimeProp = timeLinePropertyController.getValue();
+  updateForTime();
+}
+
+timeLineEnabledController.onChange(() => {
+  timeLineEnabled = timeLineEnabledController.getValue();
+  updateForTime();
 });
 
-timeLinePropertyController.onChange(() =>
-  displayedTimeProp = timeLinePropertyController.getValue()
-);
+timeLinePropertyController.onChange(onTimeLinePropertyController);
 
           
