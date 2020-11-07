@@ -175,12 +175,22 @@ Search
         }
         return candidates[0];
       }
+      
+      function retrieveThumbnailUrl(node) {
+        for(let entry of Object.entries(node.properties)) {
+          if(entry[0].toLowerCase() == 'thumbnail') {
+            return entry[1][0]
+          }
+        }
+        return null;
+      }
   
       function toVisNode(pgNode, group, props, extraOptions = null) {
           let x, y, fixed;
           ({x, y, fixed} = calcNodePosition(pgNode));
           
           let url = retrieveHttpUrl(pgNode);
+          let thumbnailUrl = retrieveThumbnailUrl(pgNode);
           let expanded = expandedNodes.includes(pgNode.id);
           
           let degree =  pgNode.properties['degree'];
@@ -208,6 +218,10 @@ Search
                 color: url ? 'blue' : 'black'
               },                  
           };
+          if(thumbnailUrl) {
+            attrs['shape'] = 'image';
+            attrs['image'] = thumbnailUrl;
+          }
           attrs = Object.assign(attrs, extraOptions);
           return attrs;
       }
