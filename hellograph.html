@@ -559,13 +559,28 @@ Search
               }
           });
           
-          function plotTimes(startTime, interval, timeForOnePixel, offsetX, offsetY, rightMostX, context) {
-            for(let i = 0; true; i++){
-              const nextTime = new Date(startTime.getTime() + i * interval);
-              const nextPosition = -offsetX + i * interval / timeForOnePixel;
+          function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
+            let currentTime = new Date(startTime);
+            while(true) {
+              const nextPosition = -offsetX + (currentTime - startTime) / timeForOnePixel / scale;
               if(nextPosition > rightMostX) break;
-              context.fillText(nextTime.toLocaleDateString(), nextPosition, -offsetY);
-              context.storoke(nextTime.toLocaleDateString(), nextPosition, -offsetY);
+              context.fillText(currentTime.toLocaleDateString(), nextPosition, -offsetY);
+              context.moveTo(nextPosition, -offsetY);
+              context.lineTo(nextPosition, -offsetY + 25 / scale);
+              context.stroke();
+              switch(intervalUnit) {
+                case 'year':
+                  currentTime.setFullYear(currentTime.getFullYear() + interval);
+                  break; 
+                case 'month':
+                  currentTime.setMonth(currentTime.getMonth() + interval);
+                  break; 
+                case 'day':
+                  currentTime.setDate(currentTime.getDate() + interval);
+                  break;
+                default:
+                  return; 
+              }
             }
           }
           
@@ -585,19 +600,18 @@ Search
               const fourMonth = twoMonth * 2;
               const minDistance = 300;
               context.font = (20 / view.scale).toString() + "px Arial";
-              if(timeForOnePixel / view.scale > fourMonth / (minDistance / view.scale) ) {
-                plotTimes(timeOnLeftEdge, fourMonth, timeForOnePixel, offsetX, offsetY, rightMost, context);
+              const minimumInterval = timeForOnePixel * minDistance / view.scale; 
+              if(minimumInterval > fourMonth ) {
+                plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
               }
-              else if(timeForOnePixel / view.scale > twoMonth / (minDistance / view.scale) ) {
-                plotTimes(timeOnLeftEdge, twoMonth, timeForOnePixel, offsetX, offsetY, rightMost, context);
+              else if(minimumInterval > twoMonth) {
+                plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
               }
               else if(timeForOnePixel / view.scale > oneMonth / (minDistance / view.scale) ) {
-                plotTimes(timeOnLeftEdge, oneMonth, timeForOnePixel, offsetX, offsetY, rightMost, context);
+                plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
               } else {
-                plotTimes(timeOnLeftEdge, oneDay, timeForOnePixel, offsetX, offsetY, rightMost, context);
+                plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
               }
-              // context.fillText(minTime.toLocaleDateString(), -timeScale / 2, -offsetY);
-              // context.fillText(maxTime.toLocaleDateString(), timeScale / 2, -offsetY);
             }
           });
           network.on("blurNode", (params) => {
