@@ -550,8 +550,21 @@
               
               function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
                 let currentTime = new Date(startTime);
+                switch(intervalUnit) {
+                  case 'year':
+                    currentTime = new Date(currentTime.getFullYear(), 0, 1);
+                    break; 
+                  case 'month':
+                    currentTime = new Date(currentTime.getFullYear(), currentTime.getMonth() - currentTime.getMonth() % interval, 1);
+                    break; 
+                  case 'day':
+                    currentTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate());
+                    break;
+                  default:
+                    return; 
+                }
                 while(true) {
-                  const nextPosition = -offsetX + (currentTime - startTime) / timeForOnePixel / scale;
+                  const nextPosition = -offsetX + (currentTime - startTime) / timeForOnePixel;
                   if(nextPosition > rightMostX) break;
                   context.fillText(currentTime.toLocaleDateString(), nextPosition, -offsetY);
                   context.moveTo(nextPosition, -offsetY);
@@ -596,7 +609,7 @@
                   else if(minimumInterval > twoMonth) {
                     plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
                   }
-                  else if(timeForOnePixel / view.scale > oneMonth / (minDistance / view.scale) ) {
+                  else if(minimumInterval > oneMonth) {
                     plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
                   } else {
                     plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
