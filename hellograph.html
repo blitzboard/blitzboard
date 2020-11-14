@@ -381,6 +381,10 @@ Search
               }
             }
           });
+          
+          
+          while(timeLineFolder.__controllers.length > 0) timeLineFolder.__controllers[0].remove();
+          
           for(let prop of timeProperties) {
             let controller = timeLineFolder.add({[prop]: false}, prop, false);
             controller.onChange(onTimeLinePropertyController);
@@ -617,6 +621,14 @@ Search
               }
               else if(minimumInterval > oneMonth) {
                 plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+              } else if(minimumInterval > oneDay * 16) {
+                plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+              } else if(minimumInterval > oneDay * 8) {
+                plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+              } else if(minimumInterval > oneDay * 4) {
+                plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+              } else if(minimumInterval > oneDay * 2) {
+                plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
               } else {
                 plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
               }
