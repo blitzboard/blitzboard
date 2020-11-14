@@ -73,7 +73,7 @@ Search
       let graph, nodeMap = new Map(), edgeMap = new Map();
       let edgeColorMap;
       let domain;
-      let displayedTimeProp = "submittedDate"; 
+      let displayedTimeProps = ["submittedDate"]; 
       let timeLineEnabled = false;
       let nodeProps, edgeProps;
       let minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
@@ -85,8 +85,7 @@ Search
       const edgeFolder = gui.addFolder('Edge');
       const timeLineFolder = gui.addFolder('TimeLine');
       const physicsController = gui.add({physics: false}, 'physics');
-      let timeLineEnabledController = timeLineFolder.add({enabled: timeLineEnabled}, 'enabled');
-      let timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property', [displayedTimeProp]);
+      // let timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property', [displayedTimeProp]);
       
       function onNodeControllerChange(){
         let displayedProps = displayedNodeProps();
@@ -104,14 +103,15 @@ Search
             let nodeCountWithTime = 0;
             graph.nodes.forEach(node => { 
               nodeMap[node.id] = node;
-              let time = node.properties[displayedTimeProp];
-              if(time) {
-                ++nodeCountWithTime;
-                time = new Date(time);
-                minTime = time < minTime ? time : minTime;
-                maxTime = time > maxTime ? time : maxTime;
+              for(let prop of displayedTimeProps) {
+                let time = node.properties[prop];
+                if(time) {
+                  ++nodeCountWithTime;
+                  time = new Date(time);
+                  minTime = time < minTime ? time : minTime;
+                  maxTime = time > maxTime ? time : maxTime;
+                }
               }
-              
             });
             timeInterval = maxTime.getTime() - minTime.getTime();
             timeScale = nodeCountWithTime * 100;
@@ -143,11 +143,21 @@ Search
       }
       
       function calcNodePosition(pgNode) {
-          let x, y, fixed;
+          let x, y, fixed, width;
           if(timeLineEnabled) {
-            if(pgNode.properties[displayedTimeProp] && timeInterval > 0) {
-              x = timeScale * ((new Date(pgNode.properties[displayedTimeProp]).getTime()) - minTime.getTime()) * 1.0 / timeInterval - timeScale * 0.5; 
+            x = null;
+            fixed = false;
+            let positions = [];
+            for(let prop of displayedTimeProps) {
+              if(pgNode.properties[prop] && timeInterval > 0) {
+                positions.push(timeScale * ((new Date(pgNode.properties[prop]).getTime()) - minTime.getTime()) * 1.0 / timeInterval - timeScale * 0.5);
+              }
+            }
+            if(positions.length > 0) {
               fixed = true;
+              let max = Math.max(...positions), min = Math.min(...positions);
+              x = max + min / 2;
+              width = max - min; 
             } else {
               x = 0;
               fixed = false;
@@ -158,8 +168,9 @@ Search
             x = null;
             y = null;
             fixed = false;
+            width = null;
           }
-          return {x, y, fixed};
+          return {x, y, fixed, width};
       }
       
       function retrieveHttpUrl(node) {
@@ -186,8 +197,8 @@ Search
       }
   
       function toVisNode(pgNode, group, props, extraOptions = null) {
-          let x, y, fixed;
-          ({x, y, fixed} = calcNodePosition(pgNode));
+          let x, y, fixed, width;
+          ({x, y, fixed, width} = calcNodePosition(pgNode));
           
           let url = retrieveHttpUrl(pgNode);
           let thumbnailUrl = retrieveThumbnailUrl(pgNode);
@@ -202,7 +213,7 @@ Search
               id: pgNode.id,
               group: group,
               label: createLabelText(pgNode, props),
-              shape: degree === 1 ? 'text' : (expanded ? 'square' : 'dot'),
+              shape: fixed ? 'square' : (degree === 1 || expanded ? 'text' : 'dot'),
               size: expanded ? 25 : (2 + degree * 8),
               degree: degree,
               title: createTitleText(pgNode),
@@ -221,6 +232,13 @@ Search
           if(thumbnailUrl) {
             attrs['shape'] = 'image';
             attrs['image'] = thumbnailUrl;
+          }
+          if(width) {
+            attrs['shape'] = 'box';
+            attrs['widthConstraint'] = {
+              minimum: x - width / 2,
+              maximum: x + width / 2
+            }
           }
           attrs = Object.assign(attrs, extraOptions);
           return attrs;
@@ -288,13 +306,12 @@ Search
           domain = 'http://' + domain;
           if(add) {
             const existing = nodeDataSet.get(node_id);
-            if(existing.shape != 'text') // For nodes with degree > 1
-              nodeDataSet.update({
-                id: node_id,
-                shape: "square",
-                size: 25,
-                fixed: true
-              });
+            nodeDataSet.update({
+              id: node_id,
+              shape: existing.shape === 'square' ? 'square' : 'text',
+              size: 25,
+              fixed: true
+            });
           }
           // TODO: use query which does not modify of backend
           const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${node_id}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`;
@@ -389,9 +406,12 @@ Search
               }
             }
           });
-          timeLinePropertyController = timeLinePropertyController.options(Array.from(timeProperties));
-          timeLinePropertyController.onChange(onTimeLinePropertyController);
-          
+          for(let prop of timeProperties) {
+            let controller = timeLineFolder.add({[prop]: false}, prop, false);
+            controller.onChange(onTimeLinePropertyController);
+          }
+          // timeLinePropertyController = timeLinePropertyController.options(Array.from(timeProperties));
+          // timeLinePropertyController.onChange(onTimeLinePropertyController);
           
           graph.edges.forEach(edge => edgeMap[edge.id] = edge);
           

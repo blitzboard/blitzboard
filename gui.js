@@ -14,11 +14,16 @@ function updateForTime() {
   if(timeLineEnabled) {
     fixedMap = [];
     graph.nodes.forEach((node) => {
-      let x, y, fixed;
-      ({x, y, fixed} =  calcNodePosition(node));
+      let x, y, fixed, width;
+      ({x, y, fixed, width} =  calcNodePosition(node));
+      console.log(fixed);
       if(fixed) {
         moveNodeWithAnimation(node.id, x, y);
-        fixedMap.push({id: node.id, fixed: {x: true, y: false}});
+        if(width) {
+          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "box", widthConstraint: {minimum: x - width / 2, maximum: x + width / 2} });
+        } else {
+          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "square"});
+        }
       }
     });
     nodeDataSet.update(fixedMap);
@@ -33,15 +38,12 @@ function updateForTime() {
 }
 
 function onTimeLinePropertyController() {
-  displayedTimeProp = timeLinePropertyController.getValue();
+  displayedTimeProps = timeLineFolder.__controllers.map((con) =>
+    con.__checkbox.checked ? con.property : null).filter((prop) => prop && prop != 'enabled');
+  timeLineEnabled = displayedTimeProps.length > 0;
   updateForTime();
 }
 
-timeLineEnabledController.onChange(() => {
-  timeLineEnabled = timeLineEnabledController.getValue();
-  updateForTime();
-});
-
-timeLinePropertyController.onChange(onTimeLinePropertyController);
+// timeLinePropertyController.onChange(onTimeLinePropertyController);
 
           
