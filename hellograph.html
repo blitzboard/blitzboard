@@ -85,7 +85,6 @@ Search
       const edgeFolder = gui.addFolder('Edge');
       const timeLineFolder = gui.addFolder('TimeLine');
       const physicsController = gui.add({physics: false}, 'physics');
-      // let timeLinePropertyController = timeLineFolder.add({property: displayedTimeProp}, 'property', [displayedTimeProp]);
       
       function onNodeControllerChange(){
         let displayedProps = displayedNodeProps();
@@ -99,7 +98,7 @@ Search
       };
       
       function updateTimeLineNodes() {
-          if(timeLineEnabled && timeInterval > 0) {
+          if(timeLineEnabled) {
             let nodeCountWithTime = 0;
             graph.nodes.forEach(node => { 
               nodeMap[node.id] = node;
@@ -115,30 +114,6 @@ Search
             });
             timeInterval = maxTime.getTime() - minTime.getTime();
             timeScale = nodeCountWithTime * 100;
-            nodeDataSet.update([
-              {
-                id:"hellograph-min",
-                label: "\n" + minTime.toLocaleDateString(),
-                shape: 'star',
-                physics: false,
-                fixed: true,
-                x: -timeScale / 2,
-                y: 0,
-                color: 'green',
-              },
-              {
-                id:"hellograph-max",
-                label: maxTime.toLocaleDateString(),
-                shape: 'star',
-                physics: false,
-                fixed: true,
-                x: timeScale / 2,
-                y: 0,
-                color: 'green',
-              },
-            ]);
-          } else {
-            nodeDataSet.remove(["hellograph-min", "hellograph-max"])
           }
       }
       
@@ -156,7 +131,7 @@ Search
             if(positions.length > 0) {
               fixed = true;
               let max = Math.max(...positions), min = Math.min(...positions);
-              x = max + min / 2;
+              x = (max + min) / 2;
               width = max - min; 
             } else {
               x = 0;
@@ -236,8 +211,8 @@ Search
           if(width) {
             attrs['shape'] = 'box';
             attrs['widthConstraint'] = {
-              minimum: x - width / 2,
-              maximum: x + width / 2
+              minimum: width,
+              maximum: width
             }
           }
           attrs = Object.assign(attrs, extraOptions);

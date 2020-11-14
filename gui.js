@@ -16,11 +16,11 @@ function updateForTime() {
     graph.nodes.forEach((node) => {
       let x, y, fixed, width;
       ({x, y, fixed, width} =  calcNodePosition(node));
-      console.log(fixed);
       if(fixed) {
         moveNodeWithAnimation(node.id, x, y);
         if(width) {
-          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "box", widthConstraint: {minimum: x - width / 2, maximum: x + width / 2} });
+          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "box", widthConstraint: {minimum: width, maximum: width} });
+
         } else {
           fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "square"});
         }
