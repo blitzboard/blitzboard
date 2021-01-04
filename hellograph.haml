@@ -502,10 +502,10 @@
                   network.on('dragStart', (e) => {
                       clearTimeout(selectTimer);
                       const node = nodeDataSet.get(e.nodes[0]);
-                      if(e.nodes.length > 0 && !node.fixedByTime) {
+                      if(e.nodes.length > 0) {
                         nodeDataSet.update({
                           id: e.nodes[0],
-                          fixed: false
+                          fixed: timeLineEnabled && node.fixedByTime ? {x: true, y: false } : false
                         });
                       }
                   });

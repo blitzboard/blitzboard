@@ -28,9 +28,12 @@ function updateForTime() {
     nodeDataSet.update(fixedMap);
   } else {
     nodeDataSet.update(graph.nodes.map((node) => {
+      const expanded = expandedNodes.includes(node.id);
+      const visNode = nodeDataSet.get(node.id);
       return {
         id:node.id,
-        fixed: expandedNodes.includes(node.id)
+        fixed: expanded,
+        shape: (expanded || visNode.degree === 1) ? 'text' : "dot",
       }
     }));
   }
