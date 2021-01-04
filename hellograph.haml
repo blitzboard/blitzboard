@@ -484,22 +484,7 @@
                   }
               };
               network = new vis.Network(container, data, options);
-              
-              
-              network.on('zoom', (opt) => {
-                if(timeLineEnabled) {
-                  nodeDataSet.update([
-                    {
-                      id: 'hellograph-min',
-                      size: 15 / opt.scale,
-                    },
-                    {
-                      id: 'hellograph-max',
-                      size: 15 / opt.scale,
-                    }
-                  ]);
-                }
-              })
+
 
               if (!localMode) {
                   let selectTimer = null;
@@ -514,7 +499,6 @@
                   network.on('dragStart', (e) => {
                       clearTimeout(selectTimer);
                       if(e.nodes.length > 0) {
-                        const node = nodeDataSet.get(e.nodes[0]);
                         nodeDataSet.update({
                           id: e.nodes[0],
                           fixed: false
