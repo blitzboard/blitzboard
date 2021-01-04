@@ -19,10 +19,9 @@ function updateForTime() {
       if(fixed) {
         moveNodeWithAnimation(node.id, x, y);
         if(width) {
-          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "box", widthConstraint: {minimum: width, maximum: width} });
-
+          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "box", widthConstraint: {minimum: width, maximum: width}, fixedByTime: true });
         } else {
-          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "square"});
+          fixedMap.push({id: node.id, fixed: {x: true, y: false}, shape: "square", fixedByTime: true});
         }
       }
     });

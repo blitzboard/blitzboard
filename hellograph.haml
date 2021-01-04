@@ -124,7 +124,6 @@
                   width = max - min; 
                 } else {
                   x = 0;
-                  fixed = false;
                 }
                 y = 0;
               }
@@ -193,7 +192,8 @@
                   y: y,
                   font: {
                     color: url ? 'blue' : 'black'
-                  },                  
+                  },
+                  fixedByTime: fixed
               };
               if(thumbnailUrl) {
                 attrs['shape'] = 'image';
@@ -275,7 +275,7 @@
                 const existing = nodeDataSet.get(node_id);
                 nodeDataSet.update({
                   id: node_id,
-                  shape: existing.shape === 'square' ? 'square' : 'text',
+                  shape: existing.fixedByTime ? existing.shape : 'text',
                   size: 25,
                   fixed: true
                 });
@@ -501,7 +501,8 @@
                   });
                   network.on('dragStart', (e) => {
                       clearTimeout(selectTimer);
-                      if(e.nodes.length > 0) {
+                      const node = nodeDataSet.get(e.nodes[0]);
+                      if(e.nodes.length > 0 && !node.fixedByTime) {
                         nodeDataSet.update({
                           id: e.nodes[0],
                           fixed: false
