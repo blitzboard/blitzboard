@@ -45,7 +45,4 @@ function onTimeLinePropertyController() {
   timeLineEnabled = displayedTimeProps.length > 0;
   updateForTime();
 }
-
-// timeLinePropertyController.onChange(onTimeLinePropertyController);
-
           

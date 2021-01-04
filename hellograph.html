@@ -27,6 +27,38 @@
       padding: 10px;
       text-align: center;
   }
+  
+  .dg.main .close-button {
+      background-color: rgba(0, 0, 0, 0.7);
+  }
+  
+  .dg.main .close-button:hover {
+      background-color: rgba(0, 0, 0, 0.7);
+  }
+  
+  .dg li:not(.folder) {
+      background: rgba(0, 0, 0, 0.7);
+  }
+  
+  .dg li.title {
+      background: rgba(0, 0, 0, 0.7) url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+  }
+  
+  #search-area {
+    position: absolute;
+    left: 50px;
+    top: 50px;
+    width: 600px;
+    z-index: 999;
+  }
+  
+  #search-input {
+    background: rgba(255, 255, 255, 0.7);
+  }
+  
+  #search-button {
+    background: rgba(0, 160, 160, 0.7);
+  }
 </style>
 </head>
 <body>
@@ -39,6 +71,7 @@
 <input id='saveButton' type='button' value='save'>
 <input id='cancelButton' type='button' value='cancel'>
 </div>
+<div id='search-area'>
 <div class='row'>
 <div class='col-6 pr-0 pl-4'>
 <input aria-label='' class='form-control' id='search-input' placeholder='Free Search' type='text'>
@@ -48,6 +81,7 @@
 <span class='fa fa-search' id='search-icon'></span>
 Search
 </button>
+</div>
 </div>
 </div>
 <div class='row'>
@@ -392,9 +426,7 @@ Search
             let controller = timeLineFolder.add({[prop]: false}, prop, false);
             controller.onChange(onTimeLinePropertyController);
           }
-          // timeLinePropertyController = timeLinePropertyController.options(Array.from(timeProperties));
-          // timeLinePropertyController.onChange(onTimeLinePropertyController);
-          
+  
           graph.edges.forEach(edge => edgeMap[edge.id] = edge);
           
           nodeProps = new Set(['label']);
@@ -417,7 +449,6 @@ Search
   
           
           if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
-          
   
           nodeDataSet = new vis.DataSet();
           nodeDataSet.add(graph.nodes.map((node) => {

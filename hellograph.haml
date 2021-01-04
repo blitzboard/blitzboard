@@ -27,6 +27,41 @@
           padding: 10px;
           text-align: center;
       }
+
+      .dg.main .close-button {
+          background-color: rgba(0, 0, 0, 0.7);
+      }
+
+      .dg.main .close-button:hover {
+          background-color: rgba(0, 0, 0, 0.7);
+      }
+
+      .dg li:not(.folder) {
+          background: rgba(0, 0, 0, 0.7);
+      }
+
+      .dg li.title {
+          background: rgba(0, 0, 0, 0.7) url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+      }
+
+      #search-area {
+        position: absolute;
+        left: 50px;
+        top: 50px;
+        width: 600px;
+        z-index: 999;
+      }
+
+      #search-input {
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      #search-button {
+        background: rgba(0, 160, 160, 0.7);
+      }
+
+
+
   %body
     #network-popUp
       %span#operation node
@@ -35,13 +70,14 @@
         %tbody#popup-table
       %input#saveButton{:type => "button", :value => "save"}/
       %input#cancelButton{:type => "button", :value => "cancel"}/
-    .row
-      .col-6.pr-0.pl-4
-        %input#search-input.form-control{"aria-label" => "", :placeholder => "Free Search", :type => "text"}/
-      .col-2.mx-0.px-0
-        %button.mx-0.btn.btn-info#search-button{:type => "button"}
-          %span.fa.fa-search#search-icon
-          Search
+    #search-area
+      .row
+        .col-6.pr-0.pl-4
+          %input#search-input.form-control{"aria-label" => "", :placeholder => "Free Search", :type => "text"}/
+        .col-2.mx-0.px-0
+          %button.mx-0.btn.btn-info#search-button{:type => "button"}
+            %span.fa.fa-search#search-icon
+            Search
     .row
       .col-12
         #graph.vh-100.bg-light
@@ -381,9 +417,7 @@
                 let controller = timeLineFolder.add({[prop]: false}, prop, false);
                 controller.onChange(onTimeLinePropertyController);
               }
-              // timeLinePropertyController = timeLinePropertyController.options(Array.from(timeProperties));
-              // timeLinePropertyController.onChange(onTimeLinePropertyController);
-              
+
               graph.edges.forEach(edge => edgeMap[edge.id] = edge);
               
               nodeProps = new Set(['label']);
@@ -406,8 +440,7 @@
 
               
               if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
-              
-      
+
               nodeDataSet = new vis.DataSet();
               nodeDataSet.add(graph.nodes.map((node) => {
                   const groupName = node.labels.join('_');
