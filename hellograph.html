@@ -182,8 +182,10 @@ Search
           let degree =  pgNode.properties['degree'];
           if(degree !== undefined) {
             degree = degree[0];
+          } else {
+            degree = 2; // assume degree to be two (default)
           }
-          
+  
           let attrs = {
               id: pgNode.id,
               group: group,
@@ -220,14 +222,15 @@ Search
       }
       
       function toVisEdge(pgEdge, group, props) {
+          const id = pgEdge.properties.id ? pgEdge.properties.id[0] : `${pgEdge.from}-${pgEdge.to}`;
           return {
-              id: pgEdge.properties.id[0],
+              id: id,
               from: pgEdge.from,
               to: pgEdge.to,
               color: edgeColorMap[group],
               label: createLabelText(pgEdge, props),
               title: createTitleText(pgEdge),
-              remoteId: pgEdge.properties.id[0]
+              remoteId: id
           }
       }
       
