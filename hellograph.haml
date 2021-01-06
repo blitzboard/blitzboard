@@ -13,6 +13,7 @@
     %script{:src => "./lib/jquery-ui.min.js"}
     %script{:src => "./lib/pg_parser_browserified.js", :type => "text/javascript"}
     %script{:src => "./lib/json2pg_browserified.js", :type => "text/javascript"}
+    %script{:src => "./lib/ace/src-min/ace.js"}
     :css
       #network-popUp {
           display: none;
@@ -99,7 +100,10 @@
       #input-area.vh-100
         %input#pgfile{:type => "file"}/
         %input#url-input/
-        %textarea#graph-input{:style => "height: 100%; width: 100%;"}
+        #graph-input{:style => "height: 100%; width: 100%;"}
+          node1 :You name:"your name"
+          node2 :Graph type:"graph"
+          node1 -> node2 :Hello! on:"today"
       #graph-pane.vh-100
         #graph.bg-light.vh-100
     :javascript
@@ -108,6 +112,7 @@
           const qa = document.querySelectorAll.bind(document);
           const nodeSize = 25;
           let timerId = 0;
+          let editor;
           let localMode = false;
           let groups = new Set();
           let data, nodeDataSet, edgeDataSet, expandedNodes = [], network;
@@ -402,7 +407,7 @@
               groups = new Set();
               edgeColorMap = {};
       
-              input = input || q('#graph-input').value;
+              input = input || editor.getValue();
               if (typeof input === 'string' || input instanceof String) {
                   try {
                       graph = JSON.parse(input);
@@ -722,32 +727,33 @@
               // Closure to capture the file information.
               reader.onload = (function (theFile) {
                   return function (e) {
-                      q('#graph-input').value = e.target.result;
+                      editor.setValue(e.target.result);
                       updateGraph();
                   };
               })(f);
               // Read in the image file as a data URL.
               reader.readAsText(f);
           };
-      
+
+
+          editor = ace.edit("graph-input");
+          editor.setTheme("ace/theme/monokai");
+
           document.addEventListener('mousemove', (e) => { 
             clickedPosition = {x: e.clientX, y: e.clientY}; 
           });
           q('#pgfile').addEventListener('change', handleFileSelect, false);
-          q('#graph-input').value =
-              `node1 :You name:"your name"
-      node2 :Graph type:"graph"
-      node1 -> node2 :Hello! on:"today"`;
+
           q('#url-input').value = 'localhost:3000';
           // retrieveGraph();
           /*  updateGraph(); */
-          
-          q('#graph-input').addEventListener('input', () => {
+
+          editor.session.on('change', (delta) => {
               clearTimeout(timerId);
               localMode = true;
               timerId = setTimeout(updateGraph, 1000);
           });
-          
+
           q('#search-input').addEventListener('keyup', () => {
             if (event.keyCode == 13) // Enter
               q('#search-button').click(); 
