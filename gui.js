@@ -3,7 +3,7 @@
 
 // nodeFolder.open();
 // edgeFolder.open();
-timeLineFolder.open();
+// timeLineFolder.open();
 
 physicsController.onChange(() =>
   network.setOptions({physics: {enabled:physicsController.getValue()}})

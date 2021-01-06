@@ -5,6 +5,8 @@
 <link crossorigin='anonymous' href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css' integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
 <link href='./css/jquery-ui.min.css' rel='stylesheet'>
+<link href='./lib/codemirror.css' rel='stylesheet'>
+<link href='./lib/monokai.css' rel='stylesheet'>
 <script src='./axios.min.js'></script>
 <script src='./vis-network.min.js'></script>
 <script src='./lib/dat.gui.min.js'></script>
@@ -13,7 +15,7 @@
 <script src='./lib/jquery-ui.min.js'></script>
 <script src='./lib/pg_parser_browserified.js' type='text/javascript'></script>
 <script src='./lib/json2pg_browserified.js' type='text/javascript'></script>
-<script src='./lib/ace/src-min/ace.js'></script>
+<script src='./lib/codemirror.js'></script>
 <style>
   #network-popUp {
       display: none;
@@ -106,13 +108,10 @@ Search
 </div>
 <div id='main-area'>
 <div class='vh-100' id='input-area'>
-<input id='pgfile' type='file'>
-<input id='url-input'>
-<div id='graph-input' style='height: 100%; width: 100%;'>
-node1 :You name:"your name"
+<input class='d-none' id='url-input'>
+<textarea class='vh-100' id='graph-input' style='height: 100%; width: 100%;'>node1 :You name:"your name"
 node2 :Graph type:"graph"
-node1 -> node2 :Hello! on:"today"
-</div>
+node1 -> node2 :Hello! on:"today"</textarea>
 </div>
 <div class='vh-100' id='graph-pane'>
 <div class='bg-light vh-100' id='graph'></div>
@@ -747,20 +746,22 @@ node1 -> node2 :Hello! on:"today"
           reader.readAsText(f);
       };
   
+      editor = CodeMirror.fromTextArea(q('#graph-input'), {
+        lineNumbers: true,
+        theme: "monokai"
+      });
+      editor.setSize('100%', '100%');
   
-      editor = ace.edit("graph-input");
-      editor.setTheme("ace/theme/monokai");
-  
-      document.addEventListener('mousemove', (e) => { 
+      document.addEventListener('mousemove', (e) => {
         clickedPosition = {x: e.clientX, y: e.clientY}; 
       });
-      q('#pgfile').addEventListener('change', handleFileSelect, false);
+      // q('#pgfile').addEventListener('change', handleFileSelect, false);
   
       q('#url-input').value = 'localhost:3000';
       // retrieveGraph();
       /*  updateGraph(); */
   
-      editor.session.on('change', (delta) => {
+      editor.on('change', (delta) => {
           clearTimeout(timerId);
           localMode = true;
           timerId = setTimeout(updateGraph, 1000);
@@ -782,11 +783,11 @@ node1 -> node2 :Hello! on:"today"
       });
       
       q('#search-input').value = '情報通信';
-      searchGraph();
+      // searchGraph();
+      updateGraph();
   
       function onResize(event, ui) {
         const totalWidth = $("#main-area").width();
-        console.log(totalWidth);
         let width = $("#input-area").width();
         if(width > totalWidth) {
             width = totalWidth;
