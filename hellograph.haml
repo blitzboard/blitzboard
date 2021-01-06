@@ -620,10 +620,14 @@
                   const oneDay = 24 * 60 * 60 * 1000;
                   const twoMonth = oneMonth * 2;
                   const fourMonth = twoMonth * 2;
+                  const oneYear = 365 * oneDay;
                   const minDistance = 300;
                   context.font = (20 / view.scale).toString() + "px Arial";
-                  const minimumInterval = timeForOnePixel * minDistance / view.scale; 
-                  if(minimumInterval > fourMonth ) {
+                  const minimumInterval = timeForOnePixel * minDistance / view.scale;
+                  if(minimumInterval > oneYear ) {
+                    plotTimes(timeOnLeftEdge, 1, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+                  }
+                  else if(minimumInterval > fourMonth ) {
                     plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
                   }
                   else if(minimumInterval > twoMonth) {
