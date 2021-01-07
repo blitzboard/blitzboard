@@ -85,6 +85,15 @@
         height: 100%;
       }
 
+
+      #share-btn {
+        position: absolute;
+        width: 100px;
+        height: 40px;
+        right: 10px;
+        bottom: 10px;
+      }
+
   %body
     #network-popUp
       %span#operation node
@@ -111,6 +120,8 @@
           node1 -> node2 :Hello! on:"today"
       #graph-pane.vh-100
         #graph.bg-light.vh-100
+      #share-btn.btn.btn-info
+        Share!
     :javascript
       'use strict';
           const q = document.querySelector.bind(document);
@@ -749,6 +760,10 @@
           });
           editor.setSize('100%', '100%');
 
+          const urlParams = new URLSearchParams(window.location.search);
+          if(urlParams.get('pg')) {
+            editor.setValue(urlParams.get('pg'));
+          }
           document.addEventListener('mousemove', (e) => {
             clickedPosition = {x: e.clientX, y: e.clientY}; 
           });
@@ -778,6 +793,15 @@
               localMode = false;
               timerId = setTimeout(retrieveGraph, 1000);
           });
+
+          q('#share-btn').addEventListener('click', () => {
+            let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}`;
+            let data = [new ClipboardItem({ 'text/plain': new Blob([url], { type: "text/plain"})})];
+            navigator.clipboard.write(data).then(function() {
+              alert("Your graph is now on clipboard!")
+            });
+          });
+
           
           q('#search-input').value = '情報通信';
           // searchGraph();

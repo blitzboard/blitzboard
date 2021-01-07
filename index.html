@@ -83,6 +83,15 @@
     width: 100%;
     height: 100%;
   }
+  
+  
+  #share-btn {
+    position: absolute;
+    width: 100px;
+    height: 40px;
+    right: 10px;
+    bottom: 10px;
+  }
 </style>
 </head>
 <body>
@@ -117,6 +126,9 @@ node1 -> node2 :Hello! on:"today"</textarea>
 </div>
 <div class='vh-100' id='graph-pane'>
 <div class='bg-light vh-100' id='graph'></div>
+</div>
+<div class='btn btn-info' id='share-btn'>
+Share!
 </div>
 </div>
 <script>
@@ -757,6 +769,10 @@ node1 -> node2 :Hello! on:"today"</textarea>
       });
       editor.setSize('100%', '100%');
   
+      const urlParams = new URLSearchParams(window.location.search);
+      if(urlParams.get('pg')) {
+        editor.setValue(urlParams.get('pg'));
+      }
       document.addEventListener('mousemove', (e) => {
         clickedPosition = {x: e.clientX, y: e.clientY}; 
       });
@@ -786,6 +802,15 @@ node1 -> node2 :Hello! on:"today"</textarea>
           localMode = false;
           timerId = setTimeout(retrieveGraph, 1000);
       });
+  
+      q('#share-btn').addEventListener('click', () => {
+        let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}`;
+        let data = [new ClipboardItem({ 'text/plain': new Blob([url], { type: "text/plain"})})];
+        navigator.clipboard.write(data).then(function() {
+          alert("Your graph is now on clipboard!")
+        });
+      });
+  
       
       q('#search-input').value = '情報通信';
       // searchGraph();
