@@ -511,8 +511,9 @@ node1 -> node2 :Hello! on:"today"</textarea>
           
           const onEdgeControllerChange = () => {
             let displayedProps = displayedEdgeProps();
+  
             edgeDataSet.update(graph.edges.map((edge) => {
-                return { id:edge.properties.id[0],
+                return { id: edge.properties.id ? edge.properties.id[0] : `${edge.from}-${edge.to}`,
                  label: createLabelText(edge, displayedProps) };
               }
             ));
