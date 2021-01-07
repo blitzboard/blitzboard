@@ -751,6 +751,7 @@ node1 -> node2 :Hello! on:"today"</textarea>
   
       editor = CodeMirror.fromTextArea(q('#graph-input'), {
         lineNumbers: true,
+        viewportMargin: Infinity,
         theme: "monokai",
         mode: "pgMode",
       });
