@@ -500,7 +500,7 @@ Share!
           nodeDataSet.add(graph.nodes.map((node) => {
               const groupName = node.labels.join('_');
               groups.add(groupName);
-              return toVisNode(node, groupName, defaultNodeProps)
+              return toVisNode(node, groupName, defaultNodeProps);
           }));
           
           updateTimeLineNodes();
@@ -510,7 +510,9 @@ Share!
               if (!edgeColorMap[edgeLabel]) {
                   edgeColorMap[edgeLabel] = getRandomColor();
               }
-              return toVisEdge(edge, edgeLabel, defaultEdgeProps);                   
+              let visEdge = toVisEdge(edge, edgeLabel, defaultEdgeProps);
+              edgeMap[visEdge.id] = edge;
+              return visEdge;
           }));
           // create a network
           let container = document.getElementById('graph');
@@ -580,14 +582,22 @@ Share!
   
           let selectTimer = null;
           network.on('selectNode', (e) => {
-              let line = nodeMap[e.nodes[0]].line;
               if (e.nodes.length > 0) {
+                let line = nodeMap[e.nodes[0]].line;
                 if(localMode) {
                   editor.scrollIntoView({line, ch:0}, 200);
                   editor.setSelection({line, ch: Infinity}, {line, ch: 0});
                 }
                 else
                   selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
+              }
+          });
+  
+          network.on('selectEdge', (e) => {
+              if (e.edges.length > 0) {
+                let line = edgeMap[e.edges[0]].line;
+                editor.scrollIntoView({line, ch:0}, 200);
+                editor.setSelection({line, ch: Infinity}, {line, ch: 0});
               }
           });
           if (!localMode) {
@@ -752,7 +762,9 @@ Share!
               if (!edgeColorMap[edgeLabel]) {
                   edgeColorMap[edgeLabel] = getRandomColor();
               }
-              return toVisEdge(edge, edgeLabel, displayedEdgeProps());     
+              let visEdge = toVisEdge(edge, edgeLabel, displayedEdgeProps());
+              edgeMap[visEdge.id] = edge;
+              return visEdge;
           }));
   
       }
