@@ -433,6 +433,7 @@ Share!
           edgeColorMap = {};
   
           input = input || editor.getValue();
+          localStorage.setItem('pg', editor.getValue());
           if (typeof input === 'string' || input instanceof String) {
               try {
                   graph = JSON.parse(input);
@@ -772,6 +773,8 @@ Share!
       const urlParams = new URLSearchParams(window.location.search);
       if(urlParams.get('pg')) {
         editor.setValue(urlParams.get('pg'));
+      } else {
+        editor.setValue(localStorage.getItem('pg'));
       }
       document.addEventListener('mousemove', (e) => {
         clickedPosition = {x: e.clientX, y: e.clientY}; 
