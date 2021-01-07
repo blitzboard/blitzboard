@@ -583,7 +583,7 @@ Share!
           let selectTimer = null;
           network.on('selectNode', (e) => {
               if (e.nodes.length > 0) {
-                let line = nodeMap[e.nodes[0]].line;
+                let line = nodeMap[e.nodes[0]].line - 1;
                 if(localMode) {
                   editor.scrollIntoView({line, ch:0}, 200);
                   editor.setSelection({line, ch: Infinity}, {line, ch: 0});
@@ -594,8 +594,8 @@ Share!
           });
   
           network.on('selectEdge', (e) => {
-              if (e.edges.length > 0) {
-                let line = edgeMap[e.edges[0]].line;
+              if (e.nodes.length == 0 && e.edges.length > 0) {
+                let line = edgeMap[e.edges[0]].line - 1;
                 editor.scrollIntoView({line, ch:0}, 200);
                 editor.setSelection({line, ch: Infinity}, {line, ch: 0});
               }
