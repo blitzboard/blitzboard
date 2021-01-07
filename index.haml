@@ -18,6 +18,7 @@
     %script{:src => "./lib/codemirror/codemirror.js"}
     %script{:src => "./lib/codemirror/simple.js"}
     %script{:src => "./lib/codemirror/pg_mode.js"}
+    %script{:src => "./lib/codemirror/mark-selection.js"}
 
     :css
       #network-popUp {
@@ -94,6 +95,12 @@
         bottom: 10px;
       }
 
+      span .highlighted {
+        background: rgba(200, 200, 0, 0.5);
+      }
+
+      .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
+
   %body
     #network-popUp
       %span#operation node
@@ -129,7 +136,7 @@
           const nodeSize = 25;
           let timerId = 0;
           let editor;
-          let localMode = false;
+          let localMode = true;
           let groups = new Set();
           let data, nodeDataSet, edgeDataSet, expandedNodes = [], network;
           let clickedPosition;
@@ -163,8 +170,7 @@
           function updateTimeLineNodes() {
               if(timeLineEnabled) {
                 let nodeCountWithTime = 0;
-                graph.nodes.forEach(node => { 
-                  nodeMap[node.id] = node;
+                graph.nodes.forEach(node => {
                   for(let prop of displayedTimeProps) {
                     let time = node.properties[prop];
                     if(time) {
@@ -462,6 +468,7 @@
               nodeProps = new Set(['label']);
               edgeProps = new Set(['label']);
               graph.nodes.forEach((node) => {
+                  nodeMap[node.id] = node;
                   Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
               });
               graph.edges.forEach((edge) => {
@@ -562,12 +569,19 @@
               network = new vis.Network(container, data, options);
 
 
+              let selectTimer = null;
+              network.on('selectNode', (e) => {
+                  let line = nodeMap[e.nodes[0]].line;
+                  if (e.nodes.length > 0) {
+                    if(localMode) {
+                      editor.scrollIntoView({line, ch:0}, 200);
+                      editor.setSelection({line, ch: Infinity}, {line, ch: 0});
+                    }
+                    else
+                      selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
+                  }
+              });
               if (!localMode) {
-                  let selectTimer = null;
-                  network.on('selectNode', (e) => {
-                      if (e.nodes.length > 0)
-                          selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
-                  });
                   network.on('doubleClick', (e) => {
                       if (e.nodes.length > 0)
                           retrieveGraph(e.nodes[0]);
