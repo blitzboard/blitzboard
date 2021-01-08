@@ -1,3 +1,26 @@
+function addNewNode(newNode, x, y) {
+  graph.nodes.push(newNode);
+  let visNode = toVisNode(newNode);
+  nodeMap[visNode.id] = newNode;
+  if(x) visNode.x = x;
+  if(y) visNode.y = y;
+  nodeDataSet.add(visNode);
+
+  let oldPg = editor.getValue();
+  newNode.line = numberOfLines(oldPg) + 1;
+  byProgram = true;
+  editor.setValue(oldPg + `\n"${newNode.id}" ${newNode.labels.map((label) => ':' + label).join(' ')} `);
+  scrollToLine(newNode.line - 1);
+}
+
+let currentNodeId = 1;
+function newNodeId() {
+  while(nodeMap[`node${currentNodeId}`]) {
+    ++currentNodeId;
+  }
+  return `node${currentNodeId}`;
+}
+
 let numberOfLines = (text) => (text.match(/\n/g) || '').length + 1;
 
 let manipulationOptions =
@@ -95,6 +118,13 @@ function inputProperties() {
 function saveNode(data, callback) {
   clearPopUp();
   callback(null); // manually add nodes
+  const pgProperties = {};
+  inputProperties().forEach((prop) => pgProperties[prop.name] = [prop.value]);
+  let newNode = {
+    id: newNodeId(),
+    labels: inputLabel().split(':'),
+    properties: pgProperties
+  };
   if(!localMode) {
     const propText = inputProperties().map((input) => `${input.name}: '${input.value.trim()}'`).join(',');
     let query = `CREATE (a:${inputLabel()} {${propText}}) RETURN a`;
@@ -105,6 +135,8 @@ function saveNode(data, callback) {
       nodeMap[node.id] = node;
       q('#graph-input').value = json2pg.translate(JSON.stringify(graph));
     });
+  } else {
+    addNewNode(newNode);
   }
 }
 
@@ -134,7 +166,7 @@ function saveEdge(data) {
     edgeDataSet.add(visEdge);
 
     let oldPg = editor.getValue();
-    newEdge.line = numberOfLines(oldPg);
+    newEdge.line = numberOfLines(oldPg) + 1;
     byProgram = true;
     editor.setValue(oldPg + `\n"${newEdge.from}" -- "${newEdge.to}" ${newEdge.labels.map((label) => ':' + label).join(' ')} `);
     scrollToLine(newEdge.line);

@@ -171,6 +171,7 @@
           function scrollToLine(line) {
             editor.scrollIntoView({line, ch:0}, 200);
             editor.setSelection({line, ch: Infinity}, {line, ch: 0});
+            editor.focus();
           }
           
           function updateTimeLineNodes() {
@@ -594,6 +595,22 @@
                     let line = edgeMap[e.edges[0]].line - 1;
                     scrollToLine(line);
                   }
+              });
+
+              network.on('doubleClick', (e) => {
+                  if (localMode) {
+                    if(e.nodes.length == 0) {
+                      let newNode = {
+                        id: newNodeId(),
+                        labels: ['New'],
+                        properties: {},
+                      };
+                      console.log(e.pointer);
+                      addNewNode(newNode, e.pointer.canvas.x, e.pointer.canvas.y);
+                    }
+                  }
+                  else if (e.nodes.length > 0)
+                      retrieveGraph(e.nodes[0]);
               });
               if (!localMode) {
                   network.on('doubleClick', (e) => {
