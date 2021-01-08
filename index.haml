@@ -151,12 +151,13 @@
           let timeInterval = 1;
           let timeProperties = new Set();
           let timeScale = 100.0;
+          let lineStart = null, lineEnd = null, srcNode = null;
           const gui = new dat.GUI({hideable: false});
           const nodeFolder = gui.addFolder('Node');
           const edgeFolder = gui.addFolder('Edge');
           const timeLineFolder = gui.addFolder('TimeLine');
           const physicsController = gui.add({physics: false}, 'physics');
-          
+
           function onNodeControllerChange(){
             let displayedProps = displayedNodeProps();
             nodeDataSet.update(graph.nodes.map((node) => {
@@ -342,7 +343,7 @@
                   flattend_props.push(`<tr><td>label</td><td>${elem.labels.join(':')}</td></tr>`);
               return `<table>${flattend_props.join('')}</table>`;
           }
-      
+
           function getRandomColor() {
               let letters = '0123456789ABCDEF';
               let color = '#';
@@ -563,7 +564,7 @@
                         updateInterval: 25
                     }
                   },
-                  manipulation: manipulationOptions,
+                  manipulation: false,
 
                   edges: {
                       arrows: {
@@ -576,7 +577,6 @@
                   }
               };
               network = new vis.Network(container, data, options);
-
 
               let selectTimer = null;
               network.on('selectNode', (e) => {
@@ -605,27 +605,35 @@
                         labels: ['New'],
                         properties: {},
                       };
-                      console.log(e.pointer);
                       addNewNode(newNode, e.pointer.canvas.x, e.pointer.canvas.y);
+                    } else {
+                       const position = e.pointer.canvas;
+                       const node = e.nodes[0];
+                       lineStart = position;
+                       srcNode = node;
+                       nodeDataSet.update({id: node, fixed: {x: true, y: true}});
                     }
                   }
                   else if (e.nodes.length > 0)
                       retrieveGraph(e.nodes[0]);
               });
+
+              network.on('dragStart', (e) => {
+                  clearTimeout(selectTimer);
+                  srcNode = lineStart = lineEnd = null;
+                  const node = nodeDataSet.get(e.nodes[0]);
+                  if(e.nodes.length > 0) {
+                    nodeDataSet.update({
+                      id: e.nodes[0],
+                      fixed: timeLineEnabled && node.fixedByTime ? {x: true, y: false } : false
+                    });
+                  }
+              });
+
               if (!localMode) {
                   network.on('doubleClick', (e) => {
                       if (e.nodes.length > 0)
                           retrieveGraph(e.nodes[0]);
-                  });
-                  network.on('dragStart', (e) => {
-                      clearTimeout(selectTimer);
-                      const node = nodeDataSet.get(e.nodes[0]);
-                      if(e.nodes.length > 0) {
-                        nodeDataSet.update({
-                          id: e.nodes[0],
-                          fixed: timeLineEnabled && node.fixedByTime ? {x: true, y: false } : false
-                        });
-                      }
                   });
                   network.on('dragEnd', (e) => {
                       if(e.nodes.length > 0) {
@@ -638,19 +646,35 @@
                       }
                   });
               }
+              let canvas = q(".vis-network canvas");
+
+              function getMousePos(canvas, evt) {
+                var rect = canvas.getBoundingClientRect();
+                return {
+                  x: evt.clientX - rect.left,
+                  y: evt.clientY - rect.top
+                };
+              }
+              canvas.addEventListener('mousemove', event =>
+              {
+                if(lineStart) {
+                  lineEnd = network.DOMtoCanvas(getMousePos(canvas, event));
+                  network.redraw();
+                }
+              });
               
-              network.on("hoverNode", (params) => {
-                  network.canvas.body.container.style.cursor = 'default';
-                  const node = nodeDataSet.get(params.node);
-                  if(node && node.url) {
-                    network.canvas.body.container.style.cursor = 'pointer';
-                    nodeDataSet.update({
-                      id: params.node,
-                      color: '#8888ff',
-                    });
-                  } else if(node && node.degree > 1 && !expandedNodes.includes(params.node)) {
-                    network.canvas.body.container.style.cursor = 'pointer';
-                  }
+              network.on("hoverNode", (e) => {
+                network.canvas.body.container.style.cursor = 'default';
+                const node = nodeDataSet.get(e.node);
+                if(node && node.url) {
+                  network.canvas.body.container.style.cursor = 'pointer';
+                  nodeDataSet.update({
+                    id: e.node,
+                    color: '#8888ff',
+                  });
+                } else if(node && node.degree > 1 && !expandedNodes.includes(e.node)) {
+                  network.canvas.body.container.style.cursor = 'pointer';
+                }
               });
               
               function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
@@ -691,7 +715,13 @@
                 }
               }
               
-              network.on("afterDrawing", (e) => {
+              network.on("afterDrawing", (ctx) => {
+                if(lineStart && lineEnd) {
+                  ctx.beginPath();
+                  ctx.moveTo(lineStart.x, lineStart.y);
+                  ctx.lineTo(lineEnd.x, lineEnd.y);
+                  ctx.stroke();
+                }
                 if(timeLineEnabled){
                   const context = network.canvas.getContext("2d");
                   const view = network.canvas.body.view;
@@ -748,6 +778,28 @@
                  network.stopSimulation();
                  if(e.nodes.length > 0) {
                     let node = nodeDataSet.get(e.nodes[0]);
+                    if(srcNode) {
+                      let newEdge = {
+                        from: srcNode,
+                        to: node.id,
+                        undirected: false,
+                        labels: [],
+                        properties: {}
+                      };
+                      graph.edges.push(newEdge);
+                      let visEdge = toVisEdge(newEdge);
+                      edgeMap[visEdge.id] = newEdge
+                      edgeDataSet.add(visEdge);
+
+                      let oldPg = editor.getValue();
+                      newEdge.line = numberOfLines(oldPg) + 1;
+                      byProgram = true;
+                      editor.setValue(oldPg + `\n"${newEdge.from}" -- "${newEdge.to}" ${newEdge.labels.map((label) => ':' + label).join(' ')} `);
+                      scrollToLine(newEdge.line - 1);
+                      srcNode = null;
+                      lineStart = null;
+                      lineEnd = null;
+                    }
                     if(node && node.url)
                       window.open(node.url,'_blank');
                  }
@@ -817,7 +869,7 @@
             editor.setValue(localStorage.getItem('pg'));
           }
           document.addEventListener('mousemove', (e) => {
-            clickedPosition = {x: e.clientX, y: e.clientY}; 
+            clickedPosition = {x: e.clientX, y: e.clientY};
           });
           // q('#pgfile').addEventListener('change', handleFileSelect, false);
 

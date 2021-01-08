@@ -1,6 +1,6 @@
 function addNewNode(newNode, x, y) {
   graph.nodes.push(newNode);
-  let visNode = toVisNode(newNode);
+  let visNode = toVisNode(newNode, null, []);
   nodeMap[visNode.id] = newNode;
   if(x) visNode.x = x;
   if(y) visNode.y = y;
