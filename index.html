@@ -152,7 +152,8 @@ Share!
       let graph, nodeMap = new Map(), edgeMap = new Map();
       let edgeColorMap;
       let domain;
-      let displayedTimeProps = ["submittedDate"]; 
+      let byProgram = false;
+      let displayedTimeProps = ["submittedDate"];
       let timeLineEnabled = false;
       let nodeProps, edgeProps;
       let minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
@@ -175,6 +176,11 @@ Share!
           })
         );
       };
+  
+      function scrollToLine(line) {
+        editor.scrollIntoView({line, ch:0}, 200);
+        editor.setSelection({line, ch: Infinity}, {line, ch: 0});
+      }
       
       function updateTimeLineNodes() {
           if(timeLineEnabled) {
@@ -565,7 +571,7 @@ Share!
                     updateInterval: 25
                 }
               },
-              manipulation: false,
+              manipulation: manipulationOptions,
   
               edges: {
                   arrows: {
@@ -585,8 +591,7 @@ Share!
               if (e.nodes.length > 0) {
                 let line = nodeMap[e.nodes[0]].line - 1;
                 if(localMode) {
-                  editor.scrollIntoView({line, ch:0}, 200);
-                  editor.setSelection({line, ch: Infinity}, {line, ch: 0});
+                  scrollToLine(line);
                 }
                 else
                   selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
@@ -596,8 +601,7 @@ Share!
           network.on('selectEdge', (e) => {
               if (e.nodes.length == 0 && e.edges.length > 0) {
                 let line = edgeMap[e.edges[0]].line - 1;
-                editor.scrollIntoView({line, ch:0}, 200);
-                editor.setSelection({line, ch: Infinity}, {line, ch: 0});
+                scrollToLine(line);
               }
           });
           if (!localMode) {
@@ -630,13 +634,13 @@ Share!
           network.on("hoverNode", (params) => {
               network.canvas.body.container.style.cursor = 'default';
               const node = nodeDataSet.get(params.node);
-              if(node.url) {
+              if(node && node.url) {
                 network.canvas.body.container.style.cursor = 'pointer';
                 nodeDataSet.update({
                   id: params.node,
                   color: '#8888ff',
                 });
-              } else if(node.degree > 1 && !expandedNodes.includes(params.node)) {
+              } else if(node && node.degree > 1 && !expandedNodes.includes(params.node)) {
                 network.canvas.body.container.style.cursor = 'pointer';
               }
           });
@@ -723,7 +727,8 @@ Share!
           });
           network.on("blurNode", (params) => {
               network.canvas.body.container.style.cursor = 'default';
-              if(nodeDataSet.get(params.node).url) {
+              let node = nodeDataSet.get(params.node);
+              if(node && node.url) {
                 nodeDataSet.update({
                   id: params.node,
                   color: null,
@@ -735,7 +740,7 @@ Share!
              network.stopSimulation();
              if(e.nodes.length > 0) {
                 let node = nodeDataSet.get(e.nodes[0]);
-                if(node.url)
+                if(node && node.url)
                   window.open(node.url,'_blank');
              }
           });
@@ -813,9 +818,13 @@ Share!
       /*  updateGraph(); */
   
       editor.on('change', (delta) => {
+        if(!byProgram) {
           clearTimeout(timerId);
           localMode = true;
           timerId = setTimeout(updateGraph, 1000);
+        } else {
+          byProgram = false;
+        }
       });
   
       q('#search-input').addEventListener('keyup', () => {
