@@ -938,7 +938,7 @@
           if(urlParams.get('pg')) {
             editor.setValue(urlParams.get('pg'));
           } else {
-            editor.setValue(localStorage.getItem('pg'));
+            editor.setValue(localStorage.getItem('pg') || '');
           }
           document.addEventListener('mousemove', (e) => {
             clickedPosition = {x: e.clientX, y: e.clientY};
