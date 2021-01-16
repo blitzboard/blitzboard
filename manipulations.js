@@ -7,10 +7,11 @@ function addNewNode(newNode, x, y) {
   nodeDataSet.add(visNode);
 
   let oldPg = editor.getValue();
-  newNode.line = numberOfLines(oldPg) + 1;
+  newNode.line = numberOfLines(oldPg);
+  nodeLineMap[newNode.line] = newNode;
   byProgram = true;
   editor.setValue(oldPg + `\n"${newNode.id}" ${newNode.labels.map((label) => ':' + label).join(' ')} `);
-  scrollToLine(newNode.line - 1);
+  scrollToLine(newNode.line);
 }
 
 let currentNodeId = 1;

@@ -19,6 +19,8 @@
     %script{:src => "./lib/codemirror/simple.js"}
     %script{:src => "./lib/codemirror/pg_mode.js"}
     %script{:src => "./lib/codemirror/mark-selection.js"}
+    %script{:src => "./lib/diff.js"}
+
 
     :css
       #network-popUp {
@@ -134,13 +136,14 @@
           const q = document.querySelector.bind(document);
           const qa = document.querySelectorAll.bind(document);
           const nodeSize = 25;
+          const thresholdToReload = 100;
           let timerId = 0;
           let editor;
           let localMode = true;
           let groups = new Set();
           let data, nodeDataSet, edgeDataSet, expandedNodes = [], network;
           let clickedPosition;
-          let graph, nodeMap = new Map(), edgeMap = new Map();
+          let graph, nodeMap = new Map(), nodeLineMap = new Map(), edgeMap = new Map(), edgeLineMap = new Map();
           let edgeColorMap;
           let domain;
           let byProgram = false;
@@ -328,7 +331,7 @@
           function createLabelText(elem, props = null) {
               if(props != null) {
                   // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
-                return props.length ? props.map((prop) => prop == 'label' ? elem.labels : wrapText(elem.properties[prop])).filter((val) => val).join('\n') : ' ';
+                return props.length ? props.map((prop) => prop === 'id' ? elem.id : (prop === 'label' ? elem.labels : wrapText(elem.properties[prop]))).filter((val) => val).join('\n') : ' ';
               }
               else if (elem.id) // for nodes
                   return elem.id;
@@ -432,13 +435,81 @@
             return isNaN(str) && !isNaN(Date.parse(str))
           }
           
-      
           function updateGraph(input) {
               groups = new Set();
               edgeColorMap = {};
+
+              let newContent = editor.getValue();
+              let applyDiff = nodeDataSet && edgeDataSet;
+              let lineCount = 0;
+              let oldLineCount = 0;
+              let diffCount = 0;
+              if(applyDiff) {
+                let newNodeLineMap = new Map();
+                let newEdgeLineMap = new Map();
+                Diff.diffLines(oldContent, newContent).forEach(diff => {
+                  console.log(diff);
+                  if(diff.removed) {
+                    for(let i = 1; i <= diff.count; ++i) {
+                      let existingNode = nodeLineMap[oldLineCount + i];
+                      let existingEdge = edgeLineMap[oldLineCount + i];
+                      if(existingNode) {
+                        nodeDataSet.remove(existingNode);
+                      }
+                      if(existingEdge) {
+                        edgeDataSet.remove(existingEdge);
+                      }
+                    }
+                    diffCount += diff.count;
+                    oldLineCount += diff.count;
+                  }
+                  else if(diff.added) {
+                    let addedPg = pgParser.parse(diff.value);
+                    console.log(addedPg);
+                    addedPg.nodes.forEach(node => {
+                      node.line += lineCount;
+                      let visNode = toVisNode(node);
+                      nodeDataSet.update(visNode);
+                      newNodeLineMap[node.line] = node;
+                      nodeMap[node.id] = node;
+                    })
+                    graph.nodes = graph.nodes.concat(addedPg.nodes);
+                    addedPg.edges.forEach(edge => {
+                      edge.line += lineCount;
+                      let visEdge = toVisEdge(edge);
+                      edgeDataSet.update(visEdge);
+                      newEdgeLineMap[edge.line] = visEdge;
+                      edgeMap[visEdge.id] = edge;
+                    })
+                    graph.edges = graph.nodes.concat(addedPg.edges);
+                    diffCount += diff.count;
+                    lineCount += diff.count;
+                  } else {
+                    for(let i = 1; i <= diff.count; ++i) {
+                      let existingNode = nodeLineMap[oldLineCount + i];
+                      let existingEdge = edgeLineMap[oldLineCount + i];
+                      if(existingNode)
+                        existingNode.line = lineCount + i;
+                      if(existingEdge) {
+                        existingEdge.line = lineCount + i;
+                        edgeMap[existingEdge.id].line = existingEdge.line;
+                      }
+                      newNodeLineMap[lineCount + i] = existingNode;
+                      newEdgeLineMap[lineCount + i] = existingEdge;
+                    }
+                    lineCount += diff.count;
+                    oldLineCount += diff.count;
+                  }
+                });
+                nodeLineMap = newNodeLineMap;
+                edgeLineMap = newEdgeLineMap;
+              }
+              oldContent = newContent;
+              localStorage.setItem('pg', newContent);
+              if(applyDiff && diffCount < thresholdToReload) return;
+
       
               input = input || editor.getValue();
-              localStorage.setItem('pg', editor.getValue());
               if (typeof input === 'string' || input instanceof String) {
                   try {
                       graph = JSON.parse(input);
@@ -471,16 +542,15 @@
                 controller.onChange(onTimeLinePropertyController);
               }
 
-              graph.edges.forEach(edge => edgeMap[edge.id] = edge);
-              
-              nodeProps = new Set(['label']);
+              nodeProps = new Set(['id', 'label']);
               edgeProps = new Set(['label']);
               graph.nodes.forEach((node) => {
-                  nodeMap[node.id] = node;
-                  Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
+                nodeMap[node.id] = node;
+                nodeLineMap[node.line] = node;
+                Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
               });
               graph.edges.forEach((edge) => {
-                  Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
+                Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
               });
               
               const defaultPropsFilter = new RegExp('name|title', 'i');
@@ -511,6 +581,8 @@
                   }
                   let visEdge = toVisEdge(edge, edgeLabel, defaultEdgeProps);
                   edgeMap[visEdge.id] = edge;
+                  console.log(edge);
+                  edgeLineMap[edge.line] = visEdge;
                   return visEdge;
               }));
               // create a network
@@ -876,6 +948,9 @@
           q('#url-input').value = 'localhost:3000';
           // retrieveGraph();
           /*  updateGraph(); */
+
+
+          let oldContent = '';
 
           editor.on('change', (delta) => {
             if(!byProgram) {
