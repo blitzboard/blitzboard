@@ -355,6 +355,7 @@ Share!
           return `<table>${flattend_props.join('')}</table>`;
       }
   
+      /*
       function getRandomColor() {
           let letters = '0123456789ABCDEF';
           let color = '#';
@@ -363,7 +364,19 @@ Share!
           }
           return color;
       }
-  
+      */
+      // Create random colors, with str as seed, and with fixed saturation and lightness
+      function getRandomColor(str) {
+          let hash = 0;
+          if (str.length === 0) return hash;
+          for (let i = 0; i < str.length; i++) {
+              hash = str.charCodeAt(i) + ((hash << 5) - hash);
+              hash = hash & hash;
+          }
+          let hue = hash % 360;
+          return 'hsl(' + hue + ', 100%, 30%)';
+      }
+
       function retrieveGraph(node_id, add = false) {
           node_id = node_id || 1;
           domain = q('#url-input').value;
@@ -586,7 +599,7 @@ Share!
           edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
               const edgeLabel = edge.labels.join('_');
               if (!edgeColorMap[edgeLabel]) {
-                  edgeColorMap[edgeLabel] = getRandomColor();
+                  edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
               }
               let visEdge = toVisEdge(edge, edgeLabel, defaultEdgeProps);
               edgeMap[visEdge.id] = edge;
