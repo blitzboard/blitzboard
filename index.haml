@@ -347,13 +347,16 @@
               return `<table>${flattend_props.join('')}</table>`;
           }
 
-          function getRandomColor() {
-              let letters = '0123456789ABCDEF';
-              let color = '#';
-              for (let i = 0; i < 6; i++) {
-                  color += letters[Math.floor(Math.random() * 16)];
+          // Create random colors, with str as seed, and with fixed saturation and lightness
+          function getRandomColor(str) {
+              let hash = 0;
+              if (str.length === 0) return hash;
+              for (let i = 0; i < str.length; i++) {
+                  hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                  hash = hash & hash;
               }
-              return color;
+              let hue = hash % 360;
+              return 'hsl(' + hue + ', 100%, 30%)';
           }
       
           function retrieveGraph(node_id, add = false) {
@@ -553,13 +556,14 @@
                 Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
               });
               
-              const defaultPropsFilter = new RegExp('name|title', 'i');
+              const defaultNodePropsFilter = new RegExp('name|title', 'i');
+              const defaultEdgePropsFilter = new RegExp('label', 'i');
               let defaultNodeProps = displayedNodeProps();
               let defaultEdgeProps = displayedEdgeProps();
               
               if(defaultNodeProps.length == 0) { // Initial value
-                defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultPropsFilter.test(prop));
-                defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultPropsFilter.test(prop));
+                defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultNodePropsFilter.test(prop));
+                defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultEdgePropsFilter.test(prop));
               }
 
               
@@ -577,7 +581,7 @@
               edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
                   const edgeLabel = edge.labels.join('_');
                   if (!edgeColorMap[edgeLabel]) {
-                      edgeColorMap[edgeLabel] = getRandomColor();
+                      edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
                   }
                   let visEdge = toVisEdge(edge, edgeLabel, defaultEdgeProps);
                   edgeMap[visEdge.id] = edge;

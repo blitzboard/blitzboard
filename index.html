@@ -355,16 +355,6 @@ Share!
           return `<table>${flattend_props.join('')}</table>`;
       }
   
-      /*
-      function getRandomColor() {
-          let letters = '0123456789ABCDEF';
-          let color = '#';
-          for (let i = 0; i < 6; i++) {
-              color += letters[Math.floor(Math.random() * 16)];
-          }
-          return color;
-      }
-      */
       // Create random colors, with str as seed, and with fixed saturation and lightness
       function getRandomColor(str) {
           let hash = 0;
@@ -376,7 +366,7 @@ Share!
           let hue = hash % 360;
           return 'hsl(' + hue + ', 100%, 30%)';
       }
-
+  
       function retrieveGraph(node_id, add = false) {
           node_id = node_id || 1;
           domain = q('#url-input').value;
