@@ -561,13 +561,14 @@ Share!
             Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
           });
           
-          const defaultPropsFilter = new RegExp('name|title', 'i');
+          const defaultNodePropsFilter = new RegExp('name|title', 'i');
+          const defaultEdgePropsFilter = new RegExp('label', 'i');
           let defaultNodeProps = displayedNodeProps();
           let defaultEdgeProps = displayedEdgeProps();
           
           if(defaultNodeProps.length == 0) { // Initial value
-            defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultPropsFilter.test(prop));
-            defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultPropsFilter.test(prop));
+            defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultNodePropsFilter.test(prop));
+            defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultEdgePropsFilter.test(prop));
           }
   
           
