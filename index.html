@@ -163,6 +163,7 @@ Share!
       let timeProperties = new Set();
       let timeScale = 100.0;
       let lineStart = null, lineEnd = null, srcNode = null;
+      let listDisplayedNodeProps;
       const gui = new dat.GUI({hideable: false});
       const nodeFolder = gui.addFolder('Node');
       const edgeFolder = gui.addFolder('Edge');
@@ -178,6 +179,8 @@ Share!
             };
           })
         );
+        listDisplayedNodeProps = displayedProps;
+        //localStorage.setItem('displayedNodeProps', displayedProps);
       };
   
       function scrollToLine(line) {
@@ -947,11 +950,14 @@ Share!
       editor.setSize('100%', '100%');
   
       const urlParams = new URLSearchParams(window.location.search);
+      
       if(urlParams.get('pg')) {
         editor.setValue(urlParams.get('pg'));
       } else if(localStorage.getItem('pg')) {
         editor.setValue(localStorage.getItem('pg'));
       }
+  
+      
       document.addEventListener('mousemove', (e) => {
         clickedPosition = {x: e.clientX, y: e.clientY};
       });
@@ -990,7 +996,7 @@ Share!
       });
   
       q('#share-btn').addEventListener('click', () => {
-        let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}`;
+        let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}&displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}`;
         let data = [new ClipboardItem({ 'text/plain': new Blob([url], { type: "text/plain"})})];
         navigator.clipboard.write(data).then(function() {
           alert("Your graph is now on clipboard!")
@@ -1013,6 +1019,20 @@ Share!
       };
   
       $('#input-area').resizable({handles: "e", grid: [1, 10000]}).bind( "resize", onResize);
+  
+      if(urlParams.get('displayedNodeProps')) {
+        listDisplayedNodeProps = urlParams.get('displayedNodeProps');
+      } else if(localStorage.getItem('displayedNodeProps')) {
+        listDisplayedNodeProps = localStorage.getItem('displayedNodeProps');
+      }
+      if(listDisplayedNodeProps) {
+        nodeFolder.__controllers.forEach(con => {
+          if (listDisplayedNodeProps.includes(con.property)) {
+            con.__checkbox.checked = true;
+          }
+        });
+        onNodeControllerChange();
+      }
 </script>
 </body>
 </html>
