@@ -19,6 +19,7 @@
     %script{:src => "./lib/codemirror/simple.js"}
     %script{:src => "./lib/codemirror/pg_mode.js"}
     %script{:src => "./lib/codemirror/mark-selection.js"}
+    %script{:src => "./lib/util.js"}
     %script{:src => "./lib/diff.js"}
 
 
@@ -155,12 +156,13 @@
           let timeProperties = new Set();
           let timeScale = 100.0;
           let lineStart = null, lineEnd = null, srcNode = null;
-          let listDisplayedNodeProps;
+          let listDisplayedNodeProps, listDisplayedEdgeProps;
           const gui = new dat.GUI({hideable: false});
           const nodeFolder = gui.addFolder('Node');
           const edgeFolder = gui.addFolder('Edge');
           const timeLineFolder = gui.addFolder('TimeLine');
           const physicsController = gui.add({physics: false}, 'physics');
+          
 
           function onNodeControllerChange(){
             let displayedProps = displayedNodeProps();
@@ -173,6 +175,18 @@
             );
             localStorage.setItem('displayedNodeProps', displayedProps);
           };
+          
+          function onEdgeControllerChange(){
+            let displayedProps = displayedEdgeProps();
+
+            edgeDataSet.update(graph.edges.map((edge) => {
+                return { id: edge.properties.id ? edge.properties.id[0] : `${edge.from}-${edge.to}`,
+                 label: createLabelText(edge, displayedProps) };
+              }
+            ));
+            
+            localStorage.setItem('displayedEdgeProps', displayedProps);
+          }
 
           function scrollToLine(line) {
             editor.scrollIntoView({line, ch:0}, 200);
@@ -412,7 +426,6 @@
               domain = 'http://' + domain;
               const keywordPart = encodeURI(keyword.split(" ").map((word) => `\\"${word}\\"`).join(' AND '));
               const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
-              console.log(query);
               axios.get(domain + `query?q=${query}`).then((response) => {
                   expandedNodes = response.data.pg.nodes.map((node) => node.id);
                   
@@ -453,7 +466,6 @@
                 let newNodeLineMap = new Map();
                 let newEdgeLineMap = new Map();
                 Diff.diffLines(oldContent, newContent).forEach(diff => {
-                  console.log(diff);
                   if(diff.removed) {
                     for(let i = 1; i <= diff.count; ++i) {
                       let existingNode = nodeLineMap[oldLineCount + i];
@@ -470,7 +482,6 @@
                   }
                   else if(diff.added) {
                     let addedPg = pgParser.parse(diff.value);
-                    console.log(addedPg);
                     addedPg.nodes.forEach(node => {
                       node.line += lineCount;
                       let visNode = toVisNode(node);
@@ -587,7 +598,6 @@
                   }
                   let visEdge = toVisEdge(edge, edgeLabel, defaultEdgeProps);
                   edgeMap[visEdge.id] = edge;
-                  console.log(edge);
                   edgeLineMap[edge.line] = visEdge;
                   return visEdge;
               }));
@@ -607,16 +617,6 @@
                   controller.onChange(onNodeControllerChange);
                 }
               );
-              
-              const onEdgeControllerChange = () => {
-                let displayedProps = displayedEdgeProps();
-
-                edgeDataSet.update(graph.edges.map((edge) => {
-                    return { id: edge.properties.id ? edge.properties.id[0] : `${edge.from}-${edge.to}`,
-                     label: createLabelText(edge, displayedProps) };
-                  }
-                ));
-              }
               
               edgeProps.forEach(prop => {
                   const controller = edgeFolder.add({[prop]: defaultEdgeProps.includes(prop)}, prop)
@@ -883,7 +883,6 @@
                  }
               });
               network.on("stabilizationIterationsDone", function () {
-                  console.log('stabilized');
                   network.setOptions({physics: {enabled:physicsController.getValue()}});
               });
           }
@@ -940,14 +939,7 @@
           });
           editor.setSize('100%', '100%');
 
-          const urlParams = new URLSearchParams(window.location.search);
-          
-          if(urlParams.get('pg')) {
-            editor.setValue(urlParams.get('pg'));
-          } else if(localStorage.getItem('pg')) {
-            editor.setValue(localStorage.getItem('pg'));
-          }
-
+          editor.setValue(loadConfig('pg'));
           
           document.addEventListener('mousemove', (e) => {
             clickedPosition = {x: e.clientX, y: e.clientY};
@@ -957,7 +949,6 @@
           q('#url-input').value = 'localhost:3000';
           // retrieveGraph();
           /*  updateGraph(); */
-
 
           let oldContent = '';
 
@@ -987,7 +978,9 @@
           });
 
           q('#share-btn').addEventListener('click', () => {
-            let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}&displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}`;
+            let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}
+                       &displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}
+                       &displayedEdgeProps=${encodeURIComponent(listDisplayedEdgeProps)}`;
             let data = [new ClipboardItem({ 'text/plain': new Blob([url], { type: "text/plain"})})];
             navigator.clipboard.write(data).then(function() {
               alert("Your graph is now on clipboard!")
@@ -1010,19 +1003,22 @@
           };
 
           $('#input-area').resizable({handles: "e", grid: [1, 10000]}).bind( "resize", onResize);
+          
+          listDisplayedNodeProps = loadConfig('displayedNodeProps');
 
-          if(urlParams.get('displayedNodeProps')) {
-            listDisplayedNodeProps = urlParams.get('displayedNodeProps');
-          } else if(localStorage.getItem('displayedNodeProps')) {
-            listDisplayedNodeProps = localStorage.getItem('displayedNodeProps');
-          }
           if(listDisplayedNodeProps) {
             nodeFolder.__controllers.forEach(con => {
-              if (listDisplayedNodeProps.includes(con.property)) {
-                con.__checkbox.checked = true;
-              }
+              con.__checkbox.checked = listDisplayedNodeProps.includes(con.property);
             });
             onNodeControllerChange();
+          }
+          
+          listDisplayedEdgeProps = loadConfig('displayedEdgeProps');
+          if(listDisplayedEdgeProps) {
+            edgeFolder.__controllers.forEach(con => {
+              con.__checkbox.checked = listDisplayedEdgeProps.includes(con.property);
+            });
+            onEdgeControllerChange();
           }
           
 %script{:src => "./gui.js"}
