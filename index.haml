@@ -939,7 +939,9 @@
           });
           editor.setSize('100%', '100%');
 
-          editor.setValue(loadConfig('pg'));
+          if(loadConfig('pg')) {
+            editor.setValue(loadConfig('pg'));
+          }
           
           document.addEventListener('mousemove', (e) => {
             clickedPosition = {x: e.clientX, y: e.clientY};
