@@ -125,9 +125,11 @@
         -#%input#pgfile{:type => "file"}/
         %input#url-input.d-none/
         %textarea.vh-100#graph-input{:style => "height: 100%; width: 100%;"}
-          node1 :You name:"your name"
-          node2 :Graph type:"graph"
-          node1 -> node2 :Hello! on:"today"
+          I :person name:"your name"
+          You :person
+          Graph :graph
+          I -> Graph :say word:Hello date:today
+          You -> I :say word:Goodbye date:yesterday
       #graph-pane.vh-100
         #graph.bg-light.vh-100
       #share-btn.btn.btn-info
@@ -938,8 +940,11 @@
             mode: "pgMode",
           });
           editor.setSize('100%', '100%');
-
-          editor.setValue(loadConfig('pg'));
+          
+          let initialPg = loadConfig('pg');
+          if(initialPg) {
+            editor.setValue(initialPg);
+          }
           
           document.addEventListener('mousemove', (e) => {
             clickedPosition = {x: e.clientX, y: e.clientY};
@@ -1013,7 +1018,7 @@
             onNodeControllerChange();
           }
           
-          listDisplayedEdgeProps = loadConfig('displayedEdgeProps');
+          listDisplayedEdgeProps = loadConfig('displayedEdgeProps') || ['label', 'word']; // Show 'word' if pg is default
           if(listDisplayedEdgeProps) {
             edgeFolder.__controllers.forEach(con => {
               con.__checkbox.checked = listDisplayedEdgeProps.includes(con.property);
