@@ -191,6 +191,7 @@
           }
 
           function scrollToLine(line) {
+            byProgram = true;
             editor.scrollIntoView({line, ch:0}, 200);
             editor.setSelection({line, ch: Infinity}, {line, ch: 0});
             editor.focus();
@@ -958,6 +959,20 @@
               clearTimeout(timerId);
               localMode = true;
               timerId = setTimeout(updateGraph, 1000);
+            } else {
+              byProgram = false;
+            }
+          });
+          
+          editor.on('cursorActivity', (doc) => {
+            if(!byProgram) {
+              const node = nodeLineMap[doc.getCursor().line + 1];
+              const edge = edgeLineMap[doc.getCursor().line + 1];
+              if(node) {
+                network.selectNodes([node.id]);
+              } else if(edge){
+                network.selectEdges([edge.id]);
+              }
             } else {
               byProgram = false;
             }
