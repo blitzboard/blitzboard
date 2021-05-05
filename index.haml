@@ -269,7 +269,10 @@
             return null;
           }
       
-          function toVisNode(pgNode, group, props, extraOptions = null) {
+          function toVisNode(pgNode, props, extraOptions = null) {
+              const group = pgNode.labels.join('_');
+              groups.add(group);
+
               let x, y, fixed, width;
               ({x, y, fixed, width} = calcNodePosition(pgNode));
               
@@ -320,13 +323,17 @@
               return attrs;
           }
           
-          function toVisEdge(pgEdge, group, props) {
+          function toVisEdge(pgEdge, props) {
+              const edgeLabel = pgEdge.labels.join('_');
+              if (!edgeColorMap[edgeLabel]) {
+                  edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
+              }
               const id = pgEdge.properties.id ? pgEdge.properties.id[0] : `${pgEdge.from}-${pgEdge.to}`;
               return {
                   id: id,
                   from: pgEdge.from,
                   to: pgEdge.to,
-                  color: edgeColorMap[group],
+                  color: edgeColorMap[edgeLabel],
                   label: createLabelText(pgEdge, props),
                   title: createTitleText(pgEdge),
                   remoteId: id
@@ -587,9 +594,7 @@
 
               nodeDataSet = new vis.DataSet();
               nodeDataSet.add(graph.nodes.map((node) => {
-                  const groupName = node.labels.join('_');
-                  groups.add(groupName);
-                  return toVisNode(node, groupName, defaultNodeProps);
+                  return toVisNode(node, defaultNodeProps);
               }));
               
               updateTimeLineNodes();
@@ -599,7 +604,7 @@
                   if (!edgeColorMap[edgeLabel]) {
                       edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
                   }
-                  let visEdge = toVisEdge(edge, edgeLabel, defaultEdgeProps);
+                  let visEdge = toVisEdge(edge, defaultEdgeProps);
                   edgeMap[visEdge.id] = edge;
                   edgeLineMap[edge.line] = visEdge;
                   return visEdge;
@@ -630,7 +635,7 @@
               
               let options = {
                   groups: Object.keys(groups).reduce((acc, group) => {
-                      acc[group] = {color: getRandomColor()}
+                      acc[group] = {color: getRandomColor(group)}
                   }, {}),
                   layout: {
                       randomSeed: 1,
@@ -893,17 +898,11 @@
               graph.edges = graph.edges.concat(newEdges);
       
               nodeDataSet.add(newNodes.map((node) => {
-                  const groupName = node.labels.join('_');
-                  groups.add(groupName);
-                  return toVisNode(node, groupName, displayedNodeProps());
+                  return toVisNode(node, displayedNodeProps());
               }));
               
               edgeDataSet.add(newEdges.map((edge) => {
-                  const edgeLabel = edge.labels.join('_');
-                  if (!edgeColorMap[edgeLabel]) {
-                      edgeColorMap[edgeLabel] = getRandomColor();
-                  }
-                  let visEdge = toVisEdge(edge, edgeLabel, displayedEdgeProps());
+                  let visEdge = toVisEdge(edge, displayedEdgeProps());
                   edgeMap[visEdge.id] = edge;
                   return visEdge;
               }));
