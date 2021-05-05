@@ -7,6 +7,7 @@
     %link{:href => "./css/jquery-ui.min.css", :rel => "stylesheet"}/
     %link{:href => "./lib/codemirror/codemirror.css", :rel => "stylesheet"}/
     %link{:href => "./lib/monokai.css", :rel => "stylesheet"}/
+    %link{:href => "./lib/codemirror/addon/show-hint.css", :rel => "stylesheet"}/
     %script{:src => "./axios.min.js"}
     %script{:src => "./vis-network.min.js"}
     %script{:src => "./lib/dat.gui.min.js"}
@@ -19,6 +20,8 @@
     %script{:src => "./lib/codemirror/simple.js"}
     %script{:src => "./lib/codemirror/pg_mode.js"}
     %script{:src => "./lib/codemirror/mark-selection.js"}
+    %script{:src => "./lib/codemirror/addon/show-hint.js"}
+    %script{:src => "./lib/codemirror/addon/anyword-hint.js"}
     %script{:src => "./lib/util.js"}
     %script{:src => "./lib/diff.js"}
 
@@ -928,15 +931,22 @@
               reader.readAsText(f);
           };
 
+
           editor = CodeMirror.fromTextArea(q('#graph-input'), {
             lineNumbers: true,
             viewportMargin: Infinity,
             theme: "monokai",
             lineWrapping: true,
             mode: "pgMode",
+            extraKeys: {
+              Tab: 'autocomplete'
+            },
+            hintOptions: {
+              completeSingle: false
+            }
           });
           editor.setSize('100%', '100%');
-          
+         
           let initialPg = loadConfig('pg');
           if(initialPg) {
             editor.setValue(initialPg);
@@ -952,6 +962,10 @@
           /*  updateGraph(); */
 
           let oldContent = '';
+
+          editor.on("inputRead", (instance) => {
+            editor.execCommand('autocomplete', { completeSingle: false });
+          });
 
           editor.on('change', (delta) => {
             if(!byProgram) {
