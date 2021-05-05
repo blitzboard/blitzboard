@@ -983,15 +983,15 @@
           });
 
           q('#share-btn').addEventListener('click', () => {
-            let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}
-                       &displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}
-                       &displayedEdgeProps=${encodeURIComponent(listDisplayedEdgeProps)}`;
+            let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}` +
+                      `&displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}` +
+                      `&displayedEdgeProps=${encodeURIComponent(listDisplayedEdgeProps)}`;
             let data = [new ClipboardItem({ 'text/plain': new Blob([url], { type: "text/plain"})})];
             navigator.clipboard.write(data).then(function() {
               alert("Your graph is now on clipboard!")
             });
           });
-
+          
           
           q('#search-input').value = '情報通信';
           // searchGraph();
