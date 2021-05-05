@@ -659,21 +659,11 @@
               network = new vis.Network(container, data, options);
 
               let selectTimer = null;
-              network.on('selectNode', (e) => {
+              network.on('selectNode', (e) => { 
                   if (e.nodes.length > 0) {
-                    let line = nodeMap[e.nodes[0]].line - 1;
-                    if(localMode) {
-                      scrollToLine(line);
-                    }
-                    else
+                    if(!localMode) {
                       selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
-                  }
-              });
-
-              network.on('selectEdge', (e) => {
-                  if (e.nodes.length == 0 && e.edges.length > 0) {
-                    let line = edgeMap[e.edges[0]].line - 1;
-                    scrollToLine(line);
+                    }
                   }
               });
 
@@ -879,10 +869,16 @@
                       srcNode = null;
                       lineStart = null;
                       lineEnd = null;
+                    } else if(localMode) {
+                      let line = nodeMap[e.nodes[0]].line - 1;
+                      scrollToLine(line);
                     }
                     if(node && node.url)
                       window.open(node.url,'_blank');
-                 }
+                } else if(e.edges.length > 0) {
+                  let line = edgeMap[e.edges[0]].line - 1;
+                  scrollToLine(line);
+                }
               });
               network.on("stabilizationIterationsDone", function () {
                   network.setOptions({physics: {enabled:physicsController.getValue()}});
