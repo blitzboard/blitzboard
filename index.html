@@ -4,6 +4,7 @@
 <title>Hello Graph</title>
 <link crossorigin='anonymous' href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css' integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
+<link href='https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css' rel='stylesheet'>
 <link href='./css/jquery-ui.min.css' rel='stylesheet'>
 <link href='./lib/codemirror/codemirror.css' rel='stylesheet'>
 <link href='./lib/monokai.css' rel='stylesheet'>
@@ -334,6 +335,19 @@ Share!
               },
               fixedByTime: fixed
           };
+  
+          if(pgNode.properties.fa) {
+            let code = String.fromCharCode(parseInt(pgNode.properties.fa[0], 16));
+            attrs['shape'] = 'icon';
+            attrs['icon'] = {
+              face: 'Ionicons',
+              code: code,
+              size: 50,
+              weight: 'bold',
+              color: getRandomColor(group, '70%')
+            };
+          }
+          
           if(thumbnailUrl) {
             attrs['shape'] = 'image';
             attrs['image'] = thumbnailUrl;
@@ -400,7 +414,7 @@ Share!
       }
   
       // Create random colors, with str as seed, and with fixed saturation and lightness
-      function getRandomColor(str) {
+      function getRandomColor(str, brightness = '20%') {
           let hash = 0;
           if (str.length === 0) return hash;
           for (let i = 0; i < str.length; i++) {
@@ -408,7 +422,7 @@ Share!
               hash = hash & hash;
           }
           let hue = hash % 360;
-          return 'hsl(' + hue + ', 100%, 30%)';
+          return 'hsl(' + hue + `, 100%, ${brightness})`;
       }
   
       function retrieveGraph(node_id, add = false) {
@@ -661,11 +675,10 @@ Share!
               controller.onChange(onEdgeControllerChange);
             }
           );
-          
-          
+  
           let options = {
-              groups: Object.keys(groups).reduce((acc, group) => {
-                  acc[group] = {color: getRandomColor(group)}
+              groups: [...groups].reduce((acc, group) => {
+                  acc[group] = {color: getRandomColor(group, '70%')}; return acc;
               }, {}),
               layout: {
                   randomSeed: 1,
@@ -1061,10 +1074,25 @@ Share!
       });
   
       
-      
       q('#search-input').value = '情報通信';
       // searchGraph();
-      updateGraph();
+      if (document.fonts) {
+      // Decent browsers: Make sure the fonts are loaded.
+      document.fonts.load('normal normal 400 24px/1 "FontAwesome"')
+        .catch(
+          console.error.bind(console, "Failed to load Font Awesome 4.")
+        ).then(function () {
+          // create a network
+          updateGraph();
+        })
+        .catch(
+          console.error.bind(
+            console,
+            "Failed to render the network with Font Awesome 4."
+          )
+        );
+      }
+  
   
       function onResize(event, ui) {
         const totalWidth = $("#main-area").width();
