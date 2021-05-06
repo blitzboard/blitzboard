@@ -185,7 +185,8 @@
                 location: 'f2e9',
                 hackathon: 'f380'
               }
-            }
+            },
+            layout: 'hierarchical'
           };
           const gui = new dat.GUI({hideable: false});
           const nodeFolder = gui.addFolder('Node');
@@ -678,13 +679,24 @@
                 }
               );
 
+              let layout = {
+                randomSeed: 1
+              };
+              if(visualizeConfig.layout == 'hierarchical') {
+                layout = {
+                  hierarchical: {
+                    enabled: true,
+                    sortMethod: 'directed',
+                  }
+                };
+              }
+
               let options = {
                   groups: [...groups].reduce((acc, group) => {
                       acc[group] = {color: getRandomColor(group, '70%')}; return acc;
                   }, {}),
-                  layout: {
-                      randomSeed: 1,
-                  },
+                  layout:
+                    layout,
                   interaction: {
                       hover: true
                   },
