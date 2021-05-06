@@ -186,6 +186,16 @@ Share!
       let timeScale = 100.0;
       let lineStart = null, lineEnd = null, srcNode = null;
       let listDisplayedNodeProps, listDisplayedEdgeProps;
+      let visualizeConfig = {
+        node: {
+          icon: {
+            programmer: 'f3a0',
+            designer: 'f37b',
+            location: 'f2e9',
+            hackathon: 'f380'
+          }
+        }
+      };
       const gui = new dat.GUI({hideable: false});
       const nodeFolder = gui.addFolder('Node');
       const edgeFolder = gui.addFolder('Edge');
@@ -336,8 +346,9 @@ Share!
               fixedByTime: fixed
           };
   
-          if(pgNode.properties.fa) {
-            let code = String.fromCharCode(parseInt(pgNode.properties.fa[0], 16));
+          let icon;
+          if(icon = visualizeConfig.node.icon[group]) {
+            let code = String.fromCharCode(parseInt(icon, 16));
             attrs['shape'] = 'icon';
             attrs['icon'] = {
               face: 'Ionicons',
@@ -345,7 +356,7 @@ Share!
               size: 50,
               weight: 'bold',
               color: getRandomColor(group, '70%')
-            };
+            };              
           }
           
           if(thumbnailUrl) {
