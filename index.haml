@@ -163,7 +163,7 @@
           let groups = new Set();
           let data, nodeDataSet, edgeDataSet, expandedNodes = [], network;
           let clickedPosition;
-          let graph, nodeMap = new Map(), nodeLineMap = new Map(), edgeMap = new Map(), edgeLineMap = new Map();
+          let graph, nodeMap = {}, nodeLineMap = {}, edgeMap = {}, edgeLineMap = {};
           let edgeColorMap;
           let domain;
           let byProgram = false;
@@ -498,10 +498,12 @@
                       let existingNode = nodeLineMap[oldLineCount + i];
                       let existingEdge = edgeLineMap[oldLineCount + i];
                       if(existingNode) {
+                        delete nodeMap[existingNode.id];
                         nodeDataSet.remove(existingNode);
                         graph.nodes = graph.nodes.filter(item => item.id != existingNode.id);
                       }
                       if(existingEdge) {
+                        delete edgeMap[existingEdge.id];
                         edgeDataSet.remove(existingEdge);
                         graph.edges = graph.edges.filter(item => item.from != existingEdge.from && item.to != existingEdge.to);
                       }
