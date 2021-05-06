@@ -940,6 +940,20 @@
             mode: "pgMode",
           });
           editor.setSize('100%', '100%');
+
+          const urlParams = new URLSearchParams(window.location.search);
+          let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
+              edgePropInParam = urlParams.get('displayedEdgeProps');
+          if(pgInParam || nodePropInParam || edgePropInParam) {
+            if(pgInParam)
+              localStorage.setItem('pg', pgInParam);
+            if(nodePropInParam)
+              localStorage.setItem('displayedNodeProps', nodePropInParam);
+            if(edgePropInParam)
+              localStorage.setItem('displayedEdgeProps', edgePropInParam);
+            window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
+          }
+
           
           let initialPg = loadConfig('pg');
           if(initialPg) {
