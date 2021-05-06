@@ -485,9 +485,11 @@
                       let existingEdge = edgeLineMap[oldLineCount + i];
                       if(existingNode) {
                         nodeDataSet.remove(existingNode);
+                        graph.nodes = graph.nodes.filter(item => item.id != existingNode.id);
                       }
                       if(existingEdge) {
                         edgeDataSet.remove(existingEdge);
+                        graph.edges = graph.edges.filter(item => item.from != existingEdge.from && item.to != existingEdge.to);
                       }
                     }
                     diffCount += diff.count;
@@ -500,7 +502,7 @@
                       let visNode = toVisNode(node);
                       nodeDataSet.update(visNode);
                       newNodeLineMap[node.line] = node;
-                      nodeMap[node.id] = node;
+                      nodeMap[node.id] = node;                      
                     })
                     graph.nodes = graph.nodes.concat(addedPg.nodes);
                     addedPg.edges.forEach(edge => {
