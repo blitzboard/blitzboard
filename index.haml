@@ -93,11 +93,23 @@
       }
 
 
-      #share-btn {
+      .btn {
         position: absolute;
         width: 100px;
         height: 40px;
         right: 10px;
+        bottom: 10px;
+      }
+
+      #share-btn {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+      }
+
+      #export-btn {
+        position: absolute;
+        right: 130px;
         bottom: 10px;
       }
 
@@ -135,6 +147,8 @@
           You -> I :say word:Goodbye date:yesterday
       #graph-pane.vh-100
         #graph.bg-light.vh-100
+      #export-btn.btn.btn-success
+        Export
       #share-btn.btn.btn-info
         Share!
     :javascript
@@ -1030,6 +1044,11 @@
               alert("Your graph is now on clipboard!")
             });
           });
+
+          q('#export-btn').addEventListener('click', () => {
+            download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+          });
+
           
           
           q('#search-input').value = '情報通信';
