@@ -956,7 +956,20 @@ Share!
         }
       });
       editor.setSize('100%', '100%');
-     
+  
+      const urlParams = new URLSearchParams(window.location.search);
+      let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
+          edgePropInParam = urlParams.get('displayedEdgeProps');
+      if(pgInParam || nodePropInParam || edgePropInParam) {
+        if(pgInParam)
+          localStorage.setItem('pg', pgInParam);
+        if(nodePropInParam)
+          localStorage.setItem('displayedNodeProps', nodePropInParam);
+        if(edgePropInParam)
+          localStorage.setItem('displayedEdgeProps', edgePropInParam);
+        window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
+      }
+  
       let initialPg = loadConfig('pg');
       if(initialPg) {
         editor.setValue(initialPg);
@@ -1017,15 +1030,15 @@ Share!
       });
   
       q('#share-btn').addEventListener('click', () => {
-        let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}
-                   &displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}
-                   &displayedEdgeProps=${encodeURIComponent(listDisplayedEdgeProps)}`;
+        let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}` +
+                  `&displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}` +
+                  `&displayedEdgeProps=${encodeURIComponent(listDisplayedEdgeProps)}`;
         let data = [new ClipboardItem({ 'text/plain': new Blob([url], { type: "text/plain"})})];
         navigator.clipboard.write(data).then(function() {
           alert("Your graph is now on clipboard!")
         });
       });
-  
+      
       
       q('#search-input').value = '情報通信';
       // searchGraph();
