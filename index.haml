@@ -25,6 +25,7 @@
     %script{:src => "./lib/codemirror/addon/anyword-hint.js"}
     %script{:src => "./lib/util.js"}
     %script{:src => "./lib/diff.js"}
+    %script{:src => "./config.js"}
 
 
     :css
@@ -177,22 +178,6 @@
           let timeScale = 100.0;
           let lineStart = null, lineEnd = null, srcNode = null;
           let listDisplayedNodeProps, listDisplayedEdgeProps;
-          let visualizeConfig = {
-            node: {
-              icon: {
-                programmer: 'f3a0',
-                designer: 'f37b',
-                location: 'f2e9',
-                hackathon: 'f380'
-              }
-            },
-            // layout: 'hierarchical',
-            layout: 'custom',
-            layoutMapping: {
-              x: 'x',
-              y: 'y'
-            }            
-          };
           const gui = new dat.GUI({hideable: false});
           const nodeFolder = gui.addFolder('Node');
           const edgeFolder = gui.addFolder('Edge');
@@ -272,12 +257,12 @@
                 y = 0;
               }
               else {
-                if(visualizeConfig.layout == 'custom' &&
-                  (pgNode.properties[visualizeConfig.layoutMapping.x] ||
-                   pgNode.properties[visualizeConfig.layoutMapping.y])
+                if(config.layout == 'custom' &&
+                  (pgNode.properties[config.layoutMapping.x] ||
+                   pgNode.properties[config.layoutMapping.y])
                   ) {
-                  x = parseInt(pgNode.properties[visualizeConfig.layoutMapping.x][0]);
-                  y = parseInt(pgNode.properties[visualizeConfig.layoutMapping.y][0]);
+                  x = parseInt(pgNode.properties[config.layoutMapping.x][0]);
+                  y = parseInt(pgNode.properties[config.layoutMapping.y][0]);
                   fixed = true;
                 } else {
                   x = null;
@@ -353,7 +338,7 @@
               };
 
               let icon;
-              if(icon = visualizeConfig.node.icon[group]) {
+              if(icon = config.node.icon[group]) {
                 let code = String.fromCharCode(parseInt(icon, 16));
                 attrs['shape'] = 'icon';
                 attrs['icon'] = {
@@ -701,7 +686,7 @@
               let layout = {
                 randomSeed: 1
               };
-              if(visualizeConfig.layout == 'hierarchical') {
+              if(config.layout == 'hierarchical') {
                 layout = {
                   hierarchical: {
                     enabled: true,
