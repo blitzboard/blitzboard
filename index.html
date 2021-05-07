@@ -405,7 +405,7 @@ Share!
               remoteId: id,
               arrows: {
                 to: {
-                  enabled: pgEdge.direction == '->'
+                  enabled: pgEdge.direction == '->' || !pgEdge.undirected
                 },
               }
           }
@@ -951,7 +951,7 @@ Share!
                   let oldPg = editor.getValue();
                   newEdge.line = numberOfLines(oldPg) + 1;
                   byProgram = true;
-                  editor.setValue(oldPg + `\n"${newEdge.from}" -- "${newEdge.to}" ${newEdge.labels.map((label) => ':' + label).join(' ')} `);
+                  editor.setValue(oldPg + `\n"${newEdge.from}" -> "${newEdge.to}" ${newEdge.labels.map((label) => ':' + label).join(' ')} `);
                   scrollToLine(newEdge.line - 1);
                   srcNode = null;
                   lineStart = null;
