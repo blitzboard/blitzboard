@@ -359,9 +359,8 @@
                 attrs['icon'] = {
                   face: 'Ionicons',
                   code: code,
-                  size: 50,
                   weight: 'bold',
-                  color: getRandomColor(group, '70%')
+                  color: getRandomColor(group, '70%'),
                 };              
               }
               
@@ -407,7 +406,7 @@
               return str;
             if(Array.isArray(str))
               str = str[0];
-            const maxWidth = 20;
+            const maxWidth = 40;
             let newLineStr = asHtml ? "<br>" : "\n", res = '';
             while (str.length > maxWidth) {
               res += str.slice(0, maxWidth) + newLineStr;
@@ -428,11 +427,16 @@
           }
       
           function createTitleText(elem) {
+
               let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
                   acc.concat(`<tr><td>${prop[0]}</td><td>${wrapText(prop[1], true)}</td></tr>`), []);
               if (elem.id) // for nodes
-                  flattend_props.push(`<tr><td>label</td><td>${elem.labels.join(':')}</td></tr>`);
-              return `<table>${flattend_props.join('')}</table>`;
+              {
+                  let idText = `<tr><td><b>${elem.id}</b></tr></td>`;
+                  flattend_props.splice(0, 0, idText);
+                  flattend_props.push(`<tr><td width="100px">label</td><td width="200px">${wrapText(elem.labels.join(':'), true)}</td></tr>`);
+              }
+              return `<table style='fixed'>${flattend_props.join('')}</table>`;
           }
 
           // Create random colors, with str as seed, and with fixed saturation and lightness
@@ -732,6 +736,9 @@
                               type: "arrow"
                           },
                       }
+                  },
+                  nodes: {
+                      title: 'hover',
                   }
               };
               network = new vis.Network(container, data, options);
