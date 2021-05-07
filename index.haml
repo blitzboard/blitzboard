@@ -436,9 +436,8 @@
           }
 
           // Create random colors, with str as seed, and with fixed saturation and lightness
-          function getRandomColor(str, brightness = '20%') {
+          function getRandomColor(str, brightness = '40%') {
               let hash = 0;
-              if (str.length === 0) return hash;
               for (let i = 0; i < str.length; i++) {
                   hash = str.charCodeAt(i) + ((hash << 5) - hash);
                   hash = hash & hash;
@@ -667,9 +666,6 @@
 
               edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
                   const edgeLabel = edge.labels.join('_');
-                  if (!edgeColorMap[edgeLabel]) {
-                      edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
-                  }
                   let visEdge = toVisEdge(edge, defaultEdgeProps);
                   edgeMap[visEdge.id] = edge;
                   edgeLineMap[edge.line] = visEdge;
