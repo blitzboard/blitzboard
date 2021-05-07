@@ -195,7 +195,12 @@ Share!
             hackathon: 'f380'
           }
         },
-        layout: 'hierarchical'
+        // layout: 'hierarchical',
+        layout: 'custom',
+        layoutMapping: {
+          x: 'x',
+          y: 'y'
+        }            
       };
       const gui = new dat.GUI({hideable: false});
       const nodeFolder = gui.addFolder('Node');
@@ -276,10 +281,19 @@ Share!
             y = 0;
           }
           else {
-            x = null;
-            y = null;
-            fixed = false;
-            width = null;
+            if(visualizeConfig.layout == 'custom' &&
+              (pgNode.properties[visualizeConfig.layoutMapping.x] ||
+               pgNode.properties[visualizeConfig.layoutMapping.y])
+              ) {
+              x = parseInt(pgNode.properties[visualizeConfig.layoutMapping.x][0]);
+              y = parseInt(pgNode.properties[visualizeConfig.layoutMapping.y][0]);
+              fixed = true;
+            } else {
+              x = null;
+              y = null;
+              fixed = false;
+              width = null;
+            }
           }
           return {x, y, fixed, width};
       }
@@ -388,7 +402,12 @@ Share!
               color: edgeColorMap[edgeLabel],
               label: createLabelText(pgEdge, props),
               title: createTitleText(pgEdge),
-              remoteId: id
+              remoteId: id,
+              arrows: {
+                to: {
+                  enabled: pgEdge.direction == '->'
+                },
+              }
           }
       }
       
