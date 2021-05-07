@@ -387,9 +387,10 @@ Share!
               label: createLabelText(pgEdge, props),
               title: createTitleText(pgEdge),
               remoteId: id,
+              
               arrows: {
                 to: {
-                  enabled: pgEdge.direction == '->' || !pgEdge.undirected
+                  enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
                 },
               }
           }
