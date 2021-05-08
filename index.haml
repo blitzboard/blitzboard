@@ -325,7 +325,7 @@
                   title: createTitleText(pgNode),
                   fixed: {
                     x: fixed,
-                    y: false
+                    y: fixed
                   },
                   borderWidth: url ? 3 : 1,
                   url: url,
@@ -413,7 +413,6 @@
           }
       
           function createTitleText(elem) {
-
               let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
                   acc.concat(`<tr><td>${prop[0]}</td><td>${wrapText(prop[1], true)}</td></tr>`), []);
               if (elem.id) // for nodes
@@ -422,7 +421,7 @@
                   flattend_props.splice(0, 0, idText);
                   flattend_props.push(`<tr><td width="100px">label</td><td width="200px">${wrapText(elem.labels.join(':'), true)}</td></tr>`);
               }
-              return `<table style='fixed'>${flattend_props.join('')}</table>`;
+              return htmlTitle(`<table style='fixed'>${flattend_props.join('')}</table>`);
           }
 
           // Create random colors, with str as seed, and with fixed saturation and lightness
@@ -687,6 +686,7 @@
               let layout = {
                 randomSeed: 1
               };
+              
               if(config.layout == 'hierarchical') {
                 layout = {
                   hierarchical: {
@@ -766,7 +766,7 @@
                   if(e.nodes.length > 0) {
                     nodeDataSet.update({
                       id: e.nodes[0],
-                      fixed: timeLineEnabled && node.fixedByTime ? {x: true, y: false } : false
+                      fixed: node.fixedByTime ? {x: true, y: true } : false
                     });
                   }
               });
