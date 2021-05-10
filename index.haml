@@ -182,8 +182,6 @@
           const nodeFolder = gui.addFolder('Node');
           const edgeFolder = gui.addFolder('Edge');
           const timeLineFolder = gui.addFolder('TimeLine');
-          const physicsController = gui.add({physics: false}, 'physics');
-          
 
           function onNodeControllerChange(){
             let displayedProps = displayedNodeProps();
@@ -950,9 +948,6 @@
                   let line = edgeMap[e.edges[0]].line - 1;
                   scrollToLine(line);
                 }
-              });
-              network.on("stabilizationIterationsDone", function () {
-                  network.setOptions({physics: {enabled:physicsController.getValue()}});
               });
           }
       
