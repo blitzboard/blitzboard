@@ -7,10 +7,31 @@ let config = {
       hackathon: 'f380'
     }
   },
+  
+  // LAYOUT -- (default), hierarchical, custom
+  //
+  // cf. https://visjs.github.io/vis-network/docs/network/layout.html
+  //
+  /*
   layout: 'hierarchical',
-  //layout: 'custom',
-  layoutMapping: {
+  layoutSettings: {
+    enabled:true,
+    levelSeparation: 150,
+    nodeSpacing: 100,
+    treeSpacing: 200,
+    blockShifting: true,
+    edgeMinimization: true,
+    parentCentralization: true,
+    direction: 'UD',        // UD, DU, LR, RL
+    sortMethod: 'hubsize',  // hubsize, directed
+    shakeTowards: 'leaves'  // roots, leaves
+  },
+  */
+  /*
+  layout: 'custom',
+  layoutSettings: {
     x: 'x',
     y: 'y'
-  }            
+  },
+  */         
 };

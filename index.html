@@ -265,11 +265,11 @@ Share!
           }
           else {
             if(config.layout == 'custom' &&
-              (pgNode.properties[config.layoutMapping.x] ||
-               pgNode.properties[config.layoutMapping.y])
+              (pgNode.properties[config.layoutSettings.x] ||
+               pgNode.properties[config.layoutSettings.y])
               ) {
-              x = parseInt(pgNode.properties[config.layoutMapping.x][0]);
-              y = parseInt(pgNode.properties[config.layoutMapping.y][0]);
+              x = parseInt(pgNode.properties[config.layoutSettings.x][0]);
+              y = parseInt(pgNode.properties[config.layoutSettings.y][0]);
               fixed = true;
             } else {
               x = null;
@@ -695,17 +695,12 @@ Share!
           };
           
           if(config.layout == 'hierarchical') {
-            layout = {
-              hierarchical: {
-                enabled: true,
-                sortMethod: 'directed',
-              }
-            };
+            layout.hierarchical = config.layoutSettings;
           }
   
           let options = {
               groups: [...groups].reduce((acc, group) => {
-                  acc[group] = {color: getRandomColor(group, '70%')}; return acc;
+                  acc[group] = {color: getRandomColor(group, '20%')}; return acc;
               }, {}),
               layout:
                 layout,
