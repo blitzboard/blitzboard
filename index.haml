@@ -1056,22 +1056,14 @@
             if(!byProgram) {
               const node = nodeLineMap[doc.getCursor().line + 1];
               const edge = edgeLineMap[doc.getCursor().line + 1];
-              const animationOption = {
-                scale: 1.0,
-                animation:
-                {
-                  duration: 500,
-                  easingFuntcion: "easeInOutQuad"
-                }
-              };
 
               if(node) {
-                network.moveTo({ ...{position:  network.getPosition(node.id)}, ...animationOption });
+                scrollIntoView(network.getPosition(node.id));
                 network.selectNodes([node.id]);
               } else if(edge){
                 const from = network.getPosition(edge.from);
                 const to = network.getPosition(edge.to);
-                network.moveTo({ ...{ position: { x: (from.x + to.x) / 2, y: (from.y + to.y) /2 } }, ...animationOption });
+                scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
                 network.selectEdges([edge.id]);
               }
             } else {
