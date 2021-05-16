@@ -37,7 +37,7 @@ let config = {
   */
   /*
   layout: 'custom',
-  layoutMapping: {
+  layoutSettings: {
     x: 'x',
     y: 'y'
   },
