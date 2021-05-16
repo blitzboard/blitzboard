@@ -7,7 +7,15 @@ let config = {
       hackathon: 'f380'
     }
   },
-  layout: 'hierarchical',
+  edge: {
+    length: {
+      distance: 'value', 
+    },
+    width: {
+      flow: 'throughput',
+    }
+  },
+  //layout: 'hierarchical',
   //layout: 'custom',
   layoutMapping: {
     x: 'x',

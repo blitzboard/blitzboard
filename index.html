@@ -378,6 +378,14 @@ Share!
           if (!edgeColorMap[edgeLabel]) {
               edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
           }
+          let length = null, lengthProp, width = null, widthProp;
+          if(lengthProp = pgEdge.properties[config?.edge?.length?.[edgeLabel]]) {
+            length = lengthProp[0];
+          }
+          if(widthProp = pgEdge.properties[config?.edge?.width?.[edgeLabel]]) {
+            width = parseFloat(widthProp[0]);
+          }
+  
           const id = pgEdge.properties.id ? pgEdge.properties.id[0] : `${pgEdge.from}-${pgEdge.to}`;
           return {
               id: id,
@@ -387,7 +395,13 @@ Share!
               label: createLabelText(pgEdge, props),
               title: createTitleText(pgEdge),
               remoteId: id,
-              
+              length: length,
+              width: width,
+              hoverWidth: 0.5,
+              smooth:
+              {
+                roundness:1
+              },
               arrows: {
                 to: {
                   enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
