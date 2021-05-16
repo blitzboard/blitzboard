@@ -31,3 +31,20 @@ function moveNodeWithAnimation(nodeId, x, y) {
     if(!callback()) clearInterval(timer), 100
   });
 }
+
+let scrollAnimationTimerId = null;
+
+function scrollIntoView(position) {
+  clearTimeout(scrollAnimationTimerId);
+  scrollAnimationTimerId = setTimeout(() => {
+    const animationOption = {
+      scale: 1.0,
+      animation:
+      {
+        duration: 500,
+        easingFuntcion: "easeInOutQuad"
+      }
+    };
+    network.moveTo({ ...{position: position}, ...animationOption });
+  }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
+}

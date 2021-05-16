@@ -374,8 +374,16 @@ Share!
       function toVisEdge(pgEdge, props) {
           const edgeLabel = pgEdge.labels.join('_');
           if (!edgeColorMap[edgeLabel]) {
-              edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
+              edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, '20%');
           }
+          let length = null, lengthProp, width = null, widthProp;
+          if(lengthProp = pgEdge.properties[config?.edge?.length?.[edgeLabel]]) {
+            length = lengthProp[0];
+          }
+          if(widthProp = pgEdge.properties[config?.edge?.width?.[edgeLabel]]) {
+            width = parseFloat(widthProp[0]);
+          }
+  
           const id = pgEdge.properties.id ? pgEdge.properties.id[0] : `${pgEdge.from}-${pgEdge.to}`;
           return {
               id: id,
@@ -385,7 +393,13 @@ Share!
               label: createLabelText(pgEdge, props),
               title: createTitleText(pgEdge),
               remoteId: id,
-              
+              length: length,
+              width: width,
+              hoverWidth: 0.5,
+              smooth:
+              {
+                roundness:1
+              },
               arrows: {
                 to: {
                   enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
@@ -700,7 +714,7 @@ Share!
   
           let options = {
               groups: [...groups].reduce((acc, group) => {
-                  acc[group] = {color: getRandomColor(group, '20%')}; return acc;
+                  acc[group] = {color: getRandomColor(group, '70%')}; return acc;
               }, {}),
               layout:
                 layout,
@@ -1055,9 +1069,14 @@ Share!
         if(!byProgram) {
           const node = nodeLineMap[doc.getCursor().line + 1];
           const edge = edgeLineMap[doc.getCursor().line + 1];
+  
           if(node) {
+            scrollIntoView(network.getPosition(node.id));
             network.selectNodes([node.id]);
           } else if(edge){
+            const from = network.getPosition(edge.from);
+            const to = network.getPosition(edge.to);
+            scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
             network.selectEdges([edge.id]);
           }
         } else {
