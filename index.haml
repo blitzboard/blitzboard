@@ -256,11 +256,11 @@
               }
               else {
                 if(config.layout == 'custom' &&
-                  (pgNode.properties[config.layoutMapping.x] ||
-                   pgNode.properties[config.layoutMapping.y])
+                  (pgNode.properties[config.layoutSettings.x] ||
+                   pgNode.properties[config.layoutSettings.y])
                   ) {
-                  x = parseInt(pgNode.properties[config.layoutMapping.x][0]);
-                  y = parseInt(pgNode.properties[config.layoutMapping.y][0]);
+                  x = parseInt(pgNode.properties[config.layoutSettings.x][0]);
+                  y = parseInt(pgNode.properties[config.layoutSettings.y][0]);
                   fixed = true;
                 } else {
                   x = null;
@@ -365,7 +365,7 @@
           function toVisEdge(pgEdge, props) {
               const edgeLabel = pgEdge.labels.join('_');
               if (!edgeColorMap[edgeLabel]) {
-                  edgeColorMap[edgeLabel] = getRandomColor(edgeLabel);
+                  edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, '20%');
               }
               let length = null, lengthProp, width = null, widthProp;
               if(lengthProp = pgEdge.properties[config?.edge?.length?.[edgeLabel]]) {
@@ -700,12 +700,7 @@
               };
               
               if(config.layout == 'hierarchical') {
-                layout = {
-                  hierarchical: {
-                    enabled: true,
-                    sortMethod: 'directed',
-                  }
-                };
+                layout.hierarchical = config.layoutSettings;
               }
 
               let options = {
