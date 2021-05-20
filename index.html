@@ -568,6 +568,7 @@ Share!
               else if(diff.added) {
                 let addedPg = pgParser.parse(diff.value);
                 addedPg.nodes.forEach(node => {
+                  if(nodeMap[node.id]) return;
                   node.line += lineCount;
                   let visNode = toVisNode(node);
                   nodeDataSet.update(visNode);
