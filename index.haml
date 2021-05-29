@@ -349,7 +349,7 @@
                   face: 'Ionicons',
                   code: code,
                   weight: 'bold',
-                  color: getRandomColor(group, '70%'),
+                  color: getRandomColor(group, config.node.saturation || '100%', config.node.brightness || '40%'),
                 };              
               }
               
@@ -371,7 +371,7 @@
           function toVisEdge(pgEdge, props) {
               const edgeLabel = pgEdge.labels.join('_');
               if (!edgeColorMap[edgeLabel]) {
-                  edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, '20%');
+                  edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, config.edge.saturation || '0%', config.edge.brightness || '30%');
               }
               let length = null, lengthProp, width = null, widthProp;
               if(lengthProp = pgEdge.properties[config?.edge?.length?.[edgeLabel]]) {
@@ -443,14 +443,14 @@
           }
 
           // Create random colors, with str as seed, and with fixed saturation and lightness
-          function getRandomColor(str, brightness = '40%') {
+          function getRandomColor(str, saturation, brightness) {
               let hash = 0;
               for (let i = 0; i < str.length; i++) {
                   hash = str.charCodeAt(i) + ((hash << 5) - hash);
                   hash = hash & hash;
               }
               let hue = hash % 360;
-              return 'hsl(' + hue + `, 100%, ${brightness})`;
+              return 'hsl(' + hue + `, ${saturation}, ${brightness})`;
           }
       
           function retrieveGraph(node_id, add = false) {
@@ -712,7 +712,7 @@
 
               let options = {
                   groups: [...groups].reduce((acc, group) => {
-                      acc[group] = {color: getRandomColor(group, '70%')}; return acc;
+                      acc[group] = {color: getRandomColor(group, config.node.saturation || '100%', config.node.brightness || '40%')}; return acc;
                   }, {}),
                   layout:
                     layout,

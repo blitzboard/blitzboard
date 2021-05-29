@@ -5,7 +5,9 @@ let config = {
       designer: 'f37b',
       location: 'f2e9',
       hackathon: 'f380'
-    }
+    },
+    saturation: '100%',
+    brightness: '37%',
   },
   edge: {
     length: {
@@ -13,7 +15,9 @@ let config = {
     },
     width: {
       flow: 'throughput',
-    }
+    },
+    saturation: '0%',
+    brightness: '62%',
   },
   
   // LAYOUT -- (default), hierarchical, custom
