@@ -1069,10 +1069,22 @@ Share!
         window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
       }
   
+  
+      
+      let query = urlParams.get('query');
       let initialPg = loadConfig('pg');
-      if(initialPg) {
+      if(query) {
+        editor.setValue('');
+        axios.get(config.remoteUrl + query).then((response) => {
+          // editor.setValue(json2pg.translate(JSON.stringify(response.data)));
+          editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+          console.log(json2pg.translate(JSON.stringify(response.data.pg)));
+        });
+      }
+      else if(initialPg) {
         editor.setValue(initialPg);
       }
+  
       
       document.addEventListener('mousemove', (e) => {
         clickedPosition = {x: e.clientX, y: e.clientY};
