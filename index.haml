@@ -179,6 +179,7 @@
           let timeScale = 100.0;
           let lineStart = null, lineEnd = null, srcNode = null;
           let listDisplayedNodeProps, listDisplayedEdgeProps;
+          let groupColorMap = {};
           const gui = new dat.GUI({hideable: false});
           const nodeFolder = gui.addFolder('Node');
           const edgeFolder = gui.addFolder('Edge');
@@ -347,10 +348,10 @@
                 attrs['shape'] = 'icon';
                 attrs['icon'] = {
                   face: 'Ionicons',
+                  size: attrs.size * 1.5,
                   code: code,
-                  weight: 'bold',
-                  color: getRandomColor(group, config.node.saturation || '100%', config.node.brightness || '40%'),
-                };              
+                  color: 'white'
+                };
               }
               
               if(thumbnailUrl) {
@@ -710,10 +711,12 @@
                 layout.hierarchical = config.layoutSettings;
               }
 
-              let options = {
-                  groups: [...groups].reduce((acc, group) => {
+              groupColorMap =  [...groups].reduce((acc, group) => {
                       acc[group] = {color: getRandomColor(group, config.node.saturation || '100%', config.node.brightness || '40%')}; return acc;
-                  }, {}),
+              }, {});
+
+              let options = {
+                  groups: groupColorMap,
                   layout:
                     layout,
                   interaction: {
@@ -735,7 +738,7 @@
                               scaleFactor: 0.3,
                               type: "arrow"
                           },
-                      }
+                      },
                   },
                   nodes: {
                       title: 'hover',
@@ -869,6 +872,29 @@
                   }
                 }
               }
+
+              network.on("beforeDrawing", (ctx) => {
+                for(let node of graph.nodes) {
+                  node = nodeDataSet.get(node.id);
+                  if(node.shape == 'icon') {
+                    let position = network.getPosition(node.id);
+                    ctx.strokeStyle = "#294475";
+                    ctx.fillStyle = groupColorMap[node.group].color;
+                    ctx.beginPath();
+                    ctx.arc(
+                      position.x,
+                      position.y,
+                      node.size,
+                      0,
+                      2 * Math.PI,
+                      false
+                    );
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                  }
+                }
+              });
               
               network.on("afterDrawing", (ctx) => {
                 if(lineStart && lineEnd) {
