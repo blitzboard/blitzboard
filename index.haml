@@ -61,6 +61,11 @@
           background: rgba(0, 0, 0, 0.7) url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
       }
 
+      #pg-area {
+        height:50%
+      }
+
+
       #search-area {
         position: absolute;
         left: 50px;
@@ -82,13 +87,19 @@
         width: 50%;
       }
 
+      #config-area {
+        flex: 1;
+        height: 50%;
+      }
+
       #graph-pane {
         flex: 1;
       }
 
-      .ui-resizable-e {
+      .ui-resizable-handle {
         background: #cccccc;
       }
+      
       #main-area {
         display: inline-flex;
         width: 100%;
@@ -116,6 +127,13 @@
         bottom: 10px;
       }
 
+      #config-btn {
+        position: absolute;
+        left: 10px;
+        z-index: 999;
+        bottom: 10px;
+      }
+      
       span .highlighted {
         background: rgba(200, 200, 0, 0.5);
       }
@@ -140,16 +158,21 @@
             Search
     #main-area
       #input-area.vh-100
-        -#%input#pgfile{:type => "file"}/
-        %input#url-input.d-none/
-        %textarea.vh-100#graph-input{:style => "height: 100%; width: 100%;"}
-          I :person name:"your name"
-          You :person
-          Graph :graph
-          I -> Graph :say word:Hello date:today
-          You -> I :say word:Goodbye date:yesterday
+        #pg-area
+          -#%input#pgfile{:type => "file"}/
+          %input#url-input.d-none/
+          %textarea.vh-100#graph-input{:style => "height: 100%; width: 100%;"}
+            I :person name:"your name"
+            You :person
+            Graph :graph
+            I -> Graph :say word:Hello date:today
+            You -> I :say word:Goodbye date:yesterday
+        #config-area
+          %textarea#config-input{:style => "height: 100%; width: 100%;"}
       #graph-pane.vh-100
         #graph.bg-light.vh-100
+      #config-btn.btn.btn-info
+        Config▲
       #export-btn.btn.btn-success
         Export
       #share-btn.btn.btn-info
@@ -161,7 +184,7 @@
           const nodeSize = 25;
           const thresholdToReload = 100;
           let timerId = 0;
-          let editor;
+          let editor, configEditor;
           let localMode = true;
           let groups = new Set();
           let data, nodeDataSet, edgeDataSet, expandedNodes = [], network;
@@ -532,12 +555,12 @@
             return isNaN(str) && !isNaN(Date.parse(str))
           }
           
-          function updateGraph(input) {
+          function updateGraph(input, applyDiff = true) {
               groups = new Set();
               edgeColorMap = {};
 
               let newContent = editor.getValue();
-              let applyDiff = nodeDataSet && edgeDataSet;
+              applyDiff = applyDiff && nodeDataSet && edgeDataSet;
               let lineCount = 0;
               let oldLineCount = 0;
               let diffCount = 0;
@@ -878,8 +901,9 @@
                   node = nodeDataSet.get(node.id);
                   if(node.shape == 'icon') {
                     let position = network.getPosition(node.id);
+                    let color = groupColorMap[node.group]?.color || getRandomColor('', config.node.saturation || '100%', config.node.brightness || '40%');
                     ctx.strokeStyle = "#294475";
-                    ctx.fillStyle = groupColorMap[node.group].color;
+                    ctx.fillStyle = color;
                     ctx.beginPath();
                     ctx.arc(
                       position.x,
@@ -1030,7 +1054,6 @@
               reader.readAsText(f);
           };
 
-
           editor = CodeMirror.fromTextArea(q('#graph-input'), {
             lineNumbers: true,
             viewportMargin: Infinity,
@@ -1046,6 +1069,19 @@
           });
           editor.setSize('100%', '100%');
 
+          configEditor = CodeMirror.fromTextArea(q('#config-input'), {
+            viewportMargin: Infinity,
+            theme: "monokai",
+            lineWrapping: true,
+            extraKeys: {
+              Tab: 'autocomplete'
+            },
+            hintOptions: {
+              completeSingle: false
+            }
+          });
+          configEditor.setSize('100%', '100%');
+          
           const urlParams = new URLSearchParams(window.location.search);
           let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
               edgePropInParam = urlParams.get('displayedEdgeProps');
@@ -1066,15 +1102,21 @@
           if(query) {
             editor.setValue('');
             axios.get(config.remoteUrl + query).then((response) => {
-              // editor.setValue(json2pg.translate(JSON.stringify(response.data)));
               editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
-              console.log(json2pg.translate(JSON.stringify(response.data.pg)));
             });
           }
           else if(initialPg) {
             editor.setValue(initialPg);
           }
 
+          configEditor.setValue(JSON.stringify(config, null, 2));
+          configEditor.on('change', (delta) => {
+            clearTimeout(timerId);
+            timerId = setTimeout(() => {
+              config = JSON.parse(configEditor.getValue());
+              updateGraph(null, false);
+            }, 1000);            
+          });
           
           document.addEventListener('mousemove', (e) => {
             clickedPosition = {x: e.clientX, y: e.clientY};
@@ -1149,6 +1191,11 @@
             download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
           });
 
+          q('#config-btn').addEventListener('click', () => {
+            $('#pg-area').css('height', '50%');
+            $('#config-area').css('height', '50%');
+          });
+
           
           q('#search-input').value = '情報通信';
           // searchGraph();
@@ -1180,7 +1227,19 @@
             $('#graph-pane').css('width', (totalWidth - width) - 100);
           };
 
-          $('#input-area').resizable({handles: "e", grid: [1, 10000]}).bind( "resize", onResize);
+          function onConfigResize(event, ui) {
+            const totalHeight = $("#input-area").height();
+            let height = $("#pg-area").height();
+            if(height > totalHeight) {
+                height = totalHeight;
+            }
+            $('#pg-area').css('height', height);
+            $('#config-area').css('height', (totalHeight - height));
+          };
+
+
+          $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize);
+          $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
           
           listDisplayedNodeProps = loadConfig('displayedNodeProps');
 
