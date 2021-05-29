@@ -5,10 +5,6 @@
 // edgeFolder.open();
 // timeLineFolder.open();
 
-physicsController.onChange(() =>
-  network.setOptions({physics: {enabled:physicsController.getValue()}})
-);
-
 function updateForTime() {
   updateTimeLineNodes();
   if(timeLineEnabled) {
