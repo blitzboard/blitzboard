@@ -193,6 +193,8 @@ Share!
       const timeLineFolder = gui.addFolder('TimeLine');
   
       function onNodeControllerChange(){
+        if(!graph)
+          return;
         let displayedProps = displayedNodeProps();
         nodeDataSet.update(graph.nodes.map((node) => {
             return {
@@ -205,6 +207,9 @@ Share!
       };
       
       function onEdgeControllerChange(){
+        if(!graph)
+          return;
+  
         let displayedProps = displayedEdgeProps();
   
         edgeDataSet.update(graph.edges.map((edge) => {
