@@ -62,7 +62,7 @@
   }
   
   #pg-area {
-    height:50%
+    height:100%
   }
   
   
@@ -89,7 +89,7 @@
   
   #config-area {
     flex: 1;
-    height: 50%;
+    height: 0%;
   }
   
   #graph-pane {
@@ -109,29 +109,23 @@
   
   .btn {
     position: absolute;
-    width: 100px;
+    width: 40px;
     height: 40px;
     right: 10px;
     bottom: 10px;
   }
   
   #share-btn {
-    position: absolute;
     right: 10px;
-    bottom: 10px;
   }
   
   #export-btn {
-    position: absolute;
-    right: 130px;
-    bottom: 10px;
+    right: 60px;
   }
   
   #config-btn {
-    position: absolute;
     left: 10px;
     z-index: 999;
-    bottom: 10px;
   }
   
   span .highlighted {
@@ -181,14 +175,14 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 <div class='vh-100' id='graph-pane'>
 <div class='bg-light vh-100' id='graph'></div>
 </div>
-<div class='btn btn-info' id='config-btn'>
-Config▲
+<div class='btn btn-info' id='config-btn' title='Config'>
+<span class='ion-android-settings'></span>
 </div>
-<div class='btn btn-success' id='export-btn'>
-Export
+<div class='btn btn-success' id='export-btn' title='Export'>
+<span class='ion-android-download'></span>
 </div>
-<div class='btn btn-info' id='share-btn'>
-Share!
+<div class='btn btn-info' id='share-btn' title='Share'>
+<span class='ion-android-share-alt'></span>
 </div>
 </div>
 <script>
@@ -1213,10 +1207,15 @@ Share!
       });
   
       q('#config-btn').addEventListener('click', () => {
-        $('#pg-area').css('height', '50%');
-        $('#config-area').css('height', '50%');
+        let x = $('#config-area').css('height');
+        if ($('#config-area').css('height') == '0px') {
+          $('#pg-area').css('height', '50%');
+          $('#config-area').css('height', '50%');
+        } else {
+          $('#pg-area').css('height', '100%');
+          $('#config-area').css('height', '0%');
+        }
       });
-  
       
       q('#search-input').value = '情報通信';
       // searchGraph();
