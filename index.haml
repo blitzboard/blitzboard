@@ -9,6 +9,7 @@
     %link{:href => "./lib/codemirror/codemirror.css", :rel => "stylesheet"}/
     %link{:href => "./lib/monokai.css", :rel => "stylesheet"}/
     %link{:href => "./lib/codemirror/addon/show-hint.css", :rel => "stylesheet"}/
+    %link{:href => "./favicon.ico", :rel => "shortcut icon", :type => "image/x-icon"}/
     %script{:src => "./axios.min.js"}
     %script{:src => "./vis-network.min.js"}
     %script{:src => "./lib/dat.gui.min.js"}
@@ -746,6 +747,9 @@
                       hover: true
                   },
                   physics: {
+                    barnesHut: {
+                      springConstant: 0.016
+                    },
                     stabilization: {
                         enabled: false,
                         iterations: 200,
@@ -1109,11 +1113,15 @@
             editor.setValue(initialPg);
           }
 
+          if (loadConfig('config') != '') {
+            config = JSON.parse(loadConfig('config'));
+          }
           configEditor.setValue(JSON.stringify(config, null, 2));
           configEditor.on('change', (delta) => {
             clearTimeout(timerId);
             timerId = setTimeout(() => {
               config = JSON.parse(configEditor.getValue());
+              localStorage.setItem('config', configEditor.getValue());
               updateGraph(null, false);
             }, 1000);            
           });
