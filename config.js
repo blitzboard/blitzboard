@@ -1,10 +1,8 @@
 let config = {
   node: {
     icon: {
-      programmer: 'f3a0',
-      designer: 'f37b',
-      location: 'f2e9',
-      hackathon: 'f380'
+      person: 'f3a0',
+      graph: 'f341',
     },
     saturation: '100%',
     brightness: '37%',
@@ -19,11 +17,7 @@ let config = {
     saturation: '0%',
     brightness: '62%',
   },
-  
-  // LAYOUT -- (default), hierarchical, custom
-  //
-  // cf. https://visjs.github.io/vis-network/docs/network/layout.html
-  //
+
   /*
   layout: 'hierarchical',
   layoutSettings: {
@@ -38,13 +32,10 @@ let config = {
     sortMethod: 'hubsize',  // hubsize, directed
     shakeTowards: 'leaves'  // roots, leaves
   },
-  */
-  /*
   layout: 'custom',
   layoutSettings: {
     x: 'x',
     y: 'y'
   },
   */
-  remoteUrl: 'http://140.238.55.113:7000/'
 };

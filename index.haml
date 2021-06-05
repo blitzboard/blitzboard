@@ -1113,11 +1113,15 @@
             editor.setValue(initialPg);
           }
 
+          if (loadConfig('config') != '') {
+            config = JSON.parse(loadConfig('config'));
+          }
           configEditor.setValue(JSON.stringify(config, null, 2));
           configEditor.on('change', (delta) => {
             clearTimeout(timerId);
             timerId = setTimeout(() => {
               config = JSON.parse(configEditor.getValue());
+              localStorage.setItem('config', configEditor.getValue());
               updateGraph(null, false);
             }, 1000);            
           });
