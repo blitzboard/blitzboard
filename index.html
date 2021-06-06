@@ -245,10 +245,10 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         localStorage.setItem('displayedEdgeProps', displayedProps);
       }
   
-      function scrollToLine(line) {
+      function scrollToLine(loc) {
         byProgram = true;
-        editor.scrollIntoView({line, ch:0}, 200);
-        editor.setSelection({line, ch: Infinity}, {line, ch: 0});
+        editor.scrollIntoView({line: loc.start.line - 1, ch: loc.start.column - 1}, 200);
+        editor.setSelection({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1});
         editor.focus();
       }
       
@@ -563,7 +563,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         return isNaN(str) && !isNaN(Date.parse(str))
       }
       
-      function updateGraph(input, applyDiff = true) {
+      function updateGraph(input, applyDiff = false) {
           groups = new Set();
           edgeColorMap = {};
   
@@ -677,7 +677,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           edgeProps = new Set(['label']);
           graph.nodes.forEach((node) => {
             nodeMap[node.id] = node;
-            for(let i = node.line.start; i <= node.line.end; i++)
+            for(let i = node.location.start.line; i <= node.location.end.line; i++)
               nodeLineMap[i] = node;
             Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
           });
@@ -709,7 +709,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
               const edgeLabel = edge.labels.join('_');
               let visEdge = toVisEdge(edge, defaultEdgeProps);
               edgeMap[visEdge.id] = edge;
-              for(let i =  edgeline.start; i <= edge.line.end; i++)
+              for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
                   edgeLineMap[i] = visEdge;
               return visEdge;
           }));
@@ -1013,19 +1013,17 @@ You -> I :say word:Goodbye date:yesterday</textarea>
                   newEdge.line = numberOfLines(oldPg) + 1;
                   byProgram = true;
                   editor.setValue(oldPg + `\n"${newEdge.from}" -> "${newEdge.to}" ${newEdge.labels.map((label) => ':' + label).join(' ')} `);
-                  scrollToLine(newEdge.line - 1);
+                  // scrollToLine({start: newEdge.line, end: newEdge.line});
                   srcNode = null;
                   lineStart = null;
                   lineEnd = null;
                 } else if(localMode) {
-                  let line = nodeMap[e.nodes[0]].line - 1;
-                  scrollToLine(line);
+                  scrollToLine(nodeMap[e.nodes[0]].location);
                 }
                 if(node && node.url)
                   window.open(node.url,'_blank');
             } else if(e.edges.length > 0) {
-              let line = edgeMap[e.edges[0]].line - 1;
-              scrollToLine(line);
+              scrollToLine(edgeMap[e.edges[0]].location);
             }
           });
       }
