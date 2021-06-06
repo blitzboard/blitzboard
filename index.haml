@@ -1202,9 +1202,9 @@
               $('#pg-area').css('height', '100%');
               $('#config-area').css('height', '0%');
             }
+            onConfigResize(null, null);
           });
           
-          q('#search-input').value = '情報通信';
           // searchGraph();
           if (document.fonts) {
           // Decent browsers: Make sure the fonts are loaded.
@@ -1242,6 +1242,7 @@
             }
             $('#pg-area').css('height', height);
             $('#config-area').css('height', (totalHeight - height));
+            $('#config-btn').css('bottom', (totalHeight - height) + 10);
           };
 
 
