@@ -568,6 +568,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           edgeColorMap = {};
   
           let newContent = editor.getValue();
+          localStorage.setItem('pg', newContent);
           applyDiff = applyDiff && nodeDataSet && edgeDataSet;
           let lineCount = 0;
           let oldLineCount = 0;
@@ -636,7 +637,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
             edgeLineMap = newEdgeLineMap;
           }
           oldContent = newContent;
-          localStorage.setItem('pg', newContent);
           if(applyDiff && diffCount < thresholdToReload) return;
   
   
@@ -1127,8 +1127,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       configEditor.on('change', (delta) => {
         clearTimeout(timerId);
         timerId = setTimeout(() => {
-          config = JSON.parse(configEditor.getValue());
           localStorage.setItem('config', configEditor.getValue());
+          config = JSON.parse(configEditor.getValue());
           updateGraph(null, false);
         }, 1000);            
       });
