@@ -664,7 +664,8 @@
               edgeProps = new Set(['label']);
               graph.nodes.forEach((node) => {
                 nodeMap[node.id] = node;
-                nodeLineMap[node.line] = node;
+                for(let i = node.line.start; i <= node.line.end; i++)
+                  nodeLineMap[i] = node;
                 Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
               });
               graph.edges.forEach((edge) => {
@@ -695,7 +696,8 @@
                   const edgeLabel = edge.labels.join('_');
                   let visEdge = toVisEdge(edge, defaultEdgeProps);
                   edgeMap[visEdge.id] = edge;
-                  edgeLineMap[edge.line] = visEdge;
+                  for(let i =  edgeline.start; i <= edge.line.end; i++)
+                      edgeLineMap[i] = visEdge;
                   return visEdge;
               }));
               // create a network
