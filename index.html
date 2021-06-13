@@ -230,6 +230,29 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         localStorage.setItem('displayedNodeProps', displayedProps);
       };
       
+      function arrayEquals(a, b) {
+        return Array.isArray(a) &&
+          Array.isArray(b) &&
+          a.length === b.length &&
+          a.every((val, index) => val === b[index]);
+      }
+  
+      function nodeEquals(node1, node2) {
+        if(node1.id != node2.id || !arrayEquals(node1.labels, node2.labels)) {
+          return false;
+        }
+        let node1Keys = Object.keys(node1.properties);
+        let node2Keys = Object.keys(node2.properties);
+        if(node1Keys.length != node2Keys.length) {
+          return false;
+        }
+        for(let key of node1Keys) {
+          if(!arrayEquals(node1.properties[key], node2.properties[key]))
+            return false;
+        }
+        return true;
+      }
+      
       function onEdgeControllerChange(){
         if(!graph)
           return;
@@ -563,82 +586,61 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         return isNaN(str) && !isNaN(Date.parse(str))
       }
       
-      function updateGraph(input, applyDiff = false) {
+      function updateGraph(input, applyDiff = true) {
           groups = new Set();
           edgeColorMap = {};
   
           let newContent = editor.getValue();
           localStorage.setItem('pg', newContent);
           applyDiff = applyDiff && nodeDataSet && edgeDataSet;
-          let lineCount = 0;
-          let oldLineCount = 0;
-          let diffCount = 0;
           if(applyDiff) {
-            let newNodeLineMap = new Map();
-            let newEdgeLineMap = new Map();
-            Diff.diffLines(oldContent, newContent).forEach(diff => {
-              if(diff.removed) {
-                for(let i = 1; i <= diff.count; ++i) {
-                  let existingNode = nodeLineMap[oldLineCount + i];
-                  let existingEdge = edgeLineMap[oldLineCount + i];
-                  if(existingNode) {
-                    delete nodeMap[existingNode.id];
-                    nodeDataSet.remove(existingNode);
-                    graph.nodes = graph.nodes.filter(item => item.id != existingNode.id);
-                  }
-                  if(existingEdge) {
-                    delete edgeMap[existingEdge.id];
-                    edgeDataSet.remove(existingEdge);
-                    graph.edges = graph.edges.filter(item => item.from != existingEdge.from && item.to != existingEdge.to);
-                  }
-                }
-                diffCount += diff.count;
-                oldLineCount += diff.count;
-              }
-              else if(diff.added) {
-                let addedPg = pgParser.parse(diff.value);
-                addedPg.nodes.forEach(node => {
-                  if(nodeMap[node.id]) return;
-                  node.line += lineCount;
+            let newPg = pgParser.parse(newContent);
+            let nodesToDelete = new Set(Object.keys(nodeMap));
+            let edgesToDelete = new Set(Object.keys(edgeMap));
+  
+            nodeLineMap = {};
+            edgeLineMap = {};
+            newPg.nodes.forEach(node => {
+              let existingNode = nodeMap[node.id];
+              if(existingNode) {
+                if(!nodeEquals(node, existingNode)) {
+                  nodeDataSet.remove(existingNode);
                   let visNode = toVisNode(node);
                   nodeDataSet.update(visNode);
-                  newNodeLineMap[node.line] = node;
-                  nodeMap[node.id] = node;                      
-                })
-                graph.nodes = graph.nodes.concat(addedPg.nodes);
-                addedPg.edges.forEach(edge => {
-                  edge.line += lineCount;
-                  let visEdge = toVisEdge(edge);
-                  edgeDataSet.update(visEdge);
-                  newEdgeLineMap[edge.line] = visEdge;
-                  edgeMap[visEdge.id] = edge;
-                })
-                graph.edges = graph.edges.concat(addedPg.edges);
-                diffCount += diff.count;
-                lineCount += diff.count;
-              } else {
-                for(let i = 1; i <= diff.count; ++i) {
-                  let existingNode = nodeLineMap[oldLineCount + i];
-                  let existingEdge = edgeLineMap[oldLineCount + i];
-                  if(existingNode)
-                    existingNode.line = lineCount + i;
-                  if(existingEdge) {
-                    existingEdge.line = lineCount + i;
-                    edgeMap[existingEdge.id].line = existingEdge.line;
-                  }
-                  newNodeLineMap[lineCount + i] = existingNode;
-                  newEdgeLineMap[lineCount + i] = existingEdge;
                 }
-                lineCount += diff.count;
-                oldLineCount += diff.count;
+              } else {
+                let visNode = toVisNode(node);
+                nodeDataSet.add(visNode);
+              }
+              nodeMap[node.id] = node;
+              nodeLineMap[node.line] = node;
+              nodesToDelete.delete(node.id);
+              for(let i = node.location.start.line; i <= node.location.end.line; i++) {
+                nodeLineMap[i] = node;
               }
             });
-            nodeLineMap = newNodeLineMap;
-            edgeLineMap = newEdgeLineMap;
+  
+            newPg.edges.forEach(edge => {
+              let visEdge = toVisEdge(edge);
+              edgeDataSet.update(visEdge);
+              for(let i = edge.location.start.line; i <= edge.location.end.line; i++) {
+                edgeLineMap[i] = edge;
+              }
+              edgeMap[visEdge.id] = edge;
+              edgesToDelete.delete(visEdge.id);
+            });
+            nodesToDelete.forEach((nodeId) => {
+              nodeDataSet.remove(nodeMap[nodeId]);
+              delete nodeMap[nodeId];
+            });
+  
+            edgesToDelete.forEach((edgeId) => {
+              nodeDataSet.remove(edgeMap[edgeId]);
+              delete edgeMap[edgeId];
+            });
           }
           oldContent = newContent;
-          if(applyDiff && diffCount < thresholdToReload) return;
-  
+          if(applyDiff) return;
   
           input = input || editor.getValue();
           if (typeof input === 'string' || input instanceof String) {
@@ -776,9 +778,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
                       },
                   },
               },
-              nodes: {
-                  title: 'hover',
-              }
           };
           network = new vis.Network(container, data, options);
   
