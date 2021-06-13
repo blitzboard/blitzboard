@@ -626,6 +626,7 @@
                   nodeDataSet.remove(edgeMap[edgeId]);
                   delete edgeMap[edgeId];
                 });
+                graph = newPg;
               }
               oldContent = newContent;
               if(applyDiff) return;
@@ -899,7 +900,7 @@
               network.on("beforeDrawing", (ctx) => {
                 for(let node of graph.nodes) {
                   node = nodeDataSet.get(node.id);
-                  if(node.shape == 'icon') {
+                  if(node?.shape == 'icon') {
                     let position = network.getPosition(node.id);
                     let color = groupColorMap[node.group]?.color || getRandomColor('', config.node.saturation || '100%', config.node.brightness || '40%');
                     ctx.strokeStyle = "#294475";
