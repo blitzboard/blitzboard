@@ -389,17 +389,12 @@
               let icon;
               if(icon = config.node.icon[group]) {
                 let code = String.fromCharCode(parseInt(icon, 16));
-                attrs['shape'] = 'icon';
-                attrs['icon'] = {
+                attrs['customIcon'] = {
                   face: 'Ionicons',
                   size: attrs.size * 1.5,
                   code: code,
                   color: 'white'
                 };
-                attrs['margin'] = {
-                  top: attrs.size,
-                  bottom: attrs.size
-                }
               }
               
               if(thumbnailUrl) {
@@ -903,31 +898,19 @@
                 }
               }
 
-              network.on("beforeDrawing", (ctx) => {
+              network.on("afterDrawing", (ctx) => {
                 for(let node of graph.nodes) {
                   node = nodeDataSet.get(node.id);
-                  if(node?.shape == 'icon') {
+                  if(node?.customIcon) {
                     let position = network.getPosition(node.id);
-                    let color = groupColorMap[node.group]?.color || getRandomColor('', config.node.saturation || '100%', config.node.brightness || '40%');
-                    ctx.strokeStyle = "#294475";
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.arc(
-                      position.x,
-                      position.y,
-                      node.size,
-                      0,
-                      2 * Math.PI,
-                      false
-                    );
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
+                    ctx.font = `${node.customIcon.size}px Ionicons`;
+                    ctx.fillStyle = "white";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(node.customIcon.code, position.x, position.y);
                   }
                 }
-              });
-              
-              network.on("afterDrawing", (ctx) => {
+
                 if(lineStart && lineEnd) {
                   ctx.beginPath();
                   ctx.moveTo(lineStart.x, lineStart.y);
