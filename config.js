@@ -1,4 +1,6 @@
-let config = {
+let defaultConfig =
+`
+{
   node: {
     icon: {
       person: 'f3a0',
@@ -38,4 +40,5 @@ let config = {
     y: 'y'
   },
   */
-};
+}
+`

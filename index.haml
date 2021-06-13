@@ -22,6 +22,7 @@
     %script{:src => "./lib/codemirror/simple.js"}
     %script{:src => "./lib/codemirror/pg_mode.js"}
     %script{:src => "./lib/codemirror/mark-selection.js"}
+    %script{:src => "./lib/codemirror/javascript_mode.js"}
     %script{:src => "./lib/codemirror/addon/show-hint.js"}
     %script{:src => "./lib/codemirror/addon/anyword-hint.js"}
     %script{:src => "./lib/codemirror/addon/comment.js"}
@@ -196,6 +197,7 @@
           let timeInterval = 1;
           let timeProperties = new Set();
           let timeScale = 100.0;
+          let config = null;
           let lineStart = null, lineEnd = null, srcNode = null;
           let listDisplayedNodeProps, listDisplayedEdgeProps;
           let groupColorMap = {};
@@ -1071,6 +1073,7 @@
           configEditor = CodeMirror.fromTextArea(q('#config-input'), {
             viewportMargin: Infinity,
             theme: "monokai",
+            mode: 'javascript',
             lineWrapping: true,
             extraKeys: {
               Tab: 'autocomplete'
@@ -1107,20 +1110,26 @@
           else if(initialPg) {
             editor.setValue(initialPg);
           }
-
-          if (loadConfig('config') != '') {
-            config = JSON.parse(loadConfig('config'));
+          let configText = loadConfig('config');
+          if (!configText) {
+            configText = defaultConfig;
           }
-          configEditor.setValue(JSON.stringify(config, null, 2));
+          if(!config) {
+            try {
+              config = looseJsonParse(configText);
+            } catch (e) {
+              // do nothing
+            }
+          }
+          configEditor.setValue(configText);
           configEditor.on('change', (delta) => {
             clearTimeout(timerId);
             timerId = setTimeout(() => {
               localStorage.setItem('config', configEditor.getValue());
-              config = JSON.parse(configEditor.getValue());
+              config = looseJsonParse(configEditor.getValue());
               updateGraph(null, false);
             }, 1000);            
-          });
-          
+          });          
           document.addEventListener('mousemove', (e) => {
             clickedPosition = {x: e.clientX, y: e.clientY};
           });
