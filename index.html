@@ -615,10 +615,10 @@ You -> I :say word:Goodbye date:yesterday</textarea>
                 nodeDataSet.add(visNode);
               }
               nodeMap[node.id] = node;
-              nodeLineMap[node.line] = node;
               nodesToDelete.delete(node.id);
               for(let i = node.location.start.line; i <= node.location.end.line; i++) {
-                nodeLineMap[i] = node;
+                if(i < node.location.end.line || node.location.end.column > 1)
+                  nodeLineMap[i] = node;
               }
             });
   
@@ -626,7 +626,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
               let visEdge = toVisEdge(edge);
               edgeDataSet.update(visEdge);
               for(let i = edge.location.start.line; i <= edge.location.end.line; i++) {
-                edgeLineMap[i] = edge;
+                if(i < edge.location.end.line || edge.location.end.column > 1)
+                  edgeLineMap[i] = visEdge;
               }
               edgeMap[visEdge.id] = edge;
               edgesToDelete.delete(visEdge.id);
@@ -683,7 +684,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           graph.nodes.forEach((node) => {
             nodeMap[node.id] = node;
             for(let i = node.location.start.line; i <= node.location.end.line; i++)
-              nodeLineMap[i] = node;
+              if(i < node.location.end.line || node.location.end.column > 1)
+                nodeLineMap[i] = node;
             Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
           });
           graph.edges.forEach((edge) => {
@@ -715,6 +717,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
               let visEdge = toVisEdge(edge, defaultEdgeProps);
               edgeMap[visEdge.id] = edge;
               for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
+                if(i < edge.location.end.line || edge.location.end.column > 1)
                   edgeLineMap[i] = visEdge;
               return visEdge;
           }));
