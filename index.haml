@@ -213,15 +213,16 @@
           function onNodeControllerChange(){
             if(!graph)
               return;
-            let displayedProps = displayedNodeProps();
+            //let displayedProps = displayedNodeProps();
             nodeDataSet.update(graph.nodes.map((node) => {
                 return {
                   id: node.id,
-                  label: createLabelText(node, displayedProps)
+                  //label: createLabelText(node, displayedProps)
+                  label: createLabelText(node, config.node.caption)
                 };
               })
             );
-            localStorage.setItem('displayedNodeProps', displayedProps);
+            //localStorage.setItem('displayedNodeProps', displayedProps);
           };
           
           function arrayEquals(a, b) {
@@ -251,15 +252,17 @@
             if(!graph)
               return;
 
-            let displayedProps = displayedEdgeProps();
+            //let displayedProps = displayedEdgeProps();
 
             edgeDataSet.update(graph.edges.map((edge) => {
-                return { id: edge.properties.id ? edge.properties.id[0] : `${edge.from}-${edge.to}`,
-                 label: createLabelText(edge, displayedProps) };
-              }
-            ));
+                return {
+                  id: edge.properties.id ? edge.properties.id[0] : `${edge.from}-${edge.to}`,
+                  //label: createLabelText(edge, displayedProps)
+                  label: createLabelText(edge, config.edge.caption)
+                };
+            }));
             
-            localStorage.setItem('displayedEdgeProps', displayedProps);
+            //localStorage.setItem('displayedEdgeProps', displayedProps);
           }
 
           function scrollToLine(loc) {
@@ -350,7 +353,7 @@
             return null;
           }
       
-          function toVisNode(pgNode, props, extraOptions = null) {
+          function toVisNode(pgNode, props = config.node.caption, extraOptions = null) {
               const group = pgNode.labels.join('_');
               groups.add(group);
 
@@ -420,7 +423,7 @@
             return `${pgEdge.from}-${pgEdge.to}`;
           }
           
-          function toVisEdge(pgEdge, props, id) {
+          function toVisEdge(pgEdge, props = config.edge.caption, id) {
               const edgeLabel = pgEdge.labels.join('_');
               if (!edgeColorMap[edgeLabel]) {
                   edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, config.edge.saturation || '0%', config.edge.brightness || '30%');
@@ -471,14 +474,16 @@
           }
       
           function createLabelText(elem, props = null) {
-              if(props != null) {
-                  // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
+              if (props != null) {
+                // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
                 return props.length ? props.map((prop) => prop === 'id' ? elem.id : (prop === 'label' ? elem.labels : wrapText(elem.properties[prop]))).filter((val) => val).join('\n') : ' ';
               }
+              /*
               else if (elem.id) // for nodes
                   return elem.id;
               else // for edges
                   return elem.labels.join("\n");
+              */
           }
       
           function createTitleText(elem) {
@@ -539,7 +544,7 @@
               });
           }
           
-          
+          /*
           function displayedNodeProps() {
             return nodeFolder.__controllers.map((con) =>
                   con.__checkbox.checked ? con.property : null).filter((prop) => prop);
@@ -549,6 +554,7 @@
             return edgeFolder.__controllers.map((con) =>
                   con.__checkbox.checked ? con.property : null).filter((prop) => prop);
           }
+          */
           
           function isDateString(str) {
             return isNaN(str) && !isNaN(Date.parse(str))
@@ -596,7 +602,7 @@
                     id += '_';
                   }
                   newEdgeMap[id] = edge;
-                  let visEdge = toVisEdge(edge, null, id);
+                  let visEdge = toVisEdge(edge, config.edge.caption, id);
                   edgeDataSet.update(visEdge);
                   for(let i = edge.location.start.line; i <= edge.location.end.line; i++) {
                     if(i < edge.location.end.line || edge.location.end.column > 1)
@@ -667,18 +673,20 @@
                 Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
               });
               
-              const defaultNodePropsFilter = new RegExp('name|title', 'i');
-              const defaultEdgePropsFilter = new RegExp('label', 'i');
-              let defaultNodeProps = displayedNodeProps();
-              let defaultEdgeProps = displayedEdgeProps();
-              
+              //const defaultNodePropsFilter = new RegExp('name|title', 'i');
+              //const defaultEdgePropsFilter = new RegExp('label', 'i');
+              //let defaultNodeProps = displayedNodeProps();
+              //let defaultEdgeProps = displayedEdgeProps();
+              let defaultNodeProps = config.node.caption;
+              let defaultEdgeProps = config.edge.caption;
+              /*
               if(defaultNodeProps.length == 0) { // Initial value
                 defaultNodeProps = Array.from(nodeProps).filter((prop) => defaultNodePropsFilter.test(prop));
                 defaultEdgeProps = Array.from(edgeProps).filter((prop) => defaultEdgePropsFilter.test(prop));
               }
-
+              */
               
-              if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
+              //if(defaultNodeProps.length == 0) defaultNodeProps = ['id'];
 
               nodeDataSet = new vis.DataSet();
               nodeDataSet.add(graph.nodes.map((node) => {
@@ -1054,10 +1062,12 @@
           if(pgInParam || nodePropInParam || edgePropInParam) {
             if(pgInParam)
               localStorage.setItem('pg', pgInParam);
+            /*
             if(nodePropInParam)
               localStorage.setItem('displayedNodeProps', nodePropInParam);
             if(edgePropInParam)
               localStorage.setItem('displayedEdgeProps', edgePropInParam);
+            */
             window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
           }
 
@@ -1264,6 +1274,7 @@
           $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize).bind("create", onResize);
           $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
           
+          /*
           listDisplayedNodeProps = loadConfig('displayedNodeProps');
 
           if(listDisplayedNodeProps) {
@@ -1280,3 +1291,4 @@
             });
             onEdgeControllerChange();
           }
+          */
