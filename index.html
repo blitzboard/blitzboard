@@ -25,7 +25,6 @@
 <script src='./lib/codemirror/javascript_mode.js'></script>
 <script src='./lib/codemirror/addon/show-hint.js'></script>
 <script src='./lib/codemirror/addon/anyword-hint.js'></script>
-<script src='./lib/codemirror/addon/comment.js'></script>
 <script src='./lib/util.js'></script>
 <script src='./lib/diff.js'></script>
 <script src='./config.js'></script>
@@ -126,8 +125,11 @@
   }
   
   #config-btn {
-    left: 10px;
     z-index: 999;
+  }
+  
+  #reset-config-btn {
+    z-index: 995;
   }
   
   span .highlighted {
@@ -179,6 +181,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 </div>
 <div class='btn btn-info' id='config-btn' title='Config'>
 <span class='ion-android-settings'></span>
+</div>
+<div class='btn btn-info' id='reset-config-btn' title='Reset Config'>
+<span class='ion-android-refresh'></span>
 </div>
 <div class='btn btn-success' id='export-btn' title='Export'>
 <span class='ion-android-download'></span>
@@ -424,8 +429,12 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           attrs = Object.assign(attrs, extraOptions);
           return attrs;
       }
+  
+      function toNodePairString(pgEdge) {
+        return `${pgEdge.from}-${pgEdge.to}`;
+      }
       
-      function toVisEdge(pgEdge, props) {
+      function toVisEdge(pgEdge, props, id) {
           const edgeLabel = pgEdge.labels.join('_');
           if (!edgeColorMap[edgeLabel]) {
               edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, config.edge.saturation || '0%', config.edge.brightness || '30%');
@@ -438,7 +447,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
             width = parseFloat(widthProp[0]);
           }
   
-          const id = pgEdge.properties.id ? pgEdge.properties.id[0] : `${pgEdge.from}-${pgEdge.to}`;
           return {
               id: id,
               from: pgEdge.from,
@@ -510,34 +518,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           return 'hsl(' + hue + `, ${saturation}, ${brightness})`;
       }
   
-      function retrieveGraph(node_id, add = false) {
-          node_id = node_id || 1;
-          domain = q('#url-input').value;
-          if (!domain.endsWith('/'))
-              domain += '/';
-          domain = 'http://' + domain;
-          if(add) {
-            const existing = nodeDataSet.get(node_id);
-            nodeDataSet.update({
-              id: node_id,
-              shape: existing.fixedByTime ? existing.shape : 'text',
-              size: 25,
-              fixed: true
-            });
-          }
-          // TODO: use query which does not modify of backend
-          const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${node_id}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`;
-          axios.get(domain + `query?q=${subquery}`).then((response) => {
-              if (add) {
-                  addGraph(response.data.pg);
-                  expandedNodes.push(node_id.toString());
-              } else {
-                  expandedNodes = [node_id.toString()];
-                  updateGraph(response.data.pg);
-              }
-          });
-      }
-      
       function setSearchState(searching) {
         const icon =  q('#search-icon');
         if(searching) {
@@ -598,7 +578,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           if(applyDiff) {
             let newPg = pgParser.parse(newContent);
             let nodesToDelete = new Set(Object.keys(nodeMap));
-            let edgesToDelete = new Set(Object.keys(edgeMap));
+            let newEdgeMap = {};
+  
+            let newMapFromNodePairToEdges = {};
   
             nodeLineMap = {};
             edgeLineMap = {};
@@ -623,26 +605,31 @@ You -> I :say word:Goodbye date:yesterday</textarea>
             });
   
             newPg.edges.forEach(edge => {
-              let visEdge = toVisEdge(edge);
+              let id = toNodePairString(edge);
+              while(newEdgeMap[id]) {
+                id += '_';
+              }
+              newEdgeMap[id] = edge;
+              let visEdge = toVisEdge(edge, null, id);
               edgeDataSet.update(visEdge);
               for(let i = edge.location.start.line; i <= edge.location.end.line; i++) {
                 if(i < edge.location.end.line || edge.location.end.column > 1)
                   edgeLineMap[i] = visEdge;
               }
-              edgeMap[visEdge.id] = edge;
-              edgesToDelete.delete(visEdge.id);
             });
             nodesToDelete.forEach((nodeId) => {
               nodeDataSet.remove(nodeMap[nodeId]);
               delete nodeMap[nodeId];
             });
   
-            
-            edgesToDelete.forEach((edgeId) => {
-              edgeDataSet.remove(edgeId);
-              delete edgeMap[edgeId];
-            });
+            let edgesToDelete = [];
+            for(let edgeId of Object.keys(edgeMap)) {
+              if(!newEdgeMap[edgeId]) {
+                edgeDataSet.remove(edgeId);
+              }
+            }
   
+            edgeMap = newEdgeMap;
             graph = newPg;
           }
           oldContent = newContent;
@@ -713,14 +700,19 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           }));
           
           updateTimeLineNodes();
-  
+          edgeMap = {};
           edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
               const edgeLabel = edge.labels.join('_');
-              let visEdge = toVisEdge(edge, defaultEdgeProps);
+              let id = toNodePairString(edge);
+              while(edgeMap[id]) {
+                id += '_';
+              }
+              let visEdge = toVisEdge(edge, defaultEdgeProps, id);
               edgeMap[visEdge.id] = edge;
               for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
                 if(i < edge.location.end.line || edge.location.end.column > 1)
                   edgeLineMap[i] = visEdge;
+  
               return visEdge;
           }));
           // create a network
@@ -1023,25 +1015,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           });
       }
   
-      function addGraph(newGraph) {
-          let newNodes = newGraph.nodes.filter((n) => !nodeDataSet._data.has(n.id));
-          let newEdges = newGraph.edges.filter((e) => !(expandedNodes.includes(e.from) || expandedNodes.includes(e.to)));
-          graph.nodes = graph.nodes.concat(newNodes);
-          graph.edges = graph.edges.concat(newEdges);
-  
-          nodeDataSet.add(newNodes.map((node) => {
-              return toVisNode(node, displayedNodeProps());
-          }));
-          
-          edgeDataSet.add(newEdges.map((edge) => {
-              let visEdge = toVisEdge(edge, displayedEdgeProps());
-              edgeMap[visEdge.id] = edge;
-              return visEdge;
-          }));
-  
-      }
-      
-  
       function handleFileSelect(evt) {
           let files = evt.target.files; // FileList object
           // use the 1st file from the list
@@ -1248,6 +1221,12 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         }
         onConfigResize(null, null);
       });
+  
+      q('#reset-config-btn').addEventListener('click', () => {
+        configEditor.setValue(defaultConfig);
+      });
+  
+      onConfigResize(null, null);
       
       // searchGraph();
       if (document.fonts) {
@@ -1267,7 +1246,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         );
       }
   
-  
       function onResize(event, ui) {
         const totalWidth = $("#main-area").width();
         let width = $("#input-area").width();
@@ -1276,6 +1254,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
             $('#input-area').css('width', width);
         }
         $('#graph-pane').css('width', (totalWidth - width) - 100);
+        onConfigResize(null, null);
       };
   
       function onConfigResize(event, ui) {
@@ -1284,13 +1263,19 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         if(height > totalHeight) {
             height = totalHeight;
         }
+        let left = $("#pg-area").width() - 50;
+        let bottom = (totalHeight - height) + 10;
         $('#pg-area').css('height', height);
         $('#config-area').css('height', (totalHeight - height));
-        $('#config-btn').css('bottom', (totalHeight - height) + 10);
+        $('#config-btn').css('bottom', bottom);
+        $('#config-btn').css('left', left);
+        $('#reset-config-btn').css('left', left);
+        $('#reset-config-btn').css('bottom', bottom - 70);
       };
+      
   
   
-      $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize);
+      $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize).bind("create", onResize);
       $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
       
       listDisplayedNodeProps = loadConfig('displayedNodeProps');
