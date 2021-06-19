@@ -25,7 +25,6 @@
     %script{:src => "./lib/codemirror/javascript_mode.js"}
     %script{:src => "./lib/codemirror/addon/show-hint.js"}
     %script{:src => "./lib/codemirror/addon/anyword-hint.js"}
-    %script{:src => "./lib/codemirror/addon/comment.js"}
     %script{:src => "./lib/util.js"}
     %script{:src => "./lib/diff.js"}
     %script{:src => "./config.js"}
@@ -127,8 +126,11 @@
       }
 
       #config-btn {
-        left: 10px;
         z-index: 999;
+      }
+
+      #reset-config-btn {
+        z-index: 995;
       }
       
       span .highlighted {
@@ -170,6 +172,8 @@
         #graph.bg-light.vh-100
       #config-btn.btn.btn-info{:title => "Config"}
         %span{:class => "ion-android-settings"}
+      #reset-config-btn.btn.btn-info{:title => "Reset Config"}
+        %span{:class => "ion-android-refresh" }
       #export-btn.btn.btn-success{:title => "Export"}
         %span{:class => "ion-android-download"}
       #share-btn.btn.btn-info{:title => "Share"}
@@ -1174,6 +1178,12 @@
             }
             onConfigResize(null, null);
           });
+
+          q('#reset-config-btn').addEventListener('click', () => {
+            configEditor.setValue(defaultConfig);
+          });
+
+          onConfigResize(null, null);
           
           // searchGraph();
           if (document.fonts) {
@@ -1193,7 +1203,6 @@
             );
           }
 
-
           function onResize(event, ui) {
             const totalWidth = $("#main-area").width();
             let width = $("#input-area").width();
@@ -1202,6 +1211,7 @@
                 $('#input-area').css('width', width);
             }
             $('#graph-pane').css('width', (totalWidth - width) - 100);
+            onConfigResize(null, null);
           };
 
           function onConfigResize(event, ui) {
@@ -1210,13 +1220,19 @@
             if(height > totalHeight) {
                 height = totalHeight;
             }
+            let left = $("#pg-area").width() - 50;
+            let bottom = (totalHeight - height) + 10;
             $('#pg-area').css('height', height);
             $('#config-area').css('height', (totalHeight - height));
-            $('#config-btn').css('bottom', (totalHeight - height) + 10);
+            $('#config-btn').css('bottom', bottom);
+            $('#config-btn').css('left', left);
+            $('#reset-config-btn').css('left', left);
+            $('#reset-config-btn').css('bottom', bottom - 70);
           };
+          
 
 
-          $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize);
+          $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize).bind("create", onResize);
           $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
           
           listDisplayedNodeProps = loadConfig('displayedNodeProps');
