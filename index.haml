@@ -624,10 +624,12 @@
                   delete nodeMap[nodeId];
                 });
 
+                
                 edgesToDelete.forEach((edgeId) => {
-                  nodeDataSet.remove(edgeMap[edgeId]);
+                  edgeDataSet.remove(edgeId);
                   delete edgeMap[edgeId];
                 });
+
                 graph = newPg;
               }
               oldContent = newContent;
@@ -986,7 +988,7 @@
                       };
                       graph.edges.push(newEdge);
                       let visEdge = toVisEdge(newEdge);
-                      edgeMap[visEdge.id] = newEdge
+                      edgeMap[visEdge.id] = newEdge;
                       edgeDataSet.add(visEdge);
 
                       let oldPg = editor.getValue();
