@@ -1123,27 +1123,30 @@
             let pg = pgParser.parse(editor.getValue());
             let output = "";
             pg.nodes.forEach(node => {
+              let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
               let query = "";
               query = query + "INSERT INTO <graph_name> ";
-              query = query + "VERTEX v LABELS (" + node.labels[0] + ") "; // Restriction: single vertex label
-              query = query + "PROPERTIES ( ";
-              query = query + "v.id = '" + node.id + "' "; // ID is stored as a string property
+              query = query + "VERTEX v LABELS (\"" + node_label.toUpperCase() + "\") "; // Restriction: single vertex label
+              query = query + "PROPERTIES (";
+              query = query + "v.id = '" + node.id + "'"; // ID is stored as a string property
               for (let entry of Object.entries(node.properties)) { 
-                query = query + ", v." + entry[0] + " = '" + entry[1] + "' "; // values are always stored as sting
+                query = query + ", v.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
               }
               query = query + ");";
               output = output + query + '\n';
             });
             pg.edges.forEach(edge => {
+              let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
               let query = "";
               query = query + "INSERT INTO <graph_name> "
-              query = query + "EDGE e BETWEEN src AND dst LABELS (" + edge.labels[0] + ") " // Restriction: single vertex label
-              query = query + "PROPERTIES ( "
-              query = query + "e.direction = '" + edge.direction + "' "; // ID is stored as a string property
+              query = query + "EDGE e BETWEEN src AND dst LABELS (\"" + edge_label.toUpperCase() + "\") " // Restriction: single vertex label
+              query = query + "PROPERTIES ("
+              query = query + "e.direction = '" + edge.direction + "'";
               for (let entry of Object.entries(edge.properties)) { 
-                query = query + ", e." + entry[0] + " = '" + entry[1] + " "; // values are always stored as sting
+                query = query + ", e.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
               }
               query = query + ") ";
+              query = query + "FROM MATCH (src) ON <graph_name>, MATCH (dst) ON <graph_name> ";
               query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
               output = output + query + '\n';
             });
