@@ -1275,6 +1275,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       
   
   
+      window.onresize = onResize;
       $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize).bind("create", onResize);
       $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
       
