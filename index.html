@@ -1017,14 +1017,16 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       const urlParams = new URLSearchParams(window.location.search);
       let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
           edgePropInParam = urlParams.get('displayedEdgeProps');
-      if(pgInParam || nodePropInParam || edgePropInParam) {
+      let configInParam = urlParams.get('config');
+      if(pgInParam || nodePropInParam || edgePropInParam || configInParam) {
         if(pgInParam)
           localStorage.setItem('pg', pgInParam);
+        if(configInParam)
+          localStorage.setItem('config', configInParam);
         window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
       }
   
   
-      
       let query = urlParams.get('query');
       let initialPg = loadConfig('pg');
       if(query) {
@@ -1036,7 +1038,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       else if(initialPg) {
         editor.setValue(initialPg);
       }
+  
       let configText = loadConfig('config');
+  
       if (!configText) {
         configText = defaultConfig;
       }
@@ -1119,8 +1123,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
       q('#share-btn').addEventListener('click', () => {
         let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}` +
-                  `&displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}` +
-                  `&displayedEdgeProps=${encodeURIComponent(listDisplayedEdgeProps)}`;
+                  `&config=${encodeURIComponent(configEditor.getValue())}`;
         navigator.clipboard.writeText(url).then(function() {
           alert("Your graph is now on clipboard!")
         });
