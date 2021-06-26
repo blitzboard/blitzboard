@@ -1,6 +1,7 @@
 !!!
 %html
   %head
+    %meta{:charset => "utf-8"}
     %title Hello Graph
     %link{:crossorigin => "anonymous", :href => "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css", :integrity => "sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh", :rel => "stylesheet"}/
     %link{:href => "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css", :rel => "stylesheet"}/
@@ -1157,8 +1158,7 @@
             let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}` +
                       `&displayedNodeProps=${encodeURIComponent(listDisplayedNodeProps)}` +
                       `&displayedEdgeProps=${encodeURIComponent(listDisplayedEdgeProps)}`;
-            let data = [new ClipboardItem({ 'text/plain': new Blob([url], { type: "text/plain"})})];
-            navigator.clipboard.write(data).then(function() {
+            navigator.clipboard.writeText(url).then(function() {
               alert("Your graph is now on clipboard!")
             });
           });
