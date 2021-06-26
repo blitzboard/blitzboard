@@ -2,6 +2,7 @@ let defaultConfig =
 `
 {
   node: {
+    caption: ['id', 'name'],
     icon: {
       person: 'f3a0',
       graph: 'f341',
@@ -10,6 +11,7 @@ let defaultConfig =
     brightness: '37%',
   },
   edge: {
+    caption: ['label', 'date'],
     length: {
       distance: 'value', 
     },
