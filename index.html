@@ -1222,7 +1222,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       });
   
       q('#reset-config-btn').addEventListener('click', () => {
-        configEditor.setValue(defaultConfig);
+        if(confirm("Really reset config?"))
+          configEditor.setValue(defaultConfig);
       });
   
       onConfigResize(null, null);
