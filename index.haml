@@ -120,6 +120,15 @@
       span .highlighted {
         background: rgba(200, 200, 0, 0.5);
       }
+      
+      span .syntax-error {
+        background: rgba(255, 0, 0, 0.7);
+        border-bottom: red;
+      }
+      
+      span .syntax-error-line {
+        background: rgba(255, 0, 0, 0.4);
+      }
 
       .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
 
@@ -170,6 +179,7 @@
           let edgeColorMap;
           let domain;
           let byProgram = false;
+          let markers = [];
           let displayedTimeProps = ["submittedDate"];
           let timeLineEnabled = false;
           let nodeProps, edgeProps;
@@ -519,6 +529,28 @@
             return isNaN(str) && !isNaN(Date.parse(str))
           }
           
+          function tryPgParse(pg) {
+            for(let marker of markers)
+              marker.clear();
+            markers = [];
+            try {
+              let result = pgParser.parse(pg);
+              return result;
+            } catch(e) {
+              console.log(e);
+              if (!e.hasOwnProperty('location')) 
+                throw(e);
+              let loc = e.location;
+              // Mark leading characters in the error line
+              markers.push(editor.markText({line: loc.start.line - 1, ch: 0}, {line: loc.start.line - 1, ch: loc.start.column - 1}, {className: 'syntax-error-line', message: e.message}));
+              markers.push(editor.markText({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1}, {className: 'syntax-error', message: e.message}));
+              // Mark following characters in the error line
+              markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
+                 {className: 'syntax-error-line', message: e.message}));
+              return null;
+            }
+          }
+          
           function updateGraph(input, applyDiff = true) {
               groups = new Set();
               edgeColorMap = {};
@@ -527,7 +559,10 @@
               localStorage.setItem('pg', newContent);
               applyDiff = applyDiff && nodeDataSet && edgeDataSet;
               if(applyDiff) {
-                let newPg = pgParser.parse(newContent);
+                
+                let newPg = tryPgParse(newContent);
+                if(!newPg)
+                  return;
                 let nodesToDelete = new Set(Object.keys(nodeMap));
                 let newEdgeMap = {};
 
@@ -592,7 +627,7 @@
                       graph = JSON.parse(input);
                   } catch (err) {
                       if (err instanceof SyntaxError)
-                          graph = pgParser.parse(input);
+                          graph = tryPgParse(input);
                       else
                           throw err;
                   }
