@@ -11,6 +11,7 @@
 <link href='./lib/monokai.css' rel='stylesheet'>
 <link href='./lib/codemirror/addon/show-hint.css' rel='stylesheet'>
 <link href='./favicon.ico' rel='shortcut icon' type='image/x-icon'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css' rel='stylesheet'>
 <script src='./axios.min.js'></script>
 <script src='./vis-network.min.js'></script>
 <!-- /%script{:src => "./lib/dat.gui.min.js"} -->
@@ -31,6 +32,7 @@
 <script src='./config.js'></script>
 <script src='./gui.js'></script>
 <script src='./animation.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js'></script>
 <style>
   #network-popUp {
       display: none;
@@ -556,6 +558,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           // Mark following characters in the error line
           markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
              {className: 'syntax-error-line', message: e.message}));
+          toastr.error(e.message, 'SyntaxError', {preventDuplicates: true})
           return null;
         }
       }
