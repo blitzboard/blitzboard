@@ -545,8 +545,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           marker.clear();
         markers = [];
         try {
-          let result = pgParser.parse(pg);
-          return result;
+          return pgParser.parse(pg);
         } catch(e) {
           console.log(e);
           if (!e.hasOwnProperty('location')) 
@@ -558,7 +557,18 @@ You -> I :say word:Goodbye date:yesterday</textarea>
           // Mark following characters in the error line
           markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
              {className: 'syntax-error-line', message: e.message}));
-          toastr.error(e.message, 'SyntaxError', {preventDuplicates: true})
+          toastr.error(e.message, 'PG SyntaxError', {preventDuplicates: true})
+          return null;
+        }
+      }
+      
+      
+      function tryJsonParse(json) {
+        try {
+          return looseJsonParse(json);
+        } catch(e) {
+          console.log(e);
+          toastr.error(e, 'JSON SyntaxError', {preventDuplicates: true})
           return null;
         }
       }
@@ -1083,18 +1093,14 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         configText = defaultConfig;
       }
       if(!config) {
-        try {
-          config = looseJsonParse(configText);
-        } catch (e) {
-          // do nothing
-        }
+        config = tryJsonParse(configText);
       }
       configEditor.setValue(configText);
       configEditor.on('change', (delta) => {
         clearTimeout(timerId);
         timerId = setTimeout(() => {
           localStorage.setItem('config', configEditor.getValue());
-          config = looseJsonParse(configEditor.getValue());
+          config = tryJsonParse(configEditor.getValue());
           updateGraph(null, false);
         }, 1000);            
       });          
