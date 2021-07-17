@@ -15,7 +15,6 @@
     %link{:href => "https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css", :rel => "stylesheet"}/
     %script{:src => "./axios.min.js"}
     %script{:src => "./vis-network.min.js"}
-    //%script{:src => "./lib/dat.gui.min.js"}
     %script{:src => "./manipulations.js"}
     %script{:src => "./lib/jquery-3.5.1.min.js"}
     %script{:src => "./lib/jquery-ui.min.js"}
@@ -108,6 +107,10 @@
         right: 10px;
       }
 
+      #embed-btn {
+        right: 110px;
+      }
+
       #export-btn {
         right: 60px;
       }
@@ -162,1111 +165,236 @@
         %span{:class => "ion-android-settings"}
       #reset-config-btn.btn.btn-info{:title => "Reset Config"}
         %span{:class => "ion-android-refresh" }
+      #embed-btn.btn.btn-success{:title => "Embed"}
+        %span{:class => "ion-share-outline"}
       #export-btn.btn.btn-success{:title => "Export"}
         %span{:class => "ion-android-download"}
       #share-btn.btn.btn-info{:title => "Share"}
         %span{:class => "ion-android-share-alt"}
+    %script{:src => "./hello_graph.js"}
     :javascript
-      'use strict';
-          const q = document.querySelector.bind(document);
-          const qa = document.querySelectorAll.bind(document);
-          const nodeSize = 25;
-          const thresholdToReload = 100;
-          let timerId = 0;
-          let editor, configEditor;
-          let localMode = true;
-          let groups = new Set();
-          let data, nodeDataSet, edgeDataSet, expandedNodes = [], network;
-          let clickedPosition;
-          let graph, nodeMap = {}, nodeLineMap = {}, edgeMap = {}, edgeLineMap = {};
-          let edgeColorMap;
-          let domain;
-          let byProgram = false;
-          let markers = [];
-          let displayedTimeProps = ["submittedDate"];
-          let timeLineEnabled = false;
-          let nodeProps, edgeProps;
-          let minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
-          let timeInterval = 1;
-          let timeProperties = new Set();
-          let timeScale = 100.0;
-          let config = null;
-          let lineStart = null, lineEnd = null, srcNode = null;
-          let listDisplayedNodeProps, listDisplayedEdgeProps;
-          let groupColorMap = {};
-          /*
-          const gui = new dat.GUI({hideable: false});
-          const nodeFolder = gui.addFolder('Node');
-          const edgeFolder = gui.addFolder('Edge');
-          const timeLineFolder = gui.addFolder('TimeLine');
-          */
-
-          /*
-          function onNodeControllerChange(){
-            if(!graph)
-              return;
-            nodeDataSet.update(graph.nodes.map((node) => {
-                return {
-                  id: node.id,
-                  label: createLabelText(node, config.node.caption)
-                };
-            }));
-          };
-          */
-          
-          function arrayEquals(a, b) {
-            return Array.isArray(a) &&
-              Array.isArray(b) &&
-              a.length === b.length &&
-              a.every((val, index) => val === b[index]);
-          }
-
-          function nodeEquals(node1, node2) {
-            if(node1.id != node2.id || !arrayEquals(node1.labels, node2.labels)) {
-              return false;
-            }
-            let node1Keys = Object.keys(node1.properties);
-            let node2Keys = Object.keys(node2.properties);
-            if(node1Keys.length != node2Keys.length) {
-              return false;
-            }
-            for(let key of node1Keys) {
-              if(!arrayEquals(node1.properties[key], node2.properties[key]))
-                return false;
-            }
-            return true;
-          }
-          
-          /*
-          function onEdgeControllerChange(){
-            if(!graph)
-              return;
-
-            edgeDataSet.update(graph.edges.map((edge) => {
-                return {
-                  id: edge.properties.id ? edge.properties.id[0] : `${edge.from}-${edge.to}`,
-                  label: createLabelText(edge, config.edge.caption)
-                };
-            }));
-          }
-          */
-
-          function scrollToLine(loc) {
-            byProgram = true;
-            editor.scrollIntoView({line: loc.start.line - 1, ch: loc.start.column - 1}, 200);
-            editor.setSelection({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1});
-            editor.focus();
-          }
-          
-          /*
-          function updateTimeLineNodes() {
-              if(timeLineEnabled) {
-                let nodeCountWithTime = 0;
-                graph.nodes.forEach(node => {
-                  for(let prop of displayedTimeProps) {
-                    let time = node.properties[prop];
-                    if(time) {
-                      ++nodeCountWithTime;
-                      time = new Date(time);
-                      minTime = time < minTime ? time : minTime;
-                      maxTime = time > maxTime ? time : maxTime;
-                    }
-                  }
-                });
-                timeInterval = maxTime.getTime() - minTime.getTime();
-                timeScale = nodeCountWithTime * 100;
-              }
-          }
-          */
-          
-          function calcNodePosition(pgNode) {
-              let x, y, fixed, width;
-              /*
-              if(timeLineEnabled) {
-                x = null;
-                fixed = false;
-                let positions = [];
-                for(let prop of displayedTimeProps) {
-                  if(pgNode.properties[prop] && timeInterval > 0) {
-                    positions.push(timeScale * ((new Date(pgNode.properties[prop]).getTime()) - minTime.getTime()) * 1.0 / timeInterval - timeScale * 0.5);
-                  }
-                }
-                if(positions.length > 0) {
-                  fixed = true;
-                  let max = Math.max(...positions), min = Math.min(...positions);
-                  x = (max + min) / 2;
-                  width = max - min; 
-                } else {
-                  x = 0;
-                }
-                y = 0;
-              }
-              else {
-              */
-                if(config.layout == 'custom' &&
-                  (pgNode.properties[config.layoutSettings.x] ||
-                   pgNode.properties[config.layoutSettings.y])
-                  ) {
-                  x = parseInt(pgNode.properties[config.layoutSettings.x][0]);
-                  y = parseInt(pgNode.properties[config.layoutSettings.y][0]);
-                  fixed = true;
-                } else {
-                  x = null;
-                  y = null;
-                  fixed = false;
-                  width = null;
-                }
-              //}
-              return {x, y, fixed, width};
-          }
-          
-          function retrieveHttpUrl(node) {
-            let candidates = [];
-            for(let entry of Object.entries(node.properties)) { 
-              for(let prop of entry[1]) {
-                if(typeof(prop) === 'string' && (prop.startsWith("https://") || prop.startsWith("http://"))) {
-                  if(entry[0].toLowerCase() == 'url')
-                    return prop;
-                  candidates.push([entry[0], prop]);
-                }
-              }
-            }
-            return candidates[0];
-          }
-          
-          function retrieveThumbnailUrl(node) {
-            for(let entry of Object.entries(node.properties)) {
-              if(entry[0].toLowerCase() == 'thumbnail') {
-                return entry[1][0]
-              }
-            }
-            return null;
-          }
-      
-          function toVisNode(pgNode, props = config.node.caption, extraOptions = null) {
-              const group = pgNode.labels.join('_');
-              groups.add(group);
-
-              let x, y, fixed, width;
-              ({x, y, fixed, width} = calcNodePosition(pgNode));
-              
-              let url = retrieveHttpUrl(pgNode);
-              let thumbnailUrl = retrieveThumbnailUrl(pgNode);
-              let expanded = expandedNodes.includes(pgNode.id);
-              
-              let degree =  pgNode.properties['degree'];
-              if(degree !== undefined) {
-                degree = degree[0];
-              } else {
-                degree = 2; // assume degree to be two (default)
-              }
-
-              let attrs = {
-                  id: pgNode.id,
-                  group: group,
-                  label: createLabelText(pgNode, props),
-                  shape: fixed ? 'square' : (degree === 1 || expanded ? 'text' : 'dot'),
-                  size: expanded ? 25 : (2 + degree * 8),
-                  degree: degree,
-                  title: createTitleText(pgNode),
-                  fixed: {
-                    x: fixed,
-                    y: fixed
-                  },
-                  borderWidth: url ? 3 : 1,
-                  url: url,
-                  x: x,
-                  y: y,
-                  font: {
-                    color: url ? 'blue' : 'black'
-                  },
-                  fixedByTime: fixed
-              };
-
-              let icon;
-              if(icon = config.node.icon[group]) {
-                let code = String.fromCharCode(parseInt(icon, 16));
-                attrs['customIcon'] = {
-                  face: 'Ionicons',
-                  size: attrs.size * 1.5,
-                  code: code,
-                  color: 'white'
-                };
-              }
-              
-              if(thumbnailUrl) {
-                attrs['shape'] = 'image';
-                attrs['image'] = thumbnailUrl;
-              }
-              if(width) {
-                attrs['shape'] = 'box';
-                attrs['widthConstraint'] = {
-                  minimum: width,
-                  maximum: width
-                }
-              }
-              attrs = Object.assign(attrs, extraOptions);
-              return attrs;
-          }
-
-          function toNodePairString(pgEdge) {
-            return `${pgEdge.from}-${pgEdge.to}`;
-          }
-          
-          function toVisEdge(pgEdge, props = config.edge.caption, id) {
-              const edgeLabel = pgEdge.labels.join('_');
-              if (!edgeColorMap[edgeLabel]) {
-                  edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, config.edge.saturation || '0%', config.edge.brightness || '30%');
-              }
-              let length = null, lengthProp, width = null, widthProp;
-              if(lengthProp = pgEdge.properties[config?.edge?.length?.[edgeLabel]]) {
-                length = lengthProp[0];
-              }
-              if(widthProp = pgEdge.properties[config?.edge?.width?.[edgeLabel]]) {
-                width = parseFloat(widthProp[0]);
-              }
-
-              return {
-                  id: id,
-                  from: pgEdge.from,
-                  to: pgEdge.to,
-                  color: edgeColorMap[edgeLabel],
-                  label: createLabelText(pgEdge, props),
-                  title: createTitleText(pgEdge),
-                  remoteId: id,
-                  length: length,
-                  width: width,
-                  hoverWidth: 0.5,
-                  smooth:
-                  {
-                    roundness:1
-                  },
-                  arrows: {
-                    to: {
-                      enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
-                    },
-                  }
-              }
-          }
-          
-          function wrapText(str, asHtml) {
-            if(!str)
-              return str;
-            if(Array.isArray(str))
-              str = str[0];
-            const maxWidth = 40;
-            let newLineStr = asHtml ? "<br>" : "\n", res = '';
-            while (str.length > maxWidth) {
-              res += str.slice(0, maxWidth) + newLineStr;
-              str = str.slice(maxWidth);
-            }
-            return res + str;
-          }
-      
-          function createLabelText(elem, props = null) {
-              if (props != null) {
-                // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
-                return props.length ? props.map((prop) => prop === 'id' ? elem.id : (prop === 'label' ? elem.labels : wrapText(elem.properties[prop]))).filter((val) => val).join('\n') : ' ';
-              }
-          }
-      
-          function createTitleText(elem) {
-              let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-                  acc.concat(`<tr><td>${prop[0]}</td><td>${wrapText(prop[1], true)}</td></tr>`), []);
-              if (elem.id) // for nodes
-              {
-                  let idText = `<tr><td><b>${elem.id}</b></tr></td>`;
-                  flattend_props.splice(0, 0, idText);
-                  flattend_props.push(`<tr><td width="100px">label</td><td width="200px">${wrapText(elem.labels.join(':'), true)}</td></tr>`);
-              }
-              return htmlTitle(`<table style='fixed'>${flattend_props.join('')}</table>`);
-          }
-
-          // Create random colors, with str as seed, and with fixed saturation and lightness
-          function getRandomColor(str, saturation, brightness) {
-              let hash = 0;
-              for (let i = 0; i < str.length; i++) {
-                  hash = str.charCodeAt(i) + ((hash << 5) - hash);
-                  hash = hash & hash;
-              }
-              let hue = hash % 360;
-              return 'hsl(' + hue + `, ${saturation}, ${brightness})`;
-          }
-      
-          function setSearchState(searching) {
-            const icon =  q('#search-icon');
-            if(searching) {
-              icon.classList.remove("fa-search");
-              icon.classList.add("fa-spinner");
-              icon.classList.add("fa-spin");
-            } else {
-              icon.classList.add("fa-search");
-              icon.classList.remove("fa-spinner");
-              icon.classList.remove("fa-spin");
-            }
-          }
-      
-          function searchGraph() {  
-              setSearchState(true);
-              const keyword = q('#search-input').value;
-              // timeProperties.clear();
-              domain = q('#url-input').value;
-              if (!domain.endsWith('/'))
-                  domain += '/';
-              domain = 'http://' + domain;
-              const keywordPart = encodeURI(keyword.split(" ").map((word) => `\\"${word}\\"`).join(' AND '));
-              const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
-              axios.get(domain + `query?q=${query}`).then((response) => {
-                  expandedNodes = response.data.pg.nodes.map((node) => node.id);
-                  
-                  // TODO: use query which does not modify of backend
-                  const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${expandedNodes.join(',')}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`
-                  axios.get(domain + `query?q=${subquery}`).then((subresponse) => {
-                    updateGraph(subresponse.data.pg);
-                    setSearchState(false);
-                  });
-              });
-          }
-          
-          function isDateString(str) {
-            return isNaN(str) && !isNaN(Date.parse(str))
-          }
-          
-          function tryPgParse(pg) {
-            for(let marker of markers)
-              marker.clear();
-            markers = [];
-            try {
-              return pgParser.parse(pg);
-            } catch(e) {
-              console.log(e);
-              if (!e.hasOwnProperty('location')) 
-                throw(e);
-              let loc = e.location;
-              // Mark leading characters in the error line
-              markers.push(editor.markText({line: loc.start.line - 1, ch: 0}, {line: loc.start.line - 1, ch: loc.start.column - 1}, {className: 'syntax-error-line', message: e.message}));
-              markers.push(editor.markText({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1}, {className: 'syntax-error', message: e.message}));
-              // Mark following characters in the error line
-              markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
-                 {className: 'syntax-error-line', message: e.message}));
-              toastr.error(e.message, 'PG SyntaxError', {preventDuplicates: true})
-              return null;
-            }
-          }
-          
-          
-          function tryJsonParse(json) {
-            try {
-              return looseJsonParse(json);
-            } catch(e) {
-              console.log(e);
-              toastr.error(e, 'JSON SyntaxError', {preventDuplicates: true})
-              return null;
-            }
-          }
-          
-          function updateGraph(input, applyDiff = true) {
-              groups = new Set();
-              edgeColorMap = {};
-
-              let newContent = editor.getValue();
-              localStorage.setItem('pg', newContent);
-              applyDiff = applyDiff && nodeDataSet && edgeDataSet;
-              if(applyDiff) {
-                
-                let newPg = tryPgParse(newContent);
-                if(!newPg)
-                  return;
-                let nodesToDelete = new Set(Object.keys(nodeMap));
-                let newEdgeMap = {};
-
-                let newMapFromNodePairToEdges = {};
-
-                nodeLineMap = {};
-                edgeLineMap = {};
-                newPg.nodes.forEach(node => {
-                  let existingNode = nodeMap[node.id];
-                  if(existingNode) {
-                    if(!nodeEquals(node, existingNode)) {
-                      nodeDataSet.remove(existingNode);
-                      let visNode = toVisNode(node);
-                      nodeDataSet.update(visNode);
-                    }
-                  } else {
-                    let visNode = toVisNode(node);
-                    nodeDataSet.add(visNode);
-                  }
-                  nodeMap[node.id] = node;
-                  nodesToDelete.delete(node.id);
-                  for(let i = node.location.start.line; i <= node.location.end.line; i++) {
-                    if(i < node.location.end.line || node.location.end.column > 1)
-                      nodeLineMap[i] = node;
-                  }
-                });
-
-                newPg.edges.forEach(edge => {
-                  let id = toNodePairString(edge);
-                  while(newEdgeMap[id]) {
-                    id += '_';
-                  }
-                  newEdgeMap[id] = edge;
-                  let visEdge = toVisEdge(edge, config.edge.caption, id);
-                  edgeDataSet.update(visEdge);
-                  for(let i = edge.location.start.line; i <= edge.location.end.line; i++) {
-                    if(i < edge.location.end.line || edge.location.end.column > 1)
-                      edgeLineMap[i] = visEdge;
-                  }
-                });
-                nodesToDelete.forEach((nodeId) => {
-                  nodeDataSet.remove(nodeMap[nodeId]);
-                  delete nodeMap[nodeId];
-                });
-
-                let edgesToDelete = [];
-                for(let edgeId of Object.keys(edgeMap)) {
-                  if(!newEdgeMap[edgeId]) {
-                    edgeDataSet.remove(edgeId);
-                  }
-                }
-
-                edgeMap = newEdgeMap;
-                graph = newPg;
-              }
-              oldContent = newContent;
-              if(applyDiff) return;
-      
-              input = input || editor.getValue();
-              if (typeof input === 'string' || input instanceof String) {
-                  try {
-                      graph = JSON.parse(input);
-                  } catch (err) {
-                      if (err instanceof SyntaxError)
-                          graph = tryPgParse(input);
-                      else
-                          throw err;
-                  }
-              } else {
-                  graph = input;
-              }
-              
-              minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
-              
-              
-              graph.nodes.forEach(node => { 
-                for(let prop of Object.keys(node.properties)) {
-                  if(!timeProperties.has(prop) && isDateString(node.properties[prop])){
-                    timeProperties.add(prop);
-                  }
-                }
-              });
-              
-              /*
-              while(timeLineFolder.__controllers.length > 0) timeLineFolder.__controllers[0].remove();
-              
-              for(let prop of timeProperties) {
-                let controller = timeLineFolder.add({[prop]: false}, prop, false);
-                controller.onChange(onTimeLinePropertyController);
-              }
-              */
-
-              nodeProps = new Set(['id', 'label']);
-              edgeProps = new Set(['label']);
-              graph.nodes.forEach((node) => {
-                nodeMap[node.id] = node;
-                for(let i = node.location.start.line; i <= node.location.end.line; i++)
-                  if(i < node.location.end.line || node.location.end.column > 1)
-                    nodeLineMap[i] = node;
-                Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(nodeProps.add, nodeProps);
-              });
-              graph.edges.forEach((edge) => {
-                Object.keys(edge.properties).forEach(edgeProps.add, edgeProps);
-              });
-              
-              let defaultNodeProps = config.node.caption;
-              let defaultEdgeProps = config.edge.caption;
-              
-              nodeDataSet = new vis.DataSet();
-              nodeDataSet.add(graph.nodes.map((node) => {
-                  return toVisNode(node, defaultNodeProps);
-              }));
-              
-              //updateTimeLineNodes();
-              edgeMap = {};
-              edgeDataSet = new vis.DataSet(graph.edges.map((edge) => {
-                  const edgeLabel = edge.labels.join('_');
-                  let id = toNodePairString(edge);
-                  while(edgeMap[id]) {
-                    id += '_';
-                  }
-                  let visEdge = toVisEdge(edge, defaultEdgeProps, id);
-                  edgeMap[visEdge.id] = edge;
-                  for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
-                    if(i < edge.location.end.line || edge.location.end.column > 1)
-                      edgeLineMap[i] = visEdge;
-
-                  return visEdge;
-              }));
-              // create a network
-              let container = document.getElementById('graph');
-              data = {
-                  nodes: nodeDataSet,
-                  edges: edgeDataSet
-              };
-              
-              /*
-              while(nodeFolder.__controllers.length > 0) nodeFolder.__controllers[0].remove();
-              while(edgeFolder.__controllers.length > 0) edgeFolder.__controllers[0].remove();
-
-              nodeProps.forEach(prop => {
-                  const controller = nodeFolder.add({[prop]: defaultNodeProps.includes(prop)}, prop)
-                  controller.onChange(onNodeControllerChange);
-                }
-              );
-              
-              edgeProps.forEach(prop => {
-                  const controller = edgeFolder.add({[prop]: defaultEdgeProps.includes(prop)}, prop)
-                  controller.onChange(onEdgeControllerChange);
-                }
-              );
-              */
-
-              let layout = {
-                randomSeed: 1
-              };
-              
-              if(config.layout == 'hierarchical') {
-                layout.hierarchical = config.layoutSettings;
-              }
-
-              groupColorMap =  [...groups].reduce((acc, group) => {
-                      acc[group] = {color: getRandomColor(group, config.node.saturation || '100%', config.node.brightness || '40%')}; return acc;
-              }, {});
-
-              let options = {
-                  groups: groupColorMap,
-                  layout:
-                    layout,
-                  interaction: {
-                      hover: true
-                  },
-                  physics: {
-                    barnesHut: {
-                      springConstant: 0.016
-                    },
-                    stabilization: {
-                        enabled: false,
-                        iterations: 200,
-                        updateInterval: 25
-                    }
-                  },
-                  manipulation: false,
-
-                  edges: {
-                      arrows: {
-                          to: {
-                              enabled: true,
-                              scaleFactor: 0.3,
-                              type: "arrow"
-                          },
-                      },
-                  },
-              };
-              network = new vis.Network(container, data, options);
-
-              let selectTimer = null;
-              network.on('selectNode', (e) => { 
-                  if (e.nodes.length > 0) {
-                    if(!localMode) {
-                      selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
-                    }
-                  }
-              });
-
-              network.on('doubleClick', (e) => {
-                  if (localMode) {
-                    if(e.nodes.length == 0) {
-                      let newNode = {
-                        id: newNodeId(),
-                        labels: ['New'],
-                        properties: {},
-                      };
-                      addNewNode(newNode, e.pointer.canvas.x, e.pointer.canvas.y);
-                    } else {
-                       const position = e.pointer.canvas;
-                       const node = e.nodes[0];
-                       lineStart = position;
-                       srcNode = node;
-                       nodeDataSet.update({id: node, fixed: {x: true, y: true}});
-                    }
-                  }
-                  else if (e.nodes.length > 0)
-                      retrieveGraph(e.nodes[0]);
-              });
-
-              network.on('dragStart', (e) => {
-                  clearTimeout(selectTimer);
-                  srcNode = lineStart = lineEnd = null;
-                  const node = nodeDataSet.get(e.nodes[0]);
-                  if(e.nodes.length > 0) {
-                    nodeDataSet.update({
-                      id: e.nodes[0],
-                      fixed: node.fixedByTime ? {x: true, y: true } : false
-                    });
-                  }
-              });
-
-              if (!localMode) {
-                  network.on('doubleClick', (e) => {
-                      if (e.nodes.length > 0)
-                          retrieveGraph(e.nodes[0]);
-                  });
-                  network.on('dragEnd', (e) => {
-                      if(e.nodes.length > 0) {
-                        const node = nodeDataSet.get(e.nodes[0]);
-                        if(!node.fixed && expandedNodes.includes(e.nodes[0]) )
-                        nodeDataSet.update({
-                          id: e.nodes[0],
-                          fixed: true
-                        });
-                      }
-                  });
-              }
-              let canvas = q(".vis-network canvas");
-
-              function getMousePos(canvas, evt) {
-                var rect = canvas.getBoundingClientRect();
-                return {
-                  x: evt.clientX - rect.left,
-                  y: evt.clientY - rect.top
-                };
-              }
-              canvas.addEventListener('mousemove', event =>
-              {
-                if(lineStart) {
-                  lineEnd = network.DOMtoCanvas(getMousePos(canvas, event));
-                  network.redraw();
-                }
-              });
-              
-              network.on("hoverNode", (e) => {
-                network.canvas.body.container.style.cursor = 'default';
-                const node = nodeDataSet.get(e.node);
-                if(node && node.url) {
-                  network.canvas.body.container.style.cursor = 'pointer';
-                  nodeDataSet.update({
-                    id: e.node,
-                    color: '#8888ff',
-                  });
-                } else if(node && node.degree > 1 && !expandedNodes.includes(e.node)) {
-                  network.canvas.body.container.style.cursor = 'pointer';
-                }
-              });
-              
-              function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
-                let currentTime = new Date(startTime);
-                switch(intervalUnit) {
-                  case 'year':
-                    currentTime = new Date(currentTime.getFullYear(), 0, 1);
-                    break; 
-                  case 'month':
-                    currentTime = new Date(currentTime.getFullYear(), currentTime.getMonth() - currentTime.getMonth() % interval, 1);
-                    break; 
-                  case 'day':
-                    currentTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate());
-                    break;
-                  default:
-                    return; 
-                }
-                while(true) {
-                  const nextPosition = -offsetX + (currentTime - startTime) / timeForOnePixel;
-                  if(nextPosition > rightMostX) break;
-                  context.fillText(currentTime.toLocaleDateString(), nextPosition, -offsetY);
-                  context.moveTo(nextPosition, -offsetY);
-                  context.lineTo(nextPosition, -offsetY + 25 / scale);
-                  context.stroke();
-                  switch(intervalUnit) {
-                    case 'year':
-                      currentTime.setFullYear(currentTime.getFullYear() + interval);
-                      break; 
-                    case 'month':
-                      currentTime.setMonth(currentTime.getMonth() + interval);
-                      break; 
-                    case 'day':
-                      currentTime.setDate(currentTime.getDate() + interval);
-                      break;
-                    default:
-                      return; 
-                  }
-                }
-              }
-
-              network.on("afterDrawing", (ctx) => {
-                for(let node of graph.nodes) {
-                  node = nodeDataSet.get(node.id);
-                  if(node?.customIcon) {
-                    let position = network.getPosition(node.id);
-                    ctx.font = `${node.customIcon.size}px Ionicons`;
-                    ctx.fillStyle = "white";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(node.customIcon.code, position.x, position.y);
-                  }
-                }
-
-                if(lineStart && lineEnd) {
-                  ctx.beginPath();
-                  ctx.moveTo(lineStart.x, lineStart.y);
-                  ctx.lineTo(lineEnd.x, lineEnd.y);
-                  ctx.stroke();
-                }
-                if(timeLineEnabled){
-                  const context = network.canvas.getContext("2d");
-                  const view = network.canvas.body.view;
-                  const offsetY = view.translation.y / view.scale;
-                  const offsetX = view.translation.x / view.scale;
-                  const timeForOnePixel = (maxTime - minTime) / timeScale;
-                  const timeOnLeftEdge = new Date(((maxTime.getTime() + minTime.getTime()) / 2) - timeForOnePixel * offsetX);
-                  const clientWidth = network.canvas.body.container.clientWidth;
-                  const rightMost = -offsetX + clientWidth / view.scale;
-                  const oneMonth = 31 * 24 * 60 * 60 * 1000;
-                  const oneDay = 24 * 60 * 60 * 1000;
-                  const twoMonth = oneMonth * 2;
-                  const fourMonth = twoMonth * 2;
-                  const oneYear = 365 * oneDay;
-                  const minDistance = 300;
-                  context.font = (20 / view.scale).toString() + "px Arial";
-                  const minimumInterval = timeForOnePixel * minDistance / view.scale;
-                  if(minimumInterval > oneYear ) {
-                    plotTimes(timeOnLeftEdge, 1, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  }
-                  else if(minimumInterval > fourMonth ) {
-                    plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  }
-                  else if(minimumInterval > twoMonth) {
-                    plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  }
-                  else if(minimumInterval > oneMonth) {
-                    plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  } else if(minimumInterval > oneDay * 16) {
-                    plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  } else if(minimumInterval > oneDay * 8) {
-                    plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  } else if(minimumInterval > oneDay * 4) {
-                    plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  } else if(minimumInterval > oneDay * 2) {
-                    plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  } else {
-                    plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-                  }
-                }
-              });
-              network.on("blurNode", (params) => {
-                  network.canvas.body.container.style.cursor = 'default';
-                  let node = nodeDataSet.get(params.node);
-                  if(node && node.url) {
-                    nodeDataSet.update({
-                      id: params.node,
-                      color: null,
-                    });
-                  }
-              });
-          
-              network.on("click", (e) => {
-                 network.stopSimulation();
-                 if(e.nodes.length > 0) {
-                    let node = nodeDataSet.get(e.nodes[0]);
-                    if(srcNode) {
-                      let newEdge = {
-                        from: srcNode,
-                        to: node.id,
-                        undirected: false,
-                        labels: [],
-                        properties: {}
-                      };
-                      graph.edges.push(newEdge);
-                      let visEdge = toVisEdge(newEdge);
-                      edgeMap[visEdge.id] = newEdge;
-                      edgeDataSet.add(visEdge);
-
-                      let oldPg = editor.getValue();
-                      newEdge.line = numberOfLines(oldPg) + 1;
-                      byProgram = true;
-                      editor.setValue(oldPg + `\n"${newEdge.from}" -> "${newEdge.to}" ${newEdge.labels.map((label) => ':' + label).join(' ')} `);
-                      // scrollToLine({start: newEdge.line, end: newEdge.line});
-                      srcNode = null;
-                      lineStart = null;
-                      lineEnd = null;
-                    } else if(localMode) {
-                      scrollToLine(nodeMap[e.nodes[0]].location);
-                    }
-                    if(node && node.url)
-                      window.open(node.url,'_blank');
-                } else if(e.edges.length > 0) {
-                  scrollToLine(edgeMap[e.edges[0]].location);
-                }
-              });
-          }
-      
-          function handleFileSelect(evt) {
-              let files = evt.target.files; // FileList object
-              // use the 1st file from the list
-              const f = files[0];
-              let reader = new FileReader();
+      let container = document.getElementById('graph'); 
+      let timerId = 0;
+      let editor, configEditor;
+      let localMode = true;
+      let helloGraph = new HelloGraph(container);
+      let byProgram = true;
       
       
-              // Closure to capture the file information.
-              reader.onload = (function (theFile) {
-                  return function (e) {
-                      editor.setValue(e.target.result);
-                      updateGraph();
-                  };
-              })(f);
-              // Read in the image file as a data URL.
-              reader.readAsText(f);
-          };
-
-          editor = CodeMirror.fromTextArea(q('#graph-input'), {
-            lineNumbers: true,
-            viewportMargin: Infinity,
-            theme: "monokai",
-            lineWrapping: true,
-            mode: "pgMode",
-            extraKeys: {
-              Tab: 'autocomplete'
-            },
-            hintOptions: {
-              completeSingle: false
-            }
-          });
-          editor.setSize('100%', '100%');
-
-          configEditor = CodeMirror.fromTextArea(q('#config-input'), {
-            viewportMargin: Infinity,
-            theme: "monokai",
-            mode: 'javascript',
-            lineWrapping: true,
-            extraKeys: {
-              Tab: 'autocomplete'
-            },
-            hintOptions: {
-              completeSingle: false
-            }
-          });
-          configEditor.setSize('100%', '100%');
-          
-          const urlParams = new URLSearchParams(window.location.search);
-          let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
-              edgePropInParam = urlParams.get('displayedEdgeProps');
-          let configInParam = urlParams.get('config');
-          if(pgInParam || nodePropInParam || edgePropInParam || configInParam) {
-            if(pgInParam)
-              localStorage.setItem('pg', pgInParam);
-            if(configInParam)
-              localStorage.setItem('config', configInParam);
-            window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
-          }
-
-
-          let query = urlParams.get('query');
-          let initialPg = loadConfig('pg');
-          if(query) {
-            editor.setValue('');
-            axios.get(config.remoteUrl + query).then((response) => {
-              editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
-            });
-          }
-          else if(initialPg) {
-            editor.setValue(initialPg);
-          }
-
-          let configText = loadConfig('config');
-
-          if (!configText) {
-            configText = defaultConfig;
-          }
-          if(!config) {
-            config = tryJsonParse(configText);
-          }
-          configEditor.setValue(configText);
-          configEditor.on('change', (delta) => {
-            clearTimeout(timerId);
-            timerId = setTimeout(() => {
-              localStorage.setItem('config', configEditor.getValue());
-              config = tryJsonParse(configEditor.getValue());
-              updateGraph(null, false);
-            }, 1000);            
-          });          
-          document.addEventListener('mousemove', (e) => {
-            clickedPosition = {x: e.clientX, y: e.clientY};
-          });
-          // q('#pgfile').addEventListener('change', handleFileSelect, false);
-
-          q('#url-input').value = 'localhost:3000';
-          // retrieveGraph();
-          /*  updateGraph(); */
-
-          let oldContent = '';
-
-          editor.on("inputRead", (instance) => {
-            editor.execCommand('autocomplete', { completeSingle: false });
-          });
-
-          editor.on('change', (delta) => {
-            if(!byProgram) {
-              clearTimeout(timerId);
-              localMode = true;
-              timerId = setTimeout(updateGraph, 1000);
-            } else {
-              byProgram = false;
-            }
-          });
-          
-          editor.on('cursorActivity', (doc) => {
-            if(!byProgram) {
-              const node = nodeLineMap[doc.getCursor().line + 1];
-              const edge = edgeLineMap[doc.getCursor().line + 1];
-
-              if(node) {
-                scrollIntoView(network.getPosition(node.id));
-                network.selectNodes([node.id]);
-              } else if(edge){
-                const from = network.getPosition(edge.from);
-                const to = network.getPosition(edge.to);
-                scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
-                network.selectEdges([edge.id]);
-              }
-            } else {
-              byProgram = false;
-            }
-          });
-
-          /*
-          q('#search-input').addEventListener('keyup', () => {
-            if (event.keyCode == 13) // Enter
-              q('#search-button').click(); 
-          });
+      function scrollToLine(loc) {
+        byProgram = true;
+        editor.scrollIntoView({line: loc.start.line - 1, ch: loc.start.column - 1}, 200);
+        editor.setSelection({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1});
+        editor.focus();
+      }
       
-          q('#search-button').addEventListener('click', () => {
-            searchGraph();
-          });
-          */
+      q('#url-input').addEventListener('change', () => {
+        clearTimeout(timerId);
+        localMode = false;
+        timerId = setTimeout(retrieveGraph, 1000);
+      });
       
-          q('#url-input').addEventListener('change', () => {
-              clearTimeout(timerId);
-              localMode = false;
-              timerId = setTimeout(retrieveGraph, 1000);
-          });
+      q('#share-btn').addEventListener('click', () => {
+        let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}` +
+          `&config=${encodeURIComponent(configEditor.getValue())}`;
+        navigator.clipboard.writeText(url).then(function() {
+          alert("Your graph is now on clipboard!")
+        });
+      });
+      
+      function onResize(event, ui) {
+        const totalWidth = $("#main-area").width();
+        let width = $("#input-area").width();
+        if(width > totalWidth) {
+          width = totalWidth;
+          $('#input-area').css('width', width);
+        }
+        $('#graph-pane').css('width', (totalWidth - width) - 100);
+        onConfigResize(null, null);
+      };
+      
+      function onConfigResize(event, ui) {
+        const totalHeight = $("#input-area").height();
+        let height = $("#pg-area").height();
+        if(height > totalHeight) {
+          height = totalHeight;
+        }
+        let left = $("#pg-area").width() - 50;
+        let bottom = (totalHeight - height) + 10;
+        $('#pg-area').css('height', height);
+        $('#config-area').css('height', (totalHeight - height));
+        $('#config-btn').css('bottom', bottom);
+        $('#config-btn').css('left', left);
+        $('#reset-config-btn').css('left', left);
+        $('#reset-config-btn').css('bottom', bottom - 70);
+      };
+      
+      window.onresize = onResize;
+      $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize).bind("create", onResize);
+      $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
+      
+      onConfigResize(null, null);
+      
+      q('#config-btn').addEventListener('click', () => {
+        let x = $('#config-area').css('height');
+        if ($('#config-area').css('height') == '0px') {
+          $('#pg-area').css('height', '50%');
+          $('#config-area').css('height', '50%');
+        } else {
+          $('#pg-area').css('height', '100%');
+          $('#config-area').css('height', '0%');
+        }
+        onConfigResize(null, null);
+      });
+      
+      q('#reset-config-btn').addEventListener('click', () => {
+        if(confirm("Really reset config?"))
+          configEditor.setValue(defaultConfig);
+      });
 
-          q('#share-btn').addEventListener('click', () => {
-            let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}` +
-                      `&config=${encodeURIComponent(configEditor.getValue())}`;
-            navigator.clipboard.writeText(url).then(function() {
-              alert("Your graph is now on clipboard!")
-            });
-          });
-
-          q('#export-btn').addEventListener('click', () => {
-            //download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+      q('#export-btn').addEventListener('click', () => {
+        //download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+      
+        let pg = pgParser.parse(editor.getValue());
+        let output = "";
+        pg.nodes.forEach(node => {
+          let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
+          let query = "";
+          query = query + "INSERT INTO <graph_name> ";
+          query = query + "VERTEX v LABELS (\"" + node_label.toUpperCase() + "\") "; // Restriction: single vertex label
+          query = query + "PROPERTIES (";
+          query = query + "v.id = '" + node.id + "'"; // ID is stored as a string property
+          for (let entry of Object.entries(node.properties)) {
+            query = query + ", v.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
+          }
+          query = query + ");";
+          output = output + query + '\n';
+        });
+        pg.edges.forEach(edge => {
+          let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
+          let query = "";
+          query = query + "INSERT INTO <graph_name> "
+          query = query + "EDGE e BETWEEN src AND dst LABELS (\"" + edge_label.toUpperCase() + "\") " // Restriction: single vertex label
+          query = query + "PROPERTIES ("
+          query = query + "e.direction = '" + edge.direction + "'";
+          for (let entry of Object.entries(edge.properties)) {
+            query = query + ", e.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
+          }
+          query = query + ") ";
+          query = query + "FROM MATCH (src) ON <graph_name>, MATCH (dst) ON <graph_name> ";
+          query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
+          output = output + query + '\n';
+        });
+        download(output, 'graph_' + currentTimeString() + '.pgql', 'text/plain');
+      });
+      
+      editor = CodeMirror.fromTextArea(q('#graph-input'), {
+        lineNumbers: true,
+        viewportMargin: Infinity,
+        theme: "monokai",
+        lineWrapping: true,
+        mode: "pgMode",
+        extraKeys: {
+          Tab: 'autocomplete'
+        },
+        hintOptions: {
+          completeSingle: false
+        }
+      });
+      editor.setSize('100%', '100%');
+      
+      configEditor = CodeMirror.fromTextArea(q('#config-input'), {
+        viewportMargin: Infinity,
+        theme: "monokai",
+        mode: 'javascript',
+        lineWrapping: true,
+        extraKeys: {
+          Tab: 'autocomplete'
+        },
+        hintOptions: {
+          completeSingle: false
+        }
+      });
+      configEditor.setSize('100%', '100%');
+      
+      editor.on("inputRead", (instance) => {
+        editor.execCommand('autocomplete', { completeSingle: false });
+      });
             
-            let pg = pgParser.parse(editor.getValue());
-            let output = "";
-            pg.nodes.forEach(node => {
-              let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
-              let query = "";
-              query = query + "INSERT INTO <graph_name> ";
-              query = query + "VERTEX v LABELS (\"" + node_label.toUpperCase() + "\") "; // Restriction: single vertex label
-              query = query + "PROPERTIES (";
-              query = query + "v.id = '" + node.id + "'"; // ID is stored as a string property
-              for (let entry of Object.entries(node.properties)) { 
-                query = query + ", v.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
-              }
-              query = query + ");";
-              output = output + query + '\n';
-            });
-            pg.edges.forEach(edge => {
-              let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
-              let query = "";
-              query = query + "INSERT INTO <graph_name> "
-              query = query + "EDGE e BETWEEN src AND dst LABELS (\"" + edge_label.toUpperCase() + "\") " // Restriction: single vertex label
-              query = query + "PROPERTIES ("
-              query = query + "e.direction = '" + edge.direction + "'";
-              for (let entry of Object.entries(edge.properties)) { 
-                query = query + ", e.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
-              }
-              query = query + ") ";
-              query = query + "FROM MATCH (src) ON <graph_name>, MATCH (dst) ON <graph_name> ";
-              query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
-              output = output + query + '\n';
-            });
-            download(output, 'graph_' + currentTimeString() + '.pgql', 'text/plain');
-          });
-
-          q('#config-btn').addEventListener('click', () => {
-            let x = $('#config-area').css('height');
-            if ($('#config-area').css('height') == '0px') {
-              $('#pg-area').css('height', '50%');
-              $('#config-area').css('height', '50%');
-            } else {
-              $('#pg-area').css('height', '100%');
-              $('#config-area').css('height', '0%');
-            }
-            onConfigResize(null, null);
-          });
-
-          q('#reset-config-btn').addEventListener('click', () => {
-            if(confirm("Really reset config?"))
-              configEditor.setValue(defaultConfig);
-          });
-
-          onConfigResize(null, null);
-          
-          // searchGraph();
-          if (document.fonts) {
-          // Decent browsers: Make sure the fonts are loaded.
-          document.fonts.load('normal normal 400 24px/1 "FontAwesome"')
-            .catch(
-              console.error.bind(console, "Failed to load Font Awesome 4.")
-            ).then(function () {
-              // create a network
-              updateGraph();
-            })
-            .catch(
-              console.error.bind(
-                console,
-                "Failed to render the network with Font Awesome 4."
-              )
-            );
+      editor.on('change', (delta) => {
+        if(!byProgram) {
+          clearTimeout(timerId);
+          localMode = true;
+          console.log("hoooooooooooge");
+          timerId = setTimeout(() => {
+            helloGraph.updateGraph(editor.getValue(), config);
+          }, 1000);
+        } else {
+          byProgram = false;
+        }
+      });
+      
+      editor.on('cursorActivity', (doc) => {
+        if(!byProgram) {
+          const node = helloGraph.nodeLineMap[doc.getCursor().line + 1];
+          const edge = helloGraph.edgeLineMap[doc.getCursor().line + 1];
+      
+          if(node) {
+            scrollIntoView(helloGraph.network.getPosition(node.id));
+            helloGraph.network.selectNodes([node.id]);
+          } else if(edge){
+            const from = helloGraph.network.getPosition(edge.from);
+            const to = helloGraph.network.getPosition(edge.to);
+            scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
+            helloGraph.network.selectEdges([edge.id]);
           }
+        } else {
+          byProgram = false;
+        }
+      });
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
+        edgePropInParam = urlParams.get('displayedEdgeProps');
+      let configInParam = urlParams.get('config');
+      if(pgInParam || nodePropInParam || edgePropInParam || configInParam) {
+        if(pgInParam)
+          localStorage.setItem('pg', pgInParam);
+        if(configInParam)
+          localStorage.setItem('config', configInParam);
+        window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
+      }
+      
+      
+      let query = urlParams.get('query');
+      let initialPg = loadConfig('pg');
+      if(query) {
+        editor.setValue('');
+        axios.get(config.remoteUrl + query).then((response) => {
+          editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+        });
+      }
+      else if(initialPg) {
+        editor.setValue(initialPg);
+      }
+      
+      let configText = loadConfig('config');
+      
+      if (!configText) {
+        configText = defaultConfig;
+      }
+      if(!config) {
+        config = tryJsonParse(configText);
+      }
+      configEditor.setValue(configText);
+      configEditor.on('change', (delta) => {
+        clearTimeout(timerId);
+        timerId = setTimeout(() => {
+          localStorage.setItem('config', configEditor.getValue());
+          config = tryJsonParse(configEditor.getValue());
+          helloGraph.updateGraph(editor.getValue(), config);
+        }, 1000);
+      });
+      
+      helloGraph.updateGraph(editor.getValue(), config);
 
-          function onResize(event, ui) {
-            const totalWidth = $("#main-area").width();
-            let width = $("#input-area").width();
-            if(width > totalWidth) {
-                width = totalWidth;
-                $('#input-area').css('width', width);
-            }
-            $('#graph-pane').css('width', (totalWidth - width) - 100);
-            onConfigResize(null, null);
-          };
-
-          function onConfigResize(event, ui) {
-            const totalHeight = $("#input-area").height();
-            let height = $("#pg-area").height();
-            if(height > totalHeight) {
-                height = totalHeight;
-            }
-            let left = $("#pg-area").width() - 50;
-            let bottom = (totalHeight - height) + 10;
-            $('#pg-area').css('height', height);
-            $('#config-area').css('height', (totalHeight - height));
-            $('#config-btn').css('bottom', bottom);
-            $('#config-btn').css('left', left);
-            $('#reset-config-btn').css('left', left);
-            $('#reset-config-btn').css('bottom', bottom - 70);
-          };
-          
-
-
-          window.onresize = onResize;
-          $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize).bind("create", onResize);
-          $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
