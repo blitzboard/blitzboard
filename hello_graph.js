@@ -97,7 +97,7 @@ class HelloGraph {
     };
 
     let icon;
-    if(icon = config.node.icon[group]) {
+    if(icon = this.config.node.icon[group]) {
       let code = String.fromCharCode(parseInt(icon, 16));
       attrs['customIcon'] = {
         face: 'Ionicons',
@@ -162,13 +162,25 @@ class HelloGraph {
     // searchGraph();
     this.groups = new Set();
     this.edgeColorMap = {};
-    let newContent = input;
-    localStorage.setItem('pg', newContent);
+
+    let newPg;
+    if (typeof input === 'string' || input instanceof String) {
+      try {
+        newPg = JSON.parse(input);
+      } catch (err) {
+        if (err instanceof SyntaxError)
+          newPg = tryPgParse(input);
+        else
+          throw err;
+      }
+    } else {
+      newPg = input;
+    }
+    if(!newPg)
+      return;
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && this.config === config;
+    
     if(applyDiff) {
-      let newPg = tryPgParse(newContent);
-      if(!newPg)
-        return;
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
       let newEdgeMap = {};
 
@@ -217,27 +229,13 @@ class HelloGraph {
           this.edgeDataSet.remove(edgeId);
         }
       }
-
       this.edgeMap = newEdgeMap;
-      this.graph = newPg;
     }
+
+    this.graph = newPg;
     if(applyDiff) return;
     
     this.config = config || this.config;
-
-    input = input || editor.getValue();
-    if (typeof input === 'string' || input instanceof String) {
-      try {
-        this.graph = JSON.parse(input);
-      } catch (err) {
-        if (err instanceof SyntaxError)
-          this.graph = tryPgParse(input);
-        else
-          throw err;
-      }
-    } else {
-      this.graph = input;
-    }
 
     minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
 
@@ -310,12 +308,12 @@ class HelloGraph {
       layout.hierarchical = config.layoutSettings;
     }
 
-    groupColorMap =  [...this.groups].reduce((acc, group) => {
+    this.groupColorMap =  [...this.groups].reduce((acc, group) => {
       acc[group] = {color: getRandomColor(group, config.node.saturation || '100%', config.node.brightness || '40%')}; return acc;
     }, {});
 
     let options = {
-      groups: groupColorMap,
+      groups: this.groupColorMap,
       layout:
       layout,
       interaction: {
@@ -464,46 +462,46 @@ class HelloGraph {
         }
       }
 
-      if(timeLineEnabled){
-        const context = this.network.canvas.getContext("2d");
-        const view = this.network.canvas.body.view;
-        const offsetY = view.translation.y / view.scale;
-        const offsetX = view.translation.x / view.scale;
-        const timeForOnePixel = (maxTime - minTime) / timeScale;
-        const timeOnLeftEdge = new Date(((maxTime.getTime() + minTime.getTime()) / 2) - timeForOnePixel * offsetX);
-        const clientWidth = this.network.canvas.body.container.clientWidth;
-        const rightMost = -offsetX + clientWidth / view.scale;
-        const oneMonth = 31 * 24 * 60 * 60 * 1000;
-        const oneDay = 24 * 60 * 60 * 1000;
-        const twoMonth = oneMonth * 2;
-        const fourMonth = twoMonth * 2;
-        const oneYear = 365 * oneDay;
-        const minDistance = 300;
-        context.font = (20 / view.scale).toString() + "px Arial";
-        const minimumInterval = timeForOnePixel * minDistance / view.scale;
-        if(minimumInterval > oneYear ) {
-          plotTimes(timeOnLeftEdge, 1, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-        else if(minimumInterval > fourMonth ) {
-          plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-        else if(minimumInterval > twoMonth) {
-          plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-        else if(minimumInterval > oneMonth) {
-          plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 16) {
-          plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 8) {
-          plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 4) {
-          plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 2) {
-          plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else {
-          plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-      }
+      // if(timeLineEnabled){
+      //   const context = this.network.canvas.getContext("2d");
+      //   const view = this.network.canvas.body.view;
+      //   const offsetY = view.translation.y / view.scale;
+      //   const offsetX = view.translation.x / view.scale;
+      //   const timeForOnePixel = (maxTime - minTime) / timeScale;
+      //   const timeOnLeftEdge = new Date(((maxTime.getTime() + minTime.getTime()) / 2) - timeForOnePixel * offsetX);
+      //   const clientWidth = this.network.canvas.body.container.clientWidth;
+      //   const rightMost = -offsetX + clientWidth / view.scale;
+      //   const oneMonth = 31 * 24 * 60 * 60 * 1000;
+      //   const oneDay = 24 * 60 * 60 * 1000;
+      //   const twoMonth = oneMonth * 2;
+      //   const fourMonth = twoMonth * 2;
+      //   const oneYear = 365 * oneDay;
+      //   const minDistance = 300;
+      //   context.font = (20 / view.scale).toString() + "px Arial";
+      //   const minimumInterval = timeForOnePixel * minDistance / view.scale;
+      //   if(minimumInterval > oneYear ) {
+      //     plotTimes(timeOnLeftEdge, 1, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   }
+      //   else if(minimumInterval > fourMonth ) {
+      //     plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   }
+      //   else if(minimumInterval > twoMonth) {
+      //     plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   }
+      //   else if(minimumInterval > oneMonth) {
+      //     plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   } else if(minimumInterval > oneDay * 16) {
+      //     plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   } else if(minimumInterval > oneDay * 8) {
+      //     plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   } else if(minimumInterval > oneDay * 4) {
+      //     plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   } else if(minimumInterval > oneDay * 2) {
+      //     plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   } else {
+      //     plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+      //   }
+      // }
     });
     this.network.on("blurNode", (params) => {
       this.network.canvas.body.container.style.cursor = 'default';
@@ -569,14 +567,9 @@ class HelloGraph {
 }
 
 let markers = [];
-let displayedTimeProps = ["submittedDate"];
-let timeLineEnabled = false;
 let nodeProps, edgeProps;
 let minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
-let timeProperties = new Set();
 let timeScale = 100.0;
-let config = null;
-let groupColorMap = {};
 
 function arrayEquals(a, b) {
   return Array.isArray(a) &&
@@ -708,27 +701,27 @@ function setSearchState(searching) {
 }
 
 
-function searchGraph() {
-  setSearchState(true);
-  const keyword = q('#search-input').value;
-  // timeProperties.clear();
-  domain = q('#url-input').value;
-  if (!domain.endsWith('/'))
-    domain += '/';
-  domain = 'http://' + domain;
-  const keywordPart = encodeURI(keyword.split(" ").map((word) => `\\"${word}\\"`).join(' AND '));
-  const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
-  axios.get(domain + `query?q=${query}`).then((response) => {
-    this.expandedNodes = response.data.pg.nodes.map((node) => node.id);
-
-    // TODO: use query which does not modify of backend
-    const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${this.expandedNodes.join(',')}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`
-    axios.get(domain + `query?q=${subquery}`).then((subresponse) => {
-      updateGraph(subresponse.data.pg);
-      setSearchState(false);
-    });
-  });
-}
+// function searchGraph() {
+//   setSearchState(true);
+//   const keyword = q('#search-input').value;
+//   // timeProperties.clear();
+//   domain = q('#url-input').value;
+//   if (!domain.endsWith('/'))
+//     domain += '/';
+//   domain = 'http://' + domain;
+//   const keywordPart = encodeURI(keyword.split(" ").map((word) => `\\"${word}\\"`).join(' AND '));
+//   const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
+//   axios.get(domain + `query?q=${query}`).then((response) => {
+//     this.expandedNodes = response.data.pg.nodes.map((node) => node.id);
+//
+//     // TODO: use query which does not modify of backend
+//     const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${this.expandedNodes.join(',')}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`
+//     axios.get(domain + `query?q=${subquery}`).then((subresponse) => {
+//       updateGraph(subresponse.data.pg);
+//       setSearchState(false);
+//     });
+//   });
+// }
 
 function isDateString(str) {
   return isNaN(str) && !isNaN(Date.parse(str))
@@ -783,3 +776,9 @@ function handleFileSelect(evt) {
   // Read in the image file as a data URL.
   reader.readAsText(f);
 };
+
+function htmlTitle(html) {
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  return container;
+}

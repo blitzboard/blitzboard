@@ -188,6 +188,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let localMode = true;
   let helloGraph = new HelloGraph(container);
   let byProgram = true;
+  let config;
   
   
   function scrollToLine(loc) {
@@ -256,9 +257,22 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     onConfigResize(null, null);
   });
   
+  
+  q('#embed-btn').addEventListener('click', () => {
+    content = `window.addEventListener("load",function() {
+      let container = document.getElementById('graph');
+      let helloGraph = new HelloGraph(container);
+      let config =
+      ${configEditor.getValue()}
+      let graph = ${JSON.stringify(helloGraph.graph)};
+      helloGraph.updateGraph(graph, config);
+      });
+    `;
+    download(content, 'hello_graph.js', 'text/plain');
+  });
+  
   q('#reset-config-btn').addEventListener('click', () => {
-    if(confirm("Really reset config?"))
-      configEditor.setValue(defaultConfig);
+    download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
   });
   
   q('#export-btn').addEventListener('click', () => {
@@ -334,8 +348,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     if(!byProgram) {
       clearTimeout(timerId);
       localMode = true;
-      console.log("hoooooooooooge");
       timerId = setTimeout(() => {
+      
+        localStorage.setItem('pg', editor.getValue());
         helloGraph.updateGraph(editor.getValue(), config);
       }, 1000);
     } else {
