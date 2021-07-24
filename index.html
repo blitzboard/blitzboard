@@ -135,6 +135,10 @@
     height: 60px;
   }
   
+  .toast-top-right {
+    top: 70px;
+  }
+  
   .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
 </style>
 </head>
@@ -312,7 +316,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   });
   
   q('#reset-config-btn').addEventListener('click', () => {
-    configEditor.setValue(defaultConfig);
+    if(confirm("Really reset config?"))
+      configEditor.setValue(defaultConfig);
   });
   
   q('#export-pgql-btn').addEventListener('click', () => {
@@ -441,7 +446,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     config = tryJsonParse(configText);
   }
   
-  if(config.x2?.init) {
+  if(config?.x2?.init) {
     editor.setValue('');
     let strParams = '?';
     config.x2.init.parameters.forEach(parameter => {

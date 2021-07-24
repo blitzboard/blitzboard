@@ -98,7 +98,7 @@ class HelloGraph {
     };
 
     let icon;
-    if(icon = this.config.node.icon[group]) {
+    if(icon = this.config.node.icon?.[group]) {
       let code = String.fromCharCode(parseInt(icon, 16));
       attrs['customIcon'] = {
         face: 'Ionicons',
