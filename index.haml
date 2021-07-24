@@ -91,20 +91,15 @@
       #main-area {
         display: inline-flex;
         width: 100%;
-        height: 100%;
+        height: calc(100vh - 60px);
       }
 
-
-      .btn {
+      .float-btn {
         position: absolute;
         width: 40px;
         height: 40px;
         right: 10px;
         bottom: 10px;
-      }
-
-      #share-btn {
-        right: 10px;
       }
 
       #embed-btn {
@@ -135,42 +130,54 @@
       span .syntax-error-line {
         background: rgba(255, 0, 0, 0.4);
       }
+      
+      #header { 
+        background: #000044 !important;
+        height: 60px;
+      }
 
       .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
 
   %body
-    #network-popUp
-      %span#operation node
-      %br/
-      %table{:style => "margin: auto"}
-        %tbody#popup-table
-      %input#saveButton{:type => "button", :value => "save"}/
-      %input#cancelButton{:type => "button", :value => "cancel"}/
-    #main-area
-      #input-area.vh-100
-        #pg-area
-          -#%input#pgfile{:type => "file"}/
-          %input#url-input.d-none/
-          %textarea.vh-100#graph-input{:style => "height: 100%; width: 100%;"}
-            I :person name:"your name"
-            You :person
-            Graph :graph
-            I -> Graph :say word:Hello date:today
-            You -> I :say word:Goodbye date:yesterday
-        #config-area
-          %textarea#config-input{:style => "height: 100%; width: 100%;"}
-      #graph-pane.vh-100
-        #graph.bg-light.vh-100
-      #config-btn.btn.btn-info{:title => "Config"}
-        %span{:class => "ion-android-settings"}
-      #reset-config-btn.btn.btn-info{:title => "Reset Config"}
-        %span{:class => "ion-android-refresh" }
-      #embed-btn.btn.btn-success{:title => "Embed"}
-        %span{:class => "ion-android-share"}
-      #export-btn.btn.btn-success{:title => "Export"}
-        %span{:class => "ion-android-download"}
-      #share-btn.btn.btn-info{:title => "Share"}
-        %span{:class => "ion-android-share-alt"}
+    #app
+      %nav.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top#header
+        .container-fluid
+          %div{style: 'color: yellow'}
+            %h3
+              Blitzboard
+          .float-right
+            #share-btn.btn.btn-info{:title => "Share"}
+              %span{:class => "ion-android-share-alt"}
+            #embed-btn.btn.btn-success{:title => "Embed"}
+              %span{:class => "ion-android-share"}
+            #export-btn.btn.btn-success{:title => "Export"}
+              %span{:class => "ion-android-download"}
+      #network-popUp
+        %span#operation node
+        %br/
+        %table{:style => "margin: auto"}
+          %tbody#popup-table
+        %input#saveButton{:type => "button", :value => "save"}/
+        %input#cancelButton{:type => "button", :value => "cancel"}/
+      #main-area
+        #input-area
+          #pg-area
+            -#%input#pgfile{:type => "file"}/
+            %input#url-input.d-none/
+            %textarea#graph-input{:style => "height: 100%; width: 100%;"}
+              I :person name:"your name"
+              You :person
+              Graph :graph
+              I -> Graph :say word:Hello date:today
+              You -> I :say word:Goodbye date:yesterday
+          #config-area
+            %textarea#config-input{:style => "height: 100%; width: 100%;"}
+        #graph-pane.vh-100
+          #graph.bg-light.vh-100
+        #config-btn.float-btn.btn.btn-info{:title => "Config"}
+          %span{:class => "ion-android-settings"}
+        #reset-config-btn.float-btn.btn.btn-info{:title => "Reset Config"}
+          %span{:class => "ion-android-refresh" }
     %script{:src => "./hello_graph.js"}
     :javascript
       let container = document.getElementById('graph'); 

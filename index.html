@@ -89,20 +89,15 @@
   #main-area {
     display: inline-flex;
     width: 100%;
-    height: 100%;
+    height: calc(100vh - 60px);
   }
   
-  
-  .btn {
+  .float-btn {
     position: absolute;
     width: 40px;
     height: 40px;
     right: 10px;
     bottom: 10px;
-  }
-  
-  #share-btn {
-    right: 10px;
   }
   
   #embed-btn {
@@ -134,10 +129,36 @@
     background: rgba(255, 0, 0, 0.4);
   }
   
+  #header { 
+    background: #000044 !important;
+    height: 60px;
+  }
+  
   .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
 </style>
 </head>
 <body>
+<div id='app'>
+<nav class='navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top' id='header'>
+<div class='container-fluid'>
+<div style='color: yellow'>
+<h3>
+Blitzboard
+</h3>
+</div>
+<div class='float-right'>
+<div class='btn btn-info' id='share-btn' title='Share'>
+<span class='ion-android-share-alt'></span>
+</div>
+<div class='btn btn-success' id='embed-btn' title='Embed'>
+<span class='ion-android-share'></span>
+</div>
+<div class='btn btn-success' id='export-btn' title='Export'>
+<span class='ion-android-download'></span>
+</div>
+</div>
+</div>
+</nav>
 <div id='network-popUp'>
 <span id='operation'>node</span>
 <br>
@@ -148,10 +169,10 @@
 <input id='cancelButton' type='button' value='cancel'>
 </div>
 <div id='main-area'>
-<div class='vh-100' id='input-area'>
+<div id='input-area'>
 <div id='pg-area'>
 <input class='d-none' id='url-input'>
-<textarea class='vh-100' id='graph-input' style='height: 100%; width: 100%;'>I :person name:"your name"
+<textarea id='graph-input' style='height: 100%; width: 100%;'>I :person name:"your name"
 You :person
 Graph :graph
 I -> Graph :say word:Hello date:today
@@ -164,20 +185,12 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 <div class='vh-100' id='graph-pane'>
 <div class='bg-light vh-100' id='graph'></div>
 </div>
-<div class='btn btn-info' id='config-btn' title='Config'>
+<div class='float-btn btn btn-info' id='config-btn' title='Config'>
 <span class='ion-android-settings'></span>
 </div>
-<div class='btn btn-info' id='reset-config-btn' title='Reset Config'>
+<div class='float-btn btn btn-info' id='reset-config-btn' title='Reset Config'>
 <span class='ion-android-refresh'></span>
 </div>
-<div class='btn btn-success' id='embed-btn' title='Embed'>
-<span class='ion-android-share'></span>
-</div>
-<div class='btn btn-success' id='export-btn' title='Export'>
-<span class='ion-android-download'></span>
-</div>
-<div class='btn btn-info' id='share-btn' title='Share'>
-<span class='ion-android-share-alt'></span>
 </div>
 </div>
 <script src='./hello_graph.js'></script>
