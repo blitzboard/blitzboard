@@ -82,3 +82,34 @@ https://visjs.github.io/vis-network/docs/network/layout.html
 ```json
   "remoteUrl": "http://<ip_address>:<port>/",
 ```
+
+### How to embed your graph into other websites
+
+Load scripts in the header of the your html:  
+
+```html
+<link href='https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css' rel='stylesheet'>
+<script src='https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'></script>
+<script src='https://cdn.jsdelivr.net/gh/g2glab/hellograph@embed/hello_graph.js'></script>
+```
+
+Place div tag with `id='graph'`:
+
+```html
+<div style="width:100%; height: 1000px;" id='graph'></div>
+```
+
+Download `embed_pg.js` from the button on the graph editor.
+
+Load the script in your html (make sure other libraries have been already loaded):
+
+```html
+<script src='./embed_pg.js'></script>
+```
+
+You can also call the API with graph data (in pg format) and config:
+
+```javascript
+let helloGraph = new HelloGraph(document.getElementById('graph'));
+helloGraph.update(pg, config);
+```
