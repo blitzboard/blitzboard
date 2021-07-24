@@ -106,7 +106,11 @@
   }
   
   #export-btn {
-    right: 60px;
+    width: 80px;
+  }
+  
+  #share-btn {
+    width: 80px;
   }
   
   #config-btn {
@@ -131,7 +135,7 @@
   }
   
   #header { 
-    background: #000044 !important;
+    background: #151515 !important;
     height: 60px;
   }
   
@@ -145,18 +149,15 @@
 <body>
 <div id='app'>
 <nav class='navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top' id='header'>
-<div class='container-fluid'>
-<div style='color: yellow'>
-<h3>
-Blitzboard
-</h3>
+<div class='mr-5' style='color: yellow'>
+<img src='./blitzboard-w_2.png' style='height: 37px;'>
 </div>
-<div class='float-right d-inline'>
-<div class='dropdown d-inline'>
-<button aria-haspopup class='btn btn-success dropdown-toggle' data-toggle='dropdown' id='exportDropdown' type='button'>
+<ul class='navbar-nav justify-content-end'>
+<li class='nav-item'>
+<div class='dropdown text-white' id='export-btn'>
+<div aria-haspopup class='dropdown-toggle' data-toggle='dropdown' id='exportDropdown' type='button'>
 Export
-<span class='ion-android-download'></span>
-</button>
+</div>
 <div aria-labelledby='exportDropdown' class='dropdown-menu'>
 <a class='dropdown-item' href='#' id='export-pgql-btn'>
 PGQL
@@ -166,12 +167,13 @@ Javascript
 </a>
 </div>
 </div>
-<div class='btn btn-info' id='share-btn' title='Share'>
+<li class='nav-item'>
+<div class='text-white' id='share-btn' title='Share'>
 Share
-<span class='ion-android-share-alt'></span>
 </div>
-</div>
-</div>
+</li>
+</li>
+</ul>
 </nav>
 <div id='network-popUp'>
 <span id='operation'>node</span>

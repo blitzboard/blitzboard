@@ -14,6 +14,7 @@ class HelloGraph {
     this.nodeLineMap = {};
     this.edgeMap = {};
     this.edgeLineMap = {};
+    this.prevZoomPosition = null;
   }
   
   calcNodePosition(pgNode) {
@@ -163,6 +164,7 @@ class HelloGraph {
     // searchGraph();
     this.groups = new Set();
     this.edgeColorMap = {};
+    let helloGraph = this;
 
     let newPg;
     if (typeof input === 'string' || input instanceof String) {
@@ -239,6 +241,8 @@ class HelloGraph {
 
     this.graph = newPg;
     if(applyDiff) return;
+
+    this.prevZoomPosition = null;
     
     this.config = deepMerge(this.config, config );
 
@@ -386,6 +390,27 @@ class HelloGraph {
           id: e.nodes[0],
           fixed: node.fixedByTime ? {x: true, y: true } : false
         });
+      }
+    });
+
+    
+    
+    this.network.on("zoom", function(){
+      let pos = helloGraph.network.getViewPosition();
+      if(helloGraph.config.zoom?.min && helloGraph.network.getScale() < helloGraph.config.zoom.min)
+      {
+        helloGraph.network.moveTo({
+          position: helloGraph.prevZoomPosition,
+          scale: helloGraph.config.zoom?.min
+        });
+      }
+      else if(helloGraph.config.zoom?.max && helloGraph.network.getScale() > helloGraph.config.zoom.max){
+        helloGraph.network.moveTo({
+          position: helloGraph.prevZoomPosition,
+          scale: helloGraph.config.zoom.max,
+        });
+      } else {
+        helloGraph.prevZoomPosition = pos;
       }
     });
 

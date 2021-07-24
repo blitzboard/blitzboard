@@ -109,7 +109,11 @@
       }
 
       #export-btn {
-        right: 60px;
+        width: 80px;
+      }
+      
+      #share-btn {
+        width: 80px;
       }
 
       #config-btn {
@@ -134,7 +138,7 @@
       }
       
       #header { 
-        background: #000044 !important;
+        background: #151515 !important;
         height: 60px;
       }
       
@@ -147,25 +151,21 @@
   %body
     #app
       %nav.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top#header
-        .container-fluid
-          %div{style: 'color: yellow'}
-            %h3
-              Blitzboard
-          .float-right.d-inline
-            -##embed-btn.btn.btn-success{:title => "Embed"}
-              -#%span{:class => "ion-android-share"}
-            .dropdown.d-inline
-              %button#exportDropdown.btn.btn-success.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
+        %div.mr-5{style: 'color: yellow'}
+          %img{ src: './blitzboard-w_2.png', style: 'height: 37px;' }
+        %ul.navbar-nav.justify-content-end
+          %li.nav-item
+            #export-btn.dropdown.text-white
+              #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 Export
-                %span{:class => "ion-android-download"}
               .dropdown-menu{ 'aria-labelledby': "exportDropdown" }
                 %a#export-pgql-btn.dropdown-item{ href: '#' }
                   PGQL
                 %a.dropdown-item#embed-btn{ href: '#' }
                   Javascript
-            #share-btn.btn.btn-info{:title => "Share"}
-              Share 
-              %span{:class => "ion-android-share-alt"}
+            %li.nav-item
+              #share-btn.text-white{:title => "Share"}
+                Share 
       #network-popUp
         %span#operation node
         %br/
