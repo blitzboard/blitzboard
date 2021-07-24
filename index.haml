@@ -198,13 +198,13 @@
           %span{:class => "ion-android-settings"}
         #reset-config-btn.float-btn.btn.btn-info{:title => "Reset Config"}
           %span{:class => "ion-android-refresh" }
-    %script{:src => "./hello_graph.js"}
+    %script{:src => "./blitzboard.js"}
     :javascript
       let container = document.getElementById('graph'); 
       let timerId = 0;
       let editor, configEditor;
       let localMode = true;
-      let helloGraph = new HelloGraph(container);
+      let blitzboard = new Blitzboard(container);
       let byProgram = true;
       let config;
       
@@ -259,14 +259,14 @@
       
       
       function updateGraph(event, ui) {
-        helloGraph.updateGraph(editor.getValue(), config);
-        if(helloGraph.network)
-          helloGraph.network.on("click", (e) => {
+        blitzboard.updateGraph(editor.getValue(), config);
+        if(blitzboard.network)
+          blitzboard.network.on("click", (e) => {
             if(e.nodes.length > 0) {
-              let node = helloGraph.nodeMap[e.nodes[0]];
+              let node = blitzboard.nodeMap[e.nodes[0]];
               scrollToLine(node.location);
             } else if(e.edges.length > 0) {
-              let edge = helloGraph.edgeMap[e.edges[0]];
+              let edge = blitzboard.edgeMap[e.edges[0]];
               scrollToLine(edge.location);
             }
           });
@@ -293,14 +293,13 @@
       
       q('#embed-btn').addEventListener('click', () => {
         content = `
-          let helloGraph;
+          let blitzboard;
           window.addEventListener("load",function() {
           let container = document.getElementById('graph');
-          helloGraph = new HelloGraph(container);
-          let config =
-          ${configEditor.getValue()}
-          let graph = ${JSON.stringify(helloGraph.graph)};
-          helloGraph.updateGraph(graph, config);
+          blitzboard = new Blitzboard(container);
+          let config = ${configEditor.getValue()}
+          let graph = ${JSON.stringify(blitzboard.graph)};
+          blitzboard.updateGraph(graph, config);
           });
         `;
         download(content, 'embed_pg.js', 'text/plain');
@@ -396,17 +395,17 @@
       
       editor.on('cursorActivity', (doc) => {
         if(!byProgram) {
-          const node = helloGraph.nodeLineMap[doc.getCursor().line + 1];
-          const edge = helloGraph.edgeLineMap[doc.getCursor().line + 1];
+          const node = blitzboard.nodeLineMap[doc.getCursor().line + 1];
+          const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
       
           if(node) {
-            scrollIntoView(helloGraph.network.getPosition(node.id));
-            helloGraph.network.selectNodes([node.id]);
+            scrollIntoView(blitzboard.network.getPosition(node.id));
+            blitzboard.network.selectNodes([node.id]);
           } else if(edge){
-            const from = helloGraph.network.getPosition(edge.from);
-            const to = helloGraph.network.getPosition(edge.to);
+            const from = blitzboard.network.getPosition(edge.from);
+            const to = blitzboard.network.getPosition(edge.to);
             scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
-            helloGraph.network.selectEdges([edge.id]);
+            blitzboard.network.selectEdges([edge.id]);
           }
         } else {
           byProgram = false;

@@ -3,7 +3,7 @@
 const q = document.querySelector.bind(document);
 const qa = document.querySelectorAll.bind(document);
 
-class HelloGraph {
+class Blitzboard {
   static fondLoaded = false;
   constructor(container) {
     this.container = container;
@@ -164,7 +164,7 @@ class HelloGraph {
     // searchGraph();
     this.groups = new Set();
     this.edgeColorMap = {};
-    let helloGraph = this;
+    let blitzboard = this;
 
     let newPg;
     if (typeof input === 'string' || input instanceof String) {
@@ -396,21 +396,21 @@ class HelloGraph {
     
     
     this.network.on("zoom", function(){
-      let pos = helloGraph.network.getViewPosition();
-      if(helloGraph.config.zoom?.min && helloGraph.network.getScale() < helloGraph.config.zoom.min)
+      let pos = blitzboard.network.getViewPosition();
+      if(blitzboard.config.zoom?.min && blitzboard.network.getScale() < blitzboard.config.zoom.min)
       {
-        helloGraph.network.moveTo({
-          position: helloGraph.prevZoomPosition,
-          scale: helloGraph.config.zoom?.min
+        blitzboard.network.moveTo({
+          position: blitzboard.prevZoomPosition,
+          scale: blitzboard.config.zoom?.min
         });
       }
-      else if(helloGraph.config.zoom?.max && helloGraph.network.getScale() > helloGraph.config.zoom.max){
-        helloGraph.network.moveTo({
-          position: helloGraph.prevZoomPosition,
-          scale: helloGraph.config.zoom.max,
+      else if(blitzboard.config.zoom?.max && blitzboard.network.getScale() > blitzboard.config.zoom.max){
+        blitzboard.network.moveTo({
+          position: blitzboard.prevZoomPosition,
+          scale: blitzboard.config.zoom.max,
         });
       } else {
-        helloGraph.prevZoomPosition = pos;
+        blitzboard.prevZoomPosition = pos;
       }
     });
 
@@ -548,15 +548,15 @@ class HelloGraph {
       }
     });
 
-    if (!HelloGraph.fondLoaded && document.fonts) {
-      HelloGraph.fondLoaded = true;
-      let helloGraph = this;
+    if (!Blitzboard.fondLoaded && document.fonts) {
+      Blitzboard.fondLoaded = true;
+      let blitzboard = this;
       // Decent browsers: Make sure the fonts are loaded.
       document.fonts.load('normal normal 400 24px/1 "FontAwesome"')
         .catch(
           console.error.bind(console, "Failed to load Font Awesome 4.")
         ).then(function () {
-        helloGraph.network.redraw();
+        blitzboard.network.redraw();
       })
         .catch(
           console.error.bind(
