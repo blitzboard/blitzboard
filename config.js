@@ -21,6 +21,10 @@ let defaultConfig =
     saturation: '0%',
     brightness: '62%',
   },
+  zoom: {
+    max: 3.0,
+    min: 0.25,
+  },
 
   /*
   layout: 'hierarchical',
