@@ -159,9 +159,9 @@
       %nav.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top#header
         %div.mr-5{style: 'color: yellow'}
           %img{ src: './blitzboard-w_2.png', style: 'height: 37px;' }
-        %ul.navbar-nav.justify-content-end
+        %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
-            #export-btn.dropdown.text-white
+            #export-btn.btn.dropdown.text-white.mx-4
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 Export
               .dropdown-menu{ 'aria-labelledby': "exportDropdown" }
@@ -170,7 +170,7 @@
                 %a.dropdown-item#embed-btn{ href: '#' }
                   Javascript
             %li.nav-item
-              #share-btn.text-white{:title => "Share"}
+              #share-btn.btn.text-white{ title: "Share", href: '#'}
                 Share 
       #network-popUp
         %span#operation node
