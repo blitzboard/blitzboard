@@ -200,9 +200,11 @@ class HelloGraph {
         }
         this.nodeMap[node.id] = node;
         nodesToDelete.delete(node.id);
-        for(let i = node.location.start.line; i <= node.location.end.line; i++) {
-          if(i < node.location.end.line || node.location.end.column > 1)
-            this.nodeLineMap[i] = node;
+        if(node.location) {
+          for (let i = node.location.start.line; i <= node.location.end.line; i++) {
+            if (i < node.location.end.line || node.location.end.column > 1)
+              this.nodeLineMap[i] = node;
+          }
         }
       });
 
@@ -214,9 +216,11 @@ class HelloGraph {
         newEdgeMap[id] = edge;
         let visEdge = this.toVisEdge(edge, this.config.edge.caption, id);
         this.edgeDataSet.update(visEdge);
-        for(let i = edge.location.start.line; i <= edge.location.end.line; i++) {
-          if(i < edge.location.end.line || edge.location.end.column > 1)
-            this.edgeLineMap[i] = visEdge;
+        if(edge.location) {
+          for (let i = edge.location.start.line; i <= edge.location.end.line; i++) {
+            if (i < edge.location.end.line || edge.location.end.column > 1)
+              this.edgeLineMap[i] = visEdge;
+          }
         }
       });
       nodesToDelete.forEach((nodeId) => {
@@ -261,9 +265,11 @@ class HelloGraph {
     this.edgeProps = new Set(['label']);
     this.graph.nodes.forEach((node) => {
       this.nodeMap[node.id] = node;
-      for(let i = node.location.start.line; i <= node.location.end.line; i++)
-        if(i < node.location.end.line || node.location.end.column > 1)
-          this.nodeLineMap[i] = node;
+      if(node.location) {
+        for (let i = node.location.start.line; i <= node.location.end.line; i++)
+          if (i < node.location.end.line || node.location.end.column > 1)
+            this.nodeLineMap[i] = node;
+      }
       Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(this.nodeProps.add, this.nodeProps);
     });
     this.graph.edges.forEach((edge) => {
@@ -288,9 +294,11 @@ class HelloGraph {
       }
       let visEdge = this.toVisEdge(edge, defaultEdgeProps, id);
       this.edgeMap[visEdge.id] = edge;
-      for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
-        if(i < edge.location.end.line || edge.location.end.column > 1)
-          this.edgeLineMap[i] = visEdge;
+      if(edge.location) {
+        for (let i = edge.location.start.line; i <= edge.location.end.line; i++)
+          if (i < edge.location.end.line || edge.location.end.column > 1)
+            this.edgeLineMap[i] = visEdge;
+      }
 
       return visEdge;
     }));
@@ -304,12 +312,12 @@ class HelloGraph {
       randomSeed: 1
     };
 
-    if(config.layout == 'hierarchical') {
-      layout.hierarchical = config.layoutSettings;
+    if(this.config.layout == 'hierarchical') {
+      layout.hierarchical = this.config.layoutSettings;
     }
 
     this.groupColorMap =  [...this.groups].reduce((acc, group) => {
-      acc[group] = {color: getRandomColor(group, config.node.saturation || '100%', config.node.brightness || '40%')}; return acc;
+      acc[group] = {color: getRandomColor(group, this.config.node.saturation || '100%', this.config.node.brightness || '40%')}; return acc;
     }, {});
 
     let options = {
