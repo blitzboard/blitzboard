@@ -531,8 +531,7 @@ class HelloGraph {
         .catch(
           console.error.bind(console, "Failed to load Font Awesome 4.")
         ).then(function () {
-        // create a network
-        helloGraph.updateGraph(input, config);
+        helloGraph.network.redraw();
       })
         .catch(
           console.error.bind(
@@ -556,7 +555,7 @@ class HelloGraph {
         }
       }
     });
-    
+    //
     //
     // this.network.on("click", (e) => {
     //   this.network.stopSimulation();
