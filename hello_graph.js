@@ -533,6 +533,20 @@ class HelloGraph {
         );
     }
 
+
+    this.network.on("click", (e) => {
+      if(e.nodes.length > 0) {
+        let node = this.nodeMap[e.nodes[0]];
+        scrollToLine(node.location);
+        if(this.config.node.onClick) {
+          this.config.node.onClick(node);
+        }
+      } else if(e.edges.length > 0) {
+        scrollToLine(this.edgeMap[e.edges[0]].location);
+      }
+    });
+    
+    //
     // this.network.on("click", (e) => {
     //   this.network.stopSimulation();
     //   if(e.nodes.length > 0) {

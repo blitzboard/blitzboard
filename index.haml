@@ -250,9 +250,11 @@
       
       
       q('#embed-btn').addEventListener('click', () => {
-        content = `window.addEventListener("load",function() {
+        content = `
+          let helloGraph;
+          window.addEventListener("load",function() {
           let container = document.getElementById('graph');
-          let helloGraph = new HelloGraph(container);
+          helloGraph = new HelloGraph(container);
           let config =
           ${configEditor.getValue()}
           let graph = ${JSON.stringify(helloGraph.graph)};
