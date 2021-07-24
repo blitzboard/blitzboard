@@ -1066,6 +1066,14 @@
             window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
           }
 
+          let configText = loadConfig('config');
+
+          if (!configText) {
+            configText = defaultConfig;
+          }
+          if(!config) {
+            config = tryJsonParse(configText);
+          }
 
           let query = urlParams.get('query');
           let initialPg = loadConfig('pg');
@@ -1079,14 +1087,6 @@
             editor.setValue(initialPg);
           }
 
-          let configText = loadConfig('config');
-
-          if (!configText) {
-            configText = defaultConfig;
-          }
-          if(!config) {
-            config = tryJsonParse(configText);
-          }
           configEditor.setValue(configText);
           configEditor.on('change', (delta) => {
             clearTimeout(timerId);
