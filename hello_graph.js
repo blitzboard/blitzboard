@@ -10,6 +10,7 @@ class HelloGraph {
     this.groups = new Set();
     this.expandedNodes = [];
     this.nodeMap = {};
+    this.config = { node: {}, edge: {}}
     this.nodeLineMap = {};
     this.edgeMap = {};
     this.edgeLineMap = {};
@@ -158,7 +159,7 @@ class HelloGraph {
     }
   }
 
-  updateGraph(input, config = null, applyDiff = true) {
+  updateGraph(input, config = {}, applyDiff = true) {
     // searchGraph();
     this.groups = new Set();
     this.edgeColorMap = {};
@@ -178,7 +179,7 @@ class HelloGraph {
     }
     if(!newPg)
       return;
-    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && this.config === config;
+    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && (config === {} || this.config === config);
     
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
@@ -239,7 +240,7 @@ class HelloGraph {
     this.graph = newPg;
     if(applyDiff) return;
     
-    this.config = config || this.config;
+    this.config = deepMerge(this.config, config );
 
     minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
 
@@ -615,6 +616,26 @@ function nodeEquals(node1, node2) {
   }
   return true;
 }
+
+
+function deepMerge(target, source) {
+  const isObject = obj => obj && typeof obj === 'object' && !Array.isArray(obj);
+  let result = Object.assign({}, target);
+  if (isObject(target) && isObject(source)) {
+    for (const [sourceKey, sourceValue] of Object.entries(source)) {
+      const targetValue = target[sourceKey];
+      if (isObject(sourceValue) && target.hasOwnProperty(sourceKey)) {
+        result[sourceKey] = deepMerge(targetValue, sourceValue);
+      }
+      else {
+        Object.assign(result, {[sourceKey]: sourceValue});
+      }
+    }
+  }
+  return result;
+}
+
+
 
 /*
 function updateTimeLineNodes() {
