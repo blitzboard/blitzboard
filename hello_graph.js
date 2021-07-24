@@ -551,7 +551,11 @@ class HelloGraph {
           this.config.node.onClick(node);
         }
       } else if(e.edges.length > 0) {
-        scrollToLine(this.edgeMap[e.edges[0]].location);
+        let edge = this.edgeMap[e.edges[0]];
+        scrollToLine(edge.location);
+        if(this.config.edge.onClick) {
+          this.config.edge.onClick(edge);
+        }
       }
     });
     
