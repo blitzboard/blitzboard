@@ -1066,23 +1066,29 @@
             window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
           }
 
+          let initialPg = loadConfig('pg');
           let configText = loadConfig('config');
 
-          if (!configText) {
+          if(!configText) {
             configText = defaultConfig;
           }
           if(!config) {
             config = tryJsonParse(configText);
           }
-
-          let query = urlParams.get('query');
-          let initialPg = loadConfig('pg');
-          if(query) {
+          
+          // Load PG data from database if x2.init is set in config
+          if(config.x2.init) {
             editor.setValue('');
-            axios.get(config.remoteUrl + query).then((response) => {
+            let strParams = '?';
+            config.x2.init.parameters.forEach(parameter => {
+              strParams = strParams + parameter.key + '=' + parameter.value + '&';
+            });
+            const strUrl = config.x2.url + config.x2.init.endpoint + strParams;
+            axios.get(strUrl).then((response) => {
               editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
             });
           }
+          // Otherwise, load PG data from browser local storage
           else if(initialPg) {
             editor.setValue(initialPg);
           }
