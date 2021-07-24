@@ -32,6 +32,7 @@
 <script src='./gui.js'></script>
 <script src='./animation.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js'></script>
+<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js'></script>
 <style>
   #network-popUp {
       display: none;
@@ -146,15 +147,24 @@
 Blitzboard
 </h3>
 </div>
-<div class='float-right'>
-<div class='btn btn-info' id='share-btn' title='Share'>
-<span class='ion-android-share-alt'></span>
-</div>
-<div class='btn btn-success' id='embed-btn' title='Embed'>
-<span class='ion-android-share'></span>
-</div>
-<div class='btn btn-success' id='export-btn' title='Export'>
+<div class='float-right d-inline'>
+<div class='dropdown d-inline'>
+<button aria-haspopup class='btn btn-success dropdown-toggle' data-toggle='dropdown' id='exportDropdown' type='button'>
+Export
 <span class='ion-android-download'></span>
+</button>
+<div aria-labelledby='exportDropdown' class='dropdown-menu'>
+<a class='dropdown-item' href='#' id='export-pgql-btn'>
+PGQL
+</a>
+<a class='dropdown-item' href='#' id='embed-btn'>
+Javascript
+</a>
+</div>
+</div>
+<div class='btn btn-info' id='share-btn' title='Share'>
+Share
+<span class='ion-android-share-alt'></span>
 </div>
 </div>
 </div>
@@ -302,10 +312,10 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   });
   
   q('#reset-config-btn').addEventListener('click', () => {
-    download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+    configEditor.setValue(defaultConfig);
   });
   
-  q('#export-btn').addEventListener('click', () => {
+  q('#export-pgql-btn').addEventListener('click', () => {
     //download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
   
     let pg = pgParser.parse(editor.getValue());

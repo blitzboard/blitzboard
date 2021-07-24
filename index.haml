@@ -33,6 +33,8 @@
     %script{:src => "./gui.js"}
     %script{:src => "./animation.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"}
+    %script{:src => "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"}
+
 
     :css
       #network-popUp {
@@ -145,13 +147,21 @@
           %div{style: 'color: yellow'}
             %h3
               Blitzboard
-          .float-right
+          .float-right.d-inline
+            -##embed-btn.btn.btn-success{:title => "Embed"}
+              -#%span{:class => "ion-android-share"}
+            .dropdown.d-inline
+              %button#exportDropdown.btn.btn-success.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
+                Export
+                %span{:class => "ion-android-download"}
+              .dropdown-menu{ 'aria-labelledby': "exportDropdown" }
+                %a#export-pgql-btn.dropdown-item{ href: '#' }
+                  PGQL
+                %a.dropdown-item#embed-btn{ href: '#' }
+                  Javascript
             #share-btn.btn.btn-info{:title => "Share"}
+              Share 
               %span{:class => "ion-android-share-alt"}
-            #embed-btn.btn.btn-success{:title => "Embed"}
-              %span{:class => "ion-android-share"}
-            #export-btn.btn.btn-success{:title => "Export"}
-              %span{:class => "ion-android-download"}
       #network-popUp
         %span#operation node
         %br/
@@ -285,14 +295,14 @@
         `;
         download(content, 'embed_pg.js', 'text/plain');
       });
-      
+
       q('#reset-config-btn').addEventListener('click', () => {
-        download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+        configEditor.setValue(defaultConfig);
       });
 
-      q('#export-btn').addEventListener('click', () => {
+      q('#export-pgql-btn').addEventListener('click', () => {
         //download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
-      
+
         let pg = pgParser.parse(editor.getValue());
         let output = "";
         pg.nodes.forEach(node => {
