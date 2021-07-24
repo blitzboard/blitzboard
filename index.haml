@@ -233,15 +233,16 @@
       
       function updateGraph(event, ui) {
         helloGraph.updateGraph(editor.getValue(), config);
-        helloGraph.network.on("click", (e) => {
-          if(e.nodes.length > 0) {
-            let node = helloGraph.nodeMap[e.nodes[0]];
-            scrollToLine(node.location);
-          } else if(e.edges.length > 0) {
-            let edge = helloGraph.edgeMap[e.edges[0]];
-            scrollToLine(edge.location);
-          }
-        });
+        if(helloGraph.network)
+          helloGraph.network.on("click", (e) => {
+            if(e.nodes.length > 0) {
+              let node = helloGraph.nodeMap[e.nodes[0]];
+              scrollToLine(node.location);
+            } else if(e.edges.length > 0) {
+              let edge = helloGraph.edgeMap[e.edges[0]];
+              scrollToLine(edge.location);
+            }
+          });
       }
       
       window.onresize = onResize;
@@ -397,18 +398,8 @@
       }
       
       
-      let query = urlParams.get('query');
       let initialPg = loadConfig('pg');
-      if(query) {
-        editor.setValue('');
-        axios.get(config.remoteUrl + query).then((response) => {
-          editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
-        });
-      }
-      else if(initialPg) {
-        editor.setValue(initialPg);
-      }
-      
+
       let configText = loadConfig('config');
       
       if (!configText) {
@@ -417,6 +408,23 @@
       if(!config) {
         config = tryJsonParse(configText);
       }
+      
+      if(config.x2?.init) {
+        editor.setValue('');
+        let strParams = '?';
+        config.x2.init.parameters.forEach(parameter => {
+          strParams = strParams + parameter.key + '=' + parameter.value + '&';
+        });
+        const strUrl = config.x2.url + config.x2.init.endpoint + strParams;
+        axios.get(strUrl).then((response) => {
+          editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+        });
+      }
+      // Otherwise, load PG data from browser local storage
+      else if(initialPg) {
+        editor.setValue(initialPg);
+      }
+      
       configEditor.setValue(configText);
       configEditor.on('change', (delta) => {
         clearTimeout(timerId);
@@ -427,6 +435,7 @@
         }, 1000);
       });
       
-      updateGraph(editor.getValue(), config);
+      if(editor.getValue())
+        updateGraph(editor.getValue(), config);
       
       
