@@ -163,6 +163,20 @@
 <div class='mr-5' style='color: yellow'>
 <img src='./blitzboard-w_3.png' style='height: 30px;'>
 </div>
+<div class='btn-group btn-group-toggle' data-toggle='buttons'>
+<label class='btn btn-secondary column-mode-btn' id='input-only-btn'>
+<input autocomplete='off' name='options' type='radio'>
+L
+</label>
+<label class='btn btn-secondary column-mode-btn active' id='double-column-btn'>
+<input autocomplete='off' checked='checked' name='options' type='radio'>
+B
+</label>
+<label class='btn btn-secondary column-mode-btn' id='view-only-btn'>
+<input autocomplete='off' name='options' type='radio'>
+R
+</label>
+</div>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
 <li class='nav-item'>
 <div class='btn dropdown text-white mx-4' id='export-btn'>
@@ -209,8 +223,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 <textarea id='config-input' style='height: 100%; width: 100%;'></textarea>
 </div>
 </div>
-<div class='vh-100' id='graph-pane'>
-<div class='bg-light vh-100' id='graph'></div>
+<div class='h-100' id='graph-pane'>
+<div class='bg-light h-100' id='graph'></div>
 </div>
 <div class='float-btn btn btn-info' id='config-btn' title='Config'>
 <span class='ion-android-settings'></span>
@@ -228,6 +242,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let localMode = true;
   let blitzboard = new Blitzboard(container);
   let byProgram = true;
+  let prevInputWidth = null;
   let config;
   
   
@@ -259,7 +274,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       width = totalWidth;
       $('#input-area').css('width', width);
     }
-    $('#graph-pane').css('width', (totalWidth - width) - 100);
+    prevInputWidth = width;
+    $('#graph-pane').css('width', (totalWidth - width));
     onConfigResize(null, null);
   };
   
@@ -310,6 +326,27 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       $('#config-area').css('height', '0%');
     }
     onConfigResize(null, null);
+  });
+  
+  $('.column-mode-btn input').change(() => {
+  
+    if(!$('#input-area').resizable( "option", "disabled"))
+      prevInputWidth = $('#input-area').css('width');
+    if(q('#input-only-btn input').checked) {
+      $('#input-area').resizable('disable');
+      $('#input-area').css('width', '100%');
+      $('#graph-pane').css('width', '0px');
+    } else if(q('#double-column-btn input').checked) {
+      const totalWidth = $("#main-area").width();
+      $('#input-area').resizable('enable');
+      $('#input-area').css('width', prevInputWidth);
+      $('#graph-pane').css('width', totalWidth - prevInputWidth);
+    } else if(q('#view-only-btn input').checked) { 
+      $('#input-area').resizable('disable');
+      prevInputWidth = $('#input-area').css('width');
+      $('#input-area').css('width', '0px');
+      $('#graph-pane').css('width', '100%');
+    }
   });
   
   

@@ -163,6 +163,16 @@
       %nav#header.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top
         %div.mr-5{style: 'color: yellow'}
           %img{ src: './blitzboard-w_3.png', style: 'height: 30px;' }
+        .btn-group.btn-group-toggle{"data-toggle" => "buttons"}
+          %label.btn.btn-secondary.column-mode-btn#input-only-btn
+            %input{:autocomplete => "off", :name => "options", :type => "radio"}/
+            L
+          %label.btn.btn-secondary.column-mode-btn.active#double-column-btn
+            %input{:autocomplete => "off", :checked => "checked", :name => "options", :type => "radio"}/
+            B
+          %label.btn.btn-secondary.column-mode-btn#view-only-btn
+            %input{:autocomplete => "off", :name => "options", :type => "radio"}/
+            R
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
             #export-btn.btn.dropdown.text-white.mx-4
@@ -196,8 +206,8 @@
               You -> I :say word:Goodbye date:yesterday
           #config-area
             %textarea#config-input{:style => "height: 100%; width: 100%;"}
-        #graph-pane.vh-100
-          #graph.bg-light.vh-100
+        #graph-pane.h-100
+          #graph.bg-light.h-100
         #config-btn.float-btn.btn.btn-info{:title => "Config"}
           %span{:class => "ion-android-settings"}
         #reset-config-btn.float-btn.btn.btn-info{:title => "Reset Config"}
@@ -210,6 +220,7 @@
       let localMode = true;
       let blitzboard = new Blitzboard(container);
       let byProgram = true;
+      let prevInputWidth = null;
       let config;
       
       
@@ -241,7 +252,8 @@
           width = totalWidth;
           $('#input-area').css('width', width);
         }
-        $('#graph-pane').css('width', (totalWidth - width) - 100);
+        prevInputWidth = width;
+        $('#graph-pane').css('width', (totalWidth - width));
         onConfigResize(null, null);
       };
       
@@ -294,6 +306,27 @@
         onConfigResize(null, null);
       });
       
+      $('.column-mode-btn input').change(() => {
+      
+        if(!$('#input-area').resizable( "option", "disabled"))
+          prevInputWidth = $('#input-area').css('width');
+        if(q('#input-only-btn input').checked) {
+          $('#input-area').resizable('disable');
+          $('#input-area').css('width', '100%');
+          $('#graph-pane').css('width', '0px');
+        } else if(q('#double-column-btn input').checked) {
+          const totalWidth = $("#main-area").width();
+          $('#input-area').resizable('enable');
+          $('#input-area').css('width', prevInputWidth);
+          $('#graph-pane').css('width', totalWidth - prevInputWidth);
+        } else if(q('#view-only-btn input').checked) { 
+          $('#input-area').resizable('disable');
+          prevInputWidth = $('#input-area').css('width');
+          $('#input-area').css('width', '0px');
+          $('#graph-pane').css('width', '100%');
+        }
+      });
+
       
       q('#embed-btn').addEventListener('click', () => {
         content = `
