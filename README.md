@@ -1,4 +1,4 @@
-Please visit https://g2glab.github.io/hellograph/
+Please visit https://g2glab.github.io/blitzboard/
 
 ## Note for Contributing
 
@@ -90,7 +90,7 @@ Load scripts in the header of the your html:
 ```html
 <link href='https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css' rel='stylesheet'>
 <script src='https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'></script>
-<script src='https://cdn.jsdelivr.net/gh/g2glab/hellograph@embed/hello_graph.js'></script>
+<script src='https://cdn.jsdelivr.net/gh/g2glab/blitzboard/blitzboard.js'></script>
 ```
 
 Place div tag with `id='graph'`:

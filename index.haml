@@ -253,7 +253,7 @@
       });
       
       q('#share-btn').addEventListener('click', () => {
-        let url = `https://g2glab.github.io/hellograph?pg=${encodeURIComponent(editor.getValue())}` +
+        let url = `https://g2glab.github.io/blitzboard?pg=${encodeURIComponent(editor.getValue())}` +
           `&config=${encodeURIComponent(configEditor.getValue())}`;
         navigator.clipboard.writeText(url).then(function() {
           alert("Your graph is now on clipboard!")
