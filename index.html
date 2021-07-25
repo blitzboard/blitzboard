@@ -292,6 +292,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       width = totalWidth;
       $('#input-area').css('width', width);
     }
+    localStorage.setItem('inputAreaWidth', width);
     $('#graph-pane').css('width', (totalWidth - width));
     onConfigResize(null, null);
   };
@@ -346,23 +347,28 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   });
   
   $('.column-mode-btn input').change(() => {
-  
     if(!$('#input-area').resizable( "option", "disabled"))
       prevInputWidth = $('#input-area').css('width');
     if(q('#input-only-btn input').checked) {
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '100%');
       $('#graph-pane').css('width', '0px');
+      viewMode = 'input-only';
     } else if(q('#double-column-btn input').checked) {
       const totalWidth = $("#main-area").width();
       $('#input-area').resizable('enable');
+      if(!prevInputWidth) 
+        prevInputWidth = totalWidth / 2;
       $('#input-area').css('width', prevInputWidth);
       $('#graph-pane').css('width', totalWidth - prevInputWidth);
+      viewMode = 'double-column';
     } else if(q('#view-only-btn input').checked) { 
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '0px');
       $('#graph-pane').css('width', '100%');
+      viewMode = 'view-only';
     }
+    localStorage.setItem('viewMode', viewMode);
     onResize(null, null);
   });
   
@@ -492,18 +498,23 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
     edgePropInParam = urlParams.get('displayedEdgeProps');
   let configInParam = urlParams.get('config');
-  if(pgInParam || nodePropInParam || edgePropInParam || configInParam) {
+  let viewModeInParam = urlParams.get('viewMode');
+  if(pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
+    console.log(viewModeInParam);
     if(pgInParam)
       localStorage.setItem('pg', pgInParam);
     if(configInParam)
       localStorage.setItem('config', configInParam);
+    if(viewModeInParam)
+      localStorage.setItem('viewMode', viewModeInParam);
     window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
   }
-  
   
   let initialPg = loadConfig('pg');
   
   let configText = loadConfig('config');
+  
+  let viewMode = loadConfig('viewMode');
   
   if (!configText) {
     configText = defaultConfig;
@@ -543,6 +554,24 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   if(editor.getValue())
     updateGraph(editor.getValue(), config);
+  
+  
+  switch(viewMode) {
+    case 'input-only':
+      q('#input-only-btn input').click();
+      $('#input-area').resizable('disable');
+      $('#input-area').css('width', '100%');
+      $('#graph-pane').css('width', '0px');
+      onResize(null, null);
+      break;
+    case 'view-only':
+      q('#view-only-btn input').click(); 
+      $('#input-area').resizable('disable');
+      $('#input-area').css('width', '0px');
+      $('#graph-pane').css('width', '100%');
+      onResize(null, null);
+      break;
+  }
 </script>
 </body>
 </html>
