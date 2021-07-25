@@ -45,6 +45,6 @@ function scrollIntoView(position) {
         easingFuntcion: "easeInOutQuad"
       }
     };
-    helloGraph.network.moveTo({ ...{position: position}, ...animationOption });
+    blitzboard.network.moveTo({ ...{position: position}, ...animationOption });
   }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
 }
