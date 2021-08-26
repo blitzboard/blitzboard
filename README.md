@@ -80,7 +80,18 @@ https://visjs.github.io/vis-network/docs/network/layout.html
 ### Database Access
 
 ```json
-  "remoteUrl": "http://<ip_address>:<port>/",
+  x2: {
+    url: 'https://158.101.xxx.xxx:7001/',
+    mode: 'read-only',
+    init: {
+      endpoint: 'edge_match',
+      parameters: [
+        { key: 'edge_labels[]', value: 'respects' },
+        { key: 'limit', value: 100 },
+      ],
+    },
+  },
+
 ```
 
 ### How to embed your graph into other websites
