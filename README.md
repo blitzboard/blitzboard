@@ -9,25 +9,25 @@ Other javascripts can be edited directly!
 
 Default
 
-```json
+```js
 {
-  "node": {
-    "icon": {
-      "person": "f3a0",
-      "graph": "f341"
+  node: {
+    icon: {
+      person: "f3a0",
+      graph: "f341"
     },
-    "saturation": "100%",
-    "brightness": "37%"
+    saturation: "100%",
+    brightness: "37%"
   },
-  "edge": {
-    "length": {
-      "distance": "value"
+  edge: {
+    length: {
+      distance: "value"
     },
-    "width": {
-      "flow": "throughput"
+    width: {
+      flow: "throughput"
     },
-    "saturation": "0%",
-    "brightness": "62%"
+    saturation: "0%",
+    brightness: "62%"
   }
 }
 ```
@@ -79,7 +79,7 @@ https://visjs.github.io/vis-network/docs/network/layout.html
 
 ### Database Access
 
-```json
+```js
   x2: {
     url: 'https://158.101.xxx.xxx:7001/',
     mode: 'read-only',
