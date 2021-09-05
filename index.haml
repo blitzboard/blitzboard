@@ -168,6 +168,10 @@
         font-family: 'Courier', monospace;
         font-size: 16px;
       }
+      
+      .CodeMirror-scroll {
+        padding: 0;
+      }
 
   %body
     #app
@@ -270,7 +274,11 @@
         localStorage.setItem('inputAreaWidth', width);
         $('#graph-pane').css('width', (totalWidth - width));
         onConfigResize(null, null);
-      };
+      }
+      
+      function configCollapsed() {
+        return $('#config-area').css('height') == '0px';
+      }
       
       function onConfigResize(event, ui) {
         const totalHeight = $("#input-area").height();
@@ -284,8 +292,13 @@
         $('#config-area').css('height', (totalHeight - height));
         $('#config-btn').css('bottom', bottom);
         $('#config-btn').css('left', left);
-        $('#reset-config-btn').css('left', left);
-        $('#reset-config-btn').css('bottom', bottom - 70);
+        if(configCollapsed()) {
+          $('#reset-config-btn').hide();
+        } else {
+          $('#reset-config-btn').show();
+          $('#reset-config-btn').css('left', left);
+          $('#reset-config-btn').css('bottom', bottom - 70);
+        }
       };
       
       
@@ -310,8 +323,7 @@
       onConfigResize(null, null);
       
       q('#config-btn').addEventListener('click', () => {
-        let x = $('#config-area').css('height');
-        if ($('#config-area').css('height') == '0px') {
+        if (configCollapsed()) {
           $('#pg-area').css('height', '50%');
           $('#config-area').css('height', '50%');
         } else {
