@@ -206,7 +206,7 @@
 </div>
 <div class='custom-control custom-switch ml-4'>
 <input checked class='custom-control-input' id='autocompletion-switch' type='checkbox'>
-<label class='custom-control-label text-white' for='autocompletion-switch'>Auto completion</label>
+<label class='custom-control-label text-white' for='autocompletion-switch'>Auto complete</label>
 </div>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
 <li class='nav-item'>
@@ -275,7 +275,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let byProgram = true;
   let prevInputWidth = null;
   let config;
-  let autoCompletion = true;
+  let autocompletion = true;
   let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
   
   
@@ -541,7 +541,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   configEditor.setSize('100%', '100%');
   
   editor.on("inputRead", (instance) => {
-    if(autoCompletion)
+    if(autocompletion)
       editor.execCommand('autocomplete', { completeSingle: false });
   });
   
@@ -587,7 +587,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let configInParam = urlParams.get('config');
   let viewModeInParam = urlParams.get('viewMode');
   if(pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
-    console.log(viewModeInParam);
     if(pgInParam)
       localStorage.setItem('pg', pgInParam);
     if(configInParam)
@@ -647,16 +646,15 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     updateGraph(editor.getValue(), config);
     
     
-  let autoCompletionConfig = localStorage.getItem('autocompletion');
-  if(autoCompletionConfig !== null) {
-    autoCompletion = autoCompletionConfig === 'true';
-    $('#autocompletion-switch').prop('checked', autoCompletion);
+  let autocompletionConfig = localStorage.getItem('autocompletion');
+  if(autocompletionConfig !== null) {
+    autocompletion = autocompletionConfig === 'true';
+    $('#autocompletion-switch').prop('checked', autocompletion);
   }
   
   $('#autocompletion-switch').change(() => {
-    autoCompletion = $('#autocompletion-switch').prop('checked');
-    console.log(autoCompletion);
-    localStorage.setItem('autocompletion', autoCompletion);
+    autocompletion = $('#autocompletion-switch').prop('checked');
+    localStorage.setItem('autocompletion', autocompletion);
   }); 
   
   switch(viewMode) {
