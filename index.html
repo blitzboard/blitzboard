@@ -204,6 +204,10 @@
 </svg>
 </label>
 </div>
+<div class='custom-control custom-switch ml-4'>
+<input checked class='custom-control-input' id='autocompletion-switch' type='checkbox'>
+<label class='custom-control-label text-white' for='autocompletion-switch'>Auto completion</label>
+</div>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
 <li class='nav-item'>
 <div class='btn dropdown text-white mx-4' id='export-btn'>
@@ -271,6 +275,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let byProgram = true;
   let prevInputWidth = null;
   let config;
+  let autoCompletion = true;
   let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
   
   
@@ -530,16 +535,14 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     },
     hintOptions: {
       completeSingle: false,
-      hint: (cm, callback, options) => {
-        // callback()
-      }
     },
   });
   
   configEditor.setSize('100%', '100%');
   
   editor.on("inputRead", (instance) => {
-    editor.execCommand('autocomplete', { completeSingle: false });
+    if(autoCompletion)
+      editor.execCommand('autocomplete', { completeSingle: false });
   });
   
   function onEditorChanged(delta){
@@ -642,7 +645,19 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   if(editor.getValue())
     updateGraph(editor.getValue(), config);
+    
+    
+  let autoCompletionConfig = localStorage.getItem('autocompletion');
+  if(autoCompletionConfig !== null) {
+    autoCompletion = autoCompletionConfig === 'true';
+    $('#autocompletion-switch').prop('checked', autoCompletion);
+  }
   
+  $('#autocompletion-switch').change(() => {
+    autoCompletion = $('#autocompletion-switch').prop('checked');
+    console.log(autoCompletion);
+    localStorage.setItem('autocompletion', autoCompletion);
+  }); 
   
   switch(viewMode) {
     case 'input-only':
