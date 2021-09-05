@@ -516,8 +516,8 @@
       editor.on("inputRead", (instance) => {
         editor.execCommand('autocomplete', { completeSingle: false });
       });
-            
-      editor.on('keydown', (delta) => {
+      
+      function onEditorChanged(delta){
         if(!byProgram) {
           clearTimeout(timerId);
           localMode = true;
@@ -525,11 +525,14 @@
           
             localStorage.setItem('pg', editor.getValue());
             updateGraph(editor.getValue(), config);
-          }, 1000);
+          }, 2000);
         } else {
           byProgram = false;
         }
-      });
+      }
+            
+      editor.on('keydown', onEditorChanged);
+      editor.on('inputRead', onEditorChanged);
       
       editor.on('cursorActivity', (doc) => {
         if(!byProgram) {
@@ -596,14 +599,18 @@
       }
       
       configEditor.setValue(configText);
-      configEditor.on('keydown', (delta) => {
+      
+      function onConfigChanged(delta) {
         clearTimeout(timerId);
         timerId = setTimeout(() => {
           localStorage.setItem('config', configEditor.getValue());
           config = tryJsonParse(configEditor.getValue());
           updateGraph(editor.getValue(), config);
-        }, 1000);
-      });
+        }, 2000);
+      }
+      
+      configEditor.on('keydown', onConfigChanged);
+      configEditor.on('inputRead', onConfigChanged);
       
       $('[data-toggle="tooltip"]').tooltip()
 
