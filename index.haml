@@ -177,6 +177,10 @@
       .CodeMirror-scroll {
         padding: 0;
       }
+      .dropdown-menu{
+        max-height:600px;
+        overflow-y:auto;
+      }
 
   %body
     #app
@@ -202,6 +206,12 @@
           %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
+            #save-btn.btn.dropdown.text-white.mx-4
+              Save
+            #history-btn.btn.dropdown.text-white.mx-4
+              #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
+                History
+              #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
             #export-btn.btn.dropdown.text-white.mx-4
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 Export
@@ -250,6 +260,7 @@
       let prevInputWidth = null;
       let config;
       let autocompletion = true;
+      let savedGraphs = [];
       let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
       
       
@@ -407,6 +418,66 @@
         `;
         download(content, 'embed_pg.js', 'text/plain');
       });
+      
+      
+
+      function loadSavedGraph() {
+        savedGraphs = [];
+        for (let i = 0; i < localStorage.length; i++){
+          if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
+            savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+          }
+        }
+        
+        let menu = q('#history-menu');
+        // clear menu
+        while (menu.firstChild) {
+          menu.removeChild(menu.firstChild);
+        }
+        savedGraphs = savedGraphs.sort((a, b) => a.name - b.name);
+        for(let graph of savedGraphs) {
+          let node = document.createElement('a');
+          node.className = 'dropdown-item history-item';
+          node.appendChild(document.createTextNode((new Date(graph.name).toISOString())));
+          let div = document.createElement('div');
+          div.className = 'delete-history-btn btn btn-danger ml-2 justify-content-end';
+          let span = document.createElement('span');
+          span.className = 'ion-android-close';
+          div.appendChild(span);
+          node.appendChild(div);
+          menu.appendChild(node);
+          
+        }
+      }
+      
+      
+      $(document).on('click', '.delete-history-btn', (e) => {
+        let item = $(e.target).closest('.history-item')[0];
+        let i = $('.history-item').index(item);
+        localStorage.removeItem('saved-graph-' + savedGraphs[i].name);
+        savedGraphs.splice(i, 1);
+        item.remove();
+        e.stopPropagation();
+      });
+
+      
+      $(document).on('click', '.history-item', (e) => {
+        let i = $('.history-item').index(e.target);
+        editor.setValue(savedGraphs[i].pg);
+        configEditor.setValue(savedGraphs[i].config);
+        reloadConfig();
+      });
+
+      q('#save-btn').addEventListener('click', () => {
+        let id = Date.now();
+        localStorage.setItem('saved-graph-' + id, JSON.stringify({
+          pg: editor.getValue(),
+          config: configEditor.getValue(),
+          name: id
+        }));
+        loadSavedGraph();
+      });
+
 
       q('#reset-config-btn').addEventListener('click', () => {
         if(confirm("Really reset config?"))
@@ -601,13 +672,15 @@
       
       configEditor.setValue(configText);
       
+      function reloadConfig() {
+        localStorage.setItem('config', configEditor.getValue());
+        config = tryJsonParse(configEditor.getValue());
+        updateGraph(editor.getValue(), config);
+      }
+      
       function onConfigChanged(delta) {
         clearTimeout(timerId);
-        timerId = setTimeout(() => {
-          localStorage.setItem('config', configEditor.getValue());
-          config = tryJsonParse(configEditor.getValue());
-          updateGraph(editor.getValue(), config);
-        }, 2000);
+        timerId = setTimeout(reloadConfig, 2000);
       }
       
       configEditor.on('keydown', onConfigChanged);
@@ -648,3 +721,4 @@
           break;
       }
       
+      loadSavedGraph();
