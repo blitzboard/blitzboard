@@ -589,7 +589,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       name: name,
       date: Date.now()
     };
-    while(savedGraphs[++i].name !== name);
+    while(savedGraphs.length > 0 && savedGraphs[++i].name !== name);
     if(i < savedGraphs.length) {
       savedGraphs[i] = graph;
     }
