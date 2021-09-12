@@ -514,6 +514,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       node.appendChild(deleteButton);
       let editButton = document.createElement('div');
       editButton.className = 'edit-history-btn btn btn-secondary p-0';
+      editButton.setAttribute('title', 'Edit name')
       editButton.style = 'position:absolute; top: 5px; right: 35px; width: 25px; height: 25px';
       span = document.createElement('span');
       span.className = 'ion-android-create';
