@@ -419,8 +419,6 @@
         download(content, 'embed_pg.js', 'text/plain');
       });
       
-      
-
       function loadSavedGraph() {
         savedGraphs = [];
         for (let i = 0; i < localStorage.length; i++){
@@ -434,11 +432,13 @@
         while (menu.firstChild) {
           menu.removeChild(menu.firstChild);
         }
-        savedGraphs = savedGraphs.sort((a, b) => a.name - b.name);
+        savedGraphs = savedGraphs.sort((a, b) => b.date - a.date);
         for(let graph of savedGraphs) {
           let node = document.createElement('a');
           node.className = 'dropdown-item history-item';
-          node.appendChild(document.createTextNode((new Date(graph.name).toISOString())));
+          node.appendChild(document.createTextNode(graph.name));
+          node.appendChild(document.createElement("br"));
+          node.appendChild(document.createTextNode('(' + (new Date(graph.date)).toTimeString() + ')'));
           let div = document.createElement('div');
           div.className = 'delete-history-btn btn btn-danger ml-2 justify-content-end';
           let span = document.createElement('span');
@@ -446,10 +446,8 @@
           div.appendChild(span);
           node.appendChild(div);
           menu.appendChild(node);
-          
         }
       }
-      
       
       $(document).on('click', '.delete-history-btn', (e) => {
         let item = $(e.target).closest('.history-item')[0];
@@ -463,19 +461,35 @@
       
       $(document).on('click', '.history-item', (e) => {
         let i = $('.history-item').index(e.target);
-        editor.setValue(savedGraphs[i].pg);
-        configEditor.setValue(savedGraphs[i].config);
+        let graph = savedGraphs[i];
+        editor.setValue(graph.pg);
+        configEditor.setValue(graph.config);
+        localStorage.setItem('pg', editor.getValue());
+        localStorage.setItem('currentGraphName', graph.name);
         reloadConfig();
       });
 
       q('#save-btn').addEventListener('click', () => {
-        let id = Date.now();
-        localStorage.setItem('saved-graph-' + id, JSON.stringify({
-          pg: editor.getValue(),
-          config: configEditor.getValue(),
-          name: id
-        }));
-        loadSavedGraph();
+        let oldGraphName = localStorage.getItem('currentGraphName');
+        let name = prompt("What is the name of this graph?", oldGraphName ? oldGraphName : Date.now());
+        if (name != null) {
+          localStorage.setItem('currentGraphName', graph.name);
+          let key = 'saved-graph-' + name;
+          let existingGraph = localStorage.getItem(key);
+          if(existingGraph) {
+            if(!confirm(`Overwrite ${name}?`)) 
+              return;
+          }
+          // Use timestamp as graph id
+          localStorage.setItem(key, JSON.stringify({
+            pg: editor.getValue(),
+            config: configEditor.getValue(),
+            name: name,
+            date: Date.now()
+          }));
+          loadSavedGraph();
+          toastr.success(`Your graph has been saved as ${name}!`);
+        }
       });
 
 
@@ -672,6 +686,17 @@
       
       configEditor.setValue(configText);
       
+      function tryJsonParse(json) {
+        try {
+          return looseJsonParse(json);
+        } catch(e) {
+          console.log(e);
+          toastr.error(e, 'JSON SyntaxError', {preventDuplicates: true})
+          return null;
+        }
+      }
+    
+
       function reloadConfig() {
         localStorage.setItem('config', configEditor.getValue());
         config = tryJsonParse(configEditor.getValue());

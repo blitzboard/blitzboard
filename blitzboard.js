@@ -818,16 +818,6 @@ function tryPgParse(pg) {
   }
 }
 
-function tryJsonParse(json) {
-  try {
-    return looseJsonParse(json);
-  } catch(e) {
-    console.log(e);
-    toastr.error(e, 'JSON SyntaxError', {preventDuplicates: true})
-    return null;
-  }
-}
-
 function handleFileSelect(evt) {
   let files = evt.target.files; // FileList object
   // use the 1st file from the list
