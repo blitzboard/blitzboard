@@ -41,13 +41,12 @@ class Blitzboard {
     }
     else {
     */
-    if(this.config.layout == 'custom' &&
-      (pgNode.properties[this.config.layoutSettings.x] ||
-        pgNode.properties[this.config.layoutSettings.y])
-    ) {
-      x = parseInt(pgNode.properties[this.config.layoutSettings.x][0]);
-      y = parseInt(pgNode.properties[this.config.layoutSettings.y][0]);
-      fixed = true;
+    if(this.config.layout == 'custom') {
+      if (pgNode.properties[this.config.layoutSettings.x] || pgNode.properties[this.config.layoutSettings.y]) {
+        x = parseInt(pgNode.properties[this.config.layoutSettings.x][0]);
+        y = parseInt(pgNode.properties[this.config.layoutSettings.y][0]);
+        fixed = true;
+      }
     } else {
       x = null;
       y = null;
@@ -55,6 +54,17 @@ class Blitzboard {
       width = null;
     }
     //}
+    
+    if(this.config.layout == 'map') {
+      if(pgNode.properties[this.config.layoutSettings.x]) {
+        x = parseInt((pgNode.properties[this.config.layoutSettings.x][0] - this.config.layoutSettings.center[0]) * 100000);
+      }
+      if(pgNode.properties[this.config.layoutSettings.y]) {
+        y = parseInt((pgNode.properties[this.config.layoutSettings.y][0] - this.config.layoutSettings.center[1]) * 100000);
+      }
+      fixed = true;
+    }
+    
     return {x, y, fixed, width};
   }
 
@@ -354,7 +364,38 @@ class Blitzboard {
         },
       },
     };
+    
+    var map;
+    if(this.config.layout == 'map') {
+      map = L.map('map', {
+        center: this.config.layoutSettings.center,
+        zoom: this.config.layoutSettings.zoom,
+      });
+      var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+      });
+      tileLayer.addTo(map);
+    }
+    
+    
+    this.graph.nodes.forEach((node) => {
+      L.marker([node.properties[this.config.layoutSettings.x][0], node.properties[this.config.layoutSettings.y][0]]).addTo(map);
+    });
+
+    var polylinePoints = [
+      [35.08850794862861, 137.15369183718374],
+      [35.087384224892155, 137.15639550369508]
+    ];
+    L.polyline(polylinePoints).addTo(map);
+    var polylinePoints = [
+      [35.08850794862861, 137.15369183718374],
+      [35.08850794862861, 137.156]
+    ];
+    L.polyline(polylinePoints).addTo(map);
+    
+
     this.network = new vis.Network(this.container, data, options);
+    //this.container.style.background = 'transparent';
 
     // network.on('selectNode', (e) => {
     //   if (e.nodes.length > 0) {
