@@ -179,7 +179,7 @@ class Blitzboard {
     } else {
       newPg = input;
     }
-    if(!newPg)
+    if(newPg === null || newPg === undefined)
       return;
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && (config === {} || this.config === config);
     

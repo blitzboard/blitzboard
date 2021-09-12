@@ -163,10 +163,14 @@
         color: black;
       }
       
-      .dropdown-toggle {
-        -webkit-appearance: none;
-        border-radius: 0;
+      #history-dropdown.dropdown-toggle::after {
+          display: inline-block;
+          position: absolute;
+          float: right;
+          right: 5px;
+          margin-top: 8px;
       }
+
 
       .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
       
@@ -212,13 +216,11 @@
           %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
-            #save-btn.btn.dropdown.text-white
-              %ion-icon{ name: "save-outline" }
-              Save
+            #new-btn.btn.dropdown.text-white
+              %ion-icon{ name: "add-outline" }
+              New
             #history-btn.btn.dropdown.text-white.ml-4
-              #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
-                %ion-icon{ name: "open-outline" }
-                Load
+              #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false, style: "width: 100px; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;" }
               #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
             #export-btn.btn.dropdown.text-white.mx-4
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
@@ -276,6 +278,9 @@
         hour12: false,
       });
       
+      if(!localStorage.getItem('currentGraphName')) {
+        localStorage.setItem('currentGraphName', newGraphName());
+      }
       
       function scrollToLine(loc) {
         byProgram = true;
@@ -292,7 +297,7 @@
       
       q('#share-btn').addEventListener('click', () => {
         let url = `https://g2glab.github.io/blitzboard?pg=${encodeURIComponent(editor.getValue())}` +
-          `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}`;
+          `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
         navigator.clipboard.writeText(url).then(function() {
           alert("Your graph is now on clipboard!")
         });
@@ -335,9 +340,8 @@
         }
       };
       
-      
-      function updateGraph(event, ui) {
-        blitzboard.updateGraph(editor.getValue(), config);
+      function updateGraph(input, config) {
+        blitzboard.updateGraph(input, config);
         if(blitzboard.network)
           blitzboard.network.on("click", (e) => {
             if(e.nodes.length > 0) {
@@ -432,11 +436,28 @@
         download(content, 'embed_pg.js', 'text/plain');
       });
       
+      function newGraphName(baseName = 'Untitled') {
+        let name = baseName;
+        let i = 0;
+        while(localStorage.getItem('saved-graph-' + name)) {
+          name =  baseName + '-' + (++i);
+        }
+        return name;
+      }
+      
+      function showGraphName() {
+        $('#history-dropdown')[0].innerText = localStorage.getItem('currentGraphName');
+      }
+      
       function loadSavedGraph() {
         savedGraphs = [];
         for (let i = 0; i < localStorage.length; i++){
           if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
-            savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+            try {
+              savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+            } catch(e) {
+              localStorage.removeItem(localStorage.key(i));
+            }
           }
         }
         
@@ -462,16 +483,44 @@
           span.className = 'ion-android-close';
           deleteButton.appendChild(span);
           node.appendChild(deleteButton);
+          let editButton = document.createElement('div');
+          editButton.className = 'edit-history-btn btn btn-secondary p-0';
+          editButton.style = 'position:absolute; top: 5px; right: 35px; width: 25px; height: 25px';
+          span = document.createElement('span');
+          span.className = 'ion-android-create';
+          editButton.appendChild(span);
+          
+          node.appendChild(editButton);
           menu.appendChild(node);
         }
       }
       
+      $(document).on('click', '.edit-history-btn', (e) => {
+        let item = $(e.target).closest('.history-item')[0];
+        let i = $('.history-item').index(item);
+        let graph = savedGraphs[i];
+        let newName = prompt('What is the new graph name?', graph.name);
+        if(newName) {
+          localStorage.removeItem('saved-graph-' + graph.name);
+          if(localStorage.getItem('currentGraphName', graph.name)) {
+            localStorage.setItem('currentGraphName', newName);
+            showGraphName();
+          }
+          graph.name = newName;
+          localStorage.setItem('saved-graph-' + graph.name, JSON.stringify(graph));
+          loadSavedGraph();
+        }
+        e.stopPropagation();
+      });
+      
       $(document).on('click', '.delete-history-btn', (e) => {
         let item = $(e.target).closest('.history-item')[0];
         let i = $('.history-item').index(item);
-        localStorage.removeItem('saved-graph-' + savedGraphs[i].name);
-        savedGraphs.splice(i, 1);
-        item.remove();
+        if(confirm(`Really delete ${savedGraphs[i].name}?`)) {
+          localStorage.removeItem('saved-graph-' + savedGraphs[i].name);
+          savedGraphs.splice(i, 1);
+          item.remove();
+        }
         e.stopPropagation();
       });
 
@@ -479,6 +528,7 @@
       $(document).on('click', '.history-item', (e) => {
         let i = $('.history-item').index(e.target);
         let graph = savedGraphs[i];
+        byProgram = true;
         editor.setValue(graph.pg);
         configEditor.setValue(graph.config);
         localStorage.setItem('pg', editor.getValue());
@@ -486,30 +536,32 @@
         $('.dropdown-item.history-item').removeClass('active');
         $(e.target).addClass('active');
         reloadConfig();
+        showGraphName();
       });
-
-      q('#save-btn').addEventListener('click', () => {
-        let oldGraphName = localStorage.getItem('currentGraphName');
-        let name = prompt("What is the name of this graph?", oldGraphName ? oldGraphName : Date.now());
-        if (name != null) {
-          localStorage.setItem('currentGraphName', name);
-          let key = 'saved-graph-' + name;
-          let existingGraph = localStorage.getItem(key);
-          if(existingGraph) {
-            if(!confirm(`Overwrite ${name}?`)) 
-              return;
-          }
-          // Use timestamp as graph id
-          localStorage.setItem(key, JSON.stringify({
-            pg: editor.getValue(),
-            config: configEditor.getValue(),
-            name: name,
-            date: Date.now()
-          }));
-          loadSavedGraph();
-          setTimeout(() => $('#history-dropdown').dropdown('toggle'), 100); 
-          //toastr.success(`Your graph has been saved as ${name}!`);
+      
+      function saveCurrentGraph() {
+        let name = localStorage.getItem('currentGraphName');
+        if(!name) {
+          name = newGraphName();
         }
+        localStorage.setItem('saved-graph-' + name, JSON.stringify({
+          pg: editor.getValue(),
+          config: configEditor.getValue(),
+          name: name,
+          date: Date.now()
+        }));
+      }
+
+      q('#new-btn').addEventListener('click', () => {
+        let name = newGraphName();
+        byProgram = true;
+        editor.setValue('');
+        configEditor.setValue(defaultConfig);
+        localStorage.setItem('currentGraphName', name);
+        saveCurrentGraph();
+        loadSavedGraph();
+        showGraphName();
+        updateGraph('', defaultConfig);
       });
 
 
@@ -631,6 +683,7 @@
           timerId = setTimeout(() => {
           
             localStorage.setItem('pg', editor.getValue());
+            saveCurrentGraph();
             updateGraph(editor.getValue(), config);
           }, 2000);
         } else {
@@ -664,10 +717,17 @@
       let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
         edgePropInParam = urlParams.get('displayedEdgeProps');
       let configInParam = urlParams.get('config');
+      let graphNameInParam = urlParams.get('name');
       let viewModeInParam = urlParams.get('viewMode');
       if(pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
-        if(pgInParam)
+        if(pgInParam) {
           localStorage.setItem('pg', pgInParam);
+          if(graphNameInParam) {
+            localStorage.setItem('currentGraphName', graphNameInParam);
+          } else {
+            localStorage.setItem('currentGraphName', newGraphName());
+          }
+        }
         if(configInParam)
           localStorage.setItem('config', configInParam);
         if(viewModeInParam)
@@ -720,6 +780,7 @@
       function reloadConfig() {
         localStorage.setItem('config', configEditor.getValue());
         config = tryJsonParse(configEditor.getValue());
+        saveCurrentGraph();
         updateGraph(editor.getValue(), config);
       }
       
@@ -765,5 +826,11 @@
           onResize(null, null);
           break;
       }
+
+
+      if(!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
+        saveCurrentGraph();
+      }
       
       loadSavedGraph();
+      showGraphName();
