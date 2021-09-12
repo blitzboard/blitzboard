@@ -41,7 +41,8 @@
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"}
     %script{:src => 'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js'}
     %script{:src => "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"}
-
+    %script{:src => "https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js", :type => "module"}
+    %script{:nomodule => "", :src => "https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"}
 
     :css
       #network-popUp {
@@ -157,6 +158,11 @@
         top: 70px;
       }
       
+      .dropdown-item.active {
+        background: #047bff;
+        color: black;
+      }
+      
       .dropdown-toggle {
         -webkit-appearance: none;
         border-radius: 0;
@@ -206,11 +212,13 @@
           %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
-            #save-btn.btn.dropdown.text-white.mx-4
+            #save-btn.btn.dropdown.text-white
+              %ion-icon{ name: "save-outline" }
               Save
-            #history-btn.btn.dropdown.text-white.mx-4
+            #history-btn.btn.dropdown.text-white.ml-4
               #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
-                History
+                %ion-icon{ name: "open-outline" }
+                Load
               #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
             #export-btn.btn.dropdown.text-white.mx-4
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
@@ -262,6 +270,11 @@
       let autocompletion = true;
       let savedGraphs = [];
       let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
+      let dateTimeFormat = new Intl.DateTimeFormat('default', {
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hour12: false,
+      });
       
       
       function scrollToLine(loc) {
@@ -435,16 +448,20 @@
         savedGraphs = savedGraphs.sort((a, b) => b.date - a.date);
         for(let graph of savedGraphs) {
           let node = document.createElement('a');
-          node.className = 'dropdown-item history-item';
+          node.className = 'dropdown-item history-item mr-3';
+          if(graph.name === localStorage.getItem('currentGraphName'))
+            node.className += ' active'; 
+          node.style = 'position:relative';
           node.appendChild(document.createTextNode(graph.name));
           node.appendChild(document.createElement("br"));
-          node.appendChild(document.createTextNode('(' + (new Date(graph.date)).toTimeString() + ')'));
-          let div = document.createElement('div');
-          div.className = 'delete-history-btn btn btn-danger ml-2 justify-content-end';
+          node.appendChild(document.createTextNode(dateTimeFormat.format(new Date(graph.date))));
+          let deleteButton = document.createElement('div');
+          deleteButton.className = 'delete-history-btn btn btn-danger p-0';
+          deleteButton.style = 'position:absolute; top: 5px; right: 5px; width: 25px; height: 25px';
           let span = document.createElement('span');
           span.className = 'ion-android-close';
-          div.appendChild(span);
-          node.appendChild(div);
+          deleteButton.appendChild(span);
+          node.appendChild(deleteButton);
           menu.appendChild(node);
         }
       }
@@ -466,6 +483,8 @@
         configEditor.setValue(graph.config);
         localStorage.setItem('pg', editor.getValue());
         localStorage.setItem('currentGraphName', graph.name);
+        $('.dropdown-item.history-item').removeClass('active');
+        $(e.target).addClass('active');
         reloadConfig();
       });
 
@@ -473,7 +492,7 @@
         let oldGraphName = localStorage.getItem('currentGraphName');
         let name = prompt("What is the name of this graph?", oldGraphName ? oldGraphName : Date.now());
         if (name != null) {
-          localStorage.setItem('currentGraphName', graph.name);
+          localStorage.setItem('currentGraphName', name);
           let key = 'saved-graph-' + name;
           let existingGraph = localStorage.getItem(key);
           if(existingGraph) {
@@ -488,7 +507,8 @@
             date: Date.now()
           }));
           loadSavedGraph();
-          toastr.success(`Your graph has been saved as ${name}!`);
+          setTimeout(() => $('#history-dropdown').dropdown('toggle'), 100); 
+          //toastr.success(`Your graph has been saved as ${name}!`);
         }
       });
 

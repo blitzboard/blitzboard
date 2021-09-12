@@ -41,6 +41,8 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js'></script>
 <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js'></script>
+<script src='https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js' type='module'></script>
+<script nomodule='' src='https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js'></script>
 <style>
   #network-popUp {
       display: none;
@@ -155,6 +157,11 @@
     top: 70px;
   }
   
+  .dropdown-item.active {
+    background: #047bff;
+    color: black;
+  }
+  
   .dropdown-toggle {
     -webkit-appearance: none;
     border-radius: 0;
@@ -214,12 +221,14 @@
 </div>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
 <li class='nav-item'>
-<div class='btn dropdown text-white mx-4' id='save-btn'>
+<div class='btn dropdown text-white' id='save-btn'>
+<ion-icon name='save-outline'></ion-icon>
 Save
 </div>
-<div class='btn dropdown text-white mx-4' id='history-btn'>
+<div class='btn dropdown text-white ml-4' id='history-btn'>
 <div aria-haspopup class='dropdown-toggle' data-toggle='dropdown' id='history-dropdown' type='button'>
-History
+<ion-icon name='open-outline'></ion-icon>
+Load
 </div>
 <div aria-labelledby='historyDropdown' class='dropdown-menu' id='history-menu'></div>
 </div>
@@ -291,6 +300,11 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let autocompletion = true;
   let savedGraphs = [];
   let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
+  let dateTimeFormat = new Intl.DateTimeFormat('default', {
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric',
+    hour12: false,
+  });
   
   
   function scrollToLine(loc) {
@@ -464,16 +478,20 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     savedGraphs = savedGraphs.sort((a, b) => b.date - a.date);
     for(let graph of savedGraphs) {
       let node = document.createElement('a');
-      node.className = 'dropdown-item history-item';
+      node.className = 'dropdown-item history-item mr-3';
+      if(graph.name === localStorage.getItem('currentGraphName'))
+        node.className += ' active'; 
+      node.style = 'position:relative';
       node.appendChild(document.createTextNode(graph.name));
       node.appendChild(document.createElement("br"));
-      node.appendChild(document.createTextNode('(' + (new Date(graph.date)).toTimeString() + ')'));
-      let div = document.createElement('div');
-      div.className = 'delete-history-btn btn btn-danger ml-2 justify-content-end';
+      node.appendChild(document.createTextNode(dateTimeFormat.format(new Date(graph.date))));
+      let deleteButton = document.createElement('div');
+      deleteButton.className = 'delete-history-btn btn btn-danger p-0';
+      deleteButton.style = 'position:absolute; top: 5px; right: 5px; width: 25px; height: 25px';
       let span = document.createElement('span');
       span.className = 'ion-android-close';
-      div.appendChild(span);
-      node.appendChild(div);
+      deleteButton.appendChild(span);
+      node.appendChild(deleteButton);
       menu.appendChild(node);
     }
   }
@@ -495,6 +513,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     configEditor.setValue(graph.config);
     localStorage.setItem('pg', editor.getValue());
     localStorage.setItem('currentGraphName', graph.name);
+    $('.dropdown-item.history-item').removeClass('active');
+    $(e.target).addClass('active');
     reloadConfig();
   });
   
@@ -502,7 +522,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     let oldGraphName = localStorage.getItem('currentGraphName');
     let name = prompt("What is the name of this graph?", oldGraphName ? oldGraphName : Date.now());
     if (name != null) {
-      localStorage.setItem('currentGraphName', graph.name);
+      localStorage.setItem('currentGraphName', name);
       let key = 'saved-graph-' + name;
       let existingGraph = localStorage.getItem(key);
       if(existingGraph) {
@@ -517,7 +537,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         date: Date.now()
       }));
       loadSavedGraph();
-      toastr.success(`Your graph has been saved as ${name}!`);
+      setTimeout(() => $('#history-dropdown').dropdown('toggle'), 100); 
+      //toastr.success(`Your graph has been saved as ${name}!`);
     }
   });
   
