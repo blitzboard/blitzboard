@@ -197,7 +197,14 @@
       %nav#header.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top
         %div.mr-5{style: 'color: yellow'}
           %img{ src: './blitzboard-w_3.png', style: 'height: 30px;' }
-        .btn-group.btn-group-toggle{"data-toggle" => "buttons"}
+
+        #new-btn.btn.dropdown.text-white
+          %ion-icon{ name: "add-outline" }
+          New
+        #history-btn.btn.dropdown.text-white.mx-3
+          #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false, style: "width: 100px; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;" }
+          #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
+        .btn-group.btn-group-toggle.mx-3{"data-toggle" => "buttons"}
           %label.btn.btn-secondary.column-mode-btn#input-only-btn{ 'data-toggle': 'tooltip', 'data-placement': 'bottom', title: 'Show input area only' }
             %input{:autocomplete => "off", :name => "options", :type => "radio"}/
             %svg.bi.bi-file-text{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
@@ -211,17 +218,11 @@
             %input{:autocomplete => "off", :name => "options", :type => "radio"}/
             %svg.bi.bi-diagram-2{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
               %path{:d => "M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 5 7h2.5V6A1.5 1.5 0 0 1 6 4.5v-1zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1zM3 11.5A1.5 1.5 0 0 1 4.5 10h1A1.5 1.5 0 0 1 7 11.5v1A1.5 1.5 0 0 1 5.5 14h-1A1.5 1.5 0 0 1 3 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1A1.5 1.5 0 0 1 9 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z", "fill-rule" => "evenodd"}
-        .custom-control.custom-switch.ml-4
+        .custom-control.custom-switch.mx-3
           %input#autocompletion-switch.custom-control-input{:type => "checkbox", :checked => true}/
           %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
-            #new-btn.btn.dropdown.text-white
-              %ion-icon{ name: "add-outline" }
-              New
-            #history-btn.btn.dropdown.text-white.ml-4
-              #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false, style: "width: 100px; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;" }
-              #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
             #export-btn.btn.dropdown.text-white.mx-4
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 Export
@@ -499,7 +500,7 @@
         let item = $(e.target).closest('.history-item')[0];
         let i = $('.history-item').index(item);
         let graph = savedGraphs[i];
-        let newName = prompt('What is the new graph name?', graph.name);
+        let newName = prompt('What is the new name of the graph?', graph.name);
         if(newName) {
           localStorage.removeItem('saved-graph-' + graph.name);
           if(localStorage.getItem('currentGraphName', graph.name)) {
