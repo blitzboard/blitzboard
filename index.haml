@@ -517,27 +517,35 @@
       $(document).on('click', '.delete-history-btn', (e) => {
         let item = $(e.target).closest('.history-item')[0];
         let i = $('.history-item').index(item);
-        if(confirm(`Really delete ${savedGraphs[i].name}?`)) {
-          localStorage.removeItem('saved-graph-' + savedGraphs[i].name);
+        let name = savedGraphs[i].name;
+        if(confirm(`Really delete ${name}?`)) {
+          localStorage.removeItem('saved-graph-' + name);
           savedGraphs.splice(i, 1);
+          if(name == localStorage.getItem('currentGraphName')) {
+            loadGraph(savedGraphs[i > 0 ? i - 1 : i]);
+          }
           item.remove();
         }
         e.stopPropagation();
       });
 
-      
-      $(document).on('click', '.history-item', (e) => {
-        let i = $('.history-item').index(e.target);
-        let graph = savedGraphs[i];
+      function loadGraph(graph) {
         byProgram = true;
         editor.setValue(graph.pg);
         configEditor.setValue(graph.config);
         localStorage.setItem('pg', editor.getValue());
         localStorage.setItem('currentGraphName', graph.name);
         $('.dropdown-item.history-item').removeClass('active');
-        $(e.target).addClass('active');
+        let i = savedGraphs.indexOf(graph);
+        $(`.dropdown-item.history-item:eq(${i})`).addClass('active');
         reloadConfig();
         showGraphName();
+      }
+      
+      $(document).on('click', '.history-item', (e) => {
+        let i = $('.history-item').index(e.target);
+        let graph = savedGraphs[i];
+        loadGraph(graph);
       });
       
       function saveCurrentGraph() {
