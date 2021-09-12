@@ -581,12 +581,18 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     if(!name) {
       name = newGraphName();
     }
-    localStorage.setItem('saved-graph-' + name, JSON.stringify({
+    let i = -1;
+    let graph = {
       pg: editor.getValue(),
       config: configEditor.getValue(),
       name: name,
       date: Date.now()
-    }));
+    };
+    while(savedGraphs[++i].name !== name);
+    if(i < savedGraphs.length) {
+      savedGraphs[i] = graph;
+    }
+    localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
   }
   
   q('#new-btn').addEventListener('click', () => {
