@@ -15,6 +15,7 @@ class Blitzboard {
     this.edgeMap = {};
     this.edgeLineMap = {};
     this.prevZoomPosition = null;
+    this.map = null;
   }
   
   calcNodePosition(pgNode) {
@@ -54,16 +55,6 @@ class Blitzboard {
       width = null;
     }
     //}
-    
-    if(this.config.layout == 'map') {
-      if(pgNode.properties[this.config.layoutSettings.x]) {
-        x = parseInt((pgNode.properties[this.config.layoutSettings.x][0] - this.config.layoutSettings.center[0]) * 100000);
-      }
-      if(pgNode.properties[this.config.layoutSettings.y]) {
-        y = parseInt((pgNode.properties[this.config.layoutSettings.y][0] - this.config.layoutSettings.center[1]) * 100000);
-      }
-      fixed = true;
-    }
     
     return {x, y, fixed, width};
   }
@@ -365,33 +356,33 @@ class Blitzboard {
       },
     };
     
-    var map;
     if(this.config.layout == 'map') {
-      map = L.map('map', {
+      this.map = L.map('map', {
         center: this.config.layoutSettings.center,
-        zoom: this.config.layoutSettings.zoom,
+        zoom: 17,
+        zoomSnap: 0.001,
       });
       var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
       });
-      tileLayer.addTo(map);
+      tileLayer.addTo(this.map);
     }
     
     
-    this.graph.nodes.forEach((node) => {
-      L.marker([node.properties[this.config.layoutSettings.x][0], node.properties[this.config.layoutSettings.y][0]]).addTo(map);
-    });
+    // this.graph.nodes.forEach((node) => {
+    //   L.marker([node.properties[this.config.layoutSettings.x][0], node.properties[this.config.layoutSettings.y][0]]).addTo(map);
+    // });
 
     var polylinePoints = [
       [35.08850794862861, 137.15369183718374],
       [35.087384224892155, 137.15639550369508]
     ];
-    L.polyline(polylinePoints).addTo(map);
+    L.polyline(polylinePoints).addTo(this.map);
     var polylinePoints = [
       [35.08850794862861, 137.15369183718374],
       [35.08850794862861, 137.156]
     ];
-    L.polyline(polylinePoints).addTo(map);
+    L.polyline(polylinePoints).addTo(this.map);
     
 
     this.network = new vis.Network(this.container, data, options);
@@ -433,8 +424,23 @@ class Blitzboard {
         });
       }
     });
-
     
+    function updateNodeLocationOnMap() {
+      let nodePositions = [];
+      let xKey =  blitzboard.config.layoutSettings.x;
+      let yKey =  blitzboard.config.layoutSettings.y;
+      blitzboard.graph.nodes.forEach(node => {
+        let point = blitzboard.map.latLngToContainerPoint([node.properties[yKey][0] ,node.properties[xKey][0]]);
+        point = blitzboard.network.DOMtoCanvas(point);
+        nodePositions.push({id: node.id,
+          x: point.x, y: point.y, fixed: true });
+      });
+      blitzboard.nodeDataSet.update(nodePositions);
+    }
+    
+    blitzboard.map.on('move', updateNodeLocationOnMap);
+    blitzboard.map.on('zoom', updateNodeLocationOnMap);
+
     
     this.network.on("zoom", function(){
       let pos = blitzboard.network.getViewPosition();
@@ -454,6 +460,10 @@ class Blitzboard {
         blitzboard.prevZoomPosition = pos;
       }
     });
+    
+    if(this.map) {
+      updateNodeLocationOnMap();
+    }
 
     // if (!localMode) {
     //   network.on('doubleClick', (e) => {

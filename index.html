@@ -96,15 +96,17 @@
   #map {
     position: absolute;
     height: 100%;
-    width: 50%;
-    z-index: 3;
+    width: calc(50vw);
+    z-index: 1;
+    /*pointer-events: none;*/
   }
   
   #graph {
     position: absolute;
     height: 100%;
-    width: 50%;
+    width: 100%;
     z-index: 2;
+    pointer-events: none;
   }
   
   .ui-resizable-handle {
@@ -170,6 +172,8 @@
   .toast-top-right {
     top: 70px;
   }
+  
+  
   
   .dropdown-toggle {
     -webkit-appearance: none;
