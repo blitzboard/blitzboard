@@ -297,7 +297,7 @@
       });
       
       q('#share-btn').addEventListener('click', () => {
-        let url = `https://g2glab.github.io/blitzboard?pg=${encodeURIComponent(editor.getValue())}` +
+        let url = `https://sandbox.blitzboard.io?pg=${encodeURIComponent(editor.getValue())}` +
           `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
         navigator.clipboard.writeText(url).then(function() {
           alert("Your graph is now on clipboard!")
