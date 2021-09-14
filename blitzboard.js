@@ -372,7 +372,7 @@ class Blitzboard {
     // this.graph.nodes.forEach((node) => {
     //   L.marker([node.properties[this.config.layoutSettings.x][0], node.properties[this.config.layoutSettings.y][0]]).addTo(map);
     // });
-
+    /*
     var polylinePoints = [
       [35.08850794862861, 137.15369183718374],
       [35.087384224892155, 137.15639550369508]
@@ -383,7 +383,7 @@ class Blitzboard {
       [35.08850794862861, 137.156]
     ];
     L.polyline(polylinePoints).addTo(this.map);
-    
+    */
 
     this.network = new vis.Network(this.container, data, options);
     //this.container.style.background = 'transparent';
