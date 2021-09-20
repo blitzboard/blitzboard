@@ -326,9 +326,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   q('#share-btn').addEventListener('click', () => {
     let url = `https://sandbox.blitzboard.io?pg=${encodeURIComponent(editor.getValue())}` +
-      `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
+      `&config=${encodeURIComponent(JSON.stringify(config))}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
     navigator.clipboard.writeText(url).then(function() {
-      alert("Your graph is now on clipboard!")
+      alert("Your graph is now on clipboard! The config is translated into JSON for security reason.")
     });
   });
   
@@ -772,8 +772,14 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         localStorage.setItem('currentGraphName', newGraphName());
       }
     }
-    if(configInParam)
-      localStorage.setItem('config', configInParam);
+    if(configInParam) {
+      try {
+        JSON.parse(configInParam);
+        localStorage.setItem('config', configInParam);
+      } catch(e) {
+        alert("This url includes a config that is not valid JSON. Shared configs must be valid as JSON for security reason.")
+      }
+    }
     if(viewModeInParam)
       localStorage.setItem('viewMode', viewModeInParam);
     window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
