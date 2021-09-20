@@ -227,6 +227,8 @@
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 Export
               .dropdown-menu{ 'aria-labelledby': "exportDropdown" }
+                %a#export-cypher-btn.dropdown-item{ href: '#' }
+                  Cypher
                 %a#export-pgql-btn.dropdown-item{ href: '#' }
                   PGQL
                 %a.dropdown-item#embed-btn{ href: '#' }
@@ -598,24 +600,22 @@
           for (let entry of Object.entries(node.properties)) {
             query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
           }
-          query = query + "})";
+          query = query + "});";
           output = output + query + '\n';
         });
         pg.edges.forEach(edge => {
           let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
           let query = "";
-          query = query + "MATCH (src), (dst) WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "' ";
-          query = query + "PROPERTIES (";
-          query = query + "e.direction = '" + edge.direction + "'";
+          query = query + "MATCH (src {id: '" + edge.from + "'}) MATCH (dst {id: '" + edge.to + "'}) CREATE (src)-[e:";
+          query = query + edge_label;
+          query = query + " {";
           for (let entry of Object.entries(edge.properties)) {
-            query = query + ", e.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
+            query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
           }
-          query = query + ") ";
-          query = query + "FROM MATCH ( (src), (dst) ) ON " + graphNamePGQL + " ";
-          query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
+          query = query + "}]->(dst);";
           output = output + query + '\n';
         });
-        download(output, 'graph_' + currentTimeString() + '.pgql', 'text/plain');
+        download(output, 'graph_' + currentTimeString() + '.cypher', 'text/plain');
       });
 
       q('#export-pgql-btn').addEventListener('click', () => {

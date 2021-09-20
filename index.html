@@ -238,6 +238,9 @@ New
 Export
 </div>
 <div aria-labelledby='exportDropdown' class='dropdown-menu'>
+<a class='dropdown-item' href='#' id='export-cypher-btn'>
+Cypher
+</a>
 <a class='dropdown-item' href='#' id='export-pgql-btn'>
 PGQL
 </a>
@@ -612,6 +615,36 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   q('#reset-config-btn').addEventListener('click', () => {
     if(confirm("Really reset config?"))
       configEditor.setValue(defaultConfig);
+  });
+  
+  q('#export-cypher-btn').addEventListener('click', () => {
+  
+    let pg = pgParser.parse(editor.getValue());
+    let output = "";
+    pg.nodes.forEach(node => {
+      let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
+      let query = "";
+      query = query + "CREATE (v:" + node_label + " {"; // Restriction: single vertex label
+      query = query + "id: '" + node.id + "'"; // ID is stored as a string property
+      for (let entry of Object.entries(node.properties)) {
+        query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
+      }
+      query = query + "});";
+      output = output + query + '\n';
+    });
+    pg.edges.forEach(edge => {
+      let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
+      let query = "";
+      query = query + "MATCH (src {id: '" + edge.from + "'}) MATCH (dst {id: '" + edge.to + "'}) CREATE (src)-[e:";
+      query = query + edge_label;
+      query = query + " {";
+      for (let entry of Object.entries(edge.properties)) {
+        query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
+      }
+      query = query + "}]->(dst);";
+      output = output + query + '\n';
+    });
+    download(output, 'graph_' + currentTimeString() + '.cypher', 'text/plain');
   });
   
   q('#export-pgql-btn').addEventListener('click', () => {
