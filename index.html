@@ -238,6 +238,9 @@ New
 Export
 </div>
 <div aria-labelledby='exportDropdown' class='dropdown-menu'>
+<a class='dropdown-item' href='#' id='export-cypher-btn'>
+Cypher
+</a>
 <a class='dropdown-item' href='#' id='export-pgql-btn'>
 PGQL
 </a>
@@ -614,15 +617,48 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       configEditor.setValue(defaultConfig);
   });
   
-  q('#export-pgql-btn').addEventListener('click', () => {
-    //download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+  q('#export-cypher-btn').addEventListener('click', () => {
   
     let pg = pgParser.parse(editor.getValue());
     let output = "";
     pg.nodes.forEach(node => {
       let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
       let query = "";
-      query = query + "INSERT INTO <graph_name> ";
+      query = query + "CREATE (v:" + node_label + " {"; // Restriction: single vertex label
+      query = query + "id: '" + node.id + "'"; // ID is stored as a string property
+      for (let entry of Object.entries(node.properties)) {
+        query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
+      }
+      query = query + "});";
+      output = output + query + '\n';
+    });
+    pg.edges.forEach(edge => {
+      let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
+      let query = "";
+      query = query + "MATCH (src {id: '" + edge.from + "'}) MATCH (dst {id: '" + edge.to + "'}) CREATE (src)-[e:";
+      query = query + edge_label;
+      query = query + " {";
+      for (let entry of Object.entries(edge.properties)) {
+        query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
+      }
+      query = query + "}]->(dst);";
+      output = output + query + '\n';
+    });
+    download(output, 'graph_' + currentTimeString() + '.cypher', 'text/plain');
+  });
+  
+  q('#export-pgql-btn').addEventListener('click', () => {
+    //download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+  
+    let pg = pgParser.parse(editor.getValue());
+    let graphName = localStorage.getItem('currentGraphName');
+    let graphNamePGQL = graphName.replace('\'', '').replace(' ', '_').replace('-', '_').toLowerCase(); // must be simple SQL name
+    let output = "";
+    output = output + "CREATE PROPERTY GRAPH " + graphNamePGQL + ";\n";
+    pg.nodes.forEach(node => {
+      let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
+      let query = "";
+      query = query + "INSERT INTO " + graphNamePGQL + " ";
       query = query + "VERTEX v LABELS (\"" + node_label.toUpperCase() + "\") "; // Restriction: single vertex label
       query = query + "PROPERTIES (";
       query = query + "v.id = '" + node.id + "'"; // ID is stored as a string property
@@ -635,15 +671,15 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     pg.edges.forEach(edge => {
       let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
       let query = "";
-      query = query + "INSERT INTO <graph_name> "
-      query = query + "EDGE e BETWEEN src AND dst LABELS (\"" + edge_label.toUpperCase() + "\") " // Restriction: single vertex label
-      query = query + "PROPERTIES ("
+      query = query + "INSERT INTO " + graphNamePGQL + " ";
+      query = query + "EDGE e BETWEEN src AND dst LABELS (\"" + edge_label.toUpperCase() + "\") "; // Restriction: single vertex label
+      query = query + "PROPERTIES (";
       query = query + "e.direction = '" + edge.direction + "'";
       for (let entry of Object.entries(edge.properties)) {
         query = query + ", e.\"" + entry[0].toUpperCase() + "\" = '" + entry[1] + "'"; // values are always stored as sting
       }
       query = query + ") ";
-      query = query + "FROM MATCH (src) ON <graph_name>, MATCH (dst) ON <graph_name> ";
+      query = query + "FROM MATCH ( (src), (dst) ) ON " + graphNamePGQL + " ";
       query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
       output = output + query + '\n';
     });
