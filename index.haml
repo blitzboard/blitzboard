@@ -301,9 +301,13 @@
       q('#share-btn').addEventListener('click', () => {
         let url = `https://sandbox.blitzboard.io?pg=${encodeURIComponent(editor.getValue())}` +
           `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
-        navigator.clipboard.writeText(url).then(function() {
-          alert("Your graph is now on clipboard!")
-        });
+        if(url.length > 7333) {
+          alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
+        } else {
+          navigator.clipboard.writeText(url).then(function() {
+            alert("Your graph is now on clipboard!");
+          });
+        }
       });
       
       function onResize(event, ui) {
