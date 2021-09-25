@@ -43,6 +43,8 @@
     %script{:src => "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"}
     %script{:src => "https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js", :type => "module"}
     %script{:nomodule => "", :src => "https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"}
+    %script{:src => "https://cdn.jsdelivr.net/npm/jszip@3.2.1/dist/jszip.js"}
+    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.4/FileSaver.min.js"}
 
     :css
       #network-popUp {
@@ -227,6 +229,8 @@
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 Export
               .dropdown-menu{ 'aria-labelledby': "exportDropdown" }
+                %a#export-zip-btn.dropdown-item{ href: '#' }
+                  Zip
                 %a#export-cypher-btn.dropdown-item{ href: '#' }
                   Cypher
                 %a#export-pgql-btn.dropdown-item{ href: '#' }
@@ -590,6 +594,16 @@
       q('#reset-config-btn').addEventListener('click', () => {
         if(confirm("Really reset config?"))
           configEditor.setValue(defaultConfig);
+      });
+
+      q('#export-zip-btn').addEventListener('click', () => {
+        var zip = new JSZip();
+        let name = 'graph_' + currentTimeString();
+        zip.folder(name).file("graph.pg", editor.getValue());
+        zip.folder(name).file("config.js", configEditor.getValue());
+        zip.generateAsync({type:"blob"}).then(function (blob) {
+          saveAs(blob, name + ".zip");
+        });
       });
 
       q('#export-cypher-btn').addEventListener('click', () => {
