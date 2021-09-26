@@ -43,6 +43,8 @@
 <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js'></script>
 <script src='https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js' type='module'></script>
 <script nomodule='' src='https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/jszip@3.2.1/dist/jszip.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.4/FileSaver.min.js'></script>
 <style>
   #network-popUp {
       display: none;
@@ -195,8 +197,10 @@
 <body>
 <div id='app'>
 <nav class='navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top' id='header'>
-<div class='mr-5' style='color: yellow'>
+<div class='mr-5' href='https://www.blitzboard.io/' style='color: yellow'>
+<a href='https://www.blitzboard.io/'>
 <img src='./blitzboard-w_3.png' style='height: 30px;'>
+</a>
 </div>
 <div class='btn dropdown text-white' id='new-btn'>
 <ion-icon name='add-outline'></ion-icon>
@@ -238,6 +242,9 @@ New
 Export
 </div>
 <div aria-labelledby='exportDropdown' class='dropdown-menu'>
+<a class='dropdown-item' href='#' id='export-zip-btn'>
+Zip
+</a>
 <a class='dropdown-item' href='#' id='export-cypher-btn'>
 Cypher
 </a>
@@ -330,9 +337,13 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   q('#share-btn').addEventListener('click', () => {
     let url = `https://sandbox.blitzboard.io?pg=${encodeURIComponent(editor.getValue())}` +
       `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
-    navigator.clipboard.writeText(url).then(function() {
-      alert("Your graph is now on clipboard!")
-    });
+    if(url.length > 7333) {
+      alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
+    } else {
+      navigator.clipboard.writeText(url).then(function() {
+        alert("Your graph is now on clipboard!");
+      });
+    }
   });
   
   function onResize(event, ui) {
@@ -465,7 +476,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       blitzboard.updateGraph(graph, config);
       });
     `;
-    download(content, 'embed_pg.js', 'text/plain');
+    saveAs(new Blob([content], { type: 'text/plain' }), 'embed_pg.js');
   });
   
   function newGraphName(baseName = 'Untitled') {
@@ -617,6 +628,16 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       configEditor.setValue(defaultConfig);
   });
   
+  q('#export-zip-btn').addEventListener('click', () => {
+    var zip = new JSZip();
+    let name = 'graph_' + currentTimeString();
+    zip.folder(name).file("graph.pg", editor.getValue());
+    zip.folder(name).file("config.js", configEditor.getValue());
+    zip.generateAsync({type:"blob"}).then(function (blob) {
+      saveAs(blob, name + ".zip");
+    });
+  });
+  
   q('#export-cypher-btn').addEventListener('click', () => {
   
     let pg = pgParser.parse(editor.getValue());
@@ -644,7 +665,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       query = query + "}]->(dst);";
       output = output + query + '\n';
     });
-    download(output, 'graph_' + currentTimeString() + '.cypher', 'text/plain');
+    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.cypher')
   });
   
   q('#export-pgql-btn').addEventListener('click', () => {
@@ -683,7 +704,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
       output = output + query + '\n';
     });
-    download(output, 'graph_' + currentTimeString() + '.pgql', 'text/plain');
+    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.pgql');
   });
   
   editor = CodeMirror.fromTextArea(q('#graph-input'), {
