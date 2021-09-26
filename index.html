@@ -476,7 +476,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       blitzboard.updateGraph(graph, config);
       });
     `;
-    download(content, 'embed_pg.js', 'text/plain');
+    saveAs(new Blob([content], { type: 'text/plain' }), 'embed_pg.js');
   });
   
   function newGraphName(baseName = 'Untitled') {
@@ -665,7 +665,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       query = query + "}]->(dst);";
       output = output + query + '\n';
     });
-    download(output, 'graph_' + currentTimeString() + '.cypher', 'text/plain');
+    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.cypher')
   });
   
   q('#export-pgql-btn').addEventListener('click', () => {
@@ -704,7 +704,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
       output = output + query + '\n';
     });
-    download(output, 'graph_' + currentTimeString() + '.pgql', 'text/plain');
+    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.pgql');
   });
   
   editor = CodeMirror.fromTextArea(q('#graph-input'), {
