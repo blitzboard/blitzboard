@@ -356,16 +356,28 @@ class Blitzboard {
       },
     };
     
-    if(this.config.layout == 'map') {
-      this.map = L.map('map', {
-        center: this.config.layoutSettings.center,
-        zoom: 17,
-        zoomSnap: 0.001,
-      });
-      var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-      });
-      tileLayer.addTo(this.map);
+    if(this.config.layout === 'map') {
+      if(this.map) {
+        this.map.panTo(this.config.layoutSettings.center);
+      } else {
+        this.map = L.map('map', {
+          center: this.config.layoutSettings.center,
+          zoom: 17,
+          zoomSnap: 0.001,
+        });
+        var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        });
+        tileLayer.addTo(this.map);
+
+        this.map.on('move', updateNodeLocationOnMap);
+        this.map.on('zoom', updateNodeLocationOnMap);
+      }
+    } else {
+      if(this.map) {
+        this.map.remove();
+      }
+      this.map = null;
     }
     
     
@@ -438,8 +450,6 @@ class Blitzboard {
       blitzboard.nodeDataSet.update(nodePositions);
     }
     
-    blitzboard.map.on('move', updateNodeLocationOnMap);
-    blitzboard.map.on('zoom', updateNodeLocationOnMap);
 
     
     this.network.on("zoom", function(){

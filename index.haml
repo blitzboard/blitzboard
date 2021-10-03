@@ -92,22 +92,26 @@
 
       #graph-pane {
         flex: 1;
+        position: relative;
       }
 
       #map {
-        position: absolute;
         height: 100%;
-        width: calc(50vw);
+        width: 100%;
+        top: 0;
+        left: 0;
+        /*width: calc(50vw);*/
         z-index: 1;
+        position:absolute;
         /*pointer-events: none;*/
       }
 
       #graph {
-        position: absolute;
         height: 100%;
-        width: 100%;
+        top: 0;
+        left: 0;
+        position:absolute;
         z-index: 2;
-        pointer-events: none;
       }
 
       .ui-resizable-handle {
@@ -309,7 +313,10 @@
       
       
       function updateGraph(event, ui) {
+        document.getElementById("map").style['display'] = 'block'; // This line is needed to initialize leaflet correctly! 
         blitzboard.updateGraph(editor.getValue(), config);
+        document.getElementById("graph").style['pointer-events'] = blitzboard.config.layout === 'map' ? 'none' : 'auto';
+        document.getElementById("map").style['display'] = blitzboard.config.layout === 'map' ? 'block' : 'none';
         if(blitzboard.network)
           blitzboard.network.on("click", (e) => {
             if(e.nodes.length > 0) {
@@ -481,12 +488,20 @@
           const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
       
           if(node) {
-            scrollIntoView(blitzboard.network.getPosition(node.id));
+            if(blitzboard.config.layout === 'map') {
+              scrollMapIntoView(blitzboard.nodeMap[node.id]);
+            } else {
+              scrollIntoView(blitzboard.network.getPosition(node.id));
+            }
             blitzboard.network.selectNodes([node.id]);
           } else if(edge){
-            const from = blitzboard.network.getPosition(edge.from);
-            const to = blitzboard.network.getPosition(edge.to);
-            scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
+            if(blitzboard.config.layout === 'map') {
+              scrollMapIntoView(blitzboard.edgeMap[edge.id]);
+            } else {
+              const from = blitzboard.network.getPosition(edge.from);
+              const to = blitzboard.network.getPosition(edge.to);
+              scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
+            }
             blitzboard.network.selectEdges([edge.id]);
           }
         } else {
