@@ -20,7 +20,7 @@
     %link{:href => "./favicon.ico", :rel => "shortcut icon", :type => "image/x-icon"}/
     %link{:href => "https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css", :rel => "stylesheet"}/
     %link{:href => "https://unpkg.com/leaflet@1.6.0/dist/leaflet.css", :integrity => "sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==", :crossorigin => "", :rel => "stylesheet"}/
-    %script{:src => "./axios.min.js"}
+    %script{:src => "https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"}
     %script{:src => "./vis-network.min.js"}
     %script{:src => "./manipulations.js"}
     %script{:src => "./lib/jquery-3.5.1.min.js"}
@@ -43,6 +43,10 @@
     %script{:src => 'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js'}
     %script{:src => "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"}
     %script{:src => "https://unpkg.com/leaflet@1.6.0/dist/leaflet.js", :integrity => "sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==", :crossorigin => ""}
+    %script{:src => "https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js", :type => "module"}
+    %script{:nomodule => "", :src => "https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"}
+    %script{:src => "https://cdn.jsdelivr.net/npm/jszip@3.2.1/dist/jszip.js"}
+    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.4/FileSaver.min.js"}
 
     :css
       #network-popUp {
@@ -145,7 +149,7 @@
       }
 
       #config-btn {
-        z-index: 999;
+        z-index: 996;
         background: #272822;
         border: #272822;
       }
@@ -178,12 +182,23 @@
         top: 70px;
       }
       
-      
-      
       .dropdown-toggle {
         -webkit-appearance: none;
         border-radius: 0;
+
+      .dropdown-item.active {
+        background: #047bff;
+        color: black;
       }
+      
+      #history-dropdown.dropdown-toggle::after {
+          display: inline-block;
+          position: absolute;
+          float: right;
+          right: 5px;
+          margin-top: 8px;
+      }
+
 
       .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
       
@@ -191,13 +206,34 @@
         font-family: 'Courier', monospace;
         font-size: 16px;
       }
+      
+      
+      .CodeMirror-hints {
+        z-index: 999;
+      }
+      
+      .CodeMirror-scroll {
+        padding: 0;
+      }
+      .dropdown-menu{
+        max-height:600px;
+        overflow-y:auto;
+      }
 
   %body
     #app
       %nav#header.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top
-        %div.mr-5{style: 'color: yellow'}
-          %img{ src: './blitzboard-w_3.png', style: 'height: 30px;' }
-        .btn-group.btn-group-toggle{"data-toggle" => "buttons"}
+        %div.mr-5{style: 'color: yellow', href: 'https://www.blitzboard.io/'}
+          %a{href: 'https://www.blitzboard.io/'}
+            %img{ src: './blitzboard-w_3.png', style: 'height: 30px;'}
+
+        #new-btn.btn.dropdown.text-white
+          %ion-icon{ name: "add-outline" }
+          New
+        #history-btn.btn.dropdown.text-white.mx-3
+          #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false, style: "width: 100px; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;" }
+          #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
+        .btn-group.btn-group-toggle.mx-3{"data-toggle" => "buttons"}
           %label.btn.btn-secondary.column-mode-btn#input-only-btn{ 'data-toggle': 'tooltip', 'data-placement': 'bottom', title: 'Show input area only' }
             %input{:autocomplete => "off", :name => "options", :type => "radio"}/
             %svg.bi.bi-file-text{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
@@ -211,12 +247,19 @@
             %input{:autocomplete => "off", :name => "options", :type => "radio"}/
             %svg.bi.bi-diagram-2{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
               %path{:d => "M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 5 7h2.5V6A1.5 1.5 0 0 1 6 4.5v-1zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1zM3 11.5A1.5 1.5 0 0 1 4.5 10h1A1.5 1.5 0 0 1 7 11.5v1A1.5 1.5 0 0 1 5.5 14h-1A1.5 1.5 0 0 1 3 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1A1.5 1.5 0 0 1 9 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z", "fill-rule" => "evenodd"}
+        .custom-control.custom-switch.mx-3
+          %input#autocompletion-switch.custom-control-input{:type => "checkbox", :checked => true}/
+          %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
             #export-btn.btn.dropdown.text-white.mx-4
               #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 Export
               .dropdown-menu{ 'aria-labelledby': "exportDropdown" }
+                %a#export-zip-btn.dropdown-item{ href: '#' }
+                  Zip
+                %a#export-cypher-btn.dropdown-item{ href: '#' }
+                  Cypher
                 %a#export-pgql-btn.dropdown-item{ href: '#' }
                   PGQL
                 %a.dropdown-item#embed-btn{ href: '#' }
@@ -261,7 +304,19 @@
       let byProgram = true;
       let prevInputWidth = null;
       let config;
-
+      let autocompletion = true;
+      let savedGraphs = [];
+      let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
+      let dateTimeFormat = new Intl.DateTimeFormat('default', {
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hour12: false,
+      });
+      
+      if(!localStorage.getItem('currentGraphName')) {
+        localStorage.setItem('currentGraphName', newGraphName());
+      }
+      
       function scrollToLine(loc) {
         byProgram = true;
         editor.scrollIntoView({line: loc.start.line - 1, ch: loc.start.column - 1}, 200);
@@ -276,11 +331,15 @@
       });
       
       q('#share-btn').addEventListener('click', () => {
-        let url = `https://g2glab.github.io/blitzboard?pg=${encodeURIComponent(editor.getValue())}` +
-          `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}`;
-        navigator.clipboard.writeText(url).then(function() {
-          alert("Your graph is now on clipboard!")
-        });
+        let url = `https://sandbox.blitzboard.io?pg=${encodeURIComponent(editor.getValue())}` +
+          `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
+        if(url.length > 7333) {
+          alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
+        } else {
+          navigator.clipboard.writeText(url).then(function() {
+            alert("Your graph is now on clipboard!");
+          });
+        }
       });
       
       function onResize(event, ui) {
@@ -293,7 +352,11 @@
         localStorage.setItem('inputAreaWidth', width);
         $('#graph-pane').css('width', (totalWidth - width));
         onConfigResize(null, null);
-      };
+      }
+      
+      function configCollapsed() {
+        return $('#config-area').css('height') == '0px';
+      }
       
       function onConfigResize(event, ui) {
         const totalHeight = $("#input-area").height();
@@ -307,14 +370,18 @@
         $('#config-area').css('height', (totalHeight - height));
         $('#config-btn').css('bottom', bottom);
         $('#config-btn').css('left', left);
-        $('#reset-config-btn').css('left', left);
-        $('#reset-config-btn').css('bottom', bottom - 70);
+        if(configCollapsed()) {
+          $('#reset-config-btn').hide();
+        } else {
+          $('#reset-config-btn').show();
+          $('#reset-config-btn').css('left', left);
+          $('#reset-config-btn').css('bottom', bottom - 70);
+        }
       };
       
-      
-      function updateGraph(event, ui) {
+      function updateGraph(input, config) {
         document.getElementById("map").style['display'] = 'block'; // This line is needed to initialize leaflet correctly! 
-        blitzboard.updateGraph(editor.getValue(), config);
+        blitzboard.updateGraph(input, config);
         document.getElementById("graph").style['pointer-events'] = blitzboard.config.layout === 'map' ? 'none' : 'auto';
         document.getElementById("map").style['display'] = blitzboard.config.layout === 'map' ? 'block' : 'none';
         if(blitzboard.network)
@@ -327,6 +394,30 @@
               scrollToLine(edge.location);
             }
           });
+        if(blitzboard.graph) {
+          candidateIds = new Set();
+          candidatePropNames = new Set();
+          candidateLabels = new Set();
+          for(let node of blitzboard.graph.nodes) {
+            candidateIds.add(node.id);
+            for(let key in node.properties)
+            {
+              candidatePropNames.add(key);
+            }
+            for(let label of node.labels) {
+              candidateLabels.add(':' + label);
+            }
+          }
+          for(let edge of blitzboard.graph.edges) {
+            for(let label of edge.labels) {
+              candidateLabels.add(':' + label);
+            }
+            for(let key in edge.properties)
+            {
+              candidatePropNames.add(key);
+            }
+          }
+        }
       }
       
       window.onresize = onResize;
@@ -336,8 +427,7 @@
       onConfigResize(null, null);
       
       q('#config-btn').addEventListener('click', () => {
-        let x = $('#config-area').css('height');
-        if ($('#config-area').css('height') == '0px') {
+        if (configCollapsed()) {
           $('#pg-area').css('height', '50%');
           $('#config-area').css('height', '50%');
         } else {
@@ -385,23 +475,208 @@
           blitzboard.updateGraph(graph, config);
           });
         `;
-        download(content, 'embed_pg.js', 'text/plain');
+        saveAs(new Blob([content], { type: 'text/plain' }), 'embed_pg.js');
       });
+      
+      function newGraphName(baseName = 'Untitled') {
+        let name = baseName;
+        let i = 0;
+        while(localStorage.getItem('saved-graph-' + name)) {
+          name =  baseName + '-' + (++i);
+        }
+        return name;
+      }
+      
+      function showGraphName() {
+        $('#history-dropdown')[0].innerText = localStorage.getItem('currentGraphName');
+      }
+      
+      function loadSavedGraph() {
+        savedGraphs = [];
+        for (let i = 0; i < localStorage.length; i++){
+          if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
+            try {
+              savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+            } catch(e) {
+              localStorage.removeItem(localStorage.key(i));
+            }
+          }
+        }
+        
+        let menu = q('#history-menu');
+        // clear menu
+        while (menu.firstChild) {
+          menu.removeChild(menu.firstChild);
+        }
+        savedGraphs = savedGraphs.sort((a, b) => b.date - a.date);
+        for(let graph of savedGraphs) {
+          let node = document.createElement('a');
+          node.className = 'dropdown-item history-item mr-3';
+          if(graph.name === localStorage.getItem('currentGraphName'))
+            node.className += ' active'; 
+          node.style = 'position:relative';
+          node.appendChild(document.createTextNode(graph.name));
+          node.appendChild(document.createElement("br"));
+          node.appendChild(document.createTextNode(dateTimeFormat.format(new Date(graph.date))));
+          let deleteButton = document.createElement('div');
+          deleteButton.className = 'delete-history-btn btn btn-danger p-0';
+          deleteButton.style = 'position:absolute; top: 5px; right: 5px; width: 25px; height: 25px';
+          let span = document.createElement('span');
+          span.className = 'ion-android-close';
+          deleteButton.appendChild(span);
+          node.appendChild(deleteButton);
+          let editButton = document.createElement('div');
+          editButton.className = 'edit-history-btn btn btn-secondary p-0';
+          editButton.setAttribute('title', 'Edit name')
+          editButton.style = 'position:absolute; top: 5px; right: 35px; width: 25px; height: 25px';
+          span = document.createElement('span');
+          span.className = 'ion-android-create';
+          editButton.appendChild(span);
+          
+          node.appendChild(editButton);
+          menu.appendChild(node);
+        }
+      }
+      
+      $(document).on('click', '.edit-history-btn', (e) => {
+        let item = $(e.target).closest('.history-item')[0];
+        let i = $('.history-item').index(item);
+        let graph = savedGraphs[i];
+        let newName = prompt('What is the new name of the graph?', graph.name);
+        if(newName) {
+          localStorage.removeItem('saved-graph-' + graph.name);
+          if(localStorage.getItem('currentGraphName', graph.name)) {
+            localStorage.setItem('currentGraphName', newName);
+            showGraphName();
+          }
+          graph.name = newName;
+          localStorage.setItem('saved-graph-' + graph.name, JSON.stringify(graph));
+          loadSavedGraph();
+        }
+        e.stopPropagation();
+      });
+      
+      $(document).on('click', '.delete-history-btn', (e) => {
+        let item = $(e.target).closest('.history-item')[0];
+        let i = $('.history-item').index(item);
+        let name = savedGraphs[i].name;
+        if(confirm(`Really delete ${name}?`)) {
+          localStorage.removeItem('saved-graph-' + name);
+          savedGraphs.splice(i, 1);
+          if(name == localStorage.getItem('currentGraphName')) {
+            loadGraph(savedGraphs[i > 0 ? i - 1 : i]);
+          }
+          item.remove();
+        }
+        e.stopPropagation();
+      });
+
+      function loadGraph(graph) {
+        byProgram = true;
+        editor.setValue(graph.pg);
+        configEditor.setValue(graph.config);
+        localStorage.setItem('pg', editor.getValue());
+        localStorage.setItem('currentGraphName', graph.name);
+        $('.dropdown-item.history-item').removeClass('active');
+        let i = savedGraphs.indexOf(graph);
+        $(`.dropdown-item.history-item:eq(${i})`).addClass('active');
+        reloadConfig();
+        showGraphName();
+      }
+      
+      $(document).on('click', '.history-item', (e) => {
+        let i = $('.history-item').index(e.target);
+        let graph = savedGraphs[i];
+        loadGraph(graph);
+      });
+      
+      function saveCurrentGraph() {
+        let name = localStorage.getItem('currentGraphName');
+        if(!name) {
+          name = newGraphName();
+        }
+        let i = -1;
+        let graph = {
+          pg: editor.getValue(),
+          config: configEditor.getValue(),
+          name: name,
+          date: Date.now()
+        };
+        while(i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
+        if(i < savedGraphs.length) {
+          savedGraphs[i] = graph;
+        }
+        localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
+      }
+
+      q('#new-btn').addEventListener('click', () => {
+        let name = newGraphName();
+        byProgram = true;
+        editor.setValue('');
+        configEditor.setValue(defaultConfig);
+        localStorage.setItem('currentGraphName', name);
+        saveCurrentGraph();
+        loadSavedGraph();
+        showGraphName();
+        updateGraph('', defaultConfig);
+      });
+
 
       q('#reset-config-btn').addEventListener('click', () => {
         if(confirm("Really reset config?"))
           configEditor.setValue(defaultConfig);
       });
 
-      q('#export-pgql-btn').addEventListener('click', () => {
-        //download(editor.getValue(), 'graph_' + currentTimeString() + '.pg', 'text/plain');
+      q('#export-zip-btn').addEventListener('click', () => {
+        var zip = new JSZip();
+        let name = 'graph_' + currentTimeString();
+        zip.folder(name).file("graph.pg", editor.getValue());
+        zip.folder(name).file("config.js", configEditor.getValue());
+        zip.generateAsync({type:"blob"}).then(function (blob) {
+          saveAs(blob, name + ".zip");
+        });
+      });
+
+      q('#export-cypher-btn').addEventListener('click', () => {
 
         let pg = pgParser.parse(editor.getValue());
         let output = "";
         pg.nodes.forEach(node => {
           let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
           let query = "";
-          query = query + "INSERT INTO <graph_name> ";
+          query = query + "CREATE (v:" + node_label + " {"; // Restriction: single vertex label
+          query = query + "id: '" + node.id + "'"; // ID is stored as a string property
+          for (let entry of Object.entries(node.properties)) {
+            query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
+          }
+          query = query + "});";
+          output = output + query + '\n';
+        });
+        pg.edges.forEach(edge => {
+          let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
+          let query = "";
+          query = query + "MATCH (src {id: '" + edge.from + "'}) MATCH (dst {id: '" + edge.to + "'}) CREATE (src)-[e:";
+          query = query + edge_label;
+          query = query + " {";
+          for (let entry of Object.entries(edge.properties)) {
+            query = query + ", " + entry[0] + ": '" + entry[1] + "'"; // values are always stored as sting
+          }
+          query = query + "}]->(dst);";
+          output = output + query + '\n';
+        });
+        saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.cypher')
+      });
+
+      q('#export-pgql-btn').addEventListener('click', () => {
+        let pg = pgParser.parse(editor.getValue());
+        let graphName = localStorage.getItem('currentGraphName');
+        let graphNamePGQL = graphName.replace('\'', '').replace(' ', '_').replace('-', '_').toLowerCase(); // must be simple SQL name
+        let output = "";
+        output = output + "CREATE PROPERTY GRAPH " + graphNamePGQL + ";\n";
+        pg.nodes.forEach(node => {
+          let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
+          let query = "";
+          query = query + "INSERT INTO " + graphNamePGQL + " ";
           query = query + "VERTEX v LABELS (\"" + node_label.toUpperCase() + "\") "; // Restriction: single vertex label
           query = query + "PROPERTIES (";
           query = query + "v.id = '" + node.id + "'"; // ID is stored as a string property
@@ -417,9 +692,9 @@
         pg.edges.forEach(edge => {
           let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
           let query = "";
-          query = query + "INSERT INTO <graph_name> "
-          query = query + "EDGE e BETWEEN src AND dst LABELS (\"" + edge_label.toUpperCase() + "\") " // Restriction: single vertex label
-          query = query + "PROPERTIES ("
+          query = query + "INSERT INTO " + graphNamePGQL + " ";
+          query = query + "EDGE e BETWEEN src AND dst LABELS (\"" + edge_label.toUpperCase() + "\") "; // Restriction: single vertex label
+          query = query + "PROPERTIES (";
           query = query + "e.direction = '" + edge.direction + "'";
           let json = "{\"FROM\":[\"" + edge.from + "\"], \"TO\":[\"" + edge.to + "\"]";
           for (let entry of Object.entries(edge.properties)) {
@@ -428,11 +703,11 @@
           json = json + "}";
           query = query + ", e.json = '" + json + "'";
           query = query + ") ";
-          query = query + "FROM MATCH (src) ON <graph_name>, MATCH (dst) ON <graph_name> ";
+          query = query + "FROM MATCH ( (src), (dst) ) ON " + graphNamePGQL + " ";
           query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
           output = output + query + '\n';
         });
-        download(output, 'graph_' + currentTimeString() + '.pgql', 'text/plain');
+        saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.pgql');
       });
       
       editor = CodeMirror.fromTextArea(q('#graph-input'), {
@@ -450,6 +725,41 @@
       });
       editor.setSize('100%', '100%');
       
+      let oldHint = CodeMirror.hint.anyword;
+      
+      CodeMirror.hint.pgMode = function (editor) {
+        let word =  /[\w$:]+/;
+        let range = 200;
+        let cur = editor.getCursor(), curLine = editor.getLine(cur.line);
+        let end = cur.ch, start = end;
+        while (start && word.test(curLine.charAt(start - 1))) --start;
+        let curWord = start != end && curLine.slice(start, end);
+        
+        let graph = blitzboard.graph;
+        let list = [];
+        
+        for(let id of candidateIds) {
+          if(id.includes(curWord))
+            list.push(id);
+        }
+        
+        for(let prop of candidatePropNames) {
+          if(prop.includes(curWord))
+            list.push(prop);
+        }
+        
+        for(let label of candidateLabels) {
+          if(label.includes(curWord))
+            list.push(label);
+        }
+        
+        
+
+        return {list: list, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
+      };
+      
+
+
       configEditor = CodeMirror.fromTextArea(q('#config-input'), {
         viewportMargin: Infinity,
         theme: "monokai",
@@ -459,28 +769,34 @@
           Tab: 'autocomplete'
         },
         hintOptions: {
-          completeSingle: false
-        }
+          completeSingle: false,
+        },
       });
+      
       configEditor.setSize('100%', '100%');
       
       editor.on("inputRead", (instance) => {
-        editor.execCommand('autocomplete', { completeSingle: false });
+        if(autocompletion)
+          editor.execCommand('autocomplete', { completeSingle: false });
       });
-            
-      editor.on('change', (delta) => {
+      
+      function onEditorChanged(delta){
         if(!byProgram) {
           clearTimeout(timerId);
           localMode = true;
           timerId = setTimeout(() => {
           
             localStorage.setItem('pg', editor.getValue());
+            saveCurrentGraph();
             updateGraph(editor.getValue(), config);
-          }, 1000);
+          }, 2000);
         } else {
           byProgram = false;
         }
-      });
+      }
+            
+      editor.on('keydown', onEditorChanged);
+      editor.on('inputRead', onEditorChanged);
       
       editor.on('cursorActivity', (doc) => {
         if(!byProgram) {
@@ -513,11 +829,17 @@
       let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
         edgePropInParam = urlParams.get('displayedEdgeProps');
       let configInParam = urlParams.get('config');
+      let graphNameInParam = urlParams.get('name');
       let viewModeInParam = urlParams.get('viewMode');
       if(pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
-        console.log(viewModeInParam);
-        if(pgInParam)
+        if(pgInParam) {
           localStorage.setItem('pg', pgInParam);
+          if(graphNameInParam) {
+            localStorage.setItem('currentGraphName', graphNameInParam);
+          } else {
+            localStorage.setItem('currentGraphName', newGraphName());
+          }
+        }
         if(configInParam)
           localStorage.setItem('config', configInParam);
         if(viewModeInParam)
@@ -555,21 +877,50 @@
       }
       
       configEditor.setValue(configText);
-      configEditor.on('change', (delta) => {
+      
+      function tryJsonParse(json) {
+        try {
+          return looseJsonParse(json);
+        } catch(e) {
+          console.log(e);
+          toastr.error(e, 'JSON SyntaxError', {preventDuplicates: true})
+          return null;
+        }
+      }
+    
+
+      function reloadConfig() {
+        localStorage.setItem('config', configEditor.getValue());
+        config = tryJsonParse(configEditor.getValue());
+        saveCurrentGraph();
+        updateGraph(editor.getValue(), config);
+      }
+      
+      function onConfigChanged(delta) {
         clearTimeout(timerId);
-        timerId = setTimeout(() => {
-          localStorage.setItem('config', configEditor.getValue());
-          config = tryJsonParse(configEditor.getValue());
-          updateGraph(editor.getValue(), config);
-        }, 1000);
-      });
+        timerId = setTimeout(reloadConfig, 2000);
+      }
+      
+      configEditor.on('keydown', onConfigChanged);
+      configEditor.on('inputRead', onConfigChanged);
       
       $('[data-toggle="tooltip"]').tooltip()
 
       
       if(editor.getValue())
         updateGraph(editor.getValue(), config);
+        
+        
+      let autocompletionConfig = localStorage.getItem('autocompletion');
+      if(autocompletionConfig !== null) {
+        autocompletion = autocompletionConfig === 'true';
+        $('#autocompletion-switch').prop('checked', autocompletion);
+      }
       
+      $('#autocompletion-switch').change(() => {
+        autocompletion = $('#autocompletion-switch').prop('checked');
+        localStorage.setItem('autocompletion', autocompletion);
+      }); 
       
       switch(viewMode) {
         case 'input-only':
@@ -587,3 +938,11 @@
           onResize(null, null);
           break;
       }
+
+
+      if(!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
+        saveCurrentGraph();
+      }
+      
+      loadSavedGraph();
+      showGraphName();

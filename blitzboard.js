@@ -180,7 +180,7 @@ class Blitzboard {
     } else {
       newPg = input;
     }
-    if(!newPg)
+    if(newPg === null || newPg === undefined)
       return;
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && (config === {} || this.config === config);
     
@@ -875,16 +875,6 @@ function tryPgParse(pg) {
     markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
       {className: 'syntax-error-line', message: e.message}));
     toastr.error(e.message, 'PG SyntaxError', {preventDuplicates: true})
-    return null;
-  }
-}
-
-function tryJsonParse(json) {
-  try {
-    return looseJsonParse(json);
-  } catch(e) {
-    console.log(e);
-    toastr.error(e, 'JSON SyntaxError', {preventDuplicates: true})
     return null;
   }
 }
