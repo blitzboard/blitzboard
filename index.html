@@ -413,7 +413,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   function updateGraph(input, config) {
     document.getElementById("map").style['display'] = 'block'; // This line is needed to initialize leaflet correctly! 
     blitzboard.updateGraph(input, config);
-    document.getElementById("graph").style['pointer-events'] = blitzboard.config.layout === 'map' ? 'none' : 'auto';
     document.getElementById("map").style['display'] = blitzboard.config.layout === 'map' ? 'block' : 'none';
     if(blitzboard.network)
       blitzboard.network.on("click", (e) => {
@@ -940,7 +939,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   if(editor.getValue())
     updateGraph(editor.getValue(), config);
-    
     
   let autocompletionConfig = localStorage.getItem('autocompletion');
   if(autocompletionConfig !== null) {

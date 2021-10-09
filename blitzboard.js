@@ -16,6 +16,9 @@ class Blitzboard {
     this.edgeLineMap = {};
     this.prevZoomPosition = null;
     this.map = null;
+    this.prevMouseEvent= null;
+    this.dragging = false;
+    this.currentLatLng = null;
   }
   
   calcNodePosition(pgNode) {
@@ -165,6 +168,8 @@ class Blitzboard {
     // searchGraph();
     this.groups = new Set();
     this.edgeColorMap = {};
+    this.prevMousePosition = null;
+    this.dragging = false;
     let blitzboard = this;
 
     let newPg;
@@ -248,8 +253,7 @@ class Blitzboard {
     this.config = deepMerge(this.config, config );
 
     minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
-
-
+    
     // graph.nodes.forEach(node => {
     //   for(let prop of Object.keys(node.properties)) {
     //     if(!timeProperties.has(prop) && isDateString(node.properties[prop])){
@@ -331,6 +335,8 @@ class Blitzboard {
       layout:
       layout,
       interaction: {
+        dragNodes: this.config.layout !== 'map',
+        dragView: this.config.layout !== 'map',
         hover: true
       },
       physics: {
@@ -355,31 +361,6 @@ class Blitzboard {
         },
       },
     };
-    
-    if(this.config.layout === 'map') {
-      if(this.map) {
-        this.map.panTo(this.config.layoutSettings.center);
-      } else {
-        this.map = L.map('map', {
-          center: this.config.layoutSettings.center,
-          zoom: 17,
-          zoomSnap: 0.001,
-        });
-        var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-        });
-        tileLayer.addTo(this.map);
-
-        this.map.on('move', updateNodeLocationOnMap);
-        this.map.on('zoom', updateNodeLocationOnMap);
-      }
-    } else {
-      if(this.map) {
-        this.map.remove();
-      }
-      this.map = null;
-    }
-    
     
     // this.graph.nodes.forEach((node) => {
     //   L.marker([node.properties[this.config.layoutSettings.x][0], node.properties[this.config.layoutSettings.y][0]]).addTo(map);
@@ -407,6 +388,82 @@ class Blitzboard {
     //     }
     //   }
     // });
+
+
+    if(this.config.layout === 'map') {
+      if(this.map) {
+        this.map.panTo(this.config.layoutSettings.center);
+      } else {
+        this.map = L.map('map', {
+          center: this.config.layoutSettings.center,
+          zoom: 17,
+          zoomSnap: 0.01,
+        });
+        var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        });
+        tileLayer.addTo(this.map);
+
+        this.map.on('move', updateNodeLocationOnMap);
+        this.map.on('zoom', updateNodeLocationOnMap);
+      }
+      this.network.on('dragging', (e) => {
+        console.log('dragging');
+        console.log(e);
+      });
+    } else {
+      if(this.map) {
+        this.map.remove();
+      }
+      this.map = null;
+    }
+
+    this.container.addEventListener('wheel', (e) => {
+      if(blitzboard.config.layout === 'map')  
+      {
+        if((e.deltaY < 0 && blitzboard.map._zoom < blitzboard.map.getMaxZoom()) ||
+          (e.deltaY > 0 && blitzboard.map._zoom > blitzboard.map.getMinZoom()) ) {
+          if(!blitzboard.currentLatLng) {
+            blitzboard.currentLatLng = blitzboard.map.mouseEventToLatLng(e);
+            console.log(blitzboard.currentLatLng);
+          }
+          blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
+        }
+        e.stopPropagation();
+      }
+    }, true);
+    
+    this.container.addEventListener('mouseout', (e) => {
+      blitzboard.prevMouseEvent = null;
+      blitzboard.dragging = false;
+    }, true);
+
+    this.container.addEventListener('mouseup', (e) => {
+      blitzboard.dragging = false;
+      blitzboard.prevMouseEvent = null;
+    }, true);
+    
+    this.container.addEventListener('mousemove', (e) => {
+      if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMousePosition) {
+        blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
+      }
+      blitzboard.prevMouseEvent = e;
+      blitzboard.currentLatLng = null;
+    }, true);
+
+
+    this.container.addEventListener('dblclick', (e) => {
+      console.log('double');
+      if(blitzboard.config.layout === 'map') {
+        blitzboard.map.panTo(blitzboard.map.mouseEventToLatLng(e));
+      }
+    }, true);
+
+
+    this.container.addEventListener('mousedown', (e) => {
+      blitzboard.dragging = true;
+      blitzboard.prevMousePosition = e;
+    }, true);
 
     // network.on('doubleClick', (e) => {
     //   if (localMode) {
