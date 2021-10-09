@@ -322,8 +322,10 @@ class Blitzboard {
       randomSeed: 1
     };
 
-    if(this.config.layout == 'hierarchical') {
+    if(this.config.layout === 'hierarchical') {
       layout.hierarchical = this.config.layoutSettings;
+    } else {
+      layout.hierarchical = false;
     }
 
     this.groupColorMap =  [...this.groups].reduce((acc, group) => {
@@ -408,10 +410,6 @@ class Blitzboard {
         this.map.on('move', updateNodeLocationOnMap);
         this.map.on('zoom', updateNodeLocationOnMap);
       }
-      this.network.on('dragging', (e) => {
-        console.log('dragging');
-        console.log(e);
-      });
     } else {
       if(this.map) {
         this.map.remove();
@@ -426,7 +424,6 @@ class Blitzboard {
           (e.deltaY > 0 && blitzboard.map._zoom > blitzboard.map.getMinZoom()) ) {
           if(!blitzboard.currentLatLng) {
             blitzboard.currentLatLng = blitzboard.map.mouseEventToLatLng(e);
-            console.log(blitzboard.currentLatLng);
           }
           blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
         }
