@@ -339,6 +339,7 @@ class Blitzboard {
       interaction: {
         dragNodes: this.config.layout !== 'map',
         dragView: this.config.layout !== 'map',
+        zoomView: this.config.layout !== 'map',
         hover: true
       },
       physics: {
@@ -427,7 +428,7 @@ class Blitzboard {
           }
           blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
         }
-        e.stopPropagation();
+        e.stopPropagation(); // Inhibit zoom on vis-network
       }
     }, true);
     
@@ -449,7 +450,6 @@ class Blitzboard {
       blitzboard.currentLatLng = null;
     }, true);
 
-
     this.container.addEventListener('dblclick', (e) => {
       console.log('double');
       if(blitzboard.config.layout === 'map') {
@@ -457,11 +457,19 @@ class Blitzboard {
       }
     }, true);
 
-
     this.container.addEventListener('mousedown', (e) => {
       blitzboard.dragging = true;
       blitzboard.prevMousePosition = e;
     }, true);
+
+    this.network.on('resize', (e) => {
+      console.log('resize');
+      if(blitzboard.config.layout === 'map') {
+        // Fix scale to 1.0 (delay is needed to override scale set by vis-network)  
+        setTimeout( () => blitzboard.network.moveTo({scale: 1.0}), 10); 
+        blitzboard.map.invalidateSize();
+      }
+    });
 
     // network.on('doubleClick', (e) => {
     //   if (localMode) {
