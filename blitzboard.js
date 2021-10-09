@@ -397,6 +397,7 @@ class Blitzboard {
         this.map = L.map('map', {
           center: this.config.layoutSettings.center,
           zoom: 17,
+          minZoom: 3,
           zoomSnap: 0.01,
         });
         var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
