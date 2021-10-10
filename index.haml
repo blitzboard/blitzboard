@@ -118,12 +118,8 @@
         right: 110px;
       }
 
-      #export-btn {
-        width: 80px;
-      }
-      
-      #share-btn {
-        width: 80px;
+      #import-btn-input {
+        display: none;
       }
 
       #config-btn {
@@ -172,7 +168,6 @@
           right: 5px;
           margin-top: 8px;
       }
-
 
       .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
       
@@ -226,21 +221,30 @@
           %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
-            #export-btn.btn.dropdown.text-white.mx-4
-              #exportDropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
-                Export
-              .dropdown-menu{ 'aria-labelledby': "exportDropdown" }
+            %label.btn.dropdown.text-white#export-btn{ title: "Export", href: '#' }
+              #export-dropdown{ 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
+                %svg.bi.bi-download{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+                  %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
+                  %path{:d => "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"}
+              .dropdown-menu{ 'aria-labelledby': "export-dropdown" }
                 %a#export-zip-btn.dropdown-item{ href: '#' }
                   Zip
                 %a#export-cypher-btn.dropdown-item{ href: '#' }
-                  Cypher
+                  Cypher Query
                 %a#export-pgql-btn.dropdown-item{ href: '#' }
-                  PGQL
+                  PGQL Query
                 %a.dropdown-item#embed-btn{ href: '#' }
-                  Javascript
-            %li.nav-item
-              #share-btn.btn.text-white{ title: "Share", href: '#'}
-                Share 
+                  JavaScript
+          %li.nav-item
+            %label.btn.text-white#import-btn{ title: "Import", href: '#' }
+              %input#import-btn-input{ type: "file", accept: ".zip" }
+                %svg.bi.bi-upload{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+                  %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
+                  %path{:d => "M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"}
+          %li.nav-item
+            %label.btn.text-white#share-btn{ title: "Share", href: '#' }
+              %svg.bi.bi-share-fill{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+                %path{:d => "M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"}
       #network-popUp
         %span#operation node
         %br/
@@ -605,6 +609,45 @@
         zip.generateAsync({type:"blob"}).then(function (blob) {
           saveAs(blob, name + ".zip");
         });
+      });
+
+      
+      q('#import-btn').addEventListener('click', () => {
+        q('#import-btn-input').value = '';
+      });
+
+      q('#import-btn').addEventListener('change', (evt) => {
+        function handleFile(f) {
+          JSZip.loadAsync(f).then(function(zip) {
+            let dir = f.name.replace(/.zip$/, "");
+            if (!zip.file(dir + "/graph.pg") || !zip.file(dir + "/config.js")) {
+              alert("Invalid zip file");
+            } else {
+              zip.file(dir + "/graph.pg").async("string").then(function success(content) {
+                let graph = content;
+                zip.file(dir + "/config.js").async("string").then(function success(content) {
+                  let config = content;
+                  // The same process as #new-btn is clicked
+                  let name = newGraphName('Imported');
+                  localStorage.setItem('currentGraphName', name);
+                  saveCurrentGraph();
+                  loadSavedGraph();
+                  showGraphName();
+                  editor.setValue(graph);
+                  configEditor.setValue(config);
+                  updateGraph(graph, config);
+                });
+              });
+            }
+          }, function (e) {
+            alert("Error reading " + f.name + ": " + e.message);
+          });
+        }
+
+        var files = evt.target.files; // A single file is accepted so far
+        for (var i = 0; i < files.length; i++) {
+          handleFile(files[i]);
+        }
       });
 
       q('#export-cypher-btn').addEventListener('click', () => {
