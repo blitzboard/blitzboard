@@ -117,16 +117,8 @@
     right: 110px;
   }
   
-  #export-btn {
-    width: 80px;
-  }
-  
   #import-btn-input {
     display: none;
-  }
-  
-  #share-btn {
-    width: 80px;
   }
   
   #config-btn {
@@ -175,7 +167,6 @@
       right: 5px;
       margin-top: 8px;
   }
-  
   
   .CodeMirror-selected  { background-color: rgba(200, 200, 100, 0.5) !important; }
   
@@ -241,30 +232,32 @@ New
 </div>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
 <li class='nav-item'>
-<div class='btn dropdown text-white mx-4' id='export-btn'></div>
-<label class='btn text-white' href='#' id='export-btn' title='Import'>
-<div aria-haspopup class='dropdown-toggle' data-toggle='dropdown' id='exportDropdown' type='button'>
-Export
+<label class='btn dropdown text-white' href='#' id='export-btn' title='Export'>
+<div aria-haspopup data-toggle='dropdown' id='export-dropdown'>
+<svg class='bi bi-download' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
+<path d='M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z'></path>
+<path d='M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z'></path>
+</svg>
 </div>
-<div aria-labelledby='exportDropdown' class='dropdown-menu'>
+<div aria-labelledby='export-dropdown' class='dropdown-menu'>
 <a class='dropdown-item' href='#' id='export-zip-btn'>
 Zip
 </a>
 <a class='dropdown-item' href='#' id='export-cypher-btn'>
-Cypher
+Cypher Query
 </a>
 <a class='dropdown-item' href='#' id='export-pgql-btn'>
-PGQL
+PGQL Query
 </a>
 <a class='dropdown-item' href='#' id='embed-btn'>
-Javascript
+JavaScript
 </a>
 </div>
 </label>
 </li>
 <li class='nav-item'>
 <label class='btn text-white' href='#' id='import-btn' title='Import'>
-<input id='import-btn-input' type='file'>
+<input accept='.zip' id='import-btn-input' type='file'>
 <svg class='bi bi-upload' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
 <path d='M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z'></path>
 <path d='M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z'></path>
@@ -273,9 +266,11 @@ Javascript
 </label>
 </li>
 <li class='nav-item'>
-<div class='btn text-white' href='#' id='share-btn' title='Share'>
-Share
-</div>
+<label class='btn text-white' href='#' id='share-btn' title='Share'>
+<svg class='bi bi-share-fill' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
+<path d='M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z'></path>
+</svg>
+</label>
 </li>
 </ul>
 </nav>
