@@ -152,10 +152,7 @@ class Blitzboard {
       length: length,
       width: width,
       hoverWidth: 0.5,
-      smooth:
-        {
-          roundness:1
-        },
+      smooth: blitzboard.config.layout === 'map' ? false : { roundness: 1 },
       arrows: {
         to: {
           enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
@@ -343,6 +340,7 @@ class Blitzboard {
         hover: true
       },
       physics: {
+        enabled: this.config.layout !== 'map',
         barnesHut: {
           springConstant: 0.016
         },
