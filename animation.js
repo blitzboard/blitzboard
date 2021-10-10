@@ -64,11 +64,4 @@ function scrollMapIntoView(element) {
     // node
     blitzboard.map.panTo([element.properties[yKey][0] ,element.properties[xKey][0]]);
   }
-  
-  blitzboard.graph.nodes.forEach(node => {
-    let point = blitzboard.map.latLngToContainerPoint();
-    point = blitzboard.network.DOMtoCanvas(point);
-    nodePositions.push({id: node.id,
-      x: point.x, y: point.y, fixed: true });
-  });
 }

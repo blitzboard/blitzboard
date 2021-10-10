@@ -19,6 +19,52 @@ class Blitzboard {
     this.prevMouseEvent= null;
     this.dragging = false;
     this.currentLatLng = null;
+    
+    let blitzboard = this;
+    
+    this.container.addEventListener('wheel', (e) => {
+      if(blitzboard.config.layout === 'map')
+      {
+        if((e.deltaY < 0 && blitzboard.map._zoom < blitzboard.map.getMaxZoom()) ||
+          (e.deltaY > 0 && blitzboard.map._zoom > blitzboard.map.getMinZoom()) ) {
+          if(!blitzboard.currentLatLng) {
+            blitzboard.currentLatLng = blitzboard.map.mouseEventToLatLng(e);
+          }
+          blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
+        }
+        e.stopPropagation(); // Inhibit zoom on vis-network
+      }
+    }, true);
+
+    this.container.addEventListener('mouseout', (e) => {
+      blitzboard.prevMouseEvent = null;
+      blitzboard.dragging = false;
+    }, true);
+
+    this.container.addEventListener('mouseup', (e) => {
+      blitzboard.dragging = false;
+      blitzboard.prevMouseEvent = null;
+    }, true);
+
+    this.container.addEventListener('mousemove', (e) => {
+      if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMousePosition) {
+        blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
+      }
+      blitzboard.prevMouseEvent = e;
+      blitzboard.currentLatLng = null;
+    }, true);
+
+    this.container.addEventListener('dblclick', (e) => {
+      console.log('double');
+      if(blitzboard.config.layout === 'map') {
+        blitzboard.map.panTo(blitzboard.map.mouseEventToLatLng(e));
+      }
+    }, true);
+
+    this.container.addEventListener('mousedown', (e) => {
+      blitzboard.dragging = true;
+      blitzboard.prevMousePosition = e;
+    }, true);
   }
   
   calcNodePosition(pgNode) {
@@ -416,52 +462,8 @@ class Blitzboard {
       this.map = null;
     }
 
-    this.container.addEventListener('wheel', (e) => {
-      if(blitzboard.config.layout === 'map')  
-      {
-        if((e.deltaY < 0 && blitzboard.map._zoom < blitzboard.map.getMaxZoom()) ||
-          (e.deltaY > 0 && blitzboard.map._zoom > blitzboard.map.getMinZoom()) ) {
-          if(!blitzboard.currentLatLng) {
-            blitzboard.currentLatLng = blitzboard.map.mouseEventToLatLng(e);
-          }
-          blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
-        }
-        e.stopPropagation(); // Inhibit zoom on vis-network
-      }
-    }, true);
-    
-    this.container.addEventListener('mouseout', (e) => {
-      blitzboard.prevMouseEvent = null;
-      blitzboard.dragging = false;
-    }, true);
-
-    this.container.addEventListener('mouseup', (e) => {
-      blitzboard.dragging = false;
-      blitzboard.prevMouseEvent = null;
-    }, true);
-    
-    this.container.addEventListener('mousemove', (e) => {
-      if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMousePosition) {
-        blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
-      }
-      blitzboard.prevMouseEvent = e;
-      blitzboard.currentLatLng = null;
-    }, true);
-
-    this.container.addEventListener('dblclick', (e) => {
-      console.log('double');
-      if(blitzboard.config.layout === 'map') {
-        blitzboard.map.panTo(blitzboard.map.mouseEventToLatLng(e));
-      }
-    }, true);
-
-    this.container.addEventListener('mousedown', (e) => {
-      blitzboard.dragging = true;
-      blitzboard.prevMousePosition = e;
-    }, true);
 
     this.network.on('resize', (e) => {
-      console.log('resize');
       if(blitzboard.config.layout === 'map') {
         // Fix scale to 1.0 (delay is needed to override scale set by vis-network)  
         setTimeout( () => blitzboard.network.moveTo({scale: 1.0}), 10); 
