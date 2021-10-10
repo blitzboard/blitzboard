@@ -47,7 +47,7 @@ class Blitzboard {
     }, true);
 
     this.container.addEventListener('mousemove', (e) => {
-      if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMousePosition) {
+      if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMouseEvent) {
         blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
       }
       blitzboard.prevMouseEvent = e;
@@ -63,7 +63,7 @@ class Blitzboard {
 
     this.container.addEventListener('mousedown', (e) => {
       blitzboard.dragging = true;
-      blitzboard.prevMousePosition = e;
+      blitzboard.prevMouseEvent = e;
     }, true);
   }
   
@@ -211,7 +211,7 @@ class Blitzboard {
     // searchGraph();
     this.groups = new Set();
     this.edgeColorMap = {};
-    this.prevMousePosition = null;
+    this.prevMouseEvent = null;
     this.dragging = false;
     let blitzboard = this;
 
