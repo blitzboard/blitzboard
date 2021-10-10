@@ -628,11 +628,13 @@
                 zip.file(dir + "/config.js").async("string").then(function success(content) {
                   let config = content;
                   // The same process as #new-btn is clicked
-                  let name = newGraphName();
+                  let name = newGraphName('Imported');
                   localStorage.setItem('currentGraphName', name);
                   saveCurrentGraph();
                   loadSavedGraph();
                   showGraphName();
+                  editor.setValue(graph);
+                  configEditor.setValue(config);
                   updateGraph(graph, config);
                 });
               });
