@@ -103,7 +103,7 @@
       #main-area {
         display: inline-flex;
         width: 100%;
-        height: calc(100vh - 60px);
+        height: calc(100vh - 50px);
       }
 
       .float-btn {
@@ -149,7 +149,7 @@
       
       #header { 
         background: #151515 !important;
-        height: 60px;
+        height: 50px;
       }
       
       .toast-top-right {
@@ -194,14 +194,7 @@
       %nav#header.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top
         %div.mr-5{style: 'color: yellow', href: 'https://www.blitzboard.io/'}
           %a{href: 'https://www.blitzboard.io/'}
-            %img{ src: './blitzboard-w_3.png', style: 'height: 30px;'}
-
-        #new-btn.btn.dropdown.text-white
-          %ion-icon{ name: "add-outline" }
-          New
-        #history-btn.btn.dropdown.text-white.mx-3
-          #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false, style: "width: 100px; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;" }
-          #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
+            %img{ src: './blitzboard-w_3.png', style: 'height: 25px;'}
         .btn-group.btn-group-toggle.mx-3{"data-toggle" => "buttons"}
           %label.btn.btn-secondary.column-mode-btn#input-only-btn{ 'data-toggle': 'tooltip', 'data-placement': 'bottom', title: 'Show input area only' }
             %input{:autocomplete => "off", :name => "options", :type => "radio"}/
@@ -216,10 +209,23 @@
             %input{:autocomplete => "off", :name => "options", :type => "radio"}/
             %svg.bi.bi-diagram-2{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
               %path{:d => "M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 5 7h2.5V6A1.5 1.5 0 0 1 6 4.5v-1zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1zM3 11.5A1.5 1.5 0 0 1 4.5 10h1A1.5 1.5 0 0 1 7 11.5v1A1.5 1.5 0 0 1 5.5 14h-1A1.5 1.5 0 0 1 3 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1A1.5 1.5 0 0 1 9 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z", "fill-rule" => "evenodd"}
+        #history-btn.btn.dropdown.text-white.mx-3
+          #history-dropdown.dropdown-toggle{ type: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false, style: "width: 200px; text-align: left; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;" }
+          #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
         .custom-control.custom-switch.mx-3
           %input#autocompletion-switch.custom-control-input{:type => "checkbox", :checked => true}/
           %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
+          %li.nav-item
+            %label.btn.text-white#new-btn{ title: "New", href: '#' }
+              %svg.bi.bi-plus-lg{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+                %path{:d => "M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"}
+          %li.nav-item
+            %label.btn.text-white#import-btn{ title: "Import", href: '#' }
+              %input#import-btn-input{ type: "file", accept: ".zip" }
+                %svg.bi.bi-upload{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+                  %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
+                  %path{:d => "M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"}
           %li.nav-item
             %label.btn.dropdown.text-white#export-btn{ title: "Export", href: '#' }
               #export-dropdown{ 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
@@ -235,12 +241,6 @@
                   PGQL Query
                 %a.dropdown-item#embed-btn{ href: '#' }
                   JavaScript
-          %li.nav-item
-            %label.btn.text-white#import-btn{ title: "Import", href: '#' }
-              %input#import-btn-input{ type: "file", accept: ".zip" }
-                %svg.bi.bi-upload{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
-                  %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
-                  %path{:d => "M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"}
           %li.nav-item
             %label.btn.text-white#share-btn{ title: "Share", href: '#' }
               %svg.bi.bi-share-fill{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}

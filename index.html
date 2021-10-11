@@ -102,7 +102,7 @@
   #main-area {
     display: inline-flex;
     width: 100%;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 50px);
   }
   
   .float-btn {
@@ -148,7 +148,7 @@
   
   #header { 
     background: #151515 !important;
-    height: 60px;
+    height: 50px;
   }
   
   .toast-top-right {
@@ -194,16 +194,8 @@
 <nav class='navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top' id='header'>
 <div class='mr-5' href='https://www.blitzboard.io/' style='color: yellow'>
 <a href='https://www.blitzboard.io/'>
-<img src='./blitzboard-w_3.png' style='height: 30px;'>
+<img src='./blitzboard-w_3.png' style='height: 25px;'>
 </a>
-</div>
-<div class='btn dropdown text-white' id='new-btn'>
-<ion-icon name='add-outline'></ion-icon>
-New
-</div>
-<div class='btn dropdown text-white mx-3' id='history-btn'>
-<div aria-haspopup class='dropdown-toggle' data-toggle='dropdown' id='history-dropdown' style='width: 100px; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;' type='button'></div>
-<div aria-labelledby='historyDropdown' class='dropdown-menu' id='history-menu'></div>
 </div>
 <div class='btn-group btn-group-toggle mx-3' data-toggle='buttons'>
 <label class='btn btn-secondary column-mode-btn' data-placement='bottom' data-toggle='tooltip' id='input-only-btn' title='Show input area only'>
@@ -226,11 +218,32 @@ New
 </svg>
 </label>
 </div>
+<div class='btn dropdown text-white mx-3' id='history-btn'>
+<div aria-haspopup class='dropdown-toggle' data-toggle='dropdown' id='history-dropdown' style='width: 200px; text-align: left; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;' type='button'></div>
+<div aria-labelledby='historyDropdown' class='dropdown-menu' id='history-menu'></div>
+</div>
 <div class='custom-control custom-switch mx-3'>
 <input checked class='custom-control-input' id='autocompletion-switch' type='checkbox'>
 <label class='custom-control-label text-white' for='autocompletion-switch'>Autocomplete</label>
 </div>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
+<li class='nav-item'>
+<label class='btn text-white' href='#' id='new-btn' title='New'>
+<svg class='bi bi-plus-lg' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
+<path d='M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z'></path>
+</svg>
+</label>
+</li>
+<li class='nav-item'>
+<label class='btn text-white' href='#' id='import-btn' title='Import'>
+<input accept='.zip' id='import-btn-input' type='file'>
+<svg class='bi bi-upload' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
+<path d='M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z'></path>
+<path d='M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z'></path>
+</svg>
+</input>
+</label>
+</li>
 <li class='nav-item'>
 <label class='btn dropdown text-white' href='#' id='export-btn' title='Export'>
 <div aria-haspopup data-toggle='dropdown' id='export-dropdown'>
@@ -253,16 +266,6 @@ PGQL Query
 JavaScript
 </a>
 </div>
-</label>
-</li>
-<li class='nav-item'>
-<label class='btn text-white' href='#' id='import-btn' title='Import'>
-<input accept='.zip' id='import-btn-input' type='file'>
-<svg class='bi bi-upload' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
-<path d='M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z'></path>
-<path d='M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z'></path>
-</svg>
-</input>
 </label>
 </li>
 <li class='nav-item'>
