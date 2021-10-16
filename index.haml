@@ -198,7 +198,7 @@
       %nav#header.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top
         %div.mr-5{style: 'color: yellow', href: 'https://www.blitzboard.io/'}
           %a{href: 'https://www.blitzboard.io/'}
-            %img{ src: './blitzboard-w_3.png', style: 'height: 25px;'}
+            %img{ src: './blitzboard-w_3.png', style: 'height: 23px;'}
         .btn-group.btn-group-toggle.mx-3{"data-toggle" => "buttons"}
           %label.btn.btn-secondary.column-mode-btn#input-only-btn{ 'data-toggle': 'tooltip', 'data-placement': 'bottom', title: 'Edit' }
             %input{:autocomplete => "off", :name => "options", :type => "radio"}/
@@ -236,7 +236,7 @@
                 %svg.bi.bi-download{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
                   %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
                   %path{:d => "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"}
-              .dropdown-menu{ 'aria-labelledby': "export-dropdown" }
+              .dropdown-menu.dropdown-menu-right{ 'aria-labelledby': "export-dropdown" }
                 %a#export-zip-btn.dropdown-item{ href: '#' }
                   Zip
                 %a#export-cypher-btn.dropdown-item{ href: '#' }
