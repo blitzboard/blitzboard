@@ -217,17 +217,17 @@
           %label.custom-control-label.text-white{:for => "autocompletion-switch"} Autocomplete
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
-            %label.btn.text-white#new-btn{ title: "New", href: '#' }
+            %label.btn.text-white#new-btn{ title: "New", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom'}
               %svg.bi.bi-plus-lg{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
                 %path{:d => "M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"}
           %li.nav-item
-            %label.btn.text-white#import-btn{ title: "Import", href: '#' }
+            %label.btn.text-white#import-btn{ title: "Import", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom'}
               %input#import-btn-input{ type: "file", accept: ".zip" }
                 %svg.bi.bi-upload{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
                   %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
                   %path{:d => "M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"}
           %li.nav-item
-            %label.btn.dropdown.text-white#export-btn{ title: "Export", href: '#' }
+            %label.btn.dropdown.text-white#export-btn{ title: "Export", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom' }
               #export-dropdown{ 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
                 %svg.bi.bi-download{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
                   %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
@@ -242,7 +242,7 @@
                 %a.dropdown-item#embed-btn{ href: '#' }
                   JavaScript
           %li.nav-item
-            %label.btn.text-white#share-btn{ title: "Share", href: '#' }
+            %label.btn.text-white#share-btn{ title: "Share", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom' }
               %svg.bi.bi-share-fill{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
                 %path{:d => "M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"}
       #network-popUp
