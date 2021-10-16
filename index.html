@@ -941,8 +941,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   configEditor.on('keydown', onConfigChanged);
   configEditor.on('inputRead', onConfigChanged);
   
-  $('[data-toggle="tooltip"]').tooltip()
-  
+  $('[data-toggle="tooltip"]').tooltip().on('click', function() { $(this).tooltip('hide'); });
   
   if(editor.getValue())
     updateGraph(editor.getValue(), config);
