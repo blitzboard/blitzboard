@@ -901,7 +901,15 @@
       configEditor.on('keydown', onConfigChanged);
       configEditor.on('inputRead', onConfigChanged);
       
-      $('[data-toggle="tooltip"]').tooltip().on('click', function() { $(this).tooltip('hide'); });
+      $('[data-toggle="tooltip"]').tooltip()
+      .on('click', function() {
+        $(this).tooltip('hide');
+      })
+      .on('shown.bs.tooltip', function(){
+        setTimeout((function(){
+          $(this).tooltip('hide');
+        }).bind(this), 2000);
+      });
       
       if(editor.getValue())
         updateGraph(editor.getValue(), config);
