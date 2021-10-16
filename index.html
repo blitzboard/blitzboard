@@ -945,11 +945,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   configEditor.on('keydown', onConfigChanged);
   configEditor.on('inputRead', onConfigChanged);
   
-  $('[data-toggle="tooltip"]').tooltip()
-  .on('click', function() {
-    $(this).tooltip('hide');
-  });
-  
   if(editor.getValue())
     updateGraph(editor.getValue(), config);
     
@@ -967,16 +962,14 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   switch(viewMode) {
     case 'input-only':
-      $('.column-mode-btn').removeClass('active'); 
-      $('#input-only-btn').addClass('active'); 
+      $('#input-only-btn').button('toggle');
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '100%');
       $('#graph-pane').css('width', '0px');
       onResize(null, null);
       break;
     case 'view-only':
-      $('.column-mode-btn').removeClass('active'); 
-      $('#view-only-btn').addClass('active'); 
+      $('#view-only-btn').button('toggle');
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '0px');
       $('#graph-pane').css('width', '100%');
@@ -984,6 +977,10 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       break;
   }
   
+  $('[data-toggle="tooltip"]').tooltip()
+  .on('click', function() {
+    $(this).tooltip('hide');
+  });
   
   if(!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
     saveCurrentGraph();
