@@ -944,11 +944,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   $('[data-toggle="tooltip"]').tooltip()
   .on('click', function() {
     $(this).tooltip('hide');
-  })
-  .on('shown.bs.tooltip', function(){
-    setTimeout((function(){
-      $(this).tooltip('hide');
-    }).bind(this), 2000);
   });
   
   if(editor.getValue())
@@ -968,14 +963,16 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   switch(viewMode) {
     case 'input-only':
-      q('#input-only-btn input').click();
+      $('.column-mode-btn').removeClass('active'); 
+      $('#input-only-btn').addClass('active'); 
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '100%');
       $('#graph-pane').css('width', '0px');
       onResize(null, null);
       break;
     case 'view-only':
-      q('#view-only-btn input').click(); 
+      $('.column-mode-btn').removeClass('active'); 
+      $('#view-only-btn').addClass('active'); 
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '0px');
       $('#graph-pane').css('width', '100%');
