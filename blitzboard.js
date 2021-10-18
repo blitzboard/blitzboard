@@ -55,7 +55,6 @@ class Blitzboard {
     }, true);
 
     this.container.addEventListener('dblclick', (e) => {
-      console.log('double');
       if(blitzboard.config.layout === 'map') {
         blitzboard.map.panTo(blitzboard.map.mouseEventToLatLng(e));
       }
@@ -438,13 +437,14 @@ class Blitzboard {
 
 
     if(this.config.layout === 'map') {
-      let center = this.config?.layoutSettings?.center || [0, 0];
+      let statistics = statisticsOfMap();
+      let center = this.config?.layoutSettings?.center || statistics.center;
       if(this.map) {
         this.map.panTo(center);
       } else {
         this.map = L.map('map', {
           center: center,
-          zoom: 17,
+          zoom: statistics.scale,
           minZoom: 3,
           zoomSnap: 0.01,
         });
@@ -506,14 +506,44 @@ class Blitzboard {
       let xKey =  blitzboard.config.layoutSettings.x;
       let yKey =  blitzboard.config.layoutSettings.y;
       blitzboard.graph.nodes.forEach(node => {
-        let point = blitzboard.map.latLngToContainerPoint([node.properties[yKey][0] ,node.properties[xKey][0]]);
-        point = blitzboard.network.DOMtoCanvas(point);
-        nodePositions.push({id: node.id,
-          x: point.x, y: point.y, fixed: true });
+        if(node.properties[yKey] && node.properties[xKey]) {
+          let point = blitzboard.map.latLngToContainerPoint([node.properties[yKey][0], node.properties[xKey][0]]);
+          point = blitzboard.network.DOMtoCanvas(point);
+          nodePositions.push({
+            id: node.id,
+            x: point.x, y: point.y, fixed: true
+          });
+        }
       });
       blitzboard.nodeDataSet.update(nodePositions);
     }
-    
+
+    function statisticsOfMap() {
+      let xKey =  blitzboard.config.layoutSettings.x;
+      let yKey =  blitzboard.config.layoutSettings.y;
+      let xSum = 0, ySum = 0, count = 0,
+        xMax = Number.MIN_VALUE, xMin = Number.MAX_VALUE,
+        yMax = Number.MIN_VALUE, yMin = Number.MAX_VALUE;
+      blitzboard.graph.nodes.forEach(node => {
+        if(node.properties[yKey] && node.properties[xKey]) {
+          let x = parseFloat(node.properties[xKey][0]);
+          let y = parseFloat(node.properties[yKey][0]);
+          xSum += x;
+          ySum += y;
+          xMax = Math.max(x, xMax);
+          xMin = Math.min(x, xMin);
+          yMax = Math.max(y, yMax);
+          yMin = Math.min(y, yMin);
+          ++count;
+        }
+      });
+      if(count === 0)
+        return [0, 0];
+      return {
+        center: [ySum / count, xSum / count],
+        scale: Math.max( -Math.log2(Math.max(Math.abs(xMax - xMin), Math.abs(yMax - yMin)) / 1000), 0)
+      };
+    }
 
     
     this.network.on("zoom", function(){
