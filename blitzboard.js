@@ -438,11 +438,12 @@ class Blitzboard {
 
 
     if(this.config.layout === 'map') {
+      let center = this.config?.layoutSettings?.center || [0, 0];
       if(this.map) {
-        this.map.panTo(this.config.layoutSettings.center);
+        this.map.panTo(center);
       } else {
         this.map = L.map('map', {
-          center: this.config.layoutSettings.center,
+          center: center,
           zoom: 17,
           minZoom: 3,
           zoomSnap: 0.01,
