@@ -108,7 +108,7 @@ class Blitzboard {
   }
 
   toVisNode(pgNode, props = this.config.node.caption, extraOptions = null) {
-    const group = pgNode.labels.join('_');
+    const group = _.camelCase(pgNode.labels.join('_'));
     this.groups.add(group);
 
     let x, y, fixed, width;
@@ -174,7 +174,7 @@ class Blitzboard {
   }
 
   toVisEdge(pgEdge, props = this.config.edge.caption, id) {
-    const edgeLabel = pgEdge.labels.join('_');
+    const edgeLabel = _.camelCase(pgEdge.labels.join('_'));
     if (!this.edgeColorMap[edgeLabel]) {
       this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
     }
@@ -339,7 +339,7 @@ class Blitzboard {
     //updateTimeLineNodes();
     this.edgeMap = {};
     this.edgeDataSet = new vis.DataSet(this.graph.edges.map((edge) => {
-      const edgeLabel = edge.labels.join('_');
+      const edgeLabel = _.camelCase(edge.labels.join('_'));
       let id = toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
