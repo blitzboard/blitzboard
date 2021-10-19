@@ -99,7 +99,7 @@ class Blitzboard {
     } else {
       x = null;
       y = null;
-      fixed = false;
+      fixed = this.config.layout === 'hierarchical';
       width = null;
     }
     //}
@@ -129,7 +129,7 @@ class Blitzboard {
       id: pgNode.id,
       group: group,
       label: createLabelText(pgNode, props),
-      shape: fixed ? 'square' : (degree === 1 || expanded ? 'text' : 'dot'),
+      shape: (degree === 1 || expanded ? 'text' : 'dot'),
       size: expanded ? 25 : (2 + degree * 8),
       degree: degree,
       title: createTitleText(pgNode),
