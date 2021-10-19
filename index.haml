@@ -79,10 +79,10 @@
 
       .dg li.title {
           background: rgba(0, 0, 0, 0.7) url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
-      }
-
+      }      
+      
       #pg-area {
-        height:100%
+        height: 100%;
       }
 
       #input-area {
@@ -105,10 +105,8 @@
         width: 100%;
         top: 0;
         left: 0;
-        /*width: calc(50vw);*/
         z-index: 1;
         position:absolute;
-        /*pointer-events: none;*/
       }
 
       #graph {
@@ -187,6 +185,7 @@
       .dropdown-toggle {
         -webkit-appearance: none;
         border-radius: 0;
+      }
 
       .dropdown-item.active {
         background: #047bff;
@@ -201,19 +200,20 @@
           margin-top: 8px;
       }
       
+      .CodeMirror-hints {
+        z-index: 999 !important;
+      }
+      
       .CodeMirror {
         font-family: 'Courier', monospace;
         font-size: 16px;
       }
       
       
-      .CodeMirror-hints {
-        z-index: 999;
-      }
-      
       .CodeMirror-scroll {
         padding: 0;
       }
+      
       .dropdown-menu{
         max-height:600px;
         overflow-y:auto;
