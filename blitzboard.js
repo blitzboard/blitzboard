@@ -385,7 +385,7 @@ class Blitzboard {
         hover: true
       },
       physics: {
-        enabled: this.config.layout !== 'map',
+        enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical',
         barnesHut: {
           springConstant: 0.016
         },
