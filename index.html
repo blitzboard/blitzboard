@@ -885,17 +885,21 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       clearTimeout(timerId);
       localMode = true;
       timerId = setTimeout(() => {
-      
         localStorage.setItem('pg', editor.getValue());
         saveCurrentGraph();
         updateGraph(editor.getValue(), config);
+        timerId = null;
       }, 2000);
     } else {
       byProgram = false;
     }
   }
         
-  editor.on('keydown', onEditorChanged);
+  editor.on('keydown', () => {
+    // invoke only if timer is working
+    if(timerId) onEditorChanged();
+  });
+  editor.on('change', onEditorChanged);
   editor.on('inputRead', onEditorChanged);
   
   editor.on('cursorActivity', (doc) => {
@@ -994,6 +998,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     config = tryJsonParse(configEditor.getValue());
     saveCurrentGraph();
     updateGraph(editor.getValue(), config);
+    timerId = null;
   }
   
   function onConfigChanged(delta) {
