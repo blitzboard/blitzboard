@@ -257,7 +257,6 @@ class Blitzboard {
     }
     if(newPg === null || newPg === undefined)
       return;
-    console.log(applyDiff);
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !newConfig;
     
     if(applyDiff) {
@@ -484,6 +483,7 @@ class Blitzboard {
         this.map.on('move', updateNodeLocationOnMap);
         this.map.on('zoom', updateNodeLocationOnMap);
       }
+      blitzboard.network.moveTo({scale: 1.0});
     } else {
       if(this.map) {
         this.map.remove();

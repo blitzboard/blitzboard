@@ -472,7 +472,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         else if(e.nodes.length > 0) {
           let node = blitzboard.nodeMap[e.nodes[0]];
           scrollToLine(node.location);
-          console.log("Scrolled to node");
         } else if(e.edges.length > 0) {
           let edge = blitzboard.edgeMap[e.edges[0]];
           scrollToLine(edge.location);
@@ -480,8 +479,17 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       });
       blitzboard.network.on("doubleClick", (e) => {
         if(e.nodes.length > 0) {
-           const node = e.nodes[0];
-           srcNode = node;
+          const node = e.nodes[0];
+          srcNode = node;
+        } else if (blitzboard.map) {
+          let xKey =  blitzboard.config.layoutSettings.x;
+          let yKey =  blitzboard.config.layoutSettings.y;
+          let oldPg = editor.getValue();
+          let lineNum = numberOfLines(oldPg) + 1;
+          let latLng = blitzboard.map.containerPointToLatLng([e.pointer.DOM.x, e.pointer.DOM.y]);
+          editor.setValue(oldPg + `\n${newNodeName()} ${xKey}:${latLng.lng} ${yKey}:${latLng.lat}`);
+          updateGraph(editor.getValue());
+          scrollToLine({start: { line: lineNum, ch: 0 }, end: {line: lineNum, ch: 0}} );
         }
       });
       let canvas = q(".vis-network canvas");
@@ -596,6 +604,16 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     let name = baseName;
     let i = 0;
     while(localStorage.getItem('saved-graph-' + name)) {
+      name =  baseName + '-' + (++i);
+    }
+    return name;
+  }
+  
+  
+  function newNodeName(baseName = 'New') {
+    let name = baseName;
+    let i = 0;
+    while(blitzboard.nodeDataSet.get(name)) {
       name =  baseName + '-' + (++i);
     }
     return name;
