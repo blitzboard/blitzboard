@@ -464,7 +464,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
               editor.setValue(oldPg + `\n"${srcNode}" -> "${node.id}"`);
               updateGraph(editor.getValue());
               scrollToLine({start: { line: lineNum, ch: 0 }, end: {line: lineNum, ch: 0}} );
-              console.log("Scrolled to line" + lineNum);
             }
           }
           srcNode = null;
@@ -481,7 +480,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       });
       blitzboard.network.on("doubleClick", (e) => {
         if(e.nodes.length > 0) {
-           const position = e.pointer.canvas;
            const node = e.nodes[0];
            srcNode = node;
         }

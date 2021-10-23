@@ -5,6 +5,34 @@ const qa = document.querySelectorAll.bind(document);
 
 class Blitzboard {
   static fondLoaded = false;
+  static defaultConfig = {
+    node: {
+      caption: ['id'],
+      icon: {
+        person: 'f3a0',
+        graph: 'f341',
+      },
+      saturation: '100%',
+      brightness: '37%',
+    },
+    edge: {
+      caption: ['label'],
+      length: {
+        distance: 'value',
+      },
+      width: {
+        flow: 'throughput',
+      },
+      saturation: '0%',
+      brightness: '62%',
+    },
+    zoom: {
+      max: 3.0,
+      min: 0.25,
+    },
+  }
+
+  
   constructor(container) {
     this.container = container;
     this.groups = new Set();
@@ -289,12 +317,11 @@ class Blitzboard {
     }
 
     this.graph = newPg;
-    console.log(applyDiff);
     if(applyDiff) return;
 
     this.prevZoomPosition = null;
     
-    this.config = deepMerge(this.config, newConfig );
+    this.config = deepMerge(Blitzboard.defaultConfig, newConfig || {});
 
     minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
     
