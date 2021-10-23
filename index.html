@@ -381,6 +381,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     editor.scrollIntoView({line: loc.start.line - 1, ch: loc.start.column - 1}, 200);
     editor.setSelection({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1});
     editor.focus();
+    byProgram = false;
   }
   
   q('#url-input').addEventListener('change', () => {
@@ -644,6 +645,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     $(`.dropdown-item.history-item:eq(${i})`).addClass('active');
     reloadConfig();
     showGraphName();
+    byProgram = false;
   }
   
   $(document).on('click', '.history-item', (e) => {
@@ -681,6 +683,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     loadSavedGraph();
     showGraphName();
     updateGraph('', defaultConfig);
+    loadGraph({name:name, pg: '', config: defaultConfig});
+    byProgram = false;
   });
   
   
@@ -890,8 +894,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         updateGraph(editor.getValue(), config);
         timerId = null;
       }, 2000);
-    } else {
-      byProgram = false;
     }
   }
         
@@ -924,8 +926,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
         }
         blitzboard.network.selectEdges([edge.id]);
       }
-    } else {
-      byProgram = false;
     }
   });
   
