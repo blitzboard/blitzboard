@@ -136,7 +136,7 @@ class Blitzboard {
   }
 
   toVisNode(pgNode, props = this.config.node.caption, extraOptions = null) {
-    const group = _.camelCase(pgNode.labels.join('_'));
+    const group = _.camelCase([...pgNode.labels].sort().join('_'));
     this.groups.add(group);
 
     let x, y, fixed, width;
@@ -176,14 +176,17 @@ class Blitzboard {
     };
 
     let icon;
-    if(icon = this.config.node.icon?.[group]) {
-      let code = String.fromCharCode(parseInt(icon, 16));
-      attrs['customIcon'] = {
-        face: 'Ionicons',
-        size: attrs.size * 1.5,
-        code: code,
-        color: 'white'
-      };
+    for(let label of pgNode.labels) {
+      if (icon = this.config.node.icon?.[label]) {
+        let code = String.fromCharCode(parseInt(icon, 16));
+        attrs['customIcon'] = {
+          face: 'Ionicons',
+          size: attrs.size * 1.5,
+          code: code,
+          color: 'white'
+        };
+        break;
+      }
     }
 
     if(thumbnailUrl) {
