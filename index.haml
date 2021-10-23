@@ -315,11 +315,13 @@
       let editor, configEditor;
       let localMode = true;
       let blitzboard = new Blitzboard(container);
-      let byProgram = true;
+      let byProgram = false;
       let prevInputWidth = null;
-      let config;
+      let config, prevConfig;
       let autocompletion = true;
       let showConfig = false;
+      let srcNode, lineEnd;
+      let prevNetwork = null;
       let savedGraphs = [];
       let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
       let dateTimeFormat = new Intl.DateTimeFormat('default', {
@@ -395,20 +397,69 @@
         }
       };
       
-      function updateGraph(input, config) {
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      }
+      
+      function updateGraph(input, newConfig = null) {
         document.getElementById("map").style['display'] = 'block'; // This line is needed to initialize leaflet correctly! 
-        blitzboard.updateGraph(input, config);
+        blitzboard.updateGraph(input, newConfig);
         document.getElementById("map").style['display'] = blitzboard.config.layout === 'map' ? 'block' : 'none';
-        if(blitzboard.network)
+        if(blitzboard.network !== prevNetwork) {
           blitzboard.network.on("click", (e) => {
-            if(e.nodes.length > 0) {
+            if(srcNode) {
+              if(e.nodes.length > 0) {
+                let node = blitzboard.nodeMap[e.nodes[0]];
+                if(srcNode !== node.id) {
+                  let oldPg = editor.getValue();
+                  let lineNum = numberOfLines(oldPg) + 1;
+                  editor.setValue(oldPg + `\n"${srcNode}" -> "${node.id}"`);
+                  updateGraph(editor.getValue());
+                  scrollToLine({start: { line: lineNum, ch: 0 }, end: {line: lineNum, ch: 0}} );
+                }
+              }
+              srcNode = null;
+              lineEnd = null;
+            } 
+            else if(e.nodes.length > 0) {
               let node = blitzboard.nodeMap[e.nodes[0]];
               scrollToLine(node.location);
+              console.log("Scrolled to node");
             } else if(e.edges.length > 0) {
               let edge = blitzboard.edgeMap[e.edges[0]];
               scrollToLine(edge.location);
             }
           });
+          blitzboard.network.on("doubleClick", (e) => {
+            if(e.nodes.length > 0) {
+               const node = e.nodes[0];
+               srcNode = node;
+            }
+          });
+          let canvas = q(".vis-network canvas");
+          canvas.addEventListener('mousemove', event =>
+          {
+            if(srcNode) {
+              lineEnd = blitzboard.network.DOMtoCanvas(getMousePos(canvas, event));
+              blitzboard.network.redraw();
+            }
+          });
+          
+          blitzboard.network.on("afterDrawing", (ctx) => {
+            if(srcNode && lineEnd) {
+              ctx.beginPath();
+              let lineStart = blitzboard.network.getPosition(srcNode);
+              ctx.moveTo(lineStart.x, lineStart.y);
+              ctx.lineTo(lineEnd.x, lineEnd.y);
+              ctx.stroke();
+            }
+          });
+          prevNetwork = blitzboard.network;
+        }
         if(blitzboard.graph) {
           candidateIds = new Set();
           candidatePropNames = new Set();
@@ -847,7 +898,7 @@
           timerId = setTimeout(() => {
             localStorage.setItem('pg', editor.getValue());
             saveCurrentGraph();
-            updateGraph(editor.getValue(), config);
+            updateGraph(editor.getValue());
             timerId = null;
           }, 2000);
         }

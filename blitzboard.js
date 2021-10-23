@@ -206,7 +206,7 @@ class Blitzboard {
     }
   }
 
-  updateGraph(input, config = {}, applyDiff = true) {
+  updateGraph(input, newConfig = null, applyDiff = true) {
     // searchGraph();
     this.groups = new Set();
     this.edgeColorMap = {};
@@ -229,7 +229,8 @@ class Blitzboard {
     }
     if(newPg === null || newPg === undefined)
       return;
-    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && (config === {} || this.config === config);
+    console.log(applyDiff);
+    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !newConfig;
     
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
@@ -288,11 +289,12 @@ class Blitzboard {
     }
 
     this.graph = newPg;
+    console.log(applyDiff);
     if(applyDiff) return;
 
     this.prevZoomPosition = null;
     
-    this.config = deepMerge(this.config, config );
+    this.config = deepMerge(this.config, newConfig );
 
     minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
     
@@ -339,7 +341,6 @@ class Blitzboard {
     //updateTimeLineNodes();
     this.edgeMap = {};
     this.edgeDataSet = new vis.DataSet(this.graph.edges.map((edge) => {
-      const edgeLabel = _.camelCase(edge.labels.join('_'));
       let id = toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
