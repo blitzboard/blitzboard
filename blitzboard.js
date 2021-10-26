@@ -316,6 +316,9 @@ class Blitzboard {
         }
       }
       this.edgeMap = newEdgeMap;
+      if(this.map) {
+        updateNodeLocationOnMap();
+      }
     }
 
     this.graph = newPg;
