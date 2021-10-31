@@ -397,6 +397,7 @@
         }
       };
       
+      
       function getMousePos(canvas, evt) {
         var rect = canvas.getBoundingClientRect();
         return {
@@ -892,10 +893,14 @@
       configEditor = CodeMirror.fromTextArea(q('#config-input'), {
         viewportMargin: Infinity,
         theme: "monokai",
-        mode: 'javascript',
+        mode: { name: 'javascript', json: true },
         lineWrapping: true,
         extraKeys: {
-          Tab: 'autocomplete'
+          Tab: function(cm) {
+            var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+            cm.replaceSelection(spaces);
+          },
+          "Shift-Tab": "indentLess"
         },
         hintOptions: {
           completeSingle: false,
@@ -1039,7 +1044,15 @@
         timerId = setTimeout(reloadConfig, 2000);
       }
       
-      configEditor.on('keydown', onConfigChanged);
+      configEditor.on('keydown', (cm, e) => {
+        if(e.ctrlKey && e.keyCode === 13) {
+          // ctrl + enter
+          reloadConfig();
+        }
+        // invoke only if timer is working
+        else if(timerId) onConfigChanged();
+      });
+      
       configEditor.on('inputRead', onConfigChanged);
       
       if(editor.getValue())
