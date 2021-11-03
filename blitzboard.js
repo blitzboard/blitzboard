@@ -3,6 +3,7 @@
 const q = document.querySelector.bind(document);
 const qa = document.querySelectorAll.bind(document);
 
+
 class Blitzboard {
   static fondLoaded = false;
   static defaultConfig = {
@@ -93,6 +94,26 @@ class Blitzboard {
       blitzboard.prevMouseEvent = e;
     }, true);
   }
+
+  static #blitzProxy = {
+    get: function(target, prop, receiver) {
+      if (prop === 'label') {
+        return target.labels[0];
+      }
+      if (!(prop in target) && prop in target.properties) {
+        return target.properties[prop][0]; 
+      }
+      return Reflect.get(target, prop, receiver);
+    }
+  };
+
+  getNode(node_id) {
+    return new Proxy(this.nodeMap[node_id], Blitzboard.#blitzProxy);
+  }
+  
+  getEdge(edge_id) {
+    return new Proxy(this.edgeMap[edge_id], Blitzboard.#blitzProxy);
+  }
   
   calcNodePosition(pgNode) {
     let x, y, fixed, width;
@@ -135,7 +156,7 @@ class Blitzboard {
     return {x, y, fixed, width};
   }
 
-  toVisNode(pgNode, props = this.config.node.caption, extraOptions = null) {
+  toVisNode(pgNode, props, extraOptions = null) {
     const group = _.camelCase([...pgNode.labels].sort().join('_'));
     this.groups.add(group);
 
@@ -273,11 +294,11 @@ class Blitzboard {
         if(existingNode) {
           if(!nodeEquals(node, existingNode)) {
             this.nodeDataSet.remove(existingNode);
-            let visNode = this.toVisNode(node);
+            let visNode = this.toVisNode(node, this.config.node.caption);
             this.nodeDataSet.update(visNode);
           }
         } else {
-          let visNode = this.toVisNode(node);
+          let visNode = this.toVisNode(node, this.config.node.caption);
           this.nodeDataSet.add(visNode);
         }
         this.nodeMap[node.id] = node;
@@ -803,6 +824,7 @@ class Blitzboard {
     //   }
     // });
   }
+  
 }
 
 let markers = [];
