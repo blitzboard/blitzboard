@@ -780,14 +780,12 @@ class Blitzboard {
 
     this.network.on("click", (e) => {
       if(e.nodes.length > 0) {
-        let node = this.nodeMap[e.nodes[0]];
         if(this.config.node.onClick) {
-          this.config.node.onClick(node);
+          this.config.node.onClick(this.getNode(e.nodes[0]));
         }
       } else if(e.edges.length > 0) {
-        let edge = this.edgeMap[e.edges[0]];
         if(this.config.edge.onClick) {
-          this.config.edge.onClick(edge);
+          this.config.edge.onClick(this.getEdge(e.edges[0]));
         }
       }
     });
