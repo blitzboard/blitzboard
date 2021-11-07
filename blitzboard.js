@@ -51,7 +51,7 @@ class Blitzboard {
     this.prevMouseEvent= null;
     this.dragging = false;
     this.currentLatLng = null;
-    this.needsRedraw = false;
+    this.redrawTimer = null;
     
     let blitzboard = this;
     
@@ -208,13 +208,12 @@ class Blitzboard {
           icon.querySelector("path").style.fill = "white";
           img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(icon.outerHTML);
           Blitzboard.loadedIcons[name] = img;
-          blitzboard.needsRedraw = true;
-          setTimeout(1000, () => {  // Add delay to avoid redraw too ofen
-            if (blitzboard.needsRedraw) {
-              blitzboard.needsRedraw = false;
-              blitzboard.network.redraw();
-            }
-          });
+          if(blitzboard.redrawTimer) {
+            clearTimeout(blitzboard.redrawTimer);
+          }
+          blitzboard.redrawTimer = setTimeout(() => {  // Add delay to avoid redraw too ofen
+            blitzboard.network.redraw();
+          }, 1000);
         }
       };
     }
@@ -752,8 +751,9 @@ class Blitzboard {
           let position = this.network.getPosition(node.id);
           let pgNode = this.nodeMap[node.id];
           if(node.customIcon) {
-            if(node.customIcon.name) { // Iconiy
-              ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name], position.x - node.size / 2, position.y - node.size / 2);
+            if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
+              ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
+                position.x - node.size / 2, position.y - node.size / 2);
             } else { // Ionicons
               ctx.font = `${node.customIcon.size}px Ionicons`;
               ctx.fillStyle = "white";
