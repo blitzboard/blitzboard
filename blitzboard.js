@@ -34,6 +34,7 @@ class Blitzboard {
     },
   };
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
+  static iconSizeCoef = 1.5;
 
   static loadedIcons = {};
   
@@ -204,7 +205,7 @@ class Blitzboard {
       return (icons) => {
         if (icons.length > 0) {
           let img = new Image();
-          let icon = Iconify.renderSVG(`${icons[0].prefix}:${icons[0].name}`, {width: attrs.size, height: attrs.size});
+          let icon = Iconify.renderSVG(`${icons[0].prefix}:${icons[0].name}`, {width: attrs.size * Blitzboard.iconSizeCoef, height: attrs.size * Blitzboard.iconSizeCoef});
           icon.querySelector("path").style.fill = "white";
           img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(icon.outerHTML);
           Blitzboard.loadedIcons[name] = img;
@@ -766,7 +767,7 @@ class Blitzboard {
               let lowerLabel = label.toLowerCase();
               if (Blitzboard.loadedIcons[lowerLabel]) {
                 if(Blitzboard.loadedIcons[lowerLabel] != 'retrieving...')
-                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node.size / 2, position.y - node.size / 2);
+                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node.size * Blitzboard.iconSizeCoef / 2, position.y - node.size * Blitzboard.iconSizeCoef / 2);
                 break;
               }
             }
