@@ -13,6 +13,7 @@ class Blitzboard {
         person: 'f3a0',
         graph: 'f341',
       },
+      defaultIcon: true,
       saturation: '100%',
       brightness: '37%',
     },
@@ -31,8 +32,10 @@ class Blitzboard {
       max: 3.0,
       min: 0.25,
     },
-  }
+  };
+  static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
 
+  static loadedIcons = {};
   
   constructor(container) {
     this.container = container;
@@ -48,6 +51,7 @@ class Blitzboard {
     this.prevMouseEvent= null;
     this.dragging = false;
     this.currentLatLng = null;
+    this.needsRedraw = false;
     
     let blitzboard = this;
     
@@ -195,20 +199,61 @@ class Blitzboard {
       },
       fixedByTime: fixed
     };
+    
+    function iconRegisterer(name) {
+      return (icons) => {
+        if (icons.length > 0) {
+          let img = new Image();
+          let icon = Iconify.renderSVG(`${icons[0].prefix}:${icons[0].name}`, {width: attrs.size, height: attrs.size});
+          icon.querySelector("path").style.fill = "white";
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(icon.outerHTML);
+          Blitzboard.loadedIcons[name] = img;
+          blitzboard.needsRedraw = true;
+          setTimeout(1000, () => {  // Add delay to avoid redraw too ofen
+            if (blitzboard.needsRedraw) {
+              blitzboard.needsRedraw = false;
+              blitzboard.network.redraw();
+            }
+          });
+        }
+      };
+    }
 
-    let icon;
     for(let label of pgNode.labels) {
+      let icon;
       if (icon = this.config.node.icon?.[label]) {
-        let code = String.fromCharCode(parseInt(icon, 16));
-        attrs['customIcon'] = {
-          face: 'Ionicons',
-          size: attrs.size * 1.5,
-          code: code,
-          color: 'white'
-        };
-        break;
+        if(icon.includes(':')) { // For icons in iconify
+          Iconify.loadIcons([icon], iconRegisterer(icon));
+          attrs['customIcon'] = {
+            name: icon
+          };
+        } else { // For icon codes in Ionicons (to be backward compatible)
+          let code = String.fromCharCode(parseInt(icon, 16));
+          attrs['customIcon'] = {
+            face: 'Ionicons',
+            size: attrs.size * 1.5,
+            code: code,
+            color: 'white'
+          };
+          break;
+        }
       }
     }
+
+
+    if(!attrs['customIcon'] && this.config.node.defaultIcon) {
+      for(let label of pgNode.labels) {
+        let lowerLabel = label.toLowerCase();
+        if (!Blitzboard.loadedIcons[lowerLabel]) {
+          Blitzboard.loadedIcons[lowerLabel] = 'retrieving...'; // Just a placeholder to avoid duplicate fetching
+          Iconify.loadIcons(
+            Blitzboard.iconPrefixes.map((prefix) => prefix + lowerLabel),
+            iconRegisterer(lowerLabel)
+          );
+        }
+      }
+    }
+    
 
     if(thumbnailUrl) {
       attrs['shape'] = 'image';
@@ -260,7 +305,6 @@ class Blitzboard {
 
   updateGraph(input, newConfig = null, applyDiff = true) {
     // searchGraph();
-    this.groups = new Set();
     this.edgeColorMap = {};
     this.prevMouseEvent = null;
     this.dragging = false;
@@ -340,11 +384,18 @@ class Blitzboard {
       if(this.map) {
         updateNodeLocationOnMap();
       }
+
+      // this.groupColorMap =  [...this.groups].reduce((acc, group) => {
+      //   acc[group] = {color: getRandomColor(group, this.config.node.saturation || '100%', this.config.node.brightness || '40%')}; return acc;
+      // }, {});
+      // this.options.groups = this.groupColorMap;
     }
 
     this.graph = newPg;
     if(applyDiff) return;
 
+    this.groups = new Set();
+    
     this.prevZoomPosition = null;
     
     this.config = deepMerge(Blitzboard.defaultConfig, newConfig || {});
@@ -428,7 +479,7 @@ class Blitzboard {
       acc[group] = {color: getRandomColor(group, this.config.node.saturation || '100%', this.config.node.brightness || '40%')}; return acc;
     }, {});
 
-    let options = {
+    this.options = {
       groups: this.groupColorMap,
       layout:
       layout,
@@ -436,7 +487,7 @@ class Blitzboard {
         dragNodes: this.config.layout !== 'map',
         dragView: this.config.layout !== 'map',
         zoomView: this.config.layout !== 'map',
-        hover: true
+        hover: true,
       },
       physics: {
         enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical',
@@ -478,7 +529,7 @@ class Blitzboard {
     L.polyline(polylinePoints).addTo(this.map);
     */
 
-    this.network = new vis.Network(this.container, data, options);
+    this.network = new vis.Network(this.container, data, this.options);
     //this.container.style.background = 'transparent';
 
     // network.on('selectNode', (e) => {
@@ -697,13 +748,29 @@ class Blitzboard {
     this.network.on("afterDrawing", (ctx) => {
       for(let node of this.graph.nodes) {
         node = this.nodeDataSet.get(node.id);
-        if(node?.customIcon) {
+        if(node && (node.customIcon || this.config.node.defaultIcon)) {
           let position = this.network.getPosition(node.id);
-          ctx.font = `${node.customIcon.size}px Ionicons`;
-          ctx.fillStyle = "white";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(node.customIcon.code, position.x, position.y);
+          let pgNode = this.nodeMap[node.id];
+          if(node.customIcon) {
+            if(node.customIcon.name) { // Iconiy
+              ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name], position.x - node.size / 2, position.y - node.size / 2);
+            } else { // Ionicons
+              ctx.font = `${node.customIcon.size}px Ionicons`;
+              ctx.fillStyle = "white";
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillText(node.customIcon.code, position.x, position.y);
+            }
+          } else {
+            for (let label of pgNode.labels) {
+              let lowerLabel = label.toLowerCase();
+              if (Blitzboard.loadedIcons[lowerLabel]) {
+                if(Blitzboard.loadedIcons[lowerLabel] != 'retrieving...')
+                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node.size / 2, position.y - node.size / 2);
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -951,6 +1018,9 @@ function createTitleText(elem) {
     let idText = `<tr><td><b>${elem.id}</b></tr></td>`;
     flattend_props.splice(0, 0, idText);
     flattend_props.push(`<tr><td width="100px">label</td><td width="200px">${wrapText(elem.labels.join(':'), true)}</td></tr>`);
+  }
+  if (flattend_props.length === 0) {
+    return null;
   }
   return htmlTitle(`<table style='fixed'>${flattend_props.join('')}</table>`);
 }
