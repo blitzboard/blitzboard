@@ -31,6 +31,8 @@ class Blitzboard {
   };
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
   static iconSizeCoef = 1.5;
+  static minScaleOnMap = 0.3;
+  static maxScaleOnMap = 1.0;
 
   static loadedIcons = {};
   
@@ -62,6 +64,10 @@ class Blitzboard {
           }
           blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
         }
+        let newScale = blitzboard.map._zoom / 18;
+        newScale = Math.min(Blitzboard.maxScaleOnMap, Math.max(newScale, Blitzboard.minScaleOnMap));
+        setTimeout( () => blitzboard.network.moveTo({scale: newScale}), 10);
+        blitzboard.map.invalidateSize();
         e.stopPropagation(); // Inhibit zoom on vis-network
       }
     }, true);
@@ -570,7 +576,8 @@ class Blitzboard {
     this.network.on('resize', (e) => {
       if(blitzboard.config.layout === 'map') {
         // Fix scale to 1.0 (delay is needed to override scale set by vis-network)  
-        setTimeout( () => blitzboard.network.moveTo({scale: 1.0}), 10); 
+        let newScale = Math.min(Blitzboard.maxScaleOnMap, Math.max(blitzboard.network.getScale(), Blitzboard.minScaleOnMap));
+        setTimeout( () => blitzboard.network.moveTo({scale: newScale}), 10); 
         blitzboard.map.invalidateSize();
       }
     });
