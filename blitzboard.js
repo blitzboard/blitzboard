@@ -231,7 +231,8 @@ class Blitzboard {
           // svg.viewBox.baseVal.width = size;
           // svg.viewBox.baseVal.height = size;
           svg.querySelectorAll("path").forEach((path) => {
-            path.style.fill = "white"
+            path.style.fill = "white";
+            path.style.stroke = "white";
           });
           img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.outerHTML);
           Blitzboard.loadedIcons[name] = img;
