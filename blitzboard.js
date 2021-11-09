@@ -206,10 +206,34 @@ class Blitzboard {
     function iconRegisterer(name) {
       return (icons) => {
         if (icons.length > 0) {
+          let icon = null;
+          if(icons.length > 1) {
+            // Find icon with the highest priority 
+            for (let prefix of Blitzboard.iconPrefixes) {
+              for (let i of icons) {
+                if (`${i.prefix}:${i.name}`.startsWith(prefix)) {
+                  icon = i; 
+                  break;
+                }
+              }
+              if (icon) {
+                break;
+              }
+            }
+          }
+          icon = icon || icons[0];
+          let size = attrs.size * Blitzboard.iconSizeCoef;
+          let svg = Iconify.renderSVG(`${icon.prefix}:${icon.name}`, {
+            width: size,
+            height: size
+          });
           let img = new Image();
-          let icon = Iconify.renderSVG(`${icons[0].prefix}:${icons[0].name}`, {width: attrs.size * Blitzboard.iconSizeCoef, height: attrs.size * Blitzboard.iconSizeCoef});
-          icon.querySelector("path").style.fill = "white";
-          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(icon.outerHTML);
+          // svg.viewBox.baseVal.width = size;
+          // svg.viewBox.baseVal.height = size;
+          svg.querySelectorAll("path").forEach((path) => {
+            path.style.fill = "white"
+          });
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.outerHTML);
           Blitzboard.loadedIcons[name] = img;
           if(blitzboard.redrawTimer) {
             clearTimeout(blitzboard.redrawTimer);
@@ -757,7 +781,7 @@ class Blitzboard {
           if(node.customIcon) {
             if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
               ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
-                position.x - node.size / 2, position.y - node.size / 2);
+                position.x - node.size * Blitzboard.iconSizeCoef / 2, position.y - node.size * Blitzboard.iconSizeCoef / 2);
             } else { // Ionicons
               ctx.font = `${node.customIcon.size}px Ionicons`;
               ctx.fillStyle = "white";
