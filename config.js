@@ -2,29 +2,13 @@ let defaultConfig =
 `
 {
   node: {
-    caption: ['id', 'name'],
-    icon: {
-      person: 'f3a0',
-      graph: 'f341',
-    },
-    saturation: '100%',
-    brightness: '37%',
+    caption: ['id'],
+    defaultIcon: true,
   },
   edge: {
-    caption: ['label', 'date'],
-    length: {
-      distance: 'value', 
-    },
-    width: {
-      flow: 'throughput',
-    },
-    saturation: '0%',
-    brightness: '62%',
+    caption: ['label'],
   },
-  zoom: {
-    max: 3.0,
-    min: 0.25,
-  },
+  layout: 'default',
 
   /*
   layout: 'hierarchical',

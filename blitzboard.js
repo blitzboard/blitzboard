@@ -9,10 +9,6 @@ class Blitzboard {
   static defaultConfig = {
     node: {
       caption: ['id'],
-      icon: {
-        person: 'f3a0',
-        graph: 'f341',
-      },
       defaultIcon: true,
       saturation: '100%',
       brightness: '37%',
