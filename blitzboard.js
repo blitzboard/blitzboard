@@ -33,6 +33,19 @@ class Blitzboard {
   static iconSizeCoef = 1.5;
   static minScaleOnMap = 0.3;
   static maxScaleOnMap = 1.0;
+  static maxColumn = 100000;
+  static nodeTemplate = {
+    id: null,
+    labels: [],
+    properties: {}
+  }
+  static edgeTemplate = {
+    from: null,
+    to: null,
+    direction: '->',
+    labels: [],
+    properties: {}
+  }
 
   static loadedIcons = {};
   
@@ -51,7 +64,10 @@ class Blitzboard {
     this.dragging = false;
     this.currentLatLng = null;
     this.redrawTimer = null;
-    
+    this.onNodeAdded = [];
+    this.onEdgeAdded = [];
+    this.maxLine = 0;
+
     let blitzboard = this;
     
     this.container.addEventListener('wheel', (e) => {
@@ -329,14 +345,89 @@ class Blitzboard {
       }
     }
   }
+  
+  includesNode(node) {
+    return this.graph.nodes.filter(e => e.id === node.id).length > 0;
+  }
+  
+  addNode(node, update = true) {
+    this.addNodes([node], update);
+  }
+  
+  addNodes(nodes, update = true) {
+    let newNodes;
+    if (typeof nodes === 'string' || nodes instanceof String) {
+      let pg = tryPgParse(nodes);
+      newNodes = pg.nodes;
+    } else {
+      newNodes = nodes;
+    }
+    newNodes = newNodes.filter(node => !this.includesNode(node)).map((node) => {
+      let mapped = deepMerge(Blitzboard.nodeTemplate, node);
+      mapped.location = {
+        start: {
+          line: this.maxLine,
+          column: 0,
+        },
+        end: {
+          line: this.maxLine + 1,
+          column: 0,
+        }
+      }
+      ++this.maxLine;
+      return mapped;
+    });
+    this.graph.nodes = this.graph.nodes.concat(newNodes);
+    for(let callback of this.onNodeAdded) {
+      // TODO: This function should return proxy instead of plain objects
+      callback(newNodes);
+    }
+    if(update)
+      this.update();
+  }
+  
+  addEdge(edge, update = true) {
+    this.addEdges([edge], update);
+  }
 
-  updateGraph(input, newConfig = null, applyDiff = true) {
-    // searchGraph();
+  addEdges(edges, update = true) {
+    let newEdges;
+    if (typeof edges === 'string' || edges instanceof String) {
+      let pg = tryPgParse(edges);
+      newEdges = pg.edges
+    } else {
+      newEdges = edges
+    }
+    newEdges = newEdges.map((edge) => {
+      let mapped = deepMerge(Blitzboard.edgeTemplate, edge);
+      mapped.location = {
+        start: {
+          line: this.maxLine,
+          column: 0, 
+        },
+        end: {
+          line: this.maxLine + 1,
+          column: 0,
+        }
+      }
+      ++this.maxLine;
+      return mapped;
+    });
+    this.graph.edges = this.graph.edges.concat(newEdges);
+    for(let callback of this.onEdgeAdded) {
+      // TODO: This function should return proxy instead of plain objects
+      callback(newEdges);
+    }
+    if(update)
+      this.update();
+  }
+
+
+
+  setGraph(input, update = true) {
     this.edgeColorMap = {};
     this.prevMouseEvent = null;
     this.dragging = false;
-    let blitzboard = this;
-
     let newPg;
     if (typeof input === 'string' || input instanceof String) {
       try {
@@ -350,17 +441,31 @@ class Blitzboard {
     } else {
       newPg = input;
     }
-    if(newPg === null || newPg === undefined)
+    if (newPg === null || newPg === undefined)
       return;
-    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !newConfig;
-    
+    this.graph = newPg;
+    if(update)
+      this.update();
+  }
+
+
+  setConfig(config, update = true) {
+    this.config = deepMerge(Blitzboard.defaultConfig, config);
+    if(update)
+      this.update(false);
+  }
+  
+  update(applyDiff = true) {
+    let blitzboard = this;
+    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
       let newEdgeMap = {};
 
       this.nodeLineMap = {};
       this.edgeLineMap = {};
-      newPg.nodes.forEach(node => {
+      this.maxLine = 0;
+      this.graph.nodes.forEach(node => {
         let existingNode = this.nodeMap[node.id];
         if(existingNode) {
           if(!nodeEquals(node, existingNode)) {
@@ -379,10 +484,11 @@ class Blitzboard {
             if (i < node.location.end.line || node.location.end.column > 1)
               this.nodeLineMap[i] = node;
           }
+          this.maxLine = Math.max(this.maxLine, node.location.end.line);
         }
       });
 
-      newPg.edges.forEach(edge => {
+      this.graph.edges.forEach(edge => {
         let id = toNodePairString(edge);
         while(newEdgeMap[id]) {
           id += '_';
@@ -396,7 +502,9 @@ class Blitzboard {
               this.edgeLineMap[i] = visEdge;
           }
         }
+        this.maxLine = Math.max(this.maxLine, edge.location.end.line);
       });
+
       nodesToDelete.forEach((nodeId) => {
         this.nodeDataSet.remove(this.nodeMap[nodeId]);
         delete this.nodeMap[nodeId];
@@ -418,15 +526,12 @@ class Blitzboard {
       // this.options.groups = this.groupColorMap;
     }
 
-    this.graph = newPg;
     if(applyDiff) return;
 
     this.groups = new Set();
     
     this.prevZoomPosition = null;
     
-    this.config = deepMerge(Blitzboard.defaultConfig, newConfig || {});
-
     minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
     
     // graph.nodes.forEach(node => {

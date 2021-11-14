@@ -343,6 +343,40 @@
         byProgram = false;
       }
       
+      blitzboard.onNodeAdded.push((nodes) => {
+        byProgram = true;
+        let content = editor.getValue();
+        for(let node of nodes) {
+          content += `\n"${node.id}"`;
+          for(let label of node.labels)
+            content += ` :"${label}"`;
+          for(let key in node.properties)
+            for(let value of node.properties[key])
+              content += ` "${key}":"${value}"`;
+        }
+        editor.setValue(content);
+        byProgram = false;
+        updateAutoCompletion();
+        localStorage.setItem('pg', content);
+      });
+      
+      blitzboard.onEdgeAdded.push((edges) => {
+        byProgram = true;
+        let content = editor.getValue();
+        for(let edge of edges) {
+          content += `\n"${edge.from}" ${edge.direction} ${edge.to}`;
+          for(let label of edge.labels)
+            content += ` :"${label}"`;
+          for(let key in edge.properties)
+            for(let value of edge.properties[key])
+              content += ` "${key}":"${value}"`;
+        }
+        editor.setValue(content);
+        byProgram = false;
+        updateAutoCompletion();
+        localStorage.setItem('pg', content);
+      });
+      
       q('#url-input').addEventListener('change', () => {
         clearTimeout(timerId);
         localMode = false;
@@ -407,9 +441,39 @@
         };
       }
       
+      function updateAutoCompletion() {
+        candidateIds = new Set();
+        candidatePropNames = new Set();
+        candidateLabels = new Set();
+        for(let node of blitzboard.graph.nodes) {
+          candidateIds.add(node.id);
+          for(let key in node.properties)
+          {
+            candidatePropNames.add(key);
+          }
+          for(let label of node.labels) {
+            candidateLabels.add(':' + label);
+          }
+        }
+        for(let edge of blitzboard.graph.edges) {
+          for(let label of edge.labels) {
+            candidateLabels.add(':' + label);
+          }
+          for(let key in edge.properties)
+          {
+            candidatePropNames.add(key);
+          }
+        }
+      }
+      
       function updateGraph(input, newConfig = null) {
-        document.getElementById("map").style['display'] = 'block'; // This line is needed to initialize leaflet correctly! 
-        blitzboard.updateGraph(input, newConfig);
+        document.getElementById("map").style['display'] = 'block'; // This line is needed to initialize leaflet correctly!
+        if(newConfig) {
+          blitzboard.setGraph(input, false);
+          blitzboard.setConfig(newConfig);
+        } else {
+          blitzboard.setGraph(input);
+        }
         document.getElementById("map").style['display'] = blitzboard.config.layout === 'map' ? 'block' : 'none';
         if(blitzboard.network !== prevNetwork) {
           blitzboard.network.on("click", (e) => {
@@ -471,28 +535,7 @@
           prevNetwork = blitzboard.network;
         }
         if(blitzboard.graph) {
-          candidateIds = new Set();
-          candidatePropNames = new Set();
-          candidateLabels = new Set();
-          for(let node of blitzboard.graph.nodes) {
-            candidateIds.add(node.id);
-            for(let key in node.properties)
-            {
-              candidatePropNames.add(key);
-            }
-            for(let label of node.labels) {
-              candidateLabels.add(':' + label);
-            }
-          }
-          for(let edge of blitzboard.graph.edges) {
-            for(let label of edge.labels) {
-              candidateLabels.add(':' + label);
-            }
-            for(let key in edge.properties)
-            {
-              candidatePropNames.add(key);
-            }
-          }
+          updateAutoCompletion();
         }
       }
       
@@ -552,7 +595,8 @@
           blitzboard = new Blitzboard(container);
           let config = ${configEditor.getValue()}
           let graph = ${JSON.stringify(blitzboard.graph)};
-          blitzboard.updateGraph(graph, config);
+          blitzboard.setGraph(graph, false);
+          blitzboard.setConfig(config);
           });
         `;
         saveAs(new Blob([content], { type: 'text/plain' }), 'embed_pg.js');
