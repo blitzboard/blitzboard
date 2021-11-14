@@ -102,7 +102,7 @@ class Blitzboard {
     }, true);
   }
 
-  static #blitzProxy = {
+  static blitzProxy = {
     get: function(target, prop, receiver) {
       if (prop === 'label') {
         return target.labels[0];
@@ -115,11 +115,11 @@ class Blitzboard {
   };
 
   getNode(node_id) {
-    return new Proxy(this.nodeMap[node_id], Blitzboard.#blitzProxy);
+    return new Proxy(this.nodeMap[node_id], Blitzboard.blitzProxy);
   }
   
   getEdge(edge_id) {
-    return new Proxy(this.edgeMap[edge_id], Blitzboard.#blitzProxy);
+    return new Proxy(this.edgeMap[edge_id], Blitzboard.blitzProxy);
   }
   
   calcNodePosition(pgNode) {
