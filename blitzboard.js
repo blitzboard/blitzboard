@@ -117,7 +117,7 @@ class Blitzboard {
           }
           blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
         }
-        let newScale = blitzboard.map._zoom / 18;
+        let newScale = blitzboard.map._zoom / 12 + 0.4;
         newScale = Math.min(Blitzboard.maxScaleOnMap, Math.max(newScale, Blitzboard.minScaleOnMap));
         setTimeout( () => blitzboard.network.moveTo({scale: newScale}), 10);
         blitzboard.map.invalidateSize();
@@ -1028,6 +1028,19 @@ class Blitzboard {
       } else if(e.edges.length > 0) {
         if(this.config.edge.onClick) {
           this.config.edge.onClick(this.getEdge(e.edges[0]));
+        }
+      }
+    });
+
+    
+    this.network.on("doubleClick", (e) => {
+      if(e.nodes.length > 0) {
+        if(this.config.node.onDoubleClick) {
+          this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
+        }
+      } else if(e.edges.length > 0) {
+        if(this.config.edge.onDoubleClick) {
+          this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
         }
       }
     });
