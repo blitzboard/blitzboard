@@ -33,7 +33,7 @@ class Blitzboard {
   static iconSizeCoef = 1.5;
   static minScaleOnMap = 0.3;
   static maxScaleOnMap = 1.0;
-  static maxColumn = 100000;
+  static mapContainerId = 'map';
   static nodeTemplate = {
     id: null,
     labels: [],
@@ -59,18 +59,54 @@ class Blitzboard {
     this.edgeMap = {};
     this.edgeLineMap = {};
     this.prevZoomPosition = null;
+    this.mapContainer = document.createElement('div');
+    this.mapContainer.id = Blitzboard.mapContainerId;
+    this.mapContainer.style = `
+      height: 100%;
+      width: 100%;
+      top: 0;
+      left: 0;
+      position: absolute;
+      z-index: 1;
+    `;
     this.map = null;
+    
     this.prevMouseEvent= null;
     this.dragging = false;
     this.currentLatLng = null;
     this.redrawTimer = null;
     this.onNodeAdded = [];
     this.onEdgeAdded = [];
+    this.onNodeFocused = [];
+    this.onEdgeFocused = [];
     this.maxLine = 0;
     this.scrollAnimationTimerId = null;
+    this.screen = document.createElement('div');
+    this.screenText = document.createElement('div');
+    this.screenText.style = `
+      font-size: 2rem;
+      background-color: rgba(255, 255, 255, 0.5);
+      padding: 10px;
+    `;
+    this.screen.appendChild(this.screenText);
+    this.screenText.innerText = "Now loading...";
+    this.screen.style = `
+      background-color: rgba(0, 0, 0, 0.3);
+      z-index: 3;
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+    `;
 
     let blitzboard = this;
-    
+
+    container.parentNode.insertBefore(this.mapContainer, container);
+    container.parentNode.insertBefore(this.screen, this.mapContainer);
+
     this.container.addEventListener('wheel', (e) => {
       if(blitzboard.config.layout === 'map')
       {
@@ -380,7 +416,7 @@ class Blitzboard {
     });
     this.graph.nodes = this.graph.nodes.concat(newNodes);
     for(let callback of this.onNodeAdded) {
-      // TODO: This function should return proxy instead of plain objects
+      // TODO: The argument should be proxy instead of plain objects
       callback(newNodes);
     }
     if(update)
@@ -416,7 +452,7 @@ class Blitzboard {
     });
     this.graph.edges = this.graph.edges.concat(newEdges);
     for(let callback of this.onEdgeAdded) {
-      // TODO: This function should return proxy instead of plain objects
+      // TODO: The argument should be proxy instead of plain objects
       callback(newEdges);
     }
     if(update)
@@ -681,7 +717,7 @@ class Blitzboard {
       if(this.map) {
         this.map.panTo(center);
       } else {
-        this.map = L.map('map', {
+        this.map = L.map(Blitzboard.mapContainerId, {
           center: center,
           zoom: statistics.scale,
           minZoom: 3,
@@ -882,7 +918,7 @@ class Blitzboard {
         }
       }
     }
-
+    
     this.network.on("afterDrawing", (ctx) => {
       for(let node of this.graph.nodes) {
         node = this.nodeDataSet.get(node.id);
@@ -1043,6 +1079,11 @@ class Blitzboard {
     }
     if(select)
       this.network.selectNodes([node.id]);
+
+    for(let callback of this.onNodeFocused) {
+      // TODO: The argument should be proxy instead of plain objects
+      callback(node);
+    }
   }
   
   scrollNetworkToPosition(position) {
@@ -1061,8 +1102,8 @@ class Blitzboard {
   }
   
   scrollMapToNode(node) {
-    let xKey = this.node.layoutSettings.x;
-    let yKey = this.node.layoutSettings.y;
+    let xKey = this.config.layoutSettings.x;
+    let yKey = this.config.layoutSettings.y;
     this.map.panTo([node.properties[yKey][0] ,node.properties[xKey][0]]);
   }
   
@@ -1072,7 +1113,7 @@ class Blitzboard {
     }
 
     if(this.config.layout === 'map') {
-      this.scrollMapToNode(edge.from);
+      this.scrollMapToNode(this.nodeMap[edge.from]);
     } else {
       const from = this.network.getPosition(edge.from);
       const to = this.network.getPosition(edge.to);
@@ -1081,6 +1122,20 @@ class Blitzboard {
     if(select) {
       blitzboard.network.selectEdges([edge.id]);
     }
+
+    for(let callback of this.onEdgeFocused) {
+      // TODO: The argument should be proxy instead of plain objects
+      callback(edge);
+    }
+  }
+  
+  showLoader(text = "Now loading...") {
+    this.screen.style.display = 'flex';
+    this.screenText.innerText = text;
+  }
+  
+  hideLoader() {
+    this.screen.style.display = 'none';
   }
 
 }

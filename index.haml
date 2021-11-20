@@ -101,15 +101,6 @@
         position: relative;
       }
 
-      #map {
-        height: 100%;
-        width: 100%;
-        top: 0;
-        left: 0;
-        z-index: 1;
-        position:absolute;
-      }
-
       #graph {
         height: 100%;
         width: 100%;
@@ -294,7 +285,6 @@
           #config-area
             %textarea#config-input{:style => "height: 100%; width: 100%;"}
         #graph-pane.h-100
-          #map
           #graph.h-100
         %label.float-btn.btn.dropup.text-white#options-btn{ title: "Options", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'top' }
           #options-dropdown{ 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
@@ -336,6 +326,8 @@
       }
       
       function scrollToLine(loc) {
+        if(!loc)
+          return;
         byProgram = true;
         editor.scrollIntoView({line: loc.start.line - 1, ch: loc.start.column - 1}, 200);
         editor.setSelection({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1});
@@ -375,6 +367,16 @@
         byProgram = false;
         updateAutoCompletion();
         localStorage.setItem('pg', content);
+      });
+      
+      
+      blitzboard.onNodeFocused.push((node) => {
+        scrollToLine(node.location);
+      });
+      
+      
+      blitzboard.onEdgeFocused.push((edge) => {
+        scrollToLine(edge.location)
       });
       
       q('#url-input').addEventListener('change', () => {
