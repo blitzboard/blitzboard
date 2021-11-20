@@ -837,6 +837,9 @@ class Blitzboard {
           id: e.node,
           color: '#8888ff',
         });
+        if(this.config.node.onHover) {
+          this.config.node.onHover(this.getNode(e.node));
+        }
       } else if(node && node.degree > 1 && !this.expandedNodes.includes(e.node)) {
         this.network.canvas.body.container.style.cursor = 'pointer';
       }
