@@ -67,6 +67,7 @@ class Blitzboard {
     this.onNodeAdded = [];
     this.onEdgeAdded = [];
     this.maxLine = 0;
+    this.scrollAnimationTimerId = null;
 
     let blitzboard = this;
     
@@ -493,6 +494,7 @@ class Blitzboard {
         while(newEdgeMap[id]) {
           id += '_';
         }
+        edge.id = id;
         newEdgeMap[id] = edge;
         let visEdge = this.toVisEdge(edge, this.config.edge.caption, id);
         this.edgeDataSet.update(visEdge);
@@ -881,7 +883,7 @@ class Blitzboard {
     this.network.on("afterDrawing", (ctx) => {
       for(let node of this.graph.nodes) {
         node = this.nodeDataSet.get(node.id);
-        if(node && (node.customIcon || this.config.node.defaultIcon)) {
+        if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon)) {
           let position = this.network.getPosition(node.id);
           let pgNode = this.nodeMap[node.id];
           if(node.customIcon) {
@@ -1023,7 +1025,61 @@ class Blitzboard {
     //   }
     // });
   }
+
+
+  scrollNodeIntoView(node, select = true) {
+    if(typeof(node) === 'string')
+      node = this.nodeMap[node];
+    if(!node)
+      return;
+
+    if(this.config.layout === 'map') {
+      this.scrollMapToNode(this.nodeMap[node.id]);
+    } else {
+      this.scrollNetworkToPosition(this.network.getPosition(node.id));
+    }
+    if(select)
+      this.network.selectNodes([node.id]);
+  }
   
+  scrollNetworkToPosition(position) {
+    clearTimeout(this.scrollAnimationTimerId);
+    this.scrollAnimationTimerId = setTimeout(() => {
+      const animationOption = {
+        scale: 1.0,
+        animation:
+          {
+            duration: 500,
+            easingFuntcion: "easeInOutQuad"
+          }
+      };
+      this.network.moveTo({ ...{position: position}, ...animationOption });
+    }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
+  }
+  
+  scrollMapToNode(node) {
+    let xKey = this.node.layoutSettings.x;
+    let yKey = this.node.layoutSettings.y;
+    this.map.panTo([node.properties[yKey][0] ,node.properties[xKey][0]]);
+  }
+  
+  scrollEdgeIntoView(edge, select = true) {
+    if(typeof(edge) === 'string') {
+      edge = this.edgeMap[edge];
+    }
+
+    if(this.config.layout === 'map') {
+      this.scrollMapToNode(edge.from);
+    } else {
+      const from = this.network.getPosition(edge.from);
+      const to = this.network.getPosition(edge.to);
+      this.scrollNetworkToPosition({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
+    }
+    if(select) {
+      blitzboard.network.selectEdges([edge.id]);
+    }
+  }
+
 }
 
 let markers = [];

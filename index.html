@@ -1037,21 +1037,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
   
       if(node) {
-        if(blitzboard.config.layout === 'map') {
-          scrollMapIntoView(blitzboard.nodeMap[node.id]);
-        } else {
-          scrollIntoView(blitzboard.network.getPosition(node.id));
-        }
-        blitzboard.network.selectNodes([node.id]);
+        blitzboard.scrollNodeIntoView(node)
       } else if(edge){
-        if(blitzboard.config.layout === 'map') {
-          scrollMapIntoView(blitzboard.edgeMap[edge.id]);
-        } else {
-          const from = blitzboard.network.getPosition(edge.from);
-          const to = blitzboard.network.getPosition(edge.to);
-          scrollIntoView({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
-        }
-        blitzboard.network.selectEdges([edge.id]);
+        blitzboard.scrollEdgeIntoView(edge)
       }
     }
   });

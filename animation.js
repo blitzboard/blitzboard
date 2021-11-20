@@ -31,37 +31,3 @@ function moveNodeWithAnimation(nodeId, x, y) {
     if(!callback()) clearInterval(timer), 100
   });
 }
-
-let scrollAnimationTimerId = null;
-
-function scrollIntoView(position) {
-  clearTimeout(scrollAnimationTimerId);
-  scrollAnimationTimerId = setTimeout(() => {
-    const animationOption = {
-      scale: 1.0,
-      animation:
-      {
-        duration: 500,
-        easingFuntcion: "easeInOutQuad"
-      }
-    };
-    blitzboard.network.moveTo({ ...{position: position}, ...animationOption });
-  }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
-}
-
-function scrollMapIntoView(element) {
-  let xKey =  blitzboard.config.layoutSettings.x;
-  let yKey =  blitzboard.config.layoutSettings.y;
-  if(element.from && element.to) {
-    // edge
-    scrollMapIntoView(blitzboard.nodeMap[element.from]);
-    // let from = blitzboard.nodeMap[element.from];
-    // let to = blitzboard.nodeMap[element.to];
-    // let longitude = (parseFloat(from.properties[xKey][0]) + parseFloat(to.properties[xKey][0])) / 2;
-    // let latitude = (parseFloat(from.properties[yKey][0]) + parseFloat(to.properties[yKey][0])) / 2;
-    // blitzboard.map.panTo([latitude, longitude]);
-  } else if(element.id){
-    // node
-    blitzboard.map.panTo([element.properties[yKey][0] ,element.properties[xKey][0]]);
-  }
-}
