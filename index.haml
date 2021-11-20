@@ -369,16 +369,6 @@
         localStorage.setItem('pg', content);
       });
       
-      
-      blitzboard.onNodeFocused.push((node) => {
-        scrollToLine(node.location);
-      });
-      
-      
-      blitzboard.onEdgeFocused.push((edge) => {
-        scrollToLine(edge.location)
-      });
-      
       q('#url-input').addEventListener('change', () => {
         clearTimeout(timerId);
         localMode = false;
