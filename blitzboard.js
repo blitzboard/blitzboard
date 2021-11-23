@@ -847,7 +847,10 @@ class Blitzboard {
       while(++i < 100) {
         const nextPosition = -offsetX + (currentTime - startTime) / timeForOnePixel;
         if(nextPosition > rightMostX) break;
-        context.fillText(currentTime.toLocaleDateString(), nextPosition, -offsetY);
+        if(intervalUnit === 'year')
+          context.fillText(currentTime.getFullYear(), nextPosition, -offsetY);
+        else
+          context.fillText(currentTime.toLocaleDateString(), nextPosition, -offsetY);
         context.moveTo(nextPosition, -offsetY);
         context.lineTo(nextPosition, -offsetY + 25 / scale);
         context.stroke();
@@ -900,7 +903,7 @@ class Blitzboard {
      if(this.config.layout === 'timeline'){
         const context = this.network.canvas.getContext("2d");
         const view = this.network.canvas.body.view;
-        const offsetY = (view.translation.y - 10) / view.scale;
+        const offsetY = (view.translation.y - 20) / view.scale;
         const offsetX = view.translation.x / view.scale;
         const timeForOnePixel = (this.maxTime - this.minTime) / this.timeScale;
         const timeOnLeftEdge = new Date(((this.maxTime.getTime() + this.minTime.getTime()) / 2) - timeForOnePixel * offsetX);
@@ -911,8 +914,9 @@ class Blitzboard {
         const twoMonth = oneMonth * 2;
         const fourMonth = twoMonth * 2;
         const oneYear = 365 * oneDay;
-        const minDistance = 300;
+        const minDistance = 200;
         context.font = (20 / view.scale).toString() + "px Arial";
+        context.fillStyle = "blue";
         const minimumInterval = timeForOnePixel * minDistance / view.scale;
         if(minimumInterval > oneYear ) {
           plotTimes(timeOnLeftEdge, minimumInterval / oneYear, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
