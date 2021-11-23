@@ -634,17 +634,19 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   q('#embed-btn').addEventListener('click', () => {
     content = `
-      let blitzboard;
-      window.addEventListener("load",function() {
-      let container = document.getElementById('graph');
-      blitzboard = new Blitzboard(container);
-      let config = ${configEditor.getValue()}
-      let graph = ${JSON.stringify(blitzboard.graph)};
-      blitzboard.setGraph(graph, false);
-      blitzboard.setConfig(config);
-      });
+    window.addEventListener("load",function() {
+    let blitzboard; 
+    let container = document.getElementById('blitzboard');
+    blitzboard = new Blitzboard(container);
+    let config = ${configEditor.getValue()}
+    let graph = ${JSON.stringify(blitzboard.graph)};
+    blitzboard.setGraph(graph, false);
+    blitzboard.setConfig(config);
+    });
     `;
-    saveAs(new Blob([content], { type: 'text/plain' }), 'embed_pg.js');
+    let currentGraphName = localStorage.getItem('currentGraphName');
+    let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
+    saveAs(new Blob([content], { type: 'text/plain' }), name + '.js');
   });
   
   function newGraphName(baseName = 'Untitled') {

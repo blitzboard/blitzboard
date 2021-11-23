@@ -408,7 +408,7 @@ class Blitzboard {
       length: length,
       width: width,
       hoverWidth: 0.5,
-      smooth: blitzboard.config.layout === 'map' ? false : { roundness: 1 },
+      smooth: this.map ? false : { roundness: 1 },
       arrows: {
         to: {
           enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
