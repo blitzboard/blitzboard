@@ -715,8 +715,10 @@
         localStorage.setItem('pg', editor.getValue());
         localStorage.setItem('currentGraphName', graph.name);
         $('.dropdown-item.history-item').removeClass('active');
+        $('.dropdown-item.history-item').removeClass('text-white');
         let i = savedGraphs.indexOf(graph);
         $(`.dropdown-item.history-item:eq(${i})`).addClass('active');
+        $(`.dropdown-item.history-item:eq(${i})`).addClass('text-white');
         reloadConfig();
         showGraphName();
         byProgram = false;
