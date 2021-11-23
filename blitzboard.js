@@ -131,7 +131,10 @@ class Blitzboard {
         }
         let newScale = blitzboard.map._zoom / 12 + 0.4;
         newScale = Math.min(Blitzboard.maxScaleOnMap, Math.max(newScale, Blitzboard.minScaleOnMap));
-        setTimeout( () => blitzboard.network.moveTo({scale: newScale}), 10);
+        setTimeout( () => {
+          blitzboard.network.moveTo({scale: newScale});
+          blitzboard.updateNodeLocationOnMap();
+        }, 10);
         blitzboard.map.invalidateSize();
         e.stopPropagation(); // Inhibit zoom on vis-network
       }
@@ -587,7 +590,7 @@ class Blitzboard {
       }
       this.edgeMap = newEdgeMap;
       if(this.map) {
-        updateNodeLocationOnMap();
+        blitzboard.updateNodeLocationOnMap();
       }
     }
 
@@ -721,8 +724,8 @@ class Blitzboard {
         });
         tileLayer.addTo(this.map);
 
-        this.map.on('move', updateNodeLocationOnMap);
-        this.map.on('zoom', updateNodeLocationOnMap);
+        this.map.on('move', () => blitzboard.updateNodeLocationOnMap());
+        this.map.on('zoom', () => blitzboard.updateNodeLocationOnMap());
       }
       blitzboard.network.moveTo({scale: 1.0});
     } else {
@@ -737,7 +740,10 @@ class Blitzboard {
       if(blitzboard.config.layout === 'map') {
         // Fix scale to 1.0 (delay is needed to override scale set by vis-network)  
         let newScale = Math.min(Blitzboard.maxScaleOnMap, Math.max(blitzboard.network.getScale(), Blitzboard.minScaleOnMap));
-        setTimeout( () => blitzboard.network.moveTo({scale: newScale}), 10); 
+        setTimeout( () => {
+          blitzboard.network.moveTo({scale: newScale});
+          blitzboard.updateNodeLocationOnMap();
+        }, 10); 
         blitzboard.map.invalidateSize();
       }
     });
@@ -753,22 +759,6 @@ class Blitzboard {
       }
     });
     
-    function updateNodeLocationOnMap() {
-      let nodePositions = [];
-      let lngKey =  blitzboard.config.layoutSettings.lng;
-      let latKey =  blitzboard.config.layoutSettings.lat;
-      blitzboard.graph.nodes.forEach(node => {
-        if(node.properties[latKey] && node.properties[lngKey]) {
-          let point = blitzboard.map.latLngToContainerPoint([node.properties[latKey][0], node.properties[lngKey][0]]);
-          point = blitzboard.network.DOMtoCanvas(point);
-          nodePositions.push({
-            id: node.id,
-            x: point.x, y: point.y, fixed: true
-          });
-        }
-      });
-      blitzboard.nodeDataSet.update(nodePositions);
-    }
 
     function statisticsOfMap() {
       let lngKey =  blitzboard.config.layoutSettings.lng;
@@ -818,7 +808,7 @@ class Blitzboard {
     });
     
     if(this.map) {
-      updateNodeLocationOnMap();
+      this.updateNodeLocationOnMap();
     }
     
     this.network.on("hoverNode", (e) => {
@@ -1050,6 +1040,23 @@ class Blitzboard {
       };
       this.network.moveTo({ ...{position: position}, ...animationOption });
     }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
+  }
+  
+  updateNodeLocationOnMap() {
+    let nodePositions = [];
+    let lngKey =  blitzboard.config.layoutSettings.lng;
+    let latKey =  blitzboard.config.layoutSettings.lat;
+    blitzboard.graph.nodes.forEach(node => {
+      if(node.properties[latKey] && node.properties[lngKey]) {
+        let point = blitzboard.map.latLngToContainerPoint([node.properties[latKey][0], node.properties[lngKey][0]]);
+        point = blitzboard.network.DOMtoCanvas(point);
+        nodePositions.push({
+          id: node.id,
+          x: point.x, y: point.y, fixed: true
+        });
+      }
+    });
+    blitzboard.nodeDataSet.update(nodePositions);
   }
   
   scrollMapToNode(node) {
