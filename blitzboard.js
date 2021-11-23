@@ -172,6 +172,15 @@ class Blitzboard {
       return Reflect.get(target, prop, receiver);
     }
   };
+  
+  hasNode(node_id) {
+    return !!this.nodeMap[node_id];
+  }
+
+
+  hasEdge(edge_id) {
+    return !!this.edgeMap[edge_id];
+  }
 
   getNode(node_id) {
     return new Proxy(this.nodeMap[node_id], Blitzboard.blitzProxy);
