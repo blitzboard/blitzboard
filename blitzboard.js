@@ -256,7 +256,7 @@ class Blitzboard {
   }
 
   toVisNode(pgNode, props, extraOptions = null) {
-    const group = _.camelCase([...pgNode.labels].sort().join('_'));
+    const group = [...pgNode.labels].sort().join('_');
     if(!this.nodeColorMap[group]) {
       this.nodeColorMap[group] = getRandomColor(group, this.config.node.saturation, this.config.node.brightness);
     }
@@ -385,7 +385,7 @@ class Blitzboard {
   }
 
   toVisEdge(pgEdge, props = this.config.edge.caption, id) {
-    const edgeLabel = _.camelCase(pgEdge.labels.join('_'));
+    const edgeLabel = pgEdge.labels.join('_');
     if (!this.edgeColorMap[edgeLabel]) {
       this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
     }
