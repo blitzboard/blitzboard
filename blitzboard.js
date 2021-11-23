@@ -707,6 +707,7 @@ class Blitzboard {
     this.network = new vis.Network(this.container, data, this.options);
 
     if(this.config.layout === 'map') {
+      this.mapContainer.style.display = 'block';
       let statistics = statisticsOfMap();
       let center = this.config?.layoutSettings?.center || statistics.center;
       if(this.map) {
@@ -729,6 +730,7 @@ class Blitzboard {
       }
       blitzboard.network.moveTo({scale: 1.0});
     } else {
+      this.mapContainer.style.display = 'none';
       if(this.map) {
         this.map.remove();
       }
