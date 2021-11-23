@@ -77,8 +77,12 @@ class Blitzboard {
       z-index: 1;
     `;
     this.map = null;
+
+    this.minTime = new Date(8640000000000000);
+    this.maxTime = new Date(-8640000000000000);
     
     this.prevMouseEvent= null;
+    this.timeScale = 1000;
     this.dragging = false;
     this.currentLatLng = null;
     this.redrawTimer = null;
@@ -197,8 +201,8 @@ class Blitzboard {
     if(this.config.layout === 'timeline' && this.timeInterval > 0) {
       x = null;
       fixed = false;
-      let fromProp = this.config.layoutSettings.time.from;
-      let toProp = this.config.layoutSettings.time.to;
+      let fromProp = this.config.layoutSettings.time_from;
+      let toProp = this.config.layoutSettings.time_to;
       let from = this.maxTime;
       let to = this.minTime;
 
@@ -222,7 +226,6 @@ class Blitzboard {
       } else {
         x = 0;
       }
-      y = Math.random() * 500 - 1000;
     }
     else {
       if(this.config.layout == 'custom') {
@@ -279,7 +282,7 @@ class Blitzboard {
       title: createTitleText(pgNode),
       fixed: {
         x: fixed,
-        y: fixed
+        y: this.config.layout === 'timeline' ? false : fixed
       },
       borderWidth: url ? 3 : 1,
       url: url,
@@ -586,37 +589,29 @@ class Blitzboard {
       if(this.map) {
         updateNodeLocationOnMap();
       }
-
-      // this.groupColorMap =  [...this.groups].reduce((acc, group) => {
-      //   acc[group] = {color: getRandomColor(group, this.config.node.saturation || '100%', this.config.node.brightness || '40%')}; return acc;
-      // }, {});
-      // this.options.groups = this.groupColorMap;
     }
 
     if(applyDiff) return;
 
-    this.groups = new Set();
-    
     this.prevZoomPosition = null;
     
-    minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
+    this.minTime = new Date(8640000000000000);
+    this.maxTime = new Date(-8640000000000000);
     
-    // graph.nodes.forEach(node => {
-    //   for(let prop of Object.keys(node.properties)) {
-    //     if(!timeProperties.has(prop) && isDateString(node.properties[prop])){
-    //       timeProperties.add(prop);
-    //     }
-    //   }
-    // });
-
-    /*
-    while(timeLineFolder.__controllers.length > 0) timeLineFolder.__controllers[0].remove();
-    
-    for(let prop of timeProperties) {
-      let controller = timeLineFolder.add({[prop]: false}, prop, false);
-      controller.onChange(onTimeLinePropertyController);
+    if(this.config.layout === 'timeline') {
+      let fromProp = this.config.layoutSettings.time_from;
+      let toProp = this.config.layoutSettings.time_to;
+      
+      this.graph.nodes.forEach(node => {
+        for (let prop of Object.keys(node.properties)) {
+          if (prop === fromProp || prop === toProp) {
+            this.minTime = new Date(Math.min(this.minTime, new Date(node.properties[prop][0])));
+            this.maxTime = new Date(Math.max(this.maxTime, new Date(node.properties[prop][0])));
+          }
+        }
+      });
     }
-    */
+    this.timeInterval = this.maxTime - this.minTime;
 
     this.nodeProps = new Set(['id', 'label']);
     this.edgeProps = new Set(['label']);
@@ -640,8 +635,7 @@ class Blitzboard {
     this.nodeDataSet.add(this.graph.nodes.map((node) => {
       return this.toVisNode(node, defaultNodeProps);
     }));
-
-    //updateTimeLineNodes();
+    
     this.edgeMap = {};
     this.edgeDataSet = new vis.DataSet(this.graph.edges.map((edge) => {
       let id = toNodePairString(edge);
@@ -686,7 +680,7 @@ class Blitzboard {
       physics: {
         enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical',
         barnesHut: {
-          springConstant: 0.016
+          springConstant:  this.config.layout === 'timeline' ? 0.004 : 0.016
         },
         stabilization: {
           enabled: false,
@@ -848,7 +842,7 @@ class Blitzboard {
       let currentTime = new Date(startTime);
       switch(intervalUnit) {
         case 'year':
-          currentTime = new Date(currentTime.getFullYear(), 0, 1);
+          currentTime = new Date(currentTime.getFullYear()  - currentTime.getFullYear() % interval, 0, 1);
           break;
         case 'month':
           currentTime = new Date(currentTime.getFullYear(), currentTime.getMonth() - currentTime.getMonth() % interval, 1);
@@ -859,7 +853,8 @@ class Blitzboard {
         default:
           return;
       }
-      while(true) {
+      let i = 0;
+      while(++i < 100) {
         const nextPosition = -offsetX + (currentTime - startTime) / timeForOnePixel;
         if(nextPosition > rightMostX) break;
         context.fillText(currentTime.toLocaleDateString(), nextPosition, -offsetY);
@@ -912,46 +907,46 @@ class Blitzboard {
         }
       }
 
-      // if(timeLineEnabled){
-      //   const context = this.network.canvas.getContext("2d");
-      //   const view = this.network.canvas.body.view;
-      //   const offsetY = view.translation.y / view.scale;
-      //   const offsetX = view.translation.x / view.scale;
-      //   const timeForOnePixel = (maxTime - minTime) / timeScale;
-      //   const timeOnLeftEdge = new Date(((maxTime.getTime() + minTime.getTime()) / 2) - timeForOnePixel * offsetX);
-      //   const clientWidth = this.network.canvas.body.container.clientWidth;
-      //   const rightMost = -offsetX + clientWidth / view.scale;
-      //   const oneMonth = 31 * 24 * 60 * 60 * 1000;
-      //   const oneDay = 24 * 60 * 60 * 1000;
-      //   const twoMonth = oneMonth * 2;
-      //   const fourMonth = twoMonth * 2;
-      //   const oneYear = 365 * oneDay;
-      //   const minDistance = 300;
-      //   context.font = (20 / view.scale).toString() + "px Arial";
-      //   const minimumInterval = timeForOnePixel * minDistance / view.scale;
-      //   if(minimumInterval > oneYear ) {
-      //     plotTimes(timeOnLeftEdge, 1, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   }
-      //   else if(minimumInterval > fourMonth ) {
-      //     plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   }
-      //   else if(minimumInterval > twoMonth) {
-      //     plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   }
-      //   else if(minimumInterval > oneMonth) {
-      //     plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   } else if(minimumInterval > oneDay * 16) {
-      //     plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   } else if(minimumInterval > oneDay * 8) {
-      //     plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   } else if(minimumInterval > oneDay * 4) {
-      //     plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   } else if(minimumInterval > oneDay * 2) {
-      //     plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   } else {
-      //     plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-      //   }
-      // }
+     if(this.config.layout === 'timeline'){
+        const context = this.network.canvas.getContext("2d");
+        const view = this.network.canvas.body.view;
+        const offsetY = (view.translation.y - 10) / view.scale;
+        const offsetX = view.translation.x / view.scale;
+        const timeForOnePixel = (this.maxTime - this.minTime) / this.timeScale;
+        const timeOnLeftEdge = new Date(((this.maxTime.getTime() + this.minTime.getTime()) / 2) - timeForOnePixel * offsetX);
+        const clientWidth = this.network.canvas.body.container.clientWidth;
+        const rightMost = -offsetX + clientWidth / view.scale;
+        const oneMonth = 31 * 24 * 60 * 60 * 1000;
+        const oneDay = 24 * 60 * 60 * 1000;
+        const twoMonth = oneMonth * 2;
+        const fourMonth = twoMonth * 2;
+        const oneYear = 365 * oneDay;
+        const minDistance = 300;
+        context.font = (20 / view.scale).toString() + "px Arial";
+        const minimumInterval = timeForOnePixel * minDistance / view.scale;
+        if(minimumInterval > oneYear ) {
+          plotTimes(timeOnLeftEdge, minimumInterval / oneYear, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        }
+        else if(minimumInterval > fourMonth ) {
+          plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        }
+        else if(minimumInterval > twoMonth) {
+          plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        }
+        else if(minimumInterval > oneMonth) {
+          plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        } else if(minimumInterval > oneDay * 16) {
+          plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        } else if(minimumInterval > oneDay * 8) {
+          plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        } else if(minimumInterval > oneDay * 4) {
+          plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        } else if(minimumInterval > oneDay * 2) {
+          plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        } else {
+          plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+        }
+      }
     });
     this.network.on("blurNode", (params) => {
       this.network.canvas.body.container.style.cursor = 'default';
@@ -1093,13 +1088,10 @@ class Blitzboard {
   hideLoader() {
     this.screen.style.display = 'none';
   }
-
 }
 
 let markers = [];
 let nodeProps, edgeProps;
-let minTime =  new Date(8640000000000000), maxTime = new Date(-8640000000000000);
-let timeScale = 100.0;
 
 function arrayEquals(a, b) {
   return Array.isArray(a) &&
@@ -1141,29 +1133,6 @@ function deepMerge(target, source) {
   }
   return result;
 }
-
-
-
-/*
-function updateTimeLineNodes() {
-    if(timeLineEnabled) {
-      let nodeCountWithTime = 0;
-      graph.nodes.forEach(node => {
-        for(let prop of displayedTimeProps) {
-          let time = node.properties[prop];
-          if(time) {
-            ++nodeCountWithTime;
-            time = new Date(time);
-            minTime = time < minTime ? time : minTime;
-            maxTime = time > maxTime ? time : maxTime;
-          }
-        }
-      });
-      timeInterval = maxTime.getTime() - minTime.getTime();
-      timeScale = nodeCountWithTime * 100;
-    }
-}
-*/
 
 function retrieveHttpUrl(node) {
   let candidates = [];
