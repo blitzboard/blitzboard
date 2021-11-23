@@ -3,13 +3,13 @@
 const q = document.querySelector.bind(document);
 const qa = document.querySelectorAll.bind(document);
 
-
 class Blitzboard {
   static fondLoaded = false;
   static defaultConfig = {
     node: {
       caption: ['id'],
       defaultIcon: true,
+      thumbnail: 'thumbnail',
       saturation: '100%',
       brightness: '37%',
     },
@@ -225,6 +225,13 @@ class Blitzboard {
     return {x, y, fixed, width};
   }
 
+  retrieveThumbnailUrl(node) {
+    if(this.config.node.thumbnail) {
+      return node.properties[this.config.node.thumbnail]?.[0];
+    }
+    return null;
+  }
+
   toVisNode(pgNode, props, extraOptions = null) {
     const group = _.camelCase([...pgNode.labels].sort().join('_'));
     if(!this.nodeColorMap[group]) {
@@ -235,7 +242,7 @@ class Blitzboard {
     ({x, y, fixed, width} = this.calcNodePosition(pgNode));
 
     let url = retrieveHttpUrl(pgNode);
-    let thumbnailUrl = retrieveThumbnailUrl(pgNode);
+    let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
     let expanded = this.expandedNodes.includes(pgNode.id);
 
     let degree =  pgNode.properties['degree'];
@@ -349,13 +356,6 @@ class Blitzboard {
     if(thumbnailUrl) {
       attrs['shape'] = 'image';
       attrs['image'] = thumbnailUrl;
-    }
-    if(width) {
-      attrs['shape'] = 'box';
-      attrs['widthConstraint'] = {
-        minimum: width,
-        maximum: width
-      }
     }
     attrs = Object.assign(attrs, extraOptions);
     return attrs;
@@ -853,24 +853,7 @@ class Blitzboard {
     if(this.map) {
       updateNodeLocationOnMap();
     }
-
-    // if (!localMode) {
-    //   network.on('doubleClick', (e) => {
-    //     if (e.nodes.length > 0)
-    //       retrieveGraph(e.nodes[0]);
-    //   });
-    //   network.on('dragEnd', (e) => {
-    //     if(e.nodes.length > 0) {
-    //       const node = nodeDataSet.get(e.nodes[0]);
-    //       if(!node.fixed && this.expandedNodes.includes(e.nodes[0]) )
-    //         nodeDataSet.update({
-    //           id: e.nodes[0],
-    //           fixed: true
-    //         });
-    //     }
-    //   });
-    // }
-
+    
     this.network.on("hoverNode", (e) => {
       this.network.canvas.body.container.style.cursor = 'default';
       const node = this.nodeDataSet.get(e.node);
