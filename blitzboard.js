@@ -51,7 +51,7 @@ class Blitzboard {
   
   constructor(container) {
     this.container = container;
-    this.groups = new Set();
+    this.nodeColorMap = {};
     this.expandedNodes = [];
     this.nodeMap = {};
     this.config = { node: {}, edge: {}}
@@ -177,49 +177,60 @@ class Blitzboard {
   
   calcNodePosition(pgNode) {
     let x, y, fixed, width;
-    /*
-    if(timeLineEnabled) {
+    if(this.config.layout === 'timeline' && this.timeInterval > 0) {
       x = null;
       fixed = false;
-      let positions = [];
-      for(let prop of displayedTimeProps) {
-        if(pgNode.properties[prop] && timeInterval > 0) {
-          positions.push(timeScale * ((new Date(pgNode.properties[prop]).getTime()) - minTime.getTime()) * 1.0 / timeInterval - timeScale * 0.5);
+      let fromProp = this.config.layoutSettings.time.from;
+      let toProp = this.config.layoutSettings.time.to;
+      let from = this.maxTime;
+      let to = this.minTime;
+
+      for (let prop of Object.keys(pgNode.properties)) {
+        if (prop === fromProp || prop === toProp) {
+          from = new Date(Math.min(from, new Date(pgNode.properties[prop][0])));
+          to = new Date(Math.max(to, new Date(pgNode.properties[prop][0])));
         }
       }
-      if(positions.length > 0) {
+    
+      if(from <= to) {
         fixed = true;
-        let max = Math.max(...positions), min = Math.min(...positions);
-        x = (max + min) / 2;
-        width = max - min; 
+        let fromPosition = this.timeScale * (from.getTime() - this.minTime.getTime()) * 1.0 / this.timeInterval - this.timeScale * 0.5;
+        let toPosition = this.timeScale * (to.getTime() - this.minTime.getTime()) * 1.0 / this.timeInterval - this.timeScale * 0.5;
+        x = (fromPosition + toPosition) / 2;
+        if(from === to) {
+          width = fromPosition - toPosition;
+        } else {
+          width = 25;
+        }
       } else {
         x = 0;
       }
-      y = 0;
+      y = Math.random() * 500 - 1000;
     }
     else {
-    */
-    if(this.config.layout == 'custom') {
-      if (pgNode.properties[this.config.layoutSettings.x] || pgNode.properties[this.config.layoutSettings.y]) {
-        x = parseInt(pgNode.properties[this.config.layoutSettings.x][0]);
-        y = parseInt(pgNode.properties[this.config.layoutSettings.y][0]);
-        fixed = true;
+      if(this.config.layout == 'custom') {
+        if (pgNode.properties[this.config.layoutSettings.x] || pgNode.properties[this.config.layoutSettings.y]) {
+          x = parseInt(pgNode.properties[this.config.layoutSettings.x][0]);
+          y = parseInt(pgNode.properties[this.config.layoutSettings.y][0]);
+          fixed = true;
+        }
+      } else {
+        x = null;
+        y = null;
+        fixed = this.config.layout === 'hierarchical';
+        width = null;
       }
-    } else {
-      x = null;
-      y = null;
-      fixed = this.config.layout === 'hierarchical';
-      width = null;
     }
-    //}
     
     return {x, y, fixed, width};
   }
 
   toVisNode(pgNode, props, extraOptions = null) {
     const group = _.camelCase([...pgNode.labels].sort().join('_'));
-    this.groups.add(group);
-
+    if(!this.nodeColorMap[group]) {
+      this.nodeColorMap[group] = getRandomColor(group, this.config.node.saturation, this.config.node.brightness);
+    }
+    
     let x, y, fixed, width;
     ({x, y, fixed, width} = this.calcNodePosition(pgNode));
 
@@ -236,7 +247,7 @@ class Blitzboard {
 
     let attrs = {
       id: pgNode.id,
-      group: group,
+      color: this.nodeColorMap[group],
       label: createLabelText(pgNode, props),
       shape: (degree === 1 || expanded ? 'text' : 'dot'),
       size: expanded ? 25 : (2 + degree * 8),
@@ -462,6 +473,7 @@ class Blitzboard {
 
 
   setGraph(input, update = true) {
+    this.nodeColorMap = {};
     this.edgeColorMap = {};
     this.prevMouseEvent = null;
     this.dragging = false;
@@ -645,14 +657,9 @@ class Blitzboard {
       layout.hierarchical = false;
     }
 
-    this.groupColorMap =  [...this.groups].reduce((acc, group) => {
-      acc[group] = {color: getRandomColor(group, this.config.node.saturation || '100%', this.config.node.brightness || '40%')}; return acc;
-    }, {});
-
     this.options = {
-      groups: this.groupColorMap,
       layout:
-      layout,
+        layout,
       interaction: {
         dragNodes: this.config.layout !== 'map',
         dragView: this.config.layout !== 'map',
