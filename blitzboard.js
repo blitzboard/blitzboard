@@ -435,6 +435,7 @@ class Blitzboard {
     }
     newNodes = newNodes.filter(node => !this.includesNode(node)).map((node) => {
       let mapped = deepMerge(Blitzboard.nodeTemplate, node);
+      ++this.maxLine;
       mapped.location = {
         start: {
           line: this.maxLine,
@@ -445,7 +446,6 @@ class Blitzboard {
           column: 0,
         }
       }
-      ++this.maxLine;
       return mapped;
     });
     this.graph.nodes = this.graph.nodes.concat(newNodes);
@@ -471,6 +471,7 @@ class Blitzboard {
     }
     newEdges = newEdges.map((edge) => {
       let mapped = deepMerge(Blitzboard.edgeTemplate, edge);
+      ++this.maxLine;
       mapped.location = {
         start: {
           line: this.maxLine,
@@ -481,7 +482,6 @@ class Blitzboard {
           column: 0,
         }
       }
-      ++this.maxLine;
       return mapped;
     });
     this.graph.edges = this.graph.edges.concat(newEdges);
