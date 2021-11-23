@@ -693,7 +693,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       let node = document.createElement('a');
       node.className = 'dropdown-item history-item mr-3';
       if(graph.name === localStorage.getItem('currentGraphName'))
-        node.className += ' active'; 
+        node.className += ' active text-white'; 
       node.style = 'position:relative';
       node.appendChild(document.createTextNode(graph.name));
       node.appendChild(document.createElement("br"));
@@ -1007,6 +1007,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     localStorage.setItem('pg', editor.getValue());
     saveCurrentGraph();
     updateGraph(editor.getValue());
+    clearTimeout(timerId);
     timerId = null;
   }
   
@@ -1113,6 +1114,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     config = tryJsonParse(configEditor.getValue());
     saveCurrentGraph();
     updateGraph(editor.getValue(), config);
+    clearTimeout(timerId);
     timerId = null;
   }
   
