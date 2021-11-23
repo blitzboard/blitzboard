@@ -24,9 +24,15 @@ class Blitzboard {
       saturation: '0%',
       brightness: '62%',
     },
-    zoom: {
+    zoom: { 
       max: 3.0,
       min: 0.25,
+    },
+    layoutSettings: {
+      time_from: 'from',
+      time_to: 'to',
+      lng: 'lng',
+      lat: 'lat'
     },
   };
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
@@ -689,34 +695,8 @@ class Blitzboard {
         },
       },
     };
-    
-    // this.graph.nodes.forEach((node) => {
-    //   L.marker([node.properties[this.config.layoutSettings.x][0], node.properties[this.config.layoutSettings.y][0]]).addTo(map);
-    // });
-    /*
-    var polylinePoints = [
-      [35.08850794862861, 137.15369183718374],
-      [35.087384224892155, 137.15639550369508]
-    ];
-    L.polyline(polylinePoints).addTo(this.map);
-    var polylinePoints = [
-      [35.08850794862861, 137.15369183718374],
-      [35.08850794862861, 137.156]
-    ];
-    L.polyline(polylinePoints).addTo(this.map);
-    */
 
     this.network = new vis.Network(this.container, data, this.options);
-    //this.container.style.background = 'transparent';
-
-    // network.on('selectNode', (e) => {
-    //   if (e.nodes.length > 0) {
-    //     if(!localMode) {
-    //       selectTimer = setTimeout(() => retrieveGraph(e.nodes[0], true), 300);
-    //     }
-    //   }
-    // });
-
 
     if(this.config.layout === 'map') {
       let statistics = statisticsOfMap();
@@ -756,25 +736,7 @@ class Blitzboard {
         blitzboard.map.invalidateSize();
       }
     });
-
-    // network.on('doubleClick', (e) => {
-    //   if (localMode) {
-    //     if(e.nodes.length == 0) {
-    //       let newNode = {
-    //         id: newNodeId(),
-    //         labels: ['New'],
-    //         properties: {},
-    //       };
-    //       addNewNode(newNode, e.pointer.canvas.x, e.pointer.canvas.y);
-    //     } else {
-    //       const position = e.pointer.canvas;
-    //       const node = e.nodes[0];
-    //       nodeDataSet.update({id: node, fixed: {x: true, y: true}});
-    //     }
-    //   }
-    //   else if (e.nodes.length > 0)
-    //     retrieveGraph(e.nodes[0]);
-    // });
+    
 
     this.network.on('dragStart', (e) => {
       const node = this.nodeDataSet.get(e.nodes[0]);
@@ -788,11 +750,11 @@ class Blitzboard {
     
     function updateNodeLocationOnMap() {
       let nodePositions = [];
-      let xKey =  blitzboard.config.layoutSettings.x;
-      let yKey =  blitzboard.config.layoutSettings.y;
+      let lngKey =  blitzboard.config.layoutSettings.lng;
+      let latKey =  blitzboard.config.layoutSettings.lat;
       blitzboard.graph.nodes.forEach(node => {
-        if(node.properties[yKey] && node.properties[xKey]) {
-          let point = blitzboard.map.latLngToContainerPoint([node.properties[yKey][0], node.properties[xKey][0]]);
+        if(node.properties[latKey] && node.properties[lngKey]) {
+          let point = blitzboard.map.latLngToContainerPoint([node.properties[latKey][0], node.properties[lngKey][0]]);
           point = blitzboard.network.DOMtoCanvas(point);
           nodePositions.push({
             id: node.id,
@@ -804,29 +766,29 @@ class Blitzboard {
     }
 
     function statisticsOfMap() {
-      let xKey =  blitzboard.config.layoutSettings.x;
-      let yKey =  blitzboard.config.layoutSettings.y;
-      let xSum = 0, ySum = 0, count = 0,
-        xMax = Number.MIN_VALUE, xMin = Number.MAX_VALUE,
-        yMax = Number.MIN_VALUE, yMin = Number.MAX_VALUE;
+      let lngKey =  blitzboard.config.layoutSettings.lng;
+      let latKey =  blitzboard.config.layoutSettings.lat;
+      let lngSum = 0, latSum = 0, count = 0,
+        lngMax = Number.MIN_VALUE, lngMin = Number.MAX_VALUE,
+        latMax = Number.MIN_VALUE, latMin = Number.MAX_VALUE;
       blitzboard.graph.nodes.forEach(node => {
-        if(node.properties[yKey] && node.properties[xKey]) {
-          let x = parseFloat(node.properties[xKey][0]);
-          let y = parseFloat(node.properties[yKey][0]);
-          xSum += x;
-          ySum += y;
-          xMax = Math.max(x, xMax);
-          xMin = Math.min(x, xMin);
-          yMax = Math.max(y, yMax);
-          yMin = Math.min(y, yMin);
+        if(node.properties[latKey] && node.properties[lngKey]) {
+          let lng = parseFloat(node.properties[lngKey][0]);
+          let lat = parseFloat(node.properties[latKey][0]);
+          lngSum += lng;
+          latSum += lat;
+          lngMax = Math.max(lng, lngMax);
+          lngMin = Math.min(lng, lngMin);
+          latMax = Math.max(lat, latMax);
+          latMin = Math.min(lat, latMin);
           ++count;
         }
       });
       if(count === 0)
         return [0, 0];
       return {
-        center: [ySum / count, xSum / count],
-        scale: Math.max( -Math.log2(Math.max(Math.abs(xMax - xMin), Math.abs(yMax - yMin)) / 1000), 0)
+        center: [latSum / count, lngSum / count],
+        scale: Math.max( -Math.log2(Math.max(Math.abs(lngMax - lngMin), Math.abs(latMax - latMin)) / 1000), 0)
       };
     }
 
@@ -1034,38 +996,6 @@ class Blitzboard {
         }
       }
     });
-    //
-    //
-    // this.network.on("click", (e) => {
-    //   this.network.stopSimulation();
-    //   if(e.nodes.length > 0) {
-    //     let node = this.nodeDataSet.get(e.nodes[0]);
-    //     if(srcNode) {
-    //       let newEdge = {
-    //         from: srcNode,
-    //         to: node.id,
-    //         undirected: false,
-    //         labels: [],
-    //         properties: {}
-    //       };
-    //       this.graph.edges.push(newEdge);
-    //       let visEdge = this.toVisEdge(newEdge);
-    //       this.edgeMap[visEdge.id] = newEdge;
-    //       this.edgeDataSet.add(visEdge);
-    //
-    //       let oldPg = editor.getValue();
-    //       newEdge.line = numberOfLines(oldPg) + 1;
-    //       byProgram = true;
-    //       editor.setValue(oldPg + `\n"${newEdge.from}" -> "${newEdge.to}" ${newEdge.labels.map((label) => ':' + label).join(' ')} `);
-    //     } else if(localMode) {
-    //       scrollToLine(nodeMap[e.nodes[0]].location);
-    //     }
-    //     if(node && node.url)
-    //       window.open(node.url,'_blank');
-    //   } else if(e.edges.length > 0) {
-    //     scrollToLine(edgeMap[e.edges[0]].location);
-    //   }
-    // });
   }
 
 
@@ -1105,9 +1035,9 @@ class Blitzboard {
   }
   
   scrollMapToNode(node) {
-    let xKey = this.config.layoutSettings.x;
-    let yKey = this.config.layoutSettings.y;
-    this.map.panTo([node.properties[yKey][0] ,node.properties[xKey][0]]);
+    let lngKey = this.config.layoutSettings.lng;
+    let latKey = this.config.layoutSettings.lat;
+    this.map.panTo([node.properties[latKey][0] ,node.properties[lngKey][0]]);
   }
   
   scrollEdgeIntoView(edge, select = true) {
@@ -1226,14 +1156,6 @@ function retrieveHttpUrl(node) {
   return candidates[0];
 }
 
-function retrieveThumbnailUrl(node) {
-  for(let entry of Object.entries(node.properties)) {
-    if(entry[0].toLowerCase() == 'thumbnail') {
-      return entry[1][0]
-    }
-  }
-  return null;
-}
 
 function toNodePairString(pgEdge) {
   return `${pgEdge.from}-${pgEdge.to}`;
@@ -1300,29 +1222,6 @@ function setSearchState(searching) {
   }
 }
 
-
-// function searchGraph() {
-//   setSearchState(true);
-//   const keyword = q('#search-input').value;
-//   // timeProperties.clear();
-//   domain = q('#url-input').value;
-//   if (!domain.endsWith('/'))
-//     domain += '/';
-//   domain = 'http://' + domain;
-//   const keywordPart = encodeURI(keyword.split(" ").map((word) => `\\"${word}\\"`).join(' AND '));
-//   const query = `CALL db.index.fulltext.queryNodes("allProperties", "${keywordPart}") YIELD node RETURN node`;
-//   axios.get(domain + `query?q=${query}`).then((response) => {
-//     this.expandedNodes = response.data.pg.nodes.map((node) => node.id);
-//
-//     // TODO: use query which does not modify of backend
-//     const subquery = `MATCH p=(n)-[r]-(another) WHERE id(n) in [${this.expandedNodes.join(',')}] WITH p, another, size((another)--()) as degree SET another.degree = degree RETURN p`
-//     axios.get(domain + `query?q=${subquery}`).then((subresponse) => {
-//       updateGraph(subresponse.data.pg);
-//       setSearchState(false);
-//     });
-//   });
-// }
-
 function isDateString(str) {
   return isNaN(str) && !isNaN(Date.parse(str))
 }
@@ -1349,26 +1248,9 @@ function tryPgParse(pg) {
   }
 }
 
-function handleFileSelect(evt) {
-  let files = evt.target.files; // FileList object
-  // use the 1st file from the list
-  const f = files[0];
-  let reader = new FileReader();
-
-
-  // Closure to capture the file information.
-  reader.onload = (function (theFile) {
-    return function (e) {
-      editor.setValue(e.target.result);
-      updateGraph();
-    };
-  })(f);
-  // Read in the image file as a data URL.
-  reader.readAsText(f);
-};
-
 function htmlTitle(html) {
   const container = document.createElement("div");
   container.innerHTML = html;
   return container;
 }
+
