@@ -6,6 +6,7 @@ const qa = document.querySelectorAll.bind(document);
 class Blitzboard {
   static fondLoaded = false;
   static defaultConfig = {
+    doubleClickWait: 200,
     node: {
       caption: ['id'],
       defaultIcon: true,
@@ -107,7 +108,8 @@ class Blitzboard {
       align-items: center;
       font-size: 2rem;
     `;
-
+    this.doubleClickTimer = null;
+    
     let blitzboard = this;
 
     container.parentNode.insertBefore(this.mapContainer, container);
@@ -980,21 +982,33 @@ class Blitzboard {
         );
     }
 
+    function clickHandler(e) {
+      blitzboard.doubleClickTimer = null;
+      if (e.nodes.length > 0) {
+        if (blitzboard.config.node.onClick) {
+          blitzboard.config.node.onClick(blitzboard.getNode(e.nodes[0]));
+        }
+      } else if (e.edges.length > 0) {
+        if (blitzboard.config.edge.onClick) {
+          blitzboard.config.edge.onClick(blitzboard.getEdge(e.edges[0]));
+        }
+      }
+    }
 
     this.network.on("click", (e) => {
-      if(e.nodes.length > 0) {
-        if(this.config.node.onClick) {
-          this.config.node.onClick(this.getNode(e.nodes[0]));
-        }
-      } else if(e.edges.length > 0) {
-        if(this.config.edge.onClick) {
-          this.config.edge.onClick(this.getEdge(e.edges[0]));
+      if(!this.doubleClickTimer) {
+        if (this.config.doubleClickWait <= 0) {
+          clickHandler(e);
+        } else {
+          this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
         }
       }
     });
 
     
     this.network.on("doubleClick", (e) => {
+      clearTimeout(this.doubleClickTimer);
+      this.doubleClickTimer = null;
       if(e.nodes.length > 0) {
         if(this.config.node.onDoubleClick) {
           this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
