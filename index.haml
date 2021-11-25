@@ -301,7 +301,7 @@
     %script{:src => "./blitzboard.js"}
     :javascript
       let container = document.getElementById('graph'); 
-      let timerId = 0;
+      let pgTimerId = null, configTimerId = null;
       let editor, configEditor;
       let localMode = true;
       let blitzboard = new Blitzboard(container);
@@ -377,11 +377,12 @@
       });
       
       q('#url-input').addEventListener('change', () => {
-        clearTimeout(timerId);
+        clearTimeout(pgTimerId);
         localMode = false;
-        timerId = setTimeout(retrieveGraph, 1000);
+        pgTimerId = setTimeout(retrieveGraph, 1000);
       });
       
+        
       q('#share-btn').addEventListener('click', () => {
         let url = `https://sandbox.blitzboard.io?pg=${encodeURIComponent(editor.getValue())}` +
           `&config=${encodeURIComponent(configEditor.getValue())}&viewMode=${encodeURIComponent(viewMode)}&name=${encodeURIComponent(localStorage.getItem('currentGraphName'))}`;
@@ -964,15 +965,15 @@
         localStorage.setItem('pg', editor.getValue());
         saveCurrentGraph();
         updateGraph(editor.getValue());
-        clearTimeout(timerId);
-        timerId = null;
+        clearTimeout(pgTimerId);
+        pgTimerId = null;
       }
       
       function onEditorChanged(delta){
         if(!byProgram) {
-          clearTimeout(timerId);
+          clearTimeout(pgTimerId);
           localMode = true;
-          timerId = setTimeout(() => {
+          pgTimerId = setTimeout(() => {
             reflectEditorChange();
           }, 2000);
         }
@@ -984,7 +985,7 @@
           reflectEditorChange();
         }
         // invoke only if timer is working
-        else if(timerId) onEditorChanged();
+        else if(pgTimerId) onEditorChanged();
       });
       editor.on('change', onEditorChanged);
       editor.on('inputRead', onEditorChanged);
@@ -1071,13 +1072,13 @@
         config = tryJsonParse(configEditor.getValue());
         saveCurrentGraph();
         updateGraph(editor.getValue(), config);
-        clearTimeout(timerId);
-        timerId = null;
+        clearTimeout(configTimerId);
+        configTimerId = null;
       }
       
       function onConfigChanged(delta) {
-        clearTimeout(timerId);
-        timerId = setTimeout(reloadConfig, 2000);
+        clearTimeout(configTimerId);
+        configTimerId = setTimeout(reloadConfig, 2000);
       }
       
       configEditor.on('keydown', (cm, e) => {
@@ -1086,9 +1087,10 @@
           reloadConfig();
         }
         // invoke only if timer is working
-        else if(timerId) onConfigChanged();
+        else if(configTimerId) onConfigChanged();
       });
-      
+
+      configEditor.on('change', onConfigChanged);
       configEditor.on('inputRead', onConfigChanged);
       
       if(editor.getValue())
