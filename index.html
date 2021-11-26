@@ -365,7 +365,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   });
   
   String.prototype.quoteIfNeeded = function() {
-    if(this.includes('"') || this.includes('\t') || this.includes(':') || this.includes(' ')) {
+    if(this.includes('"') || this.includes('#') || this.includes('\t') || this.includes(':') || this.includes(' ')) {
       return `"${this.replace(/\"/g, '""')}"`;
     }
     return this;
