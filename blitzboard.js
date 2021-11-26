@@ -606,9 +606,7 @@ class Blitzboard {
         blitzboard.updateNodeLocationOnMap();
       }
     }
-
-    if(applyDiff) return;
-
+    
     this.prevZoomPosition = null;
     
     this.minTime = new Date(8640000000000000);
@@ -626,8 +624,10 @@ class Blitzboard {
           }
         }
       });
+      this.timeInterval = this.maxTime - this.minTime;
     }
-    this.timeInterval = this.maxTime - this.minTime;
+
+    if(applyDiff) return;
 
     this.nodeProps = new Set(['id', 'label']);
     this.edgeProps = new Set(['label']);
