@@ -140,11 +140,10 @@
         %div.mr-5{style: 'color: yellow', href: 'https://www.blitzboard.io/'}
           %a{href: 'https://www.blitzboard.io/'}
             %img{ src: './blitzboard-w_3.png', style: 'height: 23px;'}
-      #main-area
+      .container-fluid
+        .row#main-area
         %script
-        :javascript
-
-          
+        :javascript          
           $.get('https://api.github.com/repos/blitzboard/samples/git/trees/main', (res) => {
             console.log(res);
             for(let file of res.tree) {
@@ -153,10 +152,10 @@
                 let link = document.createElement('a');
                 let innerContainer = document.createElement('div');
                 let sampleName = file.path;
-                area.style = 'width: 400px; height: 500px;';
-                area.className = "case";
+                area.style = 'width: 600px; height: 500px;';
+                area.className = "case col";
                 area.id = file.path;
-                innerContainer.style = 'width: 400px; height: 400px; border: solid 1px black;';
+                innerContainer.style = 'width: 600px; height: 400px; border: solid 1px black;';
                 innerContainer.innerText = file.path;
                 area.appendChild(link);
                 area.appendChild(innerContainer);

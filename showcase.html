@@ -143,10 +143,10 @@
 </a>
 </div>
 </nav>
-<div id='main-area'>
+<div class='container-fluid'>
+<div class='row' id='main-area'></div>
 <script></script>
 <script>
-  
   $.get('https://api.github.com/repos/blitzboard/samples/git/trees/main', (res) => {
     console.log(res);
     for(let file of res.tree) {
@@ -155,10 +155,10 @@
         let link = document.createElement('a');
         let innerContainer = document.createElement('div');
         let sampleName = file.path;
-        area.style = 'width: 400px; height: 500px;';
-        area.className = "case";
+        area.style = 'width: 600px; height: 500px;';
+        area.className = "case col";
         area.id = file.path;
-        innerContainer.style = 'width: 400px; height: 400px; border: solid 1px black;';
+        innerContainer.style = 'width: 600px; height: 400px; border: solid 1px black;';
         innerContainer.innerText = file.path;
         area.appendChild(link);
         area.appendChild(innerContainer);
