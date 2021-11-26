@@ -1084,7 +1084,7 @@ class Blitzboard {
 
   updateNodeLocationOnTimeLine() {
     let nodePositions = [];
-    blitzboard.graph.nodes.forEach(node => {
+    this.graph.nodes.forEach(node => {
       let x, y, fixed, width;
       ({x, y, fixed, width} = this.calcNodePosition(node));
       nodePositions.push({
@@ -1092,7 +1092,7 @@ class Blitzboard {
         x, y
       });
     });
-    blitzboard.nodeDataSet.update(nodePositions);
+    this.nodeDataSet.update(nodePositions);
   }
   
   scrollMapToNode(node) {
