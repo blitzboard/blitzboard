@@ -37,6 +37,11 @@
           padding: 10px;
           text-align: center;
       }
+      
+      .case {
+        margin: 30px;
+        border: solid 1px black;
+      }
 
       .dg.main .close-button {
           background-color: rgba(0, 0, 0, 0.7);
@@ -149,6 +154,7 @@
                 let div = document.createElement('div');
                 div.style = 'width: 400px; height: 400px;';
                 div.innerText = file.path;
+                div.className = "case";
                 div.id = file.path;
                 document.querySelector('#main-area').appendChild(div);
                 let graph, config;
