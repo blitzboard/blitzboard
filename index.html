@@ -356,6 +356,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   let showConfig = false;
   let srcNode, lineEnd;
   let prevNetwork = null;
+  let viewMode = loadConfig('viewMode');
   let savedGraphs = [];
   let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
   let dateTimeFormat = new Intl.DateTimeFormat('default', {
@@ -1083,8 +1084,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     let initialPg = loadConfig('pg');
   
     let configText = loadConfig('config');
-    
-    let viewMode = loadConfig('viewMode');
     
     if (!configText) {
       configText = defaultConfig;
