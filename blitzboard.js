@@ -194,8 +194,11 @@ class Blitzboard {
     return false;
   }
   
-  getAllNodes() {
-    return this.graph.nodes.map(node => this.getNode(node.id));
+  getAllNodes(label = null) {
+    if(label)
+      return this.graph.nodes.filter(node => node.labels.includes(label)).map(node => this.getNode(node.id));
+    else
+      return this.graph.nodes.map(node => this.getNode(node.id));
   }
 
   getNode(node_id) {
