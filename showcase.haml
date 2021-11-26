@@ -1,0 +1,176 @@
+!!!
+%html
+  %head
+    %meta{:charset => "utf-8"}
+    %title Blitzboard
+    %link{:crossorigin => "anonymous", :href => "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css", :integrity => "sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh", :rel => "stylesheet"}/
+    %link{:href => "/apple-touch-icon.png", :rel => "apple-touch-icon", :sizes => "180x180"}/
+    %link{:href => "/favicon-32x32.png", :rel => "icon", :sizes => "32x32", :type => "image/png"}/
+    %link{:href => "/favicon-16x16.png", :rel => "icon", :sizes => "16x16", :type => "image/png"}/
+    %link{:href => "/site.webmanifest", :rel => "manifest"}/
+    %link{:color => "#848484", :href => "/safari-pinned-tab.svg", :rel => "mask-icon"}/
+    %meta{:content => "#ffffff", :name => "msapplication-TileColor"}/
+    %meta{:content => "#ffffff", :name => "theme-color"}/
+    %link{:href => "./favicon.ico", :rel => "shortcut icon", :type => "image/x-icon"}/
+    %link{:href => "https://unpkg.com/leaflet@1.6.0/dist/leaflet.css", :integrity => "sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==", :crossorigin => "", :rel => "stylesheet"}/
+    %script{:src => "./lib/pg_parser_browserified.js", :type => "text/javascript"}
+    %script{:src => "./vis-network.min.js"}
+    %script{:src => "./lib/jquery-3.5.1.min.js"}
+    %script{:src => "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"}
+    %script{:src => "https://unpkg.com/leaflet@1.6.0/dist/leaflet.js", :integrity => "sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==", :crossorigin => ""}
+    %script{:src => "https://code.iconify.design/2/2.0.4/iconify.min.js"}
+    %script{:src => "./lib/util.js"}
+    %script{:src => "./blitzboard.js"}
+
+    :css
+      #network-popUp {
+          display: none;
+          position: absolute;
+          top: 350px;
+          left: 170px;
+          z-index: 299;
+          width: 250px;
+          background-color: #f9f9f9;
+          border-style: solid;
+          border-width: 3px;
+          border-color: #5394ed;
+          padding: 10px;
+          text-align: center;
+      }
+
+      .dg.main .close-button {
+          background-color: rgba(0, 0, 0, 0.7);
+      }
+
+      .dg.main .close-button:hover {
+          background-color: rgba(0, 0, 0, 0.7);
+      }
+
+      .dg li:not(.folder) {
+          background: rgba(0, 0, 0, 0.7);
+      }
+
+      .dg li.title {
+          background: rgba(0, 0, 0, 0.7) url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+      }      
+
+      #graph {
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        position:absolute;
+        z-index: 2;
+      }
+
+      .ui-resizable-handle {
+        background: #cccccc;
+      }
+      
+      #main-area {
+        display: inline-flex;
+        width: 100%;
+        height: calc(100vh - 50px);
+      }
+
+      .float-btn {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        right: 10px;
+        bottom: 10px;
+      }
+
+      #embed-btn {
+        right: 110px;
+      }
+
+      #import-btn-input {
+        display: none;
+      }
+
+      #options-btn {
+        z-index: 996;
+        background: #272822;
+        border: #272822;
+      }
+
+      #reset-config-btn {
+        z-index: 995;
+        background: #272822;
+        border: #272822;
+      }
+            
+      #header { 
+        background: #151515 !important;
+        height: 50px;
+      }
+
+      .column-mode-btn {
+        padding: 1px 12px 4px 12px;
+      }
+      
+      .toast-top-right {
+        top: 70px;
+      }
+      
+      .dropdown-toggle {
+        -webkit-appearance: none;
+        border-radius: 0;
+      }
+
+      .dropdown-item.active {
+        background: #047bff;
+        color: black;
+      }
+      
+            
+      .dropdown-menu{
+        max-height:600px;
+        overflow-y:auto;
+      }
+
+  %body
+    #app
+      %nav#header.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top
+        %div.mr-5{style: 'color: yellow', href: 'https://www.blitzboard.io/'}
+          %a{href: 'https://www.blitzboard.io/'}
+            %img{ src: './blitzboard-w_3.png', style: 'height: 23px;'}
+      #main-area
+        %script
+        :javascript
+
+          
+          $.get('https://api.github.com/repos/blitzboard/samples/git/trees/main', (res) => {
+            console.log(res);
+            for(let file of res.tree) {
+              if(file.type === 'tree') {
+                console.log(file.path);
+                let div = document.createElement('div');
+                div.style = 'width: 400px; height: 400px;';
+                div.innerText = file.path;
+                div.id = file.path;
+                document.querySelector('#main-area').appendChild(div);
+                let graph, config;
+                let graphPromise = new Promise((resolve, reject) => {
+                  $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${file.path}/graph.pg`, (res) => {
+                    graph = res;
+                    resolve();
+                  });                  
+                });
+                let configPromise = new Promise((resolve, reject) => {
+                  $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${file.path}/config.js`, (res) => {
+                    config = res;
+                    resolve();
+                  });                  
+                });
+                Promise.all([graphPromise, configPromise]).then(() => {
+                  console.log(config);
+                  let blitzboard = new Blitzboard(document.getElementById(file.path));
+                  blitzboard.setGraph(graph, false);
+                  blitzboard.setConfig(Function('blitzboard', '"use strict";return (' + config + ')')(blitzboard), true);
+                });
+              }
+            }
+          });
+

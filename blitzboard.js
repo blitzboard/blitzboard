@@ -272,6 +272,7 @@ class Blitzboard {
     let expanded = this.expandedNodes.includes(pgNode.id);
 
     let degree =  pgNode.properties['degree'];
+    let blitzboard = this;
     if(degree !== undefined) {
       degree = degree[0];
     } else {
@@ -333,12 +334,14 @@ class Blitzboard {
           });
           img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.outerHTML);
           Blitzboard.loadedIcons[name] = img;
-          if(blitzboard.redrawTimer) {
-            clearTimeout(blitzboard.redrawTimer);
+          if(blitzboard) {
+            if (blitzboard.redrawTimer) {
+              clearTimeout(blitzboard.redrawTimer);
+            }
+            blitzboard.redrawTimer = setTimeout(() => {  // Add delay to avoid redraw too ofen
+              blitzboard.network.redraw();
+            }, 1000);
           }
-          blitzboard.redrawTimer = setTimeout(() => {  // Add delay to avoid redraw too ofen
-            blitzboard.network.redraw();
-          }, 1000);
         }
       };
     }
