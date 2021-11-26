@@ -193,6 +193,10 @@ class Blitzboard {
     }
     return false;
   }
+  
+  getAllNodes() {
+    return this.graph.nodes.map(node => this.getNode(node.id));
+  }
 
   getNode(node_id) {
     return new Proxy(this.nodeMap[node_id], Blitzboard.blitzProxy);
