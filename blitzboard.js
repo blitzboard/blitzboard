@@ -605,6 +605,9 @@ class Blitzboard {
       if(this.map) {
         blitzboard.updateNodeLocationOnMap();
       }
+      if(this.config.layout === 'timeline') {
+        blitzboard.updateNodeLocationOnTimeLine();
+      }
     }
     
     this.prevZoomPosition = null;
@@ -1074,6 +1077,20 @@ class Blitzboard {
           x: point.x, y: point.y, fixed: true
         });
       }
+    });
+    blitzboard.nodeDataSet.update(nodePositions);
+  }
+
+
+  updateNodeLocationOnTimeLine() {
+    let nodePositions = [];
+    blitzboard.graph.nodes.forEach(node => {
+      let x, y, fixed, width;
+      ({x, y, fixed, width} = this.calcNodePosition(node));
+      nodePositions.push({
+        id: node.id,
+        x, y
+      });
     });
     blitzboard.nodeDataSet.update(nodePositions);
   }
