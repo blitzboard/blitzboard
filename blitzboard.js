@@ -185,10 +185,13 @@ class Blitzboard {
   hasNode(node_id) {
     return !!this.nodeMap[node_id];
   }
-
-
-  hasEdge(edge_id) {
-    return !!this.edgeMap[edge_id];
+  
+  hasEdge(from, to, label = null) {
+    for(let edge of this.graph.edges) {
+      if(edge.from === from && edge.to === to && (!label || edge.labels.includes(label)))
+        return true;
+    }
+    return false;
   }
 
   getNode(node_id) {
