@@ -40,7 +40,6 @@
       
       .case {
         margin: 30px;
-        border: solid 1px black;
       }
 
       .dg.main .close-button {
@@ -150,29 +149,24 @@
             console.log(res);
             for(let file of res.tree) {
               if(file.type === 'tree') {
-                console.log(file.path);
-                let div = document.createElement('div');
-                div.style = 'width: 400px; height: 400px;';
-                div.innerText = file.path;
-                div.className = "case";
-                div.id = file.path;
-                document.querySelector('#main-area').appendChild(div);
-                let graph, config;
-                let graphPromise = new Promise((resolve, reject) => {
-                  $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${file.path}/graph.pg`, (res) => {
-                    graph = res;
-                    resolve();
-                  });                  
-                });
-                let configPromise = new Promise((resolve, reject) => {
-                  $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${file.path}/config.js`, (res) => {
-                    config = res;
-                    resolve();
-                  });                  
-                });
-                Promise.all([graphPromise, configPromise]).then(() => {
-                  console.log(config);
-                  let blitzboard = new Blitzboard(document.getElementById(file.path));
+                let area = document.createElement('div');
+                let link = document.createElement('a');
+                let innerContainer = document.createElement('div');
+                let sampleName = file.path;
+                area.style = 'width: 400px; height: 500px;';
+                area.className = "case";
+                area.id = file.path;
+                innerContainer.style = 'width: 400px; height: 400px; border: solid 1px black;';
+                innerContainer.innerText = file.path;
+                area.appendChild(link);
+                area.appendChild(innerContainer);
+                
+                document.querySelector('#main-area').appendChild(area);
+                let sandboxUrl = urlToShare({sample: sampleName});
+                link.href = sandboxUrl;
+                link.innerText = sampleName;
+                let blitzboard = new Blitzboard(innerContainer);
+                loadSample(sampleName, (graph, config) => {
                   blitzboard.setGraph(graph, false);
                   blitzboard.setConfig(Function('blitzboard', '"use strict";return (' + config + ')')(blitzboard), true);
                 });
