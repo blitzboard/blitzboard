@@ -1011,7 +1011,7 @@
         loadSample(sampleName, (graph, config) => {
           localStorage.setItem('pg', graph);
           localStorage.setItem('config', config);
-          localStorage.setItem('currentGraphName', newGraphName());
+          localStorage.setItem('currentGraphName', newGraphName(sampleName));
           window.location.href = window.location.href.split('?')[0];
         });
       } else {
