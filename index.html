@@ -514,14 +514,13 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   }
   
   function updateGraph(input, newConfig = null) {
-    document.getElementById("map").style['display'] = 'block'; // This line is needed to initialize leaflet correctly!
+  
     if(newConfig) {
       blitzboard.setGraph(input, false);
       blitzboard.setConfig(newConfig);
     } else {
       blitzboard.setGraph(input);
     }
-    document.getElementById("map").style['display'] = blitzboard.config.layout === 'map' ? 'block' : 'none';
     if(blitzboard.network !== prevNetwork) {
       blitzboard.network.on("click", (e) => {
         if(srcNode) {

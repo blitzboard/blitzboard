@@ -155,11 +155,10 @@
         let link = document.createElement('a');
         let innerContainer = document.createElement('div');
         let sampleName = file.path;
-        area.style = 'width: 600px; height: 500px;';
+        area.style = 'width: 600px; height: 500px; flex-basis: 600px;';
         area.className = "case col";
         area.id = file.path;
         innerContainer.style = 'width: 600px; height: 400px; border: solid 1px black;';
-        innerContainer.innerText = file.path;
         area.appendChild(link);
         area.appendChild(innerContainer);
         

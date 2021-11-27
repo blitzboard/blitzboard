@@ -61,13 +61,25 @@ class Blitzboard {
     this.nodeColorMap = {};
     this.expandedNodes = [];
     this.nodeMap = {};
-    this.config = { node: {}, edge: {}}
+    this.config = { node: {}, edge: {}};
     this.nodeLineMap = {};
     this.edgeMap = {};
     this.edgeLineMap = {};
     this.prevZoomPosition = null;
+    
+    this.container.style.position = 'absolute';
+    
+    this.networkContainer = document.createElement('div');
+    this.networkContainer.style = `
+      height: 100%;
+      width: 100%;
+      top: 0;
+      left: 0;
+      position: absolute;
+      z-index: 2;
+    `;
+    
     this.mapContainer = document.createElement('div');
-    this.mapContainer.id = Blitzboard.mapContainerId;
     this.mapContainer.style = `
       height: 100%;
       width: 100%;
@@ -116,8 +128,9 @@ class Blitzboard {
     
     let blitzboard = this;
 
-    container.parentNode.insertBefore(this.mapContainer, container);
-    container.parentNode.insertBefore(this.screen, this.mapContainer);
+    container.appendChild(this.screen);
+    container.appendChild(this.networkContainer);
+    container.appendChild(this.mapContainer);
 
     this.container.addEventListener('wheel', (e) => {
       if(blitzboard.config.layout === 'map')
@@ -136,6 +149,7 @@ class Blitzboard {
           blitzboard.updateNodeLocationOnMap();
         }, 10);
         blitzboard.map.invalidateSize();
+        e.preventDefault();
         e.stopPropagation(); // Inhibit zoom on vis-network
       }
     }, true);
@@ -720,7 +734,7 @@ class Blitzboard {
       },
     };
 
-    this.network = new vis.Network(this.container, data, this.options);
+    this.network = new vis.Network(this.networkContainer, data, this.options);
 
     if(this.config.layout === 'map') {
       this.mapContainer.style.display = 'block';
@@ -729,7 +743,7 @@ class Blitzboard {
       if(this.map) {
         this.map.panTo(center);
       } else {
-        this.map = L.map(Blitzboard.mapContainerId, {
+        this.map = L.map(this.mapContainer, {
           center: center,
           zoom: statistics.scale,
           minZoom: 3,
@@ -1066,19 +1080,19 @@ class Blitzboard {
   
   updateNodeLocationOnMap() {
     let nodePositions = [];
-    let lngKey =  blitzboard.config.layoutSettings.lng;
-    let latKey =  blitzboard.config.layoutSettings.lat;
-    blitzboard.graph.nodes.forEach(node => {
+    let lngKey =  this.config.layoutSettings.lng;
+    let latKey =  this.config.layoutSettings.lat;
+    this.graph.nodes.forEach(node => {
       if(node.properties[latKey] && node.properties[lngKey]) {
-        let point = blitzboard.map.latLngToContainerPoint([node.properties[latKey][0], node.properties[lngKey][0]]);
-        point = blitzboard.network.DOMtoCanvas(point);
+        let point = this.map.latLngToContainerPoint([node.properties[latKey][0], node.properties[lngKey][0]]);
+        point = this.network.DOMtoCanvas(point);
         nodePositions.push({
           id: node.id,
           x: point.x, y: point.y, fixed: true
         });
       }
     });
-    blitzboard.nodeDataSet.update(nodePositions);
+    this.nodeDataSet.update(nodePositions);
   }
 
 
