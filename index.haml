@@ -392,9 +392,13 @@
         if(url.length > 7333) {
           alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
         } else {
-          navigator.clipboard.writeText(url).then(function() {
-            alert("Your graph is now on clipboard!");
-          });
+          if (!navigator.clipboard) {
+            prompt("Copy URL of your graph:", url);
+          } else { 
+            navigator.clipboard.writeText(url).then(function() {
+              alert("Your graph is now on clipboard!");
+            });
+          }
         }
       });
       
