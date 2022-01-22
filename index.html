@@ -437,7 +437,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
     } else {
       if (!navigator.clipboard) {
-        prompt("Copy URL of your graph:", url);
+          alert("Sharing is not allowed under non-secure HTTP. Please export your graph or use HTTPS.");
       } else { 
         navigator.clipboard.writeText(url).then(function() {
           alert("Your graph is now on clipboard!");
