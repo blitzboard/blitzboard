@@ -461,7 +461,7 @@ class Blitzboard {
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity'));
     
-    color = color || this.edgeColorMap[group];
+    color = color || this.edgeColorMap[edgeLabel];
 
     if(opacity < 1) {
       let rgb = this.getHexColors(color);
