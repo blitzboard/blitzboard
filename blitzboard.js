@@ -550,6 +550,10 @@ class Blitzboard {
 
   setConfig(config, update = true) {
     this.config = deepMerge(Blitzboard.defaultConfig, config);
+    if(config.layout === 'hierarchical') {
+      // Remove redundant settings when layout is hierarchical
+      this.config.layoutSettings = config.layoutSettings;
+    }
     if(update)
       this.update(false);
   }
@@ -920,6 +924,9 @@ class Blitzboard {
               ctx.fillText(node.customIcon.code, position.x, position.y);
             }
           } else {
+            if(!pgNode) {
+              continue;
+            }
             for (let label of pgNode.labels) {
               let lowerLabel = label.toLowerCase();
               if (Blitzboard.loadedIcons[lowerLabel]) {
