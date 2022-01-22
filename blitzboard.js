@@ -410,25 +410,35 @@ class Blitzboard {
     attrs = Object.assign(attrs, extraOptions);
     return attrs;
   }
+  
+  retrieveConfigProp(pgEdge, propName) {
+    const edgeLabel = pgEdge.labels.join('_');
+    let propConfig = this.config?.edge[propName];
+    if((typeof propConfig) === 'function') {
+      return propConfig(new Proxy(pgEdge, Blitzboard.blitzProxy));
+    } else if((typeof propConfig) === 'object') {
+      return pgEdge.properties[this.config?.edge[propName][edgeLabel]]?.[0];
+    } else if((typeof propConfig) === 'string' && propConfig.startsWith('@')) {
+      return pgEdge.properties[propConfig.substr(1)]?.[0];
+    }
+    return propConfig; // return as constant
+  }
 
   toVisEdge(pgEdge, props = this.config.edge.caption, id) {
     const edgeLabel = pgEdge.labels.join('_');
     if (!this.edgeColorMap[edgeLabel]) {
       this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
     }
-    let length = null, lengthProp, width = null, widthProp;
-    if(lengthProp = pgEdge.properties[this.config?.edge?.length?.[edgeLabel]]) {
-      length = lengthProp[0];
-    }
-    if(widthProp = pgEdge.properties[this.config?.edge?.width?.[edgeLabel]]) {
-      width = parseFloat(widthProp[0]);
-    }
+    let length = this.retrieveConfigProp(pgEdge, 'length');
+    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'width'));
+    let color = this.retrieveConfigProp(pgEdge, 'color');
+    console.log(color);
 
     return {
       id: id,
       from: pgEdge.from,
       to: pgEdge.to,
-      color: this.edgeColorMap[edgeLabel],
+      color: color || this.edgeColorMap[edgeLabel],
       label: createLabelText(pgEdge, props),
       title: createTitleText(pgEdge),
       remoteId: id,
