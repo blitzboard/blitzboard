@@ -56,6 +56,8 @@ class Blitzboard {
 
   static loadedIcons = {};
   
+  static renderedColors = {};
+  
   constructor(container) {
     this.container = container;
     this.nodeColorMap = {};
@@ -194,7 +196,20 @@ class Blitzboard {
       }
       return Reflect.get(target, prop, receiver);
     }
-  };
+  }
+
+  getHexColors(colorStr) {
+    let computed = Blitzboard.renderedColors[colorStr];
+    if(computed) {
+      return computed;
+    }
+    let a = document.createElement('div');
+    a.style.color = colorStr;
+    let colors = window.getComputedStyle( document.body.appendChild(a) ).color.match(/\d+/g).map(function(a){ return parseInt(a,10); });
+    document.body.removeChild(a);
+    Blitzboard.renderedColors[colorStr] = colors;
+    return colors;
+  }
   
   hasNode(node_id) {
     return !!this.nodeMap[node_id];
@@ -304,11 +319,17 @@ class Blitzboard {
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
     let size = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
     let shape = this.retrieveConfigProp(pgNode, 'node', 'shape');
+    
+    color = color || this.nodeColorMap[group];
+    
+    if(opacity < 1) {
+      let rgb = this.getHexColors(color);
+      color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
+    }
 
     let attrs = {
       id: pgNode.id,
-      color: color || this.nodeColorMap[group],
-      opacity: opacity || 1,
+      color: color,
       label: createLabelText(pgNode, props),
       shape: shape || 'dot',
       size: size || 25,
@@ -420,7 +441,6 @@ class Blitzboard {
   retrieveConfigProp(pgElem, type, propName) {
     const labels = pgElem.labels.join('_');
     let propConfig = this.config?.[type][propName];
-    console.log(propConfig);
     if((typeof propConfig) === 'function') {
       return propConfig(new Proxy(pgElem, Blitzboard.blitzProxy));
     } else if((typeof propConfig) === 'object') {
@@ -428,7 +448,6 @@ class Blitzboard {
     } else if((typeof propConfig) === 'string' && propConfig.startsWith('@')) {
       return pgElem.properties[propConfig.substr(1)]?.[0];
     }
-    console.log(propConfig);
     return propConfig; // return as constant
   }
 
@@ -441,15 +460,19 @@ class Blitzboard {
     let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width'));
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity'));
+    
+    color = color || this.edgeColorMap[group];
 
+    if(opacity < 1) {
+      let rgb = this.getHexColors(color);
+      color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
+    }
+    
     return {
       id: id,
       from: pgEdge.from,
       to: pgEdge.to,
-      color: {
-        color: color || this.edgeColorMap[edgeLabel],
-        opacity: 0.1,
-      },
+      color: color,
       label: createLabelText(pgEdge, props),
       title: createTitleText(pgEdge),
       remoteId: id,
