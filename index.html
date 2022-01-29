@@ -433,17 +433,20 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
     
   q('#share-btn').addEventListener('click', () => {
-    let url = urlToShare({ pg: editor.getValue(),
-                           config:configEditor.getValue(),
-                           viewMode: viewMode,
-                           name: localStorage.getItem('currentGraphName')});
+    let url = new URL(window.location);
+    let params = new URLSearchParams();
+    params.set('pg', editor.getValue());
+    params.set('config', configEditor.getValue());
+    params.set('viewMode', viewMode);
+    params.set('name', localStorage.getItem('currentGraphName'));
+    url.search = params;
     if(url.length > 7333) {
       alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
     } else {
       if (!navigator.clipboard) {
           alert("Sharing is not allowed under non-secure HTTP. Please export your graph or use HTTPS.");
       } else { 
-        navigator.clipboard.writeText(url).then(function() {
+        navigator.clipboard.writeText(url.toString()).then(function() {
           alert("Your graph is now on clipboard!");
         });
       }

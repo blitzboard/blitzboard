@@ -148,7 +148,6 @@
 <script></script>
 <script>
   $.get('https://api.github.com/repos/blitzboard/samples/git/trees/main', (res) => {
-    console.log(res);
     for(let file of res.tree) {
       if(file.type === 'tree') {
         let area = document.createElement('div');
@@ -163,7 +162,8 @@
         area.appendChild(innerContainer);
         
         document.querySelector('#main-area').appendChild(area);
-        let sandboxUrl = urlToShare({sample: sampleName});
+        let sandboxUrl = `https://sandbox.blitzboard.io/?sample=${encodeURIComponent(sampleName)}`;
+  
         link.href = sandboxUrl;
         link.innerText = sampleName;
         let blitzboard = new Blitzboard(innerContainer);
