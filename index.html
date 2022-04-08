@@ -771,6 +771,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     byProgram = true;
     editor.setValue(graph.pg);
     configEditor.setValue(graph.config);
+    editor.getDoc().clearHistory();
+    configEditor.getDoc().clearHistory();
     localStorage.setItem('pg', editor.getValue());
     localStorage.setItem('currentGraphName', graph.name);
     $('.dropdown-item.history-item').removeClass('active');
@@ -1111,14 +1113,16 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       const strUrl = config.x2.url + config.x2.init.endpoint + strParams;
       axios.get(strUrl).then((response) => {
         editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+        editor.getDoc().clearHistory();
       });
     }
     // Otherwise, load PG data from browser local storage
     else if(initialPg) {
       editor.setValue(initialPg);
+      editor.getDoc().clearHistory();
     }
-    
     configEditor.setValue(configText);
+    configEditor.getDoc().clearHistory();
     
     function tryJsonParse(json) {
       try {
