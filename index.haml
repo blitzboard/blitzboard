@@ -910,7 +910,7 @@
         let graphNameSQL = graphName.replace('\'', '').replace(' ', '_').replace('-', '_').toLowerCase(); // must be simple SQL name
         let output = "";
         let create_table_node = `
-          CREATE TABLE node_${graphNameSQL} (
+          CREATE TABLE ${graphNameSQL}_node (
             id VARCHAR2(255)
           , label VARCHAR2(255)
           , props VARCHAR2(4000)
@@ -919,7 +919,7 @@
           );
         `;
         let create_table_edge = `
-          CREATE TABLE edge_${graphNameSQL} (
+          CREATE TABLE ${graphNameSQL}_edge (
             id VARCHAR2(255)
           , src VARCHAR2(255)
           , dst VARCHAR2(255)
@@ -939,7 +939,7 @@
             json = json + ", \"" + entry[0].toUpperCase() + "\":[\"" + entry[1] + "\"]"; // values are always stored as sting
           }
           json = json + "}";
-          let query = `INSERT INTO node_${graphNameSQL} VALUES ('${node.id}', '${node_label.toUpperCase()}', '${json}');`;
+          let query = `INSERT INTO ${graphNameSQL}_node VALUES ('${node.id}', '${node_label.toUpperCase()}', '${json}');`;
           output = output + query + '\n';
         });
         function generateUuid() {
@@ -963,7 +963,7 @@
             json = json + ", \"" + entry[0].toUpperCase() + "\":[\"" + entry[1] + "\"]"; // values are always stored as sting
           }
           json = json + "}";
-          let query = `INSERT INTO edge_${graphNameSQL} VALUES ('${generateUuid()}', '${edge.from}', '${edge.to}', '${edge_label.toUpperCase()}', '${json}');`;
+          let query = `INSERT INTO ${graphNameSQL}_edge VALUES ('${generateUuid()}', '${edge.from}', '${edge.to}', '${edge_label.toUpperCase()}', '${json}');`;
           output = output + query + '\n';
         });
         saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.sql');
