@@ -481,12 +481,17 @@
       }
       
       function updateGraph(input, newConfig = null) {
-
-        if(newConfig) {
-          blitzboard.setGraph(input, false);
-          blitzboard.setConfig(newConfig);
-        } else {
-          blitzboard.setGraph(input);
+        try {
+          if(newConfig) {
+            blitzboard.setGraph(input, false);
+            blitzboard.setConfig(newConfig);
+          } else {
+            blitzboard.setGraph(input);
+          } 
+        } catch(e) {
+            console.log(e);
+            toastr.error(e.toString(), 'Error occured while rendering', {preventDuplicates: true})
+            return null;
         }
         if(blitzboard.network !== prevNetwork) {
           blitzboard.network.on("click", (e) => {
@@ -1085,7 +1090,7 @@
             return looseJsonParse(json);
           } catch(e) {
             console.log(e);
-            toastr.error(e, 'JSON SyntaxError', {preventDuplicates: true})
+            toastr.error(e.toString(), 'JSON SyntaxError', {preventDuplicates: true});
             return null;
           }
         }
