@@ -3,6 +3,14 @@
 const q = document.querySelector.bind(document);
 const qa = document.querySelectorAll.bind(document);
 
+class DuplicateNodeError extends Error {
+  constructor(nodes) {
+    super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
+    this.name = "NodeDuplicationError";
+    this.nodes = nodes;
+  }
+}
+
 class Blitzboard {
   static fondLoaded = false;
   static defaultConfig = {
@@ -565,7 +573,6 @@ class Blitzboard {
   }
 
 
-
   setGraph(input, update = true) {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
@@ -587,9 +594,11 @@ class Blitzboard {
     if (newPg === null || newPg === undefined)
       return;
     this.graph = newPg;
+
     if(update)
       this.update();
   }
+
 
 
   setConfig(config, update = true) {
@@ -709,6 +718,26 @@ class Blitzboard {
       Object.keys(edge.properties).forEach(this.edgeProps.add, this.edgeProps);
     });
 
+
+
+    function nonuniqueNodes(nodes) {
+      let nonunique = new Set();
+      let nodeMap = {} // id -> node
+      for(let node of nodes) {
+        if(nodeMap[node.id]) {
+          nonunique.add(nodeMap[node.id]);
+          nonunique.add(node);
+        }
+        nodeMap[node.id] = node;
+      }
+      return [...nonunique];
+    }
+
+    let nonunique = nonuniqueNodes(this.graph.nodes);
+    if(nonunique.length > 0) {
+      throw new DuplicateNodeError(nonunique);
+    }
+
     let defaultNodeProps = this.config.node.caption;
     let defaultEdgeProps = this.config.edge.caption;
 
@@ -733,6 +762,9 @@ class Blitzboard {
 
       return visEdge;
     }));
+
+
+
     // create a network
     let data = {
       nodes: this.nodeDataSet,

@@ -490,7 +490,19 @@
           } 
         } catch(e) {
             console.log(e);
-            toastr.error(e.toString(), 'Error occured while rendering', {preventDuplicates: true})
+            if(e instanceof DuplicateNodeError) {
+              for(let marker of markers)
+                marker.clear();
+              markers = [];
+              for(let node of e.nodes) {
+                markers.push(editor.markText({line: node.location.start.line - 1, 
+                  ch: node.location.start.column - 1}, {line: node.location.end.line - 1, ch: node.location.end.column - 1 },
+                 {className: 'syntax-error-line', message: e.message}));
+              }
+              toastr.error(e.message, {preventDuplicates: true})
+            } else {
+              toastr.error(e.toString(), 'Error occured while rendering', {preventDuplicates: true})
+            }
             return null;
         }
         if(blitzboard.network !== prevNetwork) {
@@ -984,6 +996,7 @@
       function reflectEditorChange() {
         localStorage.setItem('pg', editor.getValue());
         saveCurrentGraph();
+        
         updateGraph(editor.getValue());
         clearTimeout(pgTimerId);
         pgTimerId = null; 
