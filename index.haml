@@ -160,6 +160,10 @@
         background: rgba(255, 0, 0, 0.4);
       }
       
+      span .syntax-warning-line {
+        background: rgba(255, 96, 0, 0.3);
+      }
+      
       #header { 
         background: #151515 !important;
         height: 50px;
@@ -498,9 +502,10 @@
             for(let warning of blitzboard.warnings) {
               markers.push(editor.markText({line: warning.location.start.line - 1, 
                 ch: warning.location.start.column - 1}, {line: warning.location.end.line - 1, ch: warning.location.end.column - 1 },
-               {className: 'syntax-error-line', message: warning.message}));
+                 {className: 'syntax-warning-line', message: warning.message}));
             }
-            toastr.error(blitzboard.warnings.map(w => w.message).join(', '), {preventDuplicates: true})
+            toastr.remove();
+            toastr.warning(blitzboard.warnings.map(w => w.message).join(', '), {preventDuplicates: true})
           }
         } catch(e) {
             console.log(e);
@@ -1214,8 +1219,11 @@
         configEditor.on('change', onConfigChanged);
         configEditor.on('inputRead', onConfigChanged);
   
-        if(editor.getValue())
+        if(editor.getValue()) {
+          byProgram = true;
           updateGraph(editor.getValue(), config);
+          byProgram = false;
+        }
   
         let autocompletionConfig = localStorage.getItem('autocompletion');
         if(autocompletionConfig !== null) {
