@@ -76,6 +76,7 @@ class Blitzboard {
     this.edgeMap = {};
     this.edgeLineMap = {};
     this.prevZoomPosition = null;
+    this.warnings = [];
     
     this.container.style.position = 'absolute';
     
@@ -611,8 +612,46 @@ class Blitzboard {
       this.update(false);
   }
   
+  validateGraph() {
+    // If duplication of nodes exist, raise error 
+    function nonuniqueNodes(nodes) {
+      let nonunique = new Set();
+      let nodeMap = {} // id -> node
+      for(let node of nodes) {
+        if(nodeMap[node.id]) {
+          nonunique.add(nodeMap[node.id]);
+          nonunique.add(node);
+        }
+        nodeMap[node.id] = node;
+      }
+      return [...nonunique];
+    }
+
+    let nonunique = nonuniqueNodes(this.graph.nodes);
+    if(nonunique.length > 0) {
+      throw new DuplicateNodeError(nonunique);
+    }
+
+    // If edge refers to undefined nodes, create warnings
+    for(let edge of this.graph.edges) {
+      if(!this.nodeMap[edge.from]) {
+        this.warnings.push({
+          location: edge.location,
+          message: `Source node is undefined: ${edge.from}`
+        });
+      }
+      if(!this.nodeMap[edge.to]) {
+        this.warnings.push({
+          location: edge.location,
+          message: `Target node is undefined: ${edge.to}`
+        });
+      }
+    }
+  }
+  
   update(applyDiff = true) {
     let blitzboard = this;
+    this.warnings = [];
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
@@ -701,7 +740,11 @@ class Blitzboard {
       this.timeInterval = this.maxTime - this.minTime;
     }
 
-    if(applyDiff) return;
+
+    if(applyDiff) {
+      this.validateGraph();
+      return;
+    }
 
     this.nodeProps = new Set(['id', 'label']);
     this.edgeProps = new Set(['label']);
@@ -718,25 +761,8 @@ class Blitzboard {
       Object.keys(edge.properties).forEach(this.edgeProps.add, this.edgeProps);
     });
 
+    this.validateGraph();
 
-
-    function nonuniqueNodes(nodes) {
-      let nonunique = new Set();
-      let nodeMap = {} // id -> node
-      for(let node of nodes) {
-        if(nodeMap[node.id]) {
-          nonunique.add(nodeMap[node.id]);
-          nonunique.add(node);
-        }
-        nodeMap[node.id] = node;
-      }
-      return [...nonunique];
-    }
-
-    let nonunique = nonuniqueNodes(this.graph.nodes);
-    if(nonunique.length > 0) {
-      throw new DuplicateNodeError(nonunique);
-    }
 
     let defaultNodeProps = this.config.node.caption;
     let defaultEdgeProps = this.config.edge.caption;
