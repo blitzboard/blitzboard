@@ -147,6 +147,14 @@
         border: #272822;
       }
       
+      #zoom-fit-btn {
+        z-index: 994;
+        background-color: transparent;
+        color: #272822;
+        border: 0px;
+        top: 60px;
+      }
+      
       span .highlighted {
         background: rgba(200, 200, 0, 0.5);
       }
@@ -198,10 +206,6 @@
       .CodeMirror-hints {
         z-index: 999 !important;
       }
-      
-      
-      
-      
       
       .CodeMirror {
         font-family: 'Courier', monospace;
@@ -308,6 +312,8 @@
               %label{:for => "options-show-config-input"} Show Config
         #reset-config-btn.float-btn.btn.btn-info{ title: "Reset Config", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom'}
           %span{:class => "ion-android-refresh" }
+        #zoom-fit-btn.float-btn.btn.btn-info{ title: "Zoom to fit", href: '#', style: 'padding:4px;', 'data-toggle': 'tooltip', 'data-placement': 'bottom'}
+          %span{:class => "iconify", 'data-icon': 'carbon:center-to-fit',  'data-width': 24, 'data-height': 24  }
     %script{:src => "./blitzboard.js"}
     :javascript
       let container = document.getElementById('graph'); 
@@ -820,6 +826,11 @@
       q('#reset-config-btn').addEventListener('click', () => {
         if(confirm("Really reset config?"))
           configEditor.setValue(defaultConfig);
+      });
+      
+      q('#zoom-fit-btn').addEventListener('click', () => {
+        if(blitzboard.network)
+          blitzboard.network.fit();
       });
 
       q('#export-zip-btn').addEventListener('click', () => {

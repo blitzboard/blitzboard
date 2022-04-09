@@ -146,6 +146,14 @@
     border: #272822;
   }
   
+  #zoom-fit-btn {
+    z-index: 994;
+    background-color: transparent;
+    color: #272822;
+    border: 0px;
+    top: 60px;
+  }
+  
   span .highlighted {
     background: rgba(200, 200, 0, 0.5);
   }
@@ -197,10 +205,6 @@
   .CodeMirror-hints {
     z-index: 999 !important;
   }
-  
-  
-  
-  
   
   .CodeMirror {
     font-family: 'Courier', monospace;
@@ -350,6 +354,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 </label>
 <div class='float-btn btn btn-info' data-placement='bottom' data-toggle='tooltip' href='#' id='reset-config-btn' title='Reset Config'>
 <span class='ion-android-refresh'></span>
+</div>
+<div class='float-btn btn btn-info' data-placement='bottom' data-toggle='tooltip' href='#' id='zoom-fit-btn' style='padding:4px;' title='Zoom to fit'>
+<span class='iconify' data-height='24' data-icon='carbon:center-to-fit' data-width='24'></span>
 </div>
 </div>
 </div>
@@ -865,6 +872,11 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   q('#reset-config-btn').addEventListener('click', () => {
     if(confirm("Really reset config?"))
       configEditor.setValue(defaultConfig);
+  });
+  
+  q('#zoom-fit-btn').addEventListener('click', () => {
+    if(blitzboard.network)
+      blitzboard.network.fit();
   });
   
   q('#export-zip-btn').addEventListener('click', () => {
