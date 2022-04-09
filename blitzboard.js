@@ -1348,12 +1348,11 @@ function createLabelText(elem, props = null) {
 
 function createTitleText(elem) {
   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-    acc.concat(`<tr><td>${prop[0]}</td><td>${wrapText(prop[1], true)}</td></tr>`), []);
+    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> : ${wrapText(prop[1], true)}</td></tr>`), []);
   if (elem.id) // for nodes
   {
-    let idText = `<tr><td><b>${elem.id}</b></tr></td>`;
+    let idText = `<tr><td><b>${elem.id}</b></td><td> : ${wrapText(elem.labels.join(':'), true)}</td></tr>`;
     flattend_props.splice(0, 0, idText);
-    flattend_props.push(`<tr><td width="100px">label</td><td width="200px">${wrapText(elem.labels.join(':'), true)}</td></tr>`);
   }
   if (flattend_props.length === 0) {
     return null;
