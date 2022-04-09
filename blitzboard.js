@@ -1017,7 +1017,9 @@ class Blitzboard {
           if(node.customIcon) {
             if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
               ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
-                position.x - node.size * Blitzboard.iconSizeCoef / 2, position.y - node.size * Blitzboard.iconSizeCoef / 2);
+                position.x - node.size * Blitzboard.iconSizeCoef / 2, position.y - node.size * Blitzboard.iconSizeCoef / 2,
+                node.size * Blitzboard.iconSizeCoef, 
+                node.size * Blitzboard.iconSizeCoef);
             } else { // Ionicons
               ctx.font = `${node.customIcon.size}px Ionicons`;
               ctx.fillStyle = "white";
@@ -1033,7 +1035,10 @@ class Blitzboard {
               let lowerLabel = label.toLowerCase();
               if (Blitzboard.loadedIcons[lowerLabel]) {
                 if(Blitzboard.loadedIcons[lowerLabel] != 'retrieving...')
-                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node.size * Blitzboard.iconSizeCoef / 2, position.y - node.size * Blitzboard.iconSizeCoef / 2);
+                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node.size * Blitzboard.iconSizeCoef / 2,
+                    position.y - node.size * Blitzboard.iconSizeCoef / 2,
+                    node.size * Blitzboard.iconSizeCoef,
+                    node.size * Blitzboard.iconSizeCoef);
                 break;
               }
             }
