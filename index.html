@@ -355,7 +355,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 <div class='float-btn btn btn-info' data-placement='bottom' data-toggle='tooltip' href='#' id='reset-config-btn' title='Reset Config'>
 <span class='ion-android-refresh'></span>
 </div>
-<div class='float-btn btn btn-info' data-placement='bottom' data-toggle='tooltip' href='#' id='zoom-fit-btn' style='padding:4px;' title='Zoom to fit'>
+<div class='float-btn btn btn-info' data-placement='bottom' data-toggle='tooltip' href='#' id='zoom-fit-btn' style='padding:4px;' title='Fit'>
 <span class='iconify' data-height='24' data-icon='carbon:center-to-fit' data-width='24'></span>
 </div>
 </div>
@@ -540,6 +540,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   function updateGraph(input, newConfig = null) {
     try {
+      toastr.remove();
       if(newConfig) {
         blitzboard.setGraph(input, false);
         blitzboard.setConfig(newConfig);
@@ -556,7 +557,6 @@ You -> I :say word:Goodbye date:yesterday</textarea>
             ch: warning.location.start.column - 1}, {line: warning.location.end.line - 1, ch: warning.location.end.column - 1 },
              {className: 'syntax-warning-line', message: warning.message}));
         }
-        toastr.remove();
         toastr.warning(blitzboard.warnings.map(w => w.message).join(', '), {preventDuplicates: true})
       }
     } catch(e) {
@@ -1080,6 +1080,8 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   });
   editor.setSize('100%', '100%');
   
+  toastr.options.timeOut = 0; // Set toastr persistent until remove() is called
+  
   let oldHint = CodeMirror.hint.anyword;
   
   CodeMirror.hint.pgMode = function (editor) {
@@ -1147,7 +1149,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   function onEditorChanged(delta){
     if(!byProgram) {
       if(!pgTimerId)
-        blitzboard.showLoader("Updating...");
+        blitzboard.showLoader("");
       clearTimeout(pgTimerId);
       localMode = true;
       pgTimerId = setTimeout(() => {

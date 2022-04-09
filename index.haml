@@ -312,7 +312,7 @@
               %label{:for => "options-show-config-input"} Show Config
         #reset-config-btn.float-btn.btn.btn-info{ title: "Reset Config", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom'}
           %span{:class => "ion-android-refresh" }
-        #zoom-fit-btn.float-btn.btn.btn-info{ title: "Zoom to fit", href: '#', style: 'padding:4px;', 'data-toggle': 'tooltip', 'data-placement': 'bottom'}
+        #zoom-fit-btn.float-btn.btn.btn-info{ title: "Fit", href: '#', style: 'padding:4px;', 'data-toggle': 'tooltip', 'data-placement': 'bottom'}
           %span{:class => "iconify", 'data-icon': 'carbon:center-to-fit',  'data-width': 24, 'data-height': 24  }
     %script{:src => "./blitzboard.js"}
     :javascript
@@ -494,6 +494,7 @@
       
       function updateGraph(input, newConfig = null) {
         try {
+          toastr.remove();
           if(newConfig) {
             blitzboard.setGraph(input, false);
             blitzboard.setConfig(newConfig);
@@ -510,7 +511,6 @@
                 ch: warning.location.start.column - 1}, {line: warning.location.end.line - 1, ch: warning.location.end.column - 1 },
                  {className: 'syntax-warning-line', message: warning.message}));
             }
-            toastr.remove();
             toastr.warning(blitzboard.warnings.map(w => w.message).join(', '), {preventDuplicates: true})
           }
         } catch(e) {
@@ -1034,6 +1034,8 @@
       });
       editor.setSize('100%', '100%');
       
+      toastr.options.timeOut = 0; // Set toastr persistent until remove() is called
+      
       let oldHint = CodeMirror.hint.anyword;
       
       CodeMirror.hint.pgMode = function (editor) {
@@ -1101,7 +1103,7 @@
       function onEditorChanged(delta){
         if(!byProgram) {
           if(!pgTimerId)
-            blitzboard.showLoader("Updating...");
+            blitzboard.showLoader("");
           clearTimeout(pgTimerId);
           localMode = true;
           pgTimerId = setTimeout(() => {
