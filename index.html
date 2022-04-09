@@ -283,6 +283,9 @@ Cypher Query
 <a class='dropdown-item' href='#' id='export-pgql-btn'>
 PGQL Query
 </a>
+<a class='dropdown-item' href='#' id='export-sql-btn'>
+SQL Query
+</a>
 <a class='dropdown-item' href='#' id='embed-btn'>
 JavaScript
 </a>
@@ -966,6 +969,71 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       output = output + query + '\n';
     });
     saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.pgql');
+  });
+  
+  q('#export-sql-btn').addEventListener('click', () => {
+    let pg = pgParser.parse(editor.getValue());
+    let graphName = localStorage.getItem('currentGraphName');
+    let graphNameSQL = graphName.replace('\'', '').replace(' ', '_').replace('-', '_').toLowerCase(); // must be simple SQL name
+    let output = "";
+    let create_table_node = `
+      CREATE TABLE ${graphNameSQL}_node (
+        id VARCHAR2(255)
+      , label VARCHAR2(255)
+      , props VARCHAR2(4000)
+      , CONSTRAINT node_pk PRIMARY KEY (id)
+      , CONSTRAINT node_check CHECK (props IS JSON)
+      );
+    `;
+    let create_table_edge = `
+      CREATE TABLE ${graphNameSQL}_edge (
+        id VARCHAR2(255)
+      , src VARCHAR2(255)
+      , dst VARCHAR2(255)
+      , label VARCHAR2(255)
+      , props VARCHAR2(4000)
+      , CONSTRAINT edge_pk PRIMARY KEY (id)
+      , CONSTRAINT edge_fk_src FOREIGN KEY (src) REFERENCES node(id)
+      , CONSTRAINT edge_fk_dst FOREIGN KEY (dst) REFERENCES node(id)
+      , CONSTRAINT edge_check CHECK (props IS JSON)
+      );
+    `;
+    output = output + create_table_node + create_table_edge + "\n";
+    pg.nodes.forEach(node => {
+      let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
+      let json = "{\"ID\":[\"" + node.id + "\"]";
+      for (let entry of Object.entries(node.properties)) {
+        json = json + ", \"" + entry[0].toUpperCase() + "\":[\"" + entry[1] + "\"]"; // values are always stored as sting
+      }
+      json = json + "}";
+      let query = `INSERT INTO ${graphNameSQL}_node VALUES ('${node.id}', '${node_label.toUpperCase()}', '${json}');`;
+      output = output + query + '\n';
+    });
+    function generateUuid() {
+      let chars = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".split("");
+      for (let i = 0, len = chars.length; i < len; i++) {
+          switch (chars[i]) {
+              case "x":
+                  chars[i] = Math.floor(Math.random() * 16).toString(16);
+                  break;
+              case "y":
+                  chars[i] = (Math.floor(Math.random() * 4) + 8).toString(16);
+                  break;
+          }
+      }
+      return chars.join("");
+    }
+    pg.edges.forEach(edge => {
+      let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
+      let json = "{\"FROM\":[\"" + edge.from + "\"], \"TO\":[\"" + edge.to + "\"]";
+      for (let entry of Object.entries(edge.properties)) {
+        json = json + ", \"" + entry[0].toUpperCase() + "\":[\"" + entry[1] + "\"]"; // values are always stored as sting
+      }
+      json = json + "}";
+      let query = `INSERT INTO ${graphNameSQL}_edge VALUES ('${generateUuid()}', '${edge.from}', '${edge.to}', '${edge_label.toUpperCase()}', '${json}');`;
+      output = output + query + '\n';
+    });
+    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.sql');
   });
   
   editor = CodeMirror.fromTextArea(q('#graph-input'), {
