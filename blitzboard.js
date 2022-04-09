@@ -466,9 +466,9 @@ class Blitzboard {
       this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
     }
     let length = this.retrieveConfigProp(pgEdge, 'edge','length');
-    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width'));
+    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width')) || 1;
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
-    let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity'));
+    let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
     
     color = color || this.edgeColorMap[edgeLabel];
 
