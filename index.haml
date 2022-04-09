@@ -1091,6 +1091,7 @@
       function reflectEditorChange() {
         localStorage.setItem('pg', editor.getValue());
         saveCurrentGraph();
+        blitzboard.hideLoader();
         
         updateGraph(editor.getValue());
         clearTimeout(pgTimerId);
@@ -1099,11 +1100,13 @@
       
       function onEditorChanged(delta){
         if(!byProgram) {
+          if(!pgTimerId)
+            blitzboard.showLoader("Updating...");
           clearTimeout(pgTimerId);
           localMode = true;
           pgTimerId = setTimeout(() => {
             reflectEditorChange();
-          }, 2000);
+          }, 1000);
         }
       }
             
@@ -1187,7 +1190,9 @@
         }
         // Otherwise, load PG data from browser local storage
         else if(initialPg) {
+          byProgram = true;
           editor.setValue(initialPg);
+          byProgram = false;
           editor.getDoc().clearHistory();
         }
         configEditor.setValue(configText);

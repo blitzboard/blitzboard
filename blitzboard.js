@@ -1254,6 +1254,7 @@ class Blitzboard {
   showLoader(text = "Now loading...") {
     this.screen.style.display = 'flex';
     this.screenText.innerText = text;
+    this.screenText.style.display = text ? 'block' : 'none';
   }
   
   hideLoader() {
