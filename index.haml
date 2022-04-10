@@ -257,22 +257,24 @@
                   %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
                   %path{:d => "M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"}
           %li.nav-item
-            %label.btn.dropdown.text-white#export-btn{ title: "Export", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom' }
-              #export-dropdown{ 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
-                %svg.bi.bi-download{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
-                  %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
-                  %path{:d => "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"}
-              .dropdown-menu.dropdown-menu-right{ 'aria-labelledby': "export-dropdown" }
-                %a#export-zip-btn.dropdown-item{ href: '#' }
-                  Zip
-                %a#export-cypher-btn.dropdown-item{ href: '#' }
-                  Cypher Query
-                %a#export-pgql-btn.dropdown-item{ href: '#' }
-                  PGQL Query
-                %a#export-sql-btn.dropdown-item{ href: '#' }
-                  SQL Query
-                %a.dropdown-item#embed-btn{ href: '#' }
-                  JavaScript
+            .dropdown
+              .btn.text-white#export-btn{ title: "Export", href: '#', 'data-toggle': 'dropdown',
+               'data-toggle-seccond': 'tooltip', 'data-placement': 'bottom' }
+                #export-dropdown.dropdown-content{ 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false }
+                  %svg.bi.bi-download{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+                    %path{:d => "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"}
+                    %path{:d => "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"}
+                .dropdown-menu.dropdown-menu-right{ 'aria-labelledby': "export-dropdown" }
+                  %a#export-zip-btn.dropdown-item{ href: '#' }
+                    Zip
+                  %a#export-cypher-btn.dropdown-item{ href: '#' }
+                    Cypher Query
+                  %a#export-pgql-btn.dropdown-item{ href: '#' }
+                    PGQL Query
+                  %a#export-sql-btn.dropdown-item{ href: '#' }
+                    SQL Query
+                  %a.dropdown-item#embed-btn{ href: '#' }
+                    JavaScript
           %li.nav-item
             %label.btn.text-white#share-btn{ title: "Share", href: '#', 'data-toggle': 'tooltip', 'data-placement': 'bottom' }
               %svg.bi.bi-share-fill{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
@@ -1283,7 +1285,7 @@
             break;
         }
   
-        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-toggle="tooltip"], [data-toggle-seccond="tooltip"]').tooltip()
         .on('click', function() {
           $(this).tooltip('hide');
         });
