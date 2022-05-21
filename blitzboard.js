@@ -43,6 +43,8 @@ class Blitzboard {
       lng: 'lng',
       lat: 'lat'
     },
+    extraOptions: {
+    }
   };
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
   static iconSizeCoef = 1.5;
@@ -840,6 +842,7 @@ class Blitzboard {
       },
     };
 
+    this.options = Object.assign(this.options, config.extraOptions);
     this.network = new vis.Network(this.networkContainer, data, this.options);
 
     if(this.config.layout === 'map') {
