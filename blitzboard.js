@@ -842,7 +842,7 @@ class Blitzboard {
       },
     };
 
-    this.options = Object.assign(this.options, config.extraOptions);
+    this.options = Object.assign(this.options, this.config.extraOptions);
     this.network = new vis.Network(this.networkContainer, data, this.options);
 
     if(this.config.layout === 'map') {
