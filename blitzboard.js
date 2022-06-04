@@ -704,8 +704,8 @@ class Blitzboard {
             if (i < edge.location.end.line || edge.location.end.column > 1)
               this.edgeLineMap[i] = visEdge;
           }
+          this.maxLine = Math.max(this.maxLine, edge.location.end.line);
         }
-        this.maxLine = Math.max(this.maxLine, edge.location.end.line);
       });
 
       nodesToDelete.forEach((nodeId) => {
