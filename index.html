@@ -295,6 +295,9 @@ PGQL Query
 <a class='dropdown-item' href='#' id='export-sql-btn'>
 SQL Query
 </a>
+<a class='dropdown-item' href='#' id='export-png-btn'>
+PNG
+</a>
 <a class='dropdown-item' href='#' id='embed-btn'>
 JavaScript
 </a>
@@ -1065,6 +1068,17 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       output = output + query + '\n';
     });
     saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.sql');
+  });
+  
+  q('#export-png-btn').addEventListener('click', () => {
+    let url = blitzboard.network.canvas.getContext().canvas.toDataURL("image/png");
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'graph_' + currentTimeString() + '.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    $('#export-btn').dropdown('toggle');
   });
   
   editor = CodeMirror.fromTextArea(q('#graph-input'), {

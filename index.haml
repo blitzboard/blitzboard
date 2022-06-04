@@ -273,6 +273,8 @@
                     PGQL Query
                   %a#export-sql-btn.dropdown-item{ href: '#' }
                     SQL Query
+                  %a#export-png-btn.dropdown-item{ href: '#' }
+                    PNG
                   %a.dropdown-item#embed-btn{ href: '#' }
                     JavaScript
           %li.nav-item
@@ -1019,6 +1021,17 @@
           output = output + query + '\n';
         });
         saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.sql');
+      });
+      
+      q('#export-png-btn').addEventListener('click', () => {
+        let url = blitzboard.network.canvas.getContext().canvas.toDataURL("image/png");
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = 'graph_' + currentTimeString() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        $('#export-btn').dropdown('toggle');
       });
 
       editor = CodeMirror.fromTextArea(q('#graph-input'), {
