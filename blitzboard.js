@@ -449,19 +449,24 @@ class Blitzboard {
     return attrs;
   }
   
+  retrieveProp(pgElem, config) {
+    if((typeof config) === 'function') {
+      return config(new Proxy(pgElem, Blitzboard.blitzProxy));
+    } else if((typeof config) === 'string' && config.startsWith('@')) {
+      return pgElem.properties[config.substr(1)]?.[0];
+    }
+    return config; // return as constant
+  }
+  
   retrieveConfigProp(pgElem, type, propName) {
     const labels = pgElem.labels.join('_');
     let propConfig = this.config?.[type][propName];
-    if((typeof propConfig) === 'function') {
-      return propConfig(new Proxy(pgElem, Blitzboard.blitzProxy));
-    } else if((typeof propConfig) === 'object') {
-      return pgElem.properties[this.config?.[type][propName][labels]]?.[0];
-    } else if((typeof propConfig) === 'string' && propConfig.startsWith('@')) {
-      return pgElem.properties[propConfig.substr(1)]?.[0];
+    if ((typeof propConfig) === 'object') {
+      return this.retrieveProp(pgElem, propConfig[labels])
     }
-    return propConfig; // return as constant
+    return this.retrieveProp(pgElem, propConfig);
   }
-
+  
   toVisEdge(pgEdge, props = this.config.edge.caption, id) {
     const edgeLabel = pgEdge.labels.join('_');
     if (!this.edgeColorMap[edgeLabel]) {
