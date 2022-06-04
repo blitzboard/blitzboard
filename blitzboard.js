@@ -115,6 +115,7 @@ class Blitzboard {
     this.onEdgeAdded = [];
     this.onNodeFocused = [];
     this.onEdgeFocused = [];
+    this.onUpdated = [];
     this.maxLine = 0;
     this.scrollAnimationTimerId = null;
     this.screen = document.createElement('div');
@@ -660,6 +661,11 @@ class Blitzboard {
     let blitzboard = this;
     this.warnings = [];
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
+
+    for(let callback of this.onUpdated) {
+      callback();
+    }
+    
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
       let newEdgeMap = {};

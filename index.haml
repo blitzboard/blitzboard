@@ -334,6 +334,7 @@
       let prevNetwork = null;
       let viewMode = loadConfig('viewMode');
       let savedGraphs = [];
+      let bufferedContent = ''; // A buffer to avoid calling editor.setValue() too often
       let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
       let dateTimeFormat = new Intl.DateTimeFormat('default', {
         year: 'numeric', month: 'numeric', day: 'numeric',
@@ -365,7 +366,7 @@
       
       blitzboard.onNodeAdded.push((nodes) => {
         byProgram = true;
-        let content = editor.getValue();
+        let content = bufferedContent || editor.getValue();
         for(let node of nodes) {
           content += `\n${node.id.quoteIfNeeded()}`;
           for(let label of node.labels)
@@ -374,15 +375,23 @@
             for(let value of node.properties[key])
               content += ` ${key.quoteIfNeeded()}:${value.quoteIfNeeded()}`;
         }
-        editor.setValue(content);
+        bufferedContent = content;
         byProgram = false;
+      });
+      
+      
+      blitzboard.onUpdated.push((nodes) => {
+        if(bufferedContent) {
+          editor.setValue(bufferedContent);
+          bufferedContent = null;
+        }
         updateAutoCompletion();
-        localStorage.setItem('pg', content);
+        localStorage.setItem('pg', editor.getValue());
       });
       
       blitzboard.onEdgeAdded.push((edges) => {
         byProgram = true;
-        let content = editor.getValue();
+        let content = bufferedContent || editor.getValue();
         for(let edge of edges) {
           content += `\n${edge.from.quoteIfNeeded()} ${edge.direction} ${edge.to.quoteIfNeeded()}`;
           for(let label of edge.labels)
@@ -391,10 +400,8 @@
             for(let value of edge.properties[key])
               content += ` ${key.quoteIfNeeded()}:${value.quoteIfNeeded()}`;
         }
-        editor.setValue(content);
+        bufferedContent = content;
         byProgram = false;
-        updateAutoCompletion();
-        localStorage.setItem('pg', content);
       });
       
       q('#url-input').addEventListener('change', () => {
