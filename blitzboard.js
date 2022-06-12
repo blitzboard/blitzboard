@@ -662,10 +662,6 @@ class Blitzboard {
     this.warnings = [];
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
 
-    for(let callback of this.onUpdated) {
-      callback();
-    }
-    
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
       let newEdgeMap = {};
@@ -715,15 +711,17 @@ class Blitzboard {
       });
 
       nodesToDelete.forEach((nodeId) => {
-        this.nodeDataSet.remove(this.nodeMap[nodeId]);
         delete this.nodeMap[nodeId];
       });
+      this.nodeDataSet.remove([...nodesToDelete]);
 
+      let edgesToDelete = [];
       for(let edgeId of Object.keys(this.edgeMap)) {
         if(!newEdgeMap[edgeId]) {
-          this.edgeDataSet.remove(edgeId);
+          edgesToDelete.push(edgeId);
         }
       }
+      this.edgeDataSet.remove(edgesToDelete);
       this.edgeMap = newEdgeMap;
       if(this.map) {
         blitzboard.updateNodeLocationOnMap();
@@ -756,6 +754,10 @@ class Blitzboard {
 
     if(applyDiff) {
       this.validateGraph();
+
+      for(let callback of this.onUpdated) {
+        callback();
+      }
       return;
     }
 
@@ -1168,6 +1170,10 @@ class Blitzboard {
         }
       }
     });
+
+    for(let callback of this.onUpdated) {
+      callback();
+    }
   }
 
 
