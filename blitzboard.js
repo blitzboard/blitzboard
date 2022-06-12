@@ -45,6 +45,7 @@ class Blitzboard {
       lng: 'lng',
       lat: 'lat'
     },
+    style: "border: solid 1px silver; background: radial-gradient(white, silver);",
     extraOptions: {
     }
   };
@@ -676,6 +677,10 @@ class Blitzboard {
     let blitzboard = this;
     this.warnings = [];
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
+    
+    if(this.config.style) {
+      this.container.style = this.config.style;
+    }
 
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
