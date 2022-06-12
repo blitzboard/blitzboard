@@ -382,8 +382,10 @@
       
       blitzboard.onUpdated.push((nodes) => {
         if(bufferedContent) {
+          byProgram = true;
           editor.setValue(bufferedContent);
           bufferedContent = null;
+          byProgram = false;
         }
         updateAutoCompletion();
         localStorage.setItem('pg', editor.getValue());
@@ -862,6 +864,9 @@
 
       q('#import-btn').addEventListener('change', (evt) => {
         function handleFile(f) {
+          let nameWithoutExtension = f.name.includes('.') ? f.name.split('.').slice(0, -1).join('.') : f.name;
+          // Remove datetime part like '****_20200101123045
+          nameWithoutExtension = nameWithoutExtension.replace(/_\d{8,15}$/, '');
           JSZip.loadAsync(f).then(function(zip) {
             if (!zip.file("graph.pg") || !zip.file("config.js")) {
               alert("Invalid zip file");
@@ -871,7 +876,7 @@
                 zip.file("config.js").async("string").then(function success(content) {
                   let config = content;
                   // The same process as #new-btn is clicked
-                  let name = newGraphName('Imported');
+                  let name = newGraphName(nameWithoutExtension);
                   editor.setValue(graph);
                   configEditor.setValue(config);
                   saveCurrentGraph();
@@ -1239,10 +1244,13 @@
           saveCurrentGraph();
           updateGraph(editor.getValue(), config);
           clearTimeout(configTimerId);
+          blitzboard.hideLoader();
           configTimerId = null;
         }
   
         function onConfigChanged(delta) {
+          if(!configTimerId)
+            blitzboard.showLoader('');
           clearTimeout(configTimerId);
           configTimerId = setTimeout(reloadConfig, 2000);
         }
