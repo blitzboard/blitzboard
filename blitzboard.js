@@ -588,7 +588,10 @@ class Blitzboard {
     this.prevMouseEvent = null;
     this.dragging = false;
     let newPg;
-    if (typeof input === 'string' || input instanceof String) {
+    if (!input) {
+      newPg = tryPgParse(''); // Set empty pg
+    }
+    else if (typeof input === 'string' || input instanceof String) {
       try {
         newPg = JSON.parse(input);
       } catch (err) {
