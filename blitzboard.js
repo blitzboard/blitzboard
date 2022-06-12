@@ -21,6 +21,7 @@ class Blitzboard {
       thumbnail: 'thumbnail',
       saturation: '100%',
       brightness: '37%',
+      limit: 500
     },
     edge: {
       caption: ['label'],
@@ -32,6 +33,7 @@ class Blitzboard {
       },
       saturation: '0%',
       brightness: '62%',
+      limit: 10000
     },
     zoom: { 
       max: 3.0,
@@ -641,6 +643,16 @@ class Blitzboard {
     let nonunique = nonuniqueNodes(this.graph.nodes);
     if(nonunique.length > 0) {
       throw new DuplicateNodeError(nonunique);
+    }
+    
+    if(this.graph.nodes.length >= this.config.node.limit) {
+      throw new Error(`The number of nodes exceeds the current limit: ${this.config.node.limit}. ` +
+        `You can change it via node.limit in your config.`);
+    }
+
+    if(this.graph.edges.length >= this.config.edge.limit) {
+      throw new Error(`The number of edges exceeds the current limit: ${this.config.edge.limit}. ` +
+        `You can change it via edge.limit in your config.`);
     }
 
     // If edge refers to undefined nodes, create warnings
