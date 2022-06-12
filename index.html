@@ -429,8 +429,10 @@ You -> I :say word:Goodbye date:yesterday</textarea>
   
   blitzboard.onUpdated.push((nodes) => {
     if(bufferedContent) {
+      byProgram = true;
       editor.setValue(bufferedContent);
       bufferedContent = null;
+      byProgram = false;
     }
     updateAutoCompletion();
     localStorage.setItem('pg', editor.getValue());
