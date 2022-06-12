@@ -359,7 +359,8 @@ class Blitzboard {
       x: x,
       y: y,
       font: {
-        color: url ? 'blue' : 'black'
+        color: url ? 'blue' : 'black',
+        strokeWidth: 2,
       },
       fixedByTime: fixed
     };
