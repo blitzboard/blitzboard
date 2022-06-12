@@ -1289,9 +1289,12 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       updateGraph(editor.getValue(), config);
       clearTimeout(configTimerId);
       configTimerId = null;
+      blitzboard.hideLoader();
     }
   
     function onConfigChanged(delta) {
+      if(!configTimerId)
+        blitzboard.showLoader('');
       clearTimeout(configTimerId);
       configTimerId = setTimeout(reloadConfig, 2000);
     }
