@@ -21,6 +21,7 @@ class Blitzboard {
       thumbnail: 'thumbnail',
       saturation: '100%',
       brightness: '37%',
+      limit: 500
     },
     edge: {
       caption: ['label'],
@@ -32,6 +33,7 @@ class Blitzboard {
       },
       saturation: '0%',
       brightness: '62%',
+      limit: 10000
     },
     zoom: { 
       max: 3.0,
@@ -43,6 +45,7 @@ class Blitzboard {
       lng: 'lng',
       lat: 'lat'
     },
+    style: "border: solid 1px silver; background: radial-gradient(white, silver);",
     extraOptions: {
     }
   };
@@ -326,12 +329,10 @@ class Blitzboard {
     } else {
       degree = 2; // assume degree to be two (default)
     }
-    
+
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
-    let size = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
-    let shape = this.retrieveConfigProp(pgNode, 'node', 'shape');
-    
+
     color = color || this.nodeColorMap[group];
     
     if(opacity < 1) {
@@ -343,8 +344,8 @@ class Blitzboard {
       id: pgNode.id,
       color: color,
       label: createLabelText(pgNode, props),
-      shape: shape || 'dot',
-      size: size || 25,
+      shape: 'dot',
+      size: 25,
       degree: degree,
       title: createTitleText(pgNode),
       fixed: {
@@ -356,10 +357,14 @@ class Blitzboard {
       x: x,
       y: y,
       font: {
-        color: url ? 'blue' : 'black'
+        color: url ? 'blue' : 'black',
+        strokeWidth: 2,
       },
       fixedByTime: fixed
     };
+    
+    attrs =  Object.assign(attrs, this.retrieveConfigPropAll(pgNode, 
+      'node', ['color', 'opacity']) );
     
     function iconRegisterer(name) {
       return (icons) => {
@@ -441,7 +446,6 @@ class Blitzboard {
       }
     }
     
-
     if(thumbnailUrl) {
       attrs['shape'] = 'image';
       attrs['image'] = thumbnailUrl;
@@ -467,14 +471,23 @@ class Blitzboard {
     }
     return this.retrieveProp(pgElem, propConfig);
   }
+
+  retrieveConfigPropAll(pgElem, type, except) {
+    let keys = Object.keys(this.config?.[type]);
+    let props = {};
+    for(let key of keys) {
+      if(except.includes(key))
+        continue;
+      props[key] = this.retrieveConfigProp(pgElem, type, key);
+    }
+    return props;
+  }
   
   toVisEdge(pgEdge, props = this.config.edge.caption, id) {
     const edgeLabel = pgEdge.labels.join('_');
     if (!this.edgeColorMap[edgeLabel]) {
       this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
     }
-    let length = this.retrieveConfigProp(pgEdge, 'edge','length');
-    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width')) || 1;
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
     
@@ -485,7 +498,7 @@ class Blitzboard {
       color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
     }
     
-    return {
+    let attrs = {
       id: id,
       from: pgEdge.from,
       to: pgEdge.to,
@@ -493,8 +506,7 @@ class Blitzboard {
       label: createLabelText(pgEdge, props),
       title: createTitleText(pgEdge),
       remoteId: id,
-      length: length,
-      width: width,
+      width: 1,
       hoverWidth: 0.5,
       smooth: this.map ? false : { roundness: 1 },
       arrows: {
@@ -502,7 +514,12 @@ class Blitzboard {
           enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
         },
       }
-    }
+    };
+    
+    attrs =  Object.assign(attrs, this.retrieveConfigPropAll(pgEdge,
+      'edge', ['color', 'opacity']) );
+    
+    return attrs;
   }
   
   includesNode(node) {
@@ -642,6 +659,16 @@ class Blitzboard {
     if(nonunique.length > 0) {
       throw new DuplicateNodeError(nonunique);
     }
+    
+    if(this.graph.nodes.length >= this.config.node.limit) {
+      throw new Error(`The number of nodes exceeds the current limit: ${this.config.node.limit}. ` +
+        `You can change it via node.limit in your config.`);
+    }
+
+    if(this.graph.edges.length >= this.config.edge.limit) {
+      throw new Error(`The number of edges exceeds the current limit: ${this.config.edge.limit}. ` +
+        `You can change it via edge.limit in your config.`);
+    }
 
     // If edge refers to undefined nodes, create warnings
     for(let edge of this.graph.edges) {
@@ -664,6 +691,10 @@ class Blitzboard {
     let blitzboard = this;
     this.warnings = [];
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
+    
+    if(this.config.style) {
+      this.container.style = this.config.style;
+    }
 
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
