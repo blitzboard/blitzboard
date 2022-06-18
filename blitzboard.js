@@ -329,12 +329,10 @@ class Blitzboard {
     } else {
       degree = 2; // assume degree to be two (default)
     }
-    
+
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
-    let size = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
-    let shape = this.retrieveConfigProp(pgNode, 'node', 'shape');
-    
+
     color = color || this.nodeColorMap[group];
     
     if(opacity < 1) {
@@ -346,8 +344,8 @@ class Blitzboard {
       id: pgNode.id,
       color: color,
       label: createLabelText(pgNode, props),
-      shape: shape || 'dot',
-      size: size || 25,
+      shape: 'dot',
+      size: 25,
       degree: degree,
       title: createTitleText(pgNode),
       fixed: {
@@ -364,6 +362,9 @@ class Blitzboard {
       },
       fixedByTime: fixed
     };
+    
+    attrs =  Object.assign(attrs, this.retrieveConfigPropAll(pgNode, 
+      'node', ['color', 'opacity']) );
     
     function iconRegisterer(name) {
       return (icons) => {
@@ -445,7 +446,6 @@ class Blitzboard {
       }
     }
     
-
     if(thumbnailUrl) {
       attrs['shape'] = 'image';
       attrs['image'] = thumbnailUrl;
@@ -471,14 +471,23 @@ class Blitzboard {
     }
     return this.retrieveProp(pgElem, propConfig);
   }
+
+  retrieveConfigPropAll(pgElem, type, except) {
+    let keys = Object.keys(this.config?.[type]);
+    let props = {};
+    for(let key of keys) {
+      if(except.includes(key))
+        continue;
+      props[key] = this.retrieveConfigProp(pgElem, type, key);
+    }
+    return props;
+  }
   
   toVisEdge(pgEdge, props = this.config.edge.caption, id) {
     const edgeLabel = pgEdge.labels.join('_');
     if (!this.edgeColorMap[edgeLabel]) {
       this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
     }
-    let length = this.retrieveConfigProp(pgEdge, 'edge','length');
-    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width')) || 1;
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
     
@@ -489,7 +498,7 @@ class Blitzboard {
       color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
     }
     
-    return {
+    let attrs = {
       id: id,
       from: pgEdge.from,
       to: pgEdge.to,
@@ -497,8 +506,7 @@ class Blitzboard {
       label: createLabelText(pgEdge, props),
       title: createTitleText(pgEdge),
       remoteId: id,
-      length: length,
-      width: width,
+      width: 1,
       hoverWidth: 0.5,
       smooth: this.map ? false : { roundness: 1 },
       arrows: {
@@ -506,7 +514,12 @@ class Blitzboard {
           enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
         },
       }
-    }
+    };
+    
+    attrs =  Object.assign(attrs, this.retrieveConfigPropAll(pgEdge,
+      'edge', ['color', 'opacity']) );
+    
+    return attrs;
   }
   
   includesNode(node) {
