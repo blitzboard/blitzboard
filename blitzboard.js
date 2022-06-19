@@ -12,7 +12,7 @@ class DuplicateNodeError extends Error {
 }
 
 class Blitzboard {
-  static fondLoaded = false;
+  static fontLoaded = false;
   static defaultConfig = {
     doubleClickWait: 200,
     node: {
@@ -25,12 +25,6 @@ class Blitzboard {
     },
     edge: {
       caption: ['label'],
-      length: {
-        distance: 'value',
-      },
-      width: {
-        flow: 'throughput',
-      },
       saturation: '0%',
       brightness: '62%',
       limit: 10000
@@ -54,6 +48,7 @@ class Blitzboard {
   static minScaleOnMap = 0.3;
   static maxScaleOnMap = 1.0;
   static mapContainerId = 'map';
+  static edgeDelimiter = '-';
   static nodeTemplate = {
     id: null,
     labels: [],
@@ -454,8 +449,8 @@ class Blitzboard {
     return attrs;
   }
   
-  retrieveProp(pgElem, config) {
-    if((typeof config) === 'function') {
+  retrieveProp(pgElem, config, loadFunction = true) {
+    if((typeof config) === 'function' && loadFunction) {
       return config(new Proxy(pgElem, Blitzboard.blitzProxy));
     } else if((typeof config) === 'string' && config.startsWith('@')) {
       return pgElem.properties[config.substr(1)]?.[0];
@@ -463,13 +458,13 @@ class Blitzboard {
     return config; // return as constant
   }
   
-  retrieveConfigProp(pgElem, type, propName) {
+  retrieveConfigProp(pgElem, type, propName, loadFunction = true) {
     const labels = pgElem.labels.join('_');
     let propConfig = this.config?.[type][propName];
     if ((typeof propConfig) === 'object') {
-      return this.retrieveProp(pgElem, propConfig[labels])
+      return this.retrieveProp(pgElem, propConfig[labels], loadFunction)
     }
-    return this.retrieveProp(pgElem, propConfig);
+    return this.retrieveProp(pgElem, propConfig, loadFunction);
   }
 
   retrieveConfigPropAll(pgElem, type, except) {
@@ -478,7 +473,8 @@ class Blitzboard {
     for(let key of keys) {
       if(except.includes(key))
         continue;
-      props[key] = this.retrieveConfigProp(pgElem, type, key);
+      // TODO: How can we allow functions for arbitrary config?
+      props[key] = this.retrieveConfigProp(pgElem, type, key, false);
     }
     return props;
   }
@@ -564,6 +560,18 @@ class Blitzboard {
   
   addEdge(edge, update = true) {
     this.addEdges([edge], update);
+  }
+  
+  highlightNodePath(nodes) {
+    let nodeIds = nodes;
+    if(nodes.length > 0 && typeof nodes[0] !== 'string') {
+      nodeIds = nodes.map((n) => n.id);
+    }
+    let edgeIds = [];
+    for(let i = 0; i < nodeIds.length - 1; ++i) {
+      edgeIds.push(`${nodeIds[i]}${Blitzboard.edgeDelimiter}${nodeIds[i + 1]}`);
+    }
+    this.network.selectEdges(edgeIds);
   }
 
   addEdges(edges, update = true) {
@@ -727,7 +735,7 @@ class Blitzboard {
       });
 
       this.graph.edges.forEach(edge => {
-        let id = toNodePairString(edge);
+        let id = this.toNodePairString(edge);
         while(newEdgeMap[id]) {
           id += '_';
         }
@@ -823,7 +831,7 @@ class Blitzboard {
     
     this.edgeMap = {};
     this.edgeDataSet = new vis.DataSet(this.graph.edges.map((edge) => {
-      let id = toNodePairString(edge);
+      let id = this.toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
       }
@@ -1149,8 +1157,8 @@ class Blitzboard {
       }
     });
 
-    if (!Blitzboard.fondLoaded && document.fonts) {
-      Blitzboard.fondLoaded = true;
+    if (!Blitzboard.fontLoaded && document.fonts) {
+      Blitzboard.fontLoaded = true;
       let blitzboard = this;
       // Decent browsers: Make sure the fonts are loaded.
       document.fonts.load('normal normal 400 24px/1 "FontAwesome"')
@@ -1314,6 +1322,10 @@ class Blitzboard {
   hideLoader() {
     this.screen.style.display = 'none';
   }
+
+  toNodePairString(pgEdge) {
+    return `${pgEdge.from}${Blitzboard.edgeDelimiter}${pgEdge.to}`;
+  }
 }
 
 let markers = [];
@@ -1375,9 +1387,6 @@ function retrieveHttpUrl(node) {
 }
 
 
-function toNodePairString(pgEdge) {
-  return `${pgEdge.from}-${pgEdge.to}`;
-}
 
 
 function wrapText(str, asHtml) {
