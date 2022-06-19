@@ -25,12 +25,6 @@ class Blitzboard {
     },
     edge: {
       caption: ['label'],
-      length: {
-        distance: 'value',
-      },
-      width: {
-        flow: 'throughput',
-      },
       saturation: '0%',
       brightness: '62%',
       limit: 10000
