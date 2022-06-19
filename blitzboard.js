@@ -449,8 +449,8 @@ class Blitzboard {
     return attrs;
   }
   
-  retrieveProp(pgElem, config) {
-    if((typeof config) === 'function') {
+  retrieveProp(pgElem, config, loadFunction = true) {
+    if((typeof config) === 'function' && loadFunction) {
       return config(new Proxy(pgElem, Blitzboard.blitzProxy));
     } else if((typeof config) === 'string' && config.startsWith('@')) {
       return pgElem.properties[config.substr(1)]?.[0];
@@ -458,13 +458,13 @@ class Blitzboard {
     return config; // return as constant
   }
   
-  retrieveConfigProp(pgElem, type, propName) {
+  retrieveConfigProp(pgElem, type, propName, loadFunction = true) {
     const labels = pgElem.labels.join('_');
     let propConfig = this.config?.[type][propName];
     if ((typeof propConfig) === 'object') {
-      return this.retrieveProp(pgElem, propConfig[labels])
+      return this.retrieveProp(pgElem, propConfig[labels], loadFunction)
     }
-    return this.retrieveProp(pgElem, propConfig);
+    return this.retrieveProp(pgElem, propConfig, loadFunction);
   }
 
   retrieveConfigPropAll(pgElem, type, except) {
@@ -473,7 +473,8 @@ class Blitzboard {
     for(let key of keys) {
       if(except.includes(key))
         continue;
-      props[key] = this.retrieveConfigProp(pgElem, type, key);
+      // TODO: How can we allow functions for arbitrary config?
+      props[key] = this.retrieveConfigProp(pgElem, type, key, false);
     }
     return props;
   }
