@@ -744,7 +744,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     $('#history-dropdown')[0].innerText = localStorage.getItem('currentGraphName');
   }
   
-  function loadSavedGraph() {
+  function loadSavedGraphs() {
     savedGraphs = [];
     for (let i = 0; i < localStorage.length; i++){
       if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
@@ -805,7 +805,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       }
       graph.name = newName;
       localStorage.setItem('saved-graph-' + graph.name, JSON.stringify(graph));
-      loadSavedGraph();
+      loadSavedGraphs();
     }
     e.stopPropagation();
   });
@@ -875,7 +875,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
     configEditor.setValue(defaultConfig);
     localStorage.setItem('currentGraphName', name);
     saveCurrentGraph();
-    loadSavedGraph();
+    loadSavedGraphs();
     showGraphName();
     updateGraph('', defaultConfig);
     loadGraph({name:name, pg: '', config: defaultConfig});
@@ -924,12 +924,17 @@ You -> I :say word:Goodbye date:yesterday</textarea>
               let config = content;
               // The same process as #new-btn is clicked
               let name = newGraphName(nameWithoutExtension);
+              byProgram = true;
               editor.setValue(graph);
               configEditor.setValue(config);
+              localStorage.setItem('pg', graph);
+              localStorage.setItem('currentGraphName', name);
               saveCurrentGraph();
-              loadSavedGraph();
+              loadSavedGraphs();
+              editor.getDoc().clearHistory();
+              configEditor.getDoc().clearHistory();
               showGraphName();
-              loadGraph({name:name, pg: graph, config: config});
+              byProgram = false;
             });
           });
         }
@@ -1369,7 +1374,7 @@ You -> I :say word:Goodbye date:yesterday</textarea>
       saveCurrentGraph();
     }
   
-    loadSavedGraph();
+    loadSavedGraphs();
     showGraphName();
   }
 </script>
