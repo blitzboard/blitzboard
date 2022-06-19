@@ -81,7 +81,7 @@ class Blitzboard {
     this.container.style.position = 'absolute';
     
     this.networkContainer = document.createElement('div');
-    this.networkContainer.style = `
+    this.networkContainer.style = this.networkContainerOriginalStyle = `
       height: 100%;
       width: 100%;
       top: 0;
@@ -701,7 +701,7 @@ class Blitzboard {
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
     
     if(this.config.style) {
-      this.container.style = this.config.style;
+      this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
 
     if(applyDiff) {
@@ -902,6 +902,7 @@ class Blitzboard {
 
     if(this.config.layout === 'map') {
       this.mapContainer.style.display = 'block';
+      this.networkContainer.style.background = 'transparent';
       let statistics = statisticsOfMap();
       let center = this.config?.layoutSettings?.center || statistics.center;
       if(this.map) {
