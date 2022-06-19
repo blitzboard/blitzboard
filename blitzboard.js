@@ -48,6 +48,7 @@ class Blitzboard {
   static minScaleOnMap = 0.3;
   static maxScaleOnMap = 1.0;
   static mapContainerId = 'map';
+  static edgeDelimiter = '-';
   static nodeTemplate = {
     id: null,
     labels: [],
@@ -559,6 +560,18 @@ class Blitzboard {
   addEdge(edge, update = true) {
     this.addEdges([edge], update);
   }
+  
+  highlightNodePath(nodes) {
+    let nodeIds = nodes;
+    if(nodes.length > 0 && typeof nodes[0] !== 'string') {
+      nodeIds = nodes.map((n) => n.id);
+    }
+    let edgeIds = [];
+    for(let i = 0; i < nodeIds.length - 1; ++i) {
+      edgeIds.push(`${nodeIds[i]}${Blitzboard.edgeDelimiter}${nodeIds[i + 1]}`);
+    }
+    this.network.selectEdges(edgeIds);
+  }
 
   addEdges(edges, update = true) {
     let newEdges;
@@ -721,7 +734,7 @@ class Blitzboard {
       });
 
       this.graph.edges.forEach(edge => {
-        let id = toNodePairString(edge);
+        let id = this.toNodePairString(edge);
         while(newEdgeMap[id]) {
           id += '_';
         }
@@ -817,7 +830,7 @@ class Blitzboard {
     
     this.edgeMap = {};
     this.edgeDataSet = new vis.DataSet(this.graph.edges.map((edge) => {
-      let id = toNodePairString(edge);
+      let id = this.toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
       }
@@ -1308,6 +1321,10 @@ class Blitzboard {
   hideLoader() {
     this.screen.style.display = 'none';
   }
+
+  toNodePairString(pgEdge) {
+    return `${pgEdge.from}${Blitzboard.edgeDelimiter}${pgEdge.to}`;
+  }
 }
 
 let markers = [];
@@ -1369,9 +1386,6 @@ function retrieveHttpUrl(node) {
 }
 
 
-function toNodePairString(pgEdge) {
-  return `${pgEdge.from}-${pgEdge.to}`;
-}
 
 
 function wrapText(str, asHtml) {
