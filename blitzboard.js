@@ -81,7 +81,7 @@ class Blitzboard {
     this.container.style.position = 'absolute';
     
     this.networkContainer = document.createElement('div');
-    this.networkContainer.style = `
+    this.networkContainer.style = this.networkContainerOriginalStyle = `
       height: 100%;
       width: 100%;
       top: 0;
@@ -701,7 +701,7 @@ class Blitzboard {
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
     
     if(this.config.style) {
-      this.container.style = this.config.style;
+      this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
 
     if(applyDiff) {
@@ -902,6 +902,7 @@ class Blitzboard {
 
     if(this.config.layout === 'map') {
       this.mapContainer.style.display = 'block';
+      this.networkContainer.style.background = 'transparent';
       let statistics = statisticsOfMap();
       let center = this.config?.layoutSettings?.center || statistics.center;
       if(this.map) {
@@ -1010,13 +1011,15 @@ class Blitzboard {
     this.network.on("hoverNode", (e) => {
       this.network.canvas.body.container.style.cursor = 'default';
       const node = this.nodeDataSet.get(e.node);
-      if(node && node.url) {
-        this.network.canvas.body.container.style.cursor = 'pointer';
-        this.nodeDataSet.update({
-          id: e.node,
-          color: '#8888ff',
-        });
-        if(this.config.node.onHover) {
+      if(node) {
+        if (node.url) {
+          this.network.canvas.body.container.style.cursor = 'pointer';
+          this.nodeDataSet.update({
+            id: e.node,
+            color: '#8888ff',
+          });
+        }
+        if (this.config.node.onHover) {
           this.config.node.onHover(this.getNode(e.node));
         }
       } else if(node && node.degree > 1 && !this.expandedNodes.includes(e.node)) {
