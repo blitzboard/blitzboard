@@ -1011,13 +1011,15 @@ class Blitzboard {
     this.network.on("hoverNode", (e) => {
       this.network.canvas.body.container.style.cursor = 'default';
       const node = this.nodeDataSet.get(e.node);
-      if(node && node.url) {
-        this.network.canvas.body.container.style.cursor = 'pointer';
-        this.nodeDataSet.update({
-          id: e.node,
-          color: '#8888ff',
-        });
-        if(this.config.node.onHover) {
+      if(node) {
+        if (node.url) {
+          this.network.canvas.body.container.style.cursor = 'pointer';
+          this.nodeDataSet.update({
+            id: e.node,
+            color: '#8888ff',
+          });
+        }
+        if (this.config.node.onHover) {
           this.config.node.onHover(this.getNode(e.node));
         }
       } else if(node && node.degree > 1 && !this.expandedNodes.includes(e.node)) {
