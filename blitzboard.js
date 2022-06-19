@@ -12,7 +12,7 @@ class DuplicateNodeError extends Error {
 }
 
 class Blitzboard {
-  static fondLoaded = false;
+  static fontLoaded = false;
   static defaultConfig = {
     doubleClickWait: 200,
     node: {
@@ -1156,8 +1156,8 @@ class Blitzboard {
       }
     });
 
-    if (!Blitzboard.fondLoaded && document.fonts) {
-      Blitzboard.fondLoaded = true;
+    if (!Blitzboard.fontLoaded && document.fonts) {
+      Blitzboard.fontLoaded = true;
       let blitzboard = this;
       // Decent browsers: Make sure the fonts are loaded.
       document.fonts.load('normal normal 400 24px/1 "FontAwesome"')
