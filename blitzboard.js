@@ -516,7 +516,7 @@ class Blitzboard {
       }
     };
 
-    let otherProps = this.retrieveConfigPropAll(pgNode,
+    let otherProps = this.retrieveConfigPropAll(pgEdge,
       'edge', ['color', 'opacity']);
 
     for(let key of Object.keys(otherProps)) {
