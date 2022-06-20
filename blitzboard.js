@@ -390,9 +390,7 @@ class Blitzboard {
             height: size
           });
           let img = new Image();
-          // svg.viewBox.baseVal.width = size;
-          // svg.viewBox.baseVal.height = size;
-          svg.querySelectorAll("path").forEach((path) => {
+          svg.querySelectorAll("path,circle,ellipse,rect").forEach((path) => {
             path.style.fill = "white";
             path.style.stroke = "white";
           });
