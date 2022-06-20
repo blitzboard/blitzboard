@@ -358,8 +358,12 @@ class Blitzboard {
       fixedByTime: fixed
     };
     
-    attrs =  Object.assign(attrs, this.retrieveConfigPropAll(pgNode, 
-      'node', ['color', 'opacity']) );
+    let otherProps = this.retrieveConfigPropAll(pgNode,
+      'node', ['color', 'opacity']);
+    
+    for(let key of Object.keys(otherProps)) {
+      attrs[key] = otherProps[key] || attrs[key];
+    }
     
     function iconRegisterer(name) {
       return (icons) => {
@@ -511,9 +515,13 @@ class Blitzboard {
         },
       }
     };
-    
-    attrs =  Object.assign(attrs, this.retrieveConfigPropAll(pgEdge,
-      'edge', ['color', 'opacity']) );
+
+    let otherProps = this.retrieveConfigPropAll(pgNode,
+      'edge', ['color', 'opacity']);
+
+    for(let key of Object.keys(otherProps)) {
+      attrs[key] = otherProps[key] || attrs[key];
+    }
     
     return attrs;
   }
