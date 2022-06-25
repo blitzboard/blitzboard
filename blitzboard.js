@@ -327,6 +327,7 @@ class Blitzboard {
 
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
+    let size  = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
 
     color = color || this.nodeColorMap[group];
     
@@ -340,7 +341,7 @@ class Blitzboard {
       color: color,
       label: createLabelText(pgNode, props),
       shape: 'dot',
-      size: 25,
+      size: size || 25,
       degree: degree,
       title: createTitleText(pgNode),
       fixed: {
@@ -359,7 +360,7 @@ class Blitzboard {
     };
     
     let otherProps = this.retrieveConfigPropAll(pgNode,
-      'node', ['color', 'opacity']);
+      'node', ['color', 'size', 'opacity']);
     
     for(let key of Object.keys(otherProps)) {
       attrs[key] = otherProps[key] || attrs[key];
@@ -488,7 +489,8 @@ class Blitzboard {
     }
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
-    
+    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width'));
+
     color = color || this.edgeColorMap[edgeLabel];
 
     if(opacity < 1) {
@@ -504,7 +506,7 @@ class Blitzboard {
       label: createLabelText(pgEdge, props),
       title: createTitleText(pgEdge),
       remoteId: id,
-      width: 1,
+      width: width || 1,
       hoverWidth: 0.5,
       smooth: this.map ? false : { roundness: 1 },
       arrows: {
@@ -515,7 +517,7 @@ class Blitzboard {
     };
 
     let otherProps = this.retrieveConfigPropAll(pgEdge,
-      'edge', ['color', 'opacity']);
+      'edge', ['color', 'opacity', 'width']);
 
     for(let key of Object.keys(otherProps)) {
       attrs[key] = otherProps[key] || attrs[key];
