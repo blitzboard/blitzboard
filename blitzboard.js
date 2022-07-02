@@ -77,6 +77,7 @@ class Blitzboard {
     this.edgeLineMap = {};
     this.prevZoomPosition = null;
     this.warnings = [];
+    this.elementWithTooltip = null;
     
     this.container.style.position = 'absolute';
     
@@ -100,6 +101,10 @@ class Blitzboard {
       z-index: 1;
     `;
     this.map = null;
+    this.tooltipDummy = document.createElement('div');
+    this.tooltipDummy.style.position = 'absolute';
+    this.tooltipDummy.style['background-color'] = 'rgba(0, 0, 0, 0)';
+
 
     this.minTime = new Date(8640000000000000);
     this.maxTime = new Date(-8640000000000000);
@@ -143,6 +148,7 @@ class Blitzboard {
     container.appendChild(this.screen);
     container.appendChild(this.networkContainer);
     container.appendChild(this.mapContainer);
+    container.appendChild(this.tooltipDummy);
 
     this.container.addEventListener('wheel', (e) => {
       if(blitzboard.config.layout === 'map')
@@ -175,10 +181,18 @@ class Blitzboard {
       blitzboard.dragging = false;
       blitzboard.prevMouseEvent = null;
     }, true);
+    
 
     this.container.addEventListener('mousemove', (e) => {
       if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMouseEvent) {
         blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
+      }
+      blitzboard.lastMousePosition = {
+        x: e.offsetX,
+        y: e.offsetY,
+      };
+      if(blitzboard.elementWithTooltip?.edge) {
+        updateTooltipLocation();
       }
       blitzboard.prevMouseEvent = e;
       blitzboard.currentLatLng = null;
@@ -303,6 +317,43 @@ class Blitzboard {
     }
     return null;
   }
+  
+  updateTooltipLocation() {
+    if(!this.elementWithTooltip)
+      return;
+    let position;
+    if(this.elementWithTooltip.node) {
+      position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
+      position.x -= this.elementWithTooltip.node.size * this.network.getScale();
+    }
+    else {
+      position = blitzboard.lastMousePosition;
+    }
+    this.tooltipDummy.style.left = `${position.x}px`;
+    this.tooltipDummy.style.top = `${position.y}px`;
+    $(this.tooltipDummy).tooltip('update');
+  }
+  
+  showTooltip() {
+    this.updateTooltipLocation();
+    let container = $(this.tooltipDummy);
+    let title = this.elementWithTooltip.node ? this.elementWithTooltip.node._title : this.elementWithTooltip.edge._title;
+    if(!title)
+      title = 'No props';
+    container.tooltip('dispose');
+    container.tooltip({
+      html: true,
+      placement: 'left',
+      trigger: 'manual',
+      title: title,
+    });
+    container.tooltip('show');
+  }
+  
+  hideTooltip() {
+    $(this.tooltipDummy).tooltip('hide');
+    this.elementWithTooltip = null;
+  }
 
   toVisNode(pgNode, props, extraOptions = null) {
     const group = [...pgNode.labels].sort().join('_');
@@ -328,6 +379,7 @@ class Blitzboard {
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
     let size  = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
+    let tooltip  = this.retrieveConfigProp(pgNode, 'node', 'tooltip');
 
     color = color || this.nodeColorMap[group];
     
@@ -343,7 +395,7 @@ class Blitzboard {
       shape: 'dot',
       size: size || 25,
       degree: degree,
-      title: createTitleText(pgNode),
+      _title: tooltip || createTitleText(pgNode),
       fixed: {
         x: fixed,
         y: this.config.layout === 'timeline' ? false : fixed
@@ -491,6 +543,7 @@ class Blitzboard {
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
     let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width'));
+    let tooltip  = this.retrieveConfigProp(pgEdge, 'edge', 'tooltip');
 
     color = color || this.edgeColorMap[edgeLabel];
 
@@ -505,7 +558,7 @@ class Blitzboard {
       to: pgEdge.to,
       color: color,
       label: createLabelText(pgEdge, props),
-      title: createTitleText(pgEdge),
+      _title: tooltip || createTitleText(pgEdge),
       remoteId: id,
       width: width || 1,
       hoverWidth: 0.5,
@@ -621,6 +674,7 @@ class Blitzboard {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
     this.prevMouseEvent = null;
+    this.lastMousePosition = null;
     this.dragging = false;
     let newPg;
     if (!input) {
@@ -942,6 +996,9 @@ class Blitzboard {
       this.map = null;
     }
 
+    this.network.on('zoom', (e) => {
+      blitzboard.updateTooltipLocation();
+    });
 
     this.network.on('resize', (e) => {
       if(blitzboard.config.layout === 'map') {
@@ -1032,10 +1089,62 @@ class Blitzboard {
         if (this.config.node.onHover) {
           this.config.node.onHover(this.getNode(e.node));
         }
+        
+        if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+          this.elementWithTooltip = {
+            node: node
+          };
+          this.showTooltip();
+        }
       } else if(node && node.degree > 1 && !this.expandedNodes.includes(e.node)) {
         this.network.canvas.body.container.style.cursor = 'pointer';
       }
     });
+
+    this.network.on("hoverEdge", (e) => {
+      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+        const edge = this.edgeDataSet.get(e.edge);
+        if (edge) {
+          this.elementWithTooltip = {
+            edge: edge,
+            position: {
+              x: e.event.offsetX,
+              y: e.event.offsetY,
+            }
+          };
+          this.showTooltip();
+        }
+      }
+    });
+
+    this.network.on("selectNode", (e) => {
+      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+        const node = this.nodeDataSet.get(e.nodes[0]);
+        if (node) {
+          this.elementWithTooltip = {
+            node: node
+          };
+          this.showTooltip();
+        }
+      }
+    });
+
+    this.network.on("selectEdge", (e) => {
+      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+        const edge = this.edgeDataSet.get(e.edges[0]);
+        if (edge) {
+          this.elementWithTooltip = {
+            edge: edge,
+            position: {
+              x: e.x,
+              y: e.y,
+            }
+          };
+          this.showTooltip();
+        }
+      }
+    });
+    
 
     function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
       let currentTime = new Date(startTime);
@@ -1080,6 +1189,7 @@ class Blitzboard {
     }
     
     this.network.on("afterDrawing", (ctx) => {
+      this.updateTooltipLocation();
       for(let node of this.graph.nodes) {
         node = this.nodeDataSet.get(node.id);
         if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon)) {
@@ -1168,6 +1278,21 @@ class Blitzboard {
           color: null,
         });
       }
+      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length)
+        this.hideTooltip();
+    });
+
+    this.network.on("deselectNode", (params) => {
+      this.hideTooltip();
+    });
+
+    this.network.on("deselectEdge", (params) => {
+      this.hideTooltip();
+    });
+
+    this.network.on("blurEdge", (params) => {
+      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length)
+        this.hideTooltip();
     });
 
     if (!Blitzboard.fontLoaded && document.fonts) {
@@ -1423,12 +1548,23 @@ function createLabelText(elem, props = null) {
   }
 }
 
+function convertToHyperLinkIfURL(text) {
+  if(!text)
+    return text;
+  if(Array.isArray(text))
+    text = text[0];
+  if(text.startsWith('http://') || text.startsWith('https://') ) {
+    return `<a target="_blank" href="${text}">${wrapText(text)}</a>`;
+  }
+  return wrapText(text);
+}
+
 function createTitleText(elem) {
   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> : ${wrapText(prop[1], true)}</td></tr>`), []);
+    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
   if (elem.id) // for nodes
   {
-    let idText = `<tr><td><b>${elem.id}</b></td><td> : ${wrapText(elem.labels.join(':'), true)}</td></tr>`;
+    let idText = `<tr><td><b>${elem.id}</b></td><td> ${wrapText(elem.labels.join(':'), true)}</td></tr>`;
     flattend_props.splice(0, 0, idText);
   }
   if (flattend_props.length === 0) {
