@@ -352,6 +352,7 @@ class Blitzboard {
       url: url,
       x: x,
       y: y,
+      chosen: this.retrieveConfigProp(pgNode, 'node', 'chosen'),
       font: {
         color: url ? 'blue' : 'black',
         strokeWidth: 2,
@@ -509,6 +510,7 @@ class Blitzboard {
       width: width || 1,
       hoverWidth: 0.5,
       smooth: this.map ? false : { roundness: 1 },
+      chosen: this.retrieveConfigProp(pgEdge, 'edge', 'chosen'),
       arrows: {
         to: {
           enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
