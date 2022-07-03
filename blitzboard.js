@@ -192,7 +192,7 @@ class Blitzboard {
         y: e.offsetY,
       };
       if(blitzboard.elementWithTooltip?.edge) {
-        updateTooltipLocation();
+        this.updateTooltipLocation();
       }
       blitzboard.prevMouseEvent = e;
       blitzboard.currentLatLng = null;
@@ -208,6 +208,16 @@ class Blitzboard {
       blitzboard.dragging = true;
       blitzboard.prevMouseEvent = e;
     }, true);
+    
+    this.applyDynamicStyle(`
+      .tooltip-inner {
+        max-width: 600px;
+      }
+      .tooltip-inner th, .tooltip-inner td {
+        text-align: left;
+        padding-left: 10px;
+      }
+    `);
   }
 
   static blitzProxy = {
@@ -221,6 +231,14 @@ class Blitzboard {
       return Reflect.get(target, prop, receiver);
     }
   }
+
+  applyDynamicStyle(css) {
+    var styleTag = document.createElement('style');
+    var dynamicStyleCss = document.createTextNode(css);
+    styleTag.appendChild(dynamicStyleCss);
+    var header = document.getElementsByTagName('head')[0];
+    header.appendChild(styleTag);
+  };
 
   getHexColors(colorStr) {
     let computed = Blitzboard.renderedColors[colorStr];
@@ -343,9 +361,10 @@ class Blitzboard {
     container.tooltip('dispose');
     container.tooltip({
       html: true,
-      placement: 'left',
+      placement: 'auto',
       trigger: 'manual',
       title: title,
+      offset: "10px, 10px"
     });
     container.tooltip('show');
   }
@@ -1090,59 +1109,57 @@ class Blitzboard {
           this.config.node.onHover(this.getNode(e.node));
         }
         
-        if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
-          this.elementWithTooltip = {
-            node: node
-          };
-          this.showTooltip();
-        }
+        this.elementWithTooltip = {
+          node: node
+        };
+        this.showTooltip();
       } else if(node && node.degree > 1 && !this.expandedNodes.includes(e.node)) {
         this.network.canvas.body.container.style.cursor = 'pointer';
       }
     });
 
     this.network.on("hoverEdge", (e) => {
-      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
-        const edge = this.edgeDataSet.get(e.edge);
-        if (edge) {
-          this.elementWithTooltip = {
-            edge: edge,
-            position: {
-              x: e.event.offsetX,
-              y: e.event.offsetY,
-            }
-          };
-          this.showTooltip();
-        }
+      const edge = this.edgeDataSet.get(e.edge);
+      if (edge) {
+        this.elementWithTooltip = {
+          edge: edge,
+          position: {
+            x: e.event.offsetX,
+            y: e.event.offsetY,
+          }
+        };
+        this.showTooltip();
       }
     });
 
     this.network.on("selectNode", (e) => {
-      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
-        const node = this.nodeDataSet.get(e.nodes[0]);
-        if (node) {
-          this.elementWithTooltip = {
-            node: node
-          };
-          this.showTooltip();
-        }
-      }
+      // TODO: Should we show fixed tooltip on selection?
+      // if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+      //   const node = this.nodeDataSet.get(e.nodes[0]);
+      //   if (node) {
+      //     this.elementWithTooltip = {
+      //       node: node
+      //     };
+      //     this.showTooltip();
+      //   }
+      // }
     });
 
     this.network.on("selectEdge", (e) => {
-      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
-        const edge = this.edgeDataSet.get(e.edges[0]);
-        if (edge) {
-          this.elementWithTooltip = {
-            edge: edge,
-            position: {
-              x: e.x,
-              y: e.y,
-            }
-          };
-          this.showTooltip();
-        }
-      }
+      // TODO: Should we show fixed tooltip on selection?
+      // if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+      //   const edge = this.edgeDataSet.get(e.edges[0]);
+      //   if (edge) {
+      //     this.elementWithTooltip = {
+      //       edge: edge,
+      //       position: {
+      //         x: e.x,
+      //         y: e.y,
+      //       }
+      //     };
+      //     this.showTooltip();
+      //   }
+      // }
     });
     
 
@@ -1278,21 +1295,11 @@ class Blitzboard {
           color: null,
         });
       }
-      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length)
-        this.hideTooltip();
-    });
-
-    this.network.on("deselectNode", (params) => {
-      this.hideTooltip();
-    });
-
-    this.network.on("deselectEdge", (params) => {
       this.hideTooltip();
     });
 
     this.network.on("blurEdge", (params) => {
-      if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length)
-        this.hideTooltip();
+      this.hideTooltip();
     });
 
     if (!Blitzboard.fontLoaded && document.fonts) {
@@ -1561,10 +1568,13 @@ function convertToHyperLinkIfURL(text) {
 
 function createTitleText(elem) {
   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
+    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${wrapText(prop[1])}</td></tr>`), []);
   if (elem.id) // for nodes
   {
-    let idText = `<tr><td><b>${elem.id}</b></td><td> ${wrapText(elem.labels.join(':'), true)}</td></tr>`;
+    let idText = `<tr><td><b>${elem.id}</b></td><td> <b>:${wrapText(elem.labels.join(':'), true)}</b></td></tr>`;
+    flattend_props.splice(0, 0, idText);
+  } else {
+    let idText = `<tr><td><b>:${wrapText(elem.labels.join(':'), true)} </b></td><td></td></tr>`;
     flattend_props.splice(0, 0, idText);
   }
   if (flattend_props.length === 0) {
