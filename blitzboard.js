@@ -43,6 +43,7 @@ class Blitzboard {
     extraOptions: {
     }
   };
+  static tooltipMaxWidth = 600;
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
   static iconSizeCoef = 1.5;
   static minScaleOnMap = 0.3;
@@ -171,26 +172,25 @@ class Blitzboard {
         e.stopPropagation(); // Inhibit zoom on vis-network
       }
     }, true);
-
+    
     this.container.addEventListener('mouseout', (e) => {
-      blitzboard.prevMouseEvent = null;
       blitzboard.dragging = false;
     }, true);
 
     this.container.addEventListener('mouseup', (e) => {
       blitzboard.dragging = false;
-      blitzboard.prevMouseEvent = null;
     }, true);
-    
+
+
+    $(document).on('mouseleave', '.tooltip', (e) => {
+      if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
+        blitzboard.hideTooltip();
+    });
 
     this.container.addEventListener('mousemove', (e) => {
       if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMouseEvent) {
         blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
       }
-      blitzboard.lastMousePosition = {
-        x: e.offsetX,
-        y: e.offsetY,
-      };
       if(blitzboard.elementWithTooltip?.edge) {
         this.updateTooltipLocation();
       }
@@ -211,11 +211,15 @@ class Blitzboard {
     
     this.applyDynamicStyle(`
       .tooltip-inner {
-        max-width: 600px;
+        max-width: ${Blitzboard.tooltipMaxWidth}px;
+        background: rgba(0, 0, 0, 0.7);
       }
       .tooltip-inner th, .tooltip-inner td {
         text-align: left;
         padding-left: 10px;
+      }
+      .tooltip-inner a {
+        color: #88BBFF;
       }
     `);
   }
@@ -336,16 +340,26 @@ class Blitzboard {
     return null;
   }
   
+  tooltipShouldBeRight() {
+    if(window.innerWidth / 2 <= Blitzboard.tooltipMaxWidth) {
+      return this.prevMouseEvent.clientX < window.innerWidth / 2;
+    }
+    return this.prevMouseEvent.clientX < Blitzboard.tooltipMaxWidth + 20;
+  }
+  
   updateTooltipLocation() {
     if(!this.elementWithTooltip)
       return;
     let position;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
-      position.x -= this.elementWithTooltip.node.size * this.network.getScale();
+      position.x += (this.tooltipShouldBeRight() ? 1 : -1) * this.elementWithTooltip.node.size * this.network.getScale();
     }
     else {
-      position = blitzboard.lastMousePosition;
+      position = {
+        x: this.prevMouseEvent.offsetX,
+        y: this.prevMouseEvent.offsetY
+      };
     }
     this.tooltipDummy.style.left = `${position.x}px`;
     this.tooltipDummy.style.top = `${position.y}px`;
@@ -361,10 +375,9 @@ class Blitzboard {
     container.tooltip('dispose');
     container.tooltip({
       html: true,
-      placement: 'auto',
+      placement: this.tooltipShouldBeRight() ? 'right' : 'left',
       trigger: 'manual',
       title: title,
-      offset: "10px, 10px"
     });
     container.tooltip('show');
   }
@@ -693,7 +706,6 @@ class Blitzboard {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
     this.prevMouseEvent = null;
-    this.lastMousePosition = null;
     this.dragging = false;
     let newPg;
     if (!input) {
@@ -1568,7 +1580,7 @@ function convertToHyperLinkIfURL(text) {
 
 function createTitleText(elem) {
   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${wrapText(prop[1])}</td></tr>`), []);
+    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
   if (elem.id) // for nodes
   {
     let idText = `<tr><td><b>${elem.id}</b></td><td> <b>:${wrapText(elem.labels.join(':'), true)}</b></td></tr>`;
