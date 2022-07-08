@@ -1,8 +1,5 @@
 'use strict';
 
-const q = document.querySelector.bind(document);
-const qa = document.querySelectorAll.bind(document);
-
 class DuplicateNodeError extends Error {
   constructor(nodes) {
     super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
@@ -1604,19 +1601,6 @@ function getRandomColor(str, saturation, brightness) {
   }
   let hue = hash % 360;
   return 'hsl(' + hue + `, ${saturation}, ${brightness})`;
-}
-
-function setSearchState(searching) {
-  const icon =  q('#search-icon');
-  if(searching) {
-    icon.classList.remove("fa-search");
-    icon.classList.add("fa-spinner");
-    icon.classList.add("fa-spin");
-  } else {
-    icon.classList.add("fa-search");
-    icon.classList.remove("fa-spinner");
-    icon.classList.remove("fa-spin");
-  }
 }
 
 function isDateString(str) {
