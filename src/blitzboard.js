@@ -1,14 +1,10 @@
-'use strict';
+// require("bootstrap/dist/css/bootstrap.min.css");
+require('@popperjs/core');
+let bootstrap = require('bootstrap');
 
-class DuplicateNodeError extends Error {
-  constructor(nodes) {
-    super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
-    this.name = "NodeDuplicationError";
-    this.nodes = nodes;
-  }
-}
+console.log(bootstrap);
 
-class Blitzboard {
+module.exports = class Blitzboard {
   static fontLoaded = false;
   static defaultConfig = {
     doubleClickWait: 200,
@@ -147,6 +143,8 @@ class Blitzboard {
     container.appendChild(this.networkContainer);
     container.appendChild(this.mapContainer);
     container.appendChild(this.tooltipDummy);
+    
+    this.tooltip = null;
 
     this.container.addEventListener('wheel', (e) => {
       if(blitzboard.config.layout === 'map')
@@ -177,13 +175,7 @@ class Blitzboard {
     this.container.addEventListener('mouseup', (e) => {
       blitzboard.dragging = false;
     }, true);
-
-
-    $(document).on('mouseleave', '.tooltip', (e) => {
-      if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
-        blitzboard.hideTooltip();
-    });
-
+    
     this.container.addEventListener('mousemove', (e) => {
       if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMouseEvent) {
         blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
@@ -345,7 +337,7 @@ class Blitzboard {
   }
   
   updateTooltipLocation() {
-    if(!this.elementWithTooltip)
+    if(!this.tooltip)
       return;
     let position;
     if(this.elementWithTooltip.node) {
@@ -360,28 +352,50 @@ class Blitzboard {
     }
     this.tooltipDummy.style.left = `${position.x}px`;
     this.tooltipDummy.style.top = `${position.y}px`;
-    $(this.tooltipDummy).tooltip('update');
+    this.tooltip.update();
   }
   
   showTooltip() {
     this.updateTooltipLocation();
-    let container = $(this.tooltipDummy);
     let title = this.elementWithTooltip.node ? this.elementWithTooltip.node._title : this.elementWithTooltip.edge._title;
     if(!title)
-      title = 'No props';
-    container.tooltip('dispose');
-    container.tooltip({
-      html: true,
-      placement: this.tooltipShouldBeRight() ? 'right' : 'left',
-      trigger: 'manual',
-      title: title,
+      return;
+    if(this.tooltip) {
+      this.hideTooltip();
+    }
+    
+    this.tooltip = new bootstrap.Tooltip(this.tooltipDummy,
+      {
+        html: true,
+        placement: this.tooltipShouldBeRight() ? 'right' : 'left',
+        trigger: 'hover',
+        title: title,
+      });
+
+    $(this.tooltip._element).on('mouseleave', (e) => {
+     if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
+        blitzboard.hideTooltip();
     });
-    container.tooltip('show');
+    let blitzboard = this;
+
+    this.tooltip.show();
+    for(let elem of document.querySelectorAll('.tooltip')) {
+      elem.addEventListener('mouseleave', (e) => {
+        if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
+          blitzboard.hideTooltip();
+        }
+      );
+    }
   }
   
   hideTooltip() {
-    $(this.tooltipDummy).tooltip('hide');
-    this.elementWithTooltip = null;
+    if(this.tooltip) {
+      this.tooltip.hide();
+      let tooltip = this.tooltip;
+      setTimeout(() => tooltip.dispose(), 1000);
+      this.tooltip = null;
+      this.elementWithTooltip = null;
+    }
   }
 
   toVisNode(pgNode, props, extraOptions = null) {
@@ -1458,7 +1472,7 @@ class Blitzboard {
       this.scrollNetworkToPosition({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
     }
     if(select) {
-      blitzboard.network.selectEdges([edge.id]);
+      this.network.selectEdges([edge.id]);
     }
 
     for(let callback of this.onEdgeFocused) {
@@ -1481,6 +1495,15 @@ class Blitzboard {
     return `${pgEdge.from}${Blitzboard.edgeDelimiter}${pgEdge.to}`;
   }
 }
+
+class DuplicateNodeError extends Error {
+  constructor(nodes) {
+    super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
+    this.name = "NodeDuplicationError";
+    this.nodes = nodes;
+  }
+}
+
 
 let markers = [];
 let nodeProps, edgeProps;
@@ -1578,12 +1601,12 @@ function convertToHyperLinkIfURL(text) {
 function createTitleText(elem) {
   let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
     acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
-  if (elem.id) // for nodes
+  if (!elem.from) // for nodes
   {
-    let idText = `<tr><td><b>${elem.id}</b></td><td> <b>:${wrapText(elem.labels.join(':'), true)}</b></td></tr>`;
+    let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
     flattend_props.splice(0, 0, idText);
-  } else {
-    let idText = `<tr><td><b>:${wrapText(elem.labels.join(':'), true)} </b></td><td></td></tr>`;
+  } else if(elem.labels.length > 0) {
+    let idText = `<tr><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td><td></td></tr>`;
     flattend_props.splice(0, 0, idText);
   }
   if (flattend_props.length === 0) {
@@ -1634,4 +1657,3 @@ function htmlTitle(html) {
   container.innerHTML = html;
   return container;
 }
-
