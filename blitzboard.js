@@ -27,7 +27,8 @@ class Blitzboard {
       caption: ['label'],
       saturation: '0%',
       brightness: '62%',
-      limit: 10000
+      limit: 10000,
+      width: 2
     },
     zoom: { 
       max: 3.0,
