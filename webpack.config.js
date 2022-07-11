@@ -17,6 +17,6 @@ module.exports = {
     filename: "blitzboard.js",
     libraryTarget: "umd",
     library: "Blitzboard",
-    
-  }
+  },
+  devtool: 'source-map'
 };
