@@ -1,9 +1,3 @@
-// require("bootstrap/dist/css/bootstrap.min.css");
-require('@popperjs/core');
-let bootstrap = require('bootstrap');
-
-console.log(bootstrap);
-
 module.exports = class Blitzboard {
   static fontLoaded = false;
   static defaultConfig = {
@@ -97,7 +91,14 @@ module.exports = class Blitzboard {
     this.map = null;
     this.tooltipDummy = document.createElement('div');
     this.tooltipDummy.style.position = 'absolute';
+    this.tooltipDummy.classList.add('blitzboard-tooltip');
     this.tooltipDummy.style['background-color'] = 'rgba(0, 0, 0, 0)';
+    this.tooltipDummy.style['z-index'] = '998';
+
+    this.tooltip = document.createElement('span');
+    this.tooltip.classList.add('blitzboard-tooltiptext');
+    this.tooltip.classList.add('blitzboard-tooltiptext-top');
+    this.tooltip.style['z-index'] = '999';
 
 
     this.minTime = new Date(8640000000000000);
@@ -142,9 +143,8 @@ module.exports = class Blitzboard {
     container.appendChild(this.screen);
     container.appendChild(this.networkContainer);
     container.appendChild(this.mapContainer);
-    container.appendChild(this.tooltipDummy);
-    
-    this.tooltip = null;
+    document.body.appendChild(this.tooltipDummy);
+    this.tooltipDummy.appendChild(this.tooltip);
 
     this.container.addEventListener('wheel', (e) => {
       if(blitzboard.config.layout === 'map')
@@ -199,15 +199,87 @@ module.exports = class Blitzboard {
     }, true);
     
     this.applyDynamicStyle(`
-      .tooltip-inner {
-        max-width: ${Blitzboard.tooltipMaxWidth}px;
-        background: rgba(0, 0, 0, 0.7);
+      .blitzboard-tooltip {
+        position: absolute;
+        display: inline-block;
+        border-bottom: 1px dotted black;
       }
-      .tooltip-inner th, .tooltip-inner td {
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext {
+        max-width: ${Blitzboard.tooltipMaxWidth}px;
+        min-width: 200px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        opacity: 1;
+        transition: opacity 0.3s;
+      }
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext-top {
+        bottom: 125%;
+        left: 50%;
+        margin-left: -6px;
+      }
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext-bottom {
+        bottom: 100%;
+        left: 50%;
+        margin-left: -6px;
+      }
+      
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext-left {
+        top: 50%;
+        left: 0%;
+      }
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext-right {
+        top: -50%;
+        left: 100%;
+      }
+      
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext::after {
+        content: "";
+        position: absolute;
+        border-width: 6px;
+        border-style: solid;
+      }
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext-bottom::after {
+        top: -12px;
+        left: 50%;
+        border-color: transparent transparent #555 transparent;
+      }
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext-left::after {
+        top: 50%;
+        left: 100%;
+        border-color: transparent transparent transparent #555;
+      }
+      
+      .blitzboard-tooltip .blitzboard-tooltiptext-top::after {
+        top: 100%;
+        left: 50%;
+        border-color: #555 transparent transparent transparent;
+      }
+
+      .blitzboard-tooltip .blitzboard-tooltiptext-right::after {
+        top: 50%;
+        left: -12px;
+        border-color: transparent #555 transparent transparent;
+      }
+      
+      .blitzboard-tooltiptext th, .blitzboard-tooltiptext td {
         text-align: left;
         padding-left: 10px;
       }
-      .tooltip-inner a {
+      
+      .blitzboard-tooltip a {
         color: #88BBFF;
       }
     `);
@@ -329,30 +401,70 @@ module.exports = class Blitzboard {
     return null;
   }
   
-  tooltipShouldBeRight() {
-    if(window.innerWidth / 2 <= Blitzboard.tooltipMaxWidth) {
-      return this.prevMouseEvent.clientX < window.innerWidth / 2;
+  tooltipPosition() {
+    if(window.innerWidth < window.innerHeight) {
+      return this.prevMouseEvent.clientY < window.innerHeight / 2 ? 'bottom' : 'top';
     }
-    return this.prevMouseEvent.clientX < Blitzboard.tooltipMaxWidth + 20;
+    return this.prevMouseEvent.clientX < window.innerWidth / 2 ? 'right' : 'left';
   }
   
   updateTooltipLocation() {
-    if(!this.tooltip)
+    if(!this.elementWithTooltip)
       return;
-    let position;
+    let position, offset = 0;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
-      position.x += (this.tooltipShouldBeRight() ? 1 : -1) * this.elementWithTooltip.node.size * this.network.getScale();
+      let clientRect = blitzboard.container.getClientRects()[0];
+      position.x += clientRect.x;
+      position.y += clientRect.y;
+      offset += this.elementWithTooltip.node.size * this.network.getScale();
     }
     else {
       position = {
-        x: this.prevMouseEvent.offsetX,
-        y: this.prevMouseEvent.offsetY
+        x: this.prevMouseEvent.clientX,
+        y: this.prevMouseEvent.clientY
       };
     }
+    
+    switch(this.tooltipPosition()) {
+      case 'left':
+        this.tooltip.classList.add('blitzboard-tooltiptext-left');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-top');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-right');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-bottom');
+        position.x -= offset;
+        position.x -= this.tooltip.clientWidth;
+        position.y -= this.tooltip.clientHeight / 2;
+        break;
+      case 'top':
+        this.tooltip.classList.remove('blitzboard-tooltiptext-left');
+        this.tooltip.classList.add('blitzboard-tooltiptext-top');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-right');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-bottom');
+        position.x -= this.tooltip.clientWidth / 2;
+        position.y -= offset;
+        break;
+      case 'right':
+        this.tooltip.classList.remove('blitzboard-tooltiptext-left');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-top');
+        this.tooltip.classList.add('blitzboard-tooltiptext-right');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-bottom');
+        position.x += offset;
+        position.y -= this.tooltip.clientHeight / 2;
+        break;
+      case 'bottom':
+        this.tooltip.classList.remove('blitzboard-tooltiptext-left');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-top');
+        this.tooltip.classList.remove('blitzboard-tooltiptext-right');
+        this.tooltip.classList.add('blitzboard-tooltiptext-bottom');
+        position.x -= this.tooltip.clientWidth / 2;
+        position.y += this.tooltip.clientHeight;
+        position.y += offset;
+        break;
+    }
+
     this.tooltipDummy.style.left = `${position.x}px`;
     this.tooltipDummy.style.top = `${position.y}px`;
-    this.tooltip.update();
   }
   
   showTooltip() {
@@ -360,40 +472,18 @@ module.exports = class Blitzboard {
     let title = this.elementWithTooltip.node ? this.elementWithTooltip.node._title : this.elementWithTooltip.edge._title;
     if(!title)
       return;
-    if(this.tooltip) {
-      this.hideTooltip();
-    }
     
-    this.tooltip = new bootstrap.Tooltip(this.tooltipDummy,
-      {
-        html: true,
-        placement: this.tooltipShouldBeRight() ? 'right' : 'left',
-        trigger: 'hover',
-        title: title,
-      });
-
-    $(this.tooltip._element).on('mouseleave', (e) => {
-     if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
-        blitzboard.hideTooltip();
-    });
-    let blitzboard = this;
-
-    this.tooltip.show();
-    for(let elem of document.querySelectorAll('.tooltip')) {
-      elem.addEventListener('mouseleave', (e) => {
-        if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
-          blitzboard.hideTooltip();
-        }
-      );
-    }
+    this.tooltip.innerHTML = title;
+    this.tooltip.style.display = 'block';
+    // $(this.tooltip._element).on('mouseleave', (e) => {
+    //  if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
+    //     blitzboard.hideTooltip();
+    // });
   }
   
   hideTooltip() {
-    if(this.tooltip) {
-      this.tooltip.hide();
-      let tooltip = this.tooltip;
-      setTimeout(() => tooltip.dispose(), 1000);
-      this.tooltip = null;
+    if(this.elementWithTooltip) {
+      this.tooltip.style.display = 'none';
       this.elementWithTooltip = null;
     }
   }
@@ -1612,7 +1702,7 @@ function createTitleText(elem) {
   if (flattend_props.length === 0) {
     return null;
   }
-  return htmlTitle(`<table style='fixed'>${flattend_props.join('')}</table>`);
+  return `<table style='fixed'>${flattend_props.join('')}</table>`;
 }
 
 // Create random colors, with str as seed, and with fixed saturation and lightness
