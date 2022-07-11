@@ -96,6 +96,7 @@ module.exports = class Blitzboard {
     this.tooltipDummy.style['z-index'] = '998';
 
     this.tooltip = document.createElement('span');
+    this.tooltip.style.display = 'none';
     this.tooltip.classList.add('blitzboard-tooltiptext');
     this.tooltip.classList.add('blitzboard-tooltiptext-top');
     this.tooltip.style['z-index'] = '999';
@@ -145,6 +146,10 @@ module.exports = class Blitzboard {
     container.appendChild(this.mapContainer);
     document.body.appendChild(this.tooltipDummy);
     this.tooltipDummy.appendChild(this.tooltip);
+    this.tooltip.addEventListener('mouseleave', (e) => {
+      if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
+        blitzboard.hideTooltip();
+    });
 
     this.container.addEventListener('wheel', (e) => {
       if(blitzboard.config.layout === 'map')
@@ -411,10 +416,10 @@ module.exports = class Blitzboard {
   updateTooltipLocation() {
     if(!this.elementWithTooltip)
       return;
-    let position, offset = 0;
+    let position, offset = 10;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
-      let clientRect = blitzboard.container.getClientRects()[0];
+      let clientRect = this.container.getClientRects()[0];
       position.x += clientRect.x;
       position.y += clientRect.y;
       offset += this.elementWithTooltip.node.size * this.network.getScale();
@@ -425,6 +430,8 @@ module.exports = class Blitzboard {
         y: this.prevMouseEvent.clientY
       };
     }
+    position.x += window.scrollX;
+    position.y += window.scrollY;
     
     switch(this.tooltipPosition()) {
       case 'left':
@@ -475,10 +482,6 @@ module.exports = class Blitzboard {
     
     this.tooltip.innerHTML = title;
     this.tooltip.style.display = 'block';
-    // $(this.tooltip._element).on('mouseleave', (e) => {
-    //  if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
-    //     blitzboard.hideTooltip();
-    // });
   }
   
   hideTooltip() {
