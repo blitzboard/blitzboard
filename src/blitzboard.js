@@ -1,3 +1,11 @@
+require("leaflet/dist/leaflet.css");
+require('@iconify/iconify');
+require('leaflet');
+require('./pg_parser_browserified.js');
+
+let visData = require('vis-data');
+let visNetwork = require('vis-network');
+
 module.exports = class Blitzboard {
   static fontLoaded = false;
   static defaultConfig = {
@@ -899,7 +907,7 @@ module.exports = class Blitzboard {
     this.warnings = [];
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
     
-    if(this.config.style) {
+    if(this.config.style && this.config.layout !== 'map') {
       this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
 
@@ -1023,13 +1031,13 @@ module.exports = class Blitzboard {
     let defaultNodeProps = this.config.node.caption;
     let defaultEdgeProps = this.config.edge.caption;
 
-    this.nodeDataSet = new vis.DataSet();
+    this.nodeDataSet = new visData.DataSet();
     this.nodeDataSet.add(this.graph.nodes.map((node) => {
       return this.toVisNode(node, defaultNodeProps);
     }));
     
     this.edgeMap = {};
-    this.edgeDataSet = new vis.DataSet(this.graph.edges.map((edge) => {
+    this.edgeDataSet = new visData.DataSet(this.graph.edges.map((edge) => {
       let id = this.toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
@@ -1097,7 +1105,7 @@ module.exports = class Blitzboard {
     };
 
     this.options = Object.assign(this.options, this.config.extraOptions);
-    this.network = new vis.Network(this.networkContainer, data, this.options);
+    this.network = new visNetwork.Network(this.networkContainer, data, this.options);
 
     if(this.config.layout === 'map') {
       this.mapContainer.style.display = 'block';
