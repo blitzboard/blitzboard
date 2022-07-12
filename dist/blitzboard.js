@@ -28246,9 +28246,6 @@ module.exports = class Blitzboard {
     for(let callback of this.beforeParse) {
       callback();
     }
-    for(let marker of markers)
-      marker.clear();
-    markers = [];
     try {
       return pgParser.parse(pg);
     } catch(e) {
