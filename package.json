@@ -14,10 +14,10 @@
     "webpack-dev-server": "^4.9.3"
   },
   "scripts": {
-    "build": "webpack",
+    "start": "webpack serve --open --config webpack.dev.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "webpack serve",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js"
   },
   "repository": {
     "type": "git",

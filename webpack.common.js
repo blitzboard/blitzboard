@@ -14,7 +14,7 @@ module.exports = {
   },
   output: {
     path: `${__dirname}/dist`,
-    filename: "blitzboard.js",
+    filename: "blitzboard.bundle.js",
     libraryTarget: "umd",
     library: "Blitzboard",
   },
