@@ -427,7 +427,7 @@ module.exports = class Blitzboard {
   updateTooltipLocation() {
     if(!this.elementWithTooltip)
       return;
-    let position, offset = 12;
+    let position, offset = 10;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
       let clientRect = this.container.getClientRects()[0];
@@ -526,7 +526,7 @@ module.exports = class Blitzboard {
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
     let size  = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
-    let tooltip  = this.retrieveConfigProp(pgNode, 'node', 'tooltip');
+    let tooltip  = this.retrieveConfigProp(pgNode, 'node', 'title');
 
     color = color || this.nodeColorMap[group];
     
@@ -542,7 +542,7 @@ module.exports = class Blitzboard {
       shape: 'dot',
       size: size || 25,
       degree: degree,
-      _title: tooltip || createTitleText(pgNode),
+      _title: tooltip || this.createTitle(pgNode),
       fixed: {
         x: fixed,
         y: this.config.layout === 'timeline' ? false : fixed
@@ -560,7 +560,7 @@ module.exports = class Blitzboard {
     };
     
     let otherProps = this.retrieveConfigPropAll(pgNode,
-      'node', ['color', 'size', 'opacity']);
+      'node', ['color', 'size', 'opacity', 'title']);
     
     for(let key of Object.keys(otherProps)) {
       attrs[key] = otherProps[key] || attrs[key];
@@ -690,7 +690,7 @@ module.exports = class Blitzboard {
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
     let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width'));
-    let tooltip  = this.retrieveConfigProp(pgEdge, 'edge', 'tooltip');
+    let tooltip  = this.retrieveConfigProp(pgEdge, 'edge', 'title');
 
     color = color || this.edgeColorMap[edgeLabel];
 
@@ -705,7 +705,7 @@ module.exports = class Blitzboard {
       to: pgEdge.to,
       color: color,
       label: createLabelText(pgEdge, props),
-      _title: tooltip || createTitleText(pgEdge),
+      _title: tooltip || this.createTitle(pgEdge),
       remoteId: id,
       width: width || defaultWidth,
       hoverWidth: 0.5,
@@ -719,7 +719,7 @@ module.exports = class Blitzboard {
     };
 
     let otherProps = this.retrieveConfigPropAll(pgEdge,
-      'edge', ['color', 'opacity', 'width']);
+      'edge', ['color', 'opacity', 'width', 'title']);
 
     for(let key of Object.keys(otherProps)) {
       attrs[key] = otherProps[key] || attrs[key];
@@ -815,6 +815,25 @@ module.exports = class Blitzboard {
     if(update)
       this.update();
   }
+
+
+  createTitle(elem) {
+    let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
+      acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
+    if (!elem.from) // for nodes
+    {
+      let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
+      flattend_props.splice(0, 0, idText);
+    } else if(elem.labels.length > 0) {
+      let idText = `<tr><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td><td></td></tr>`;
+      flattend_props.splice(0, 0, idText);
+    }
+    if (flattend_props.length === 0) {
+      return null;
+    }
+    return `<table style='fixed'>${flattend_props.join('')}</table>`;
+  }
+
 
 
   setGraph(input, update = true) {
@@ -1600,14 +1619,6 @@ module.exports = class Blitzboard {
   }
 }
 
-class DuplicateNodeError extends Error {
-  constructor(nodes) {
-    super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
-    this.name = "NodeDuplicationError";
-    this.nodes = nodes;
-  }
-}
-
 
 let markers = [];
 let nodeProps, edgeProps;
@@ -1634,6 +1645,17 @@ function nodeEquals(node1, node2) {
   }
   return true;
 }
+
+
+class DuplicateNodeError extends Error {
+  constructor(nodes) {
+    super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
+    this.name = "NodeDuplicationError";
+    this.nodes = nodes;
+  }
+}
+
+module.exports.DuplicateNodeError = DuplicateNodeError;
 
 
 function deepMerge(target, source) {
@@ -1700,23 +1722,6 @@ function convertToHyperLinkIfURL(text) {
     return `<a target="_blank" href="${text}">${wrapText(text)}</a>`;
   }
   return wrapText(text);
-}
-
-function createTitleText(elem) {
-  let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
-    acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
-  if (!elem.from) // for nodes
-  {
-    let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
-    flattend_props.splice(0, 0, idText);
-  } else if(elem.labels.length > 0) {
-    let idText = `<tr><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td><td></td></tr>`;
-    flattend_props.splice(0, 0, idText);
-  }
-  if (flattend_props.length === 0) {
-    return null;
-  }
-  return `<table style='fixed'>${flattend_props.join('')}</table>`;
 }
 
 // Create random colors, with str as seed, and with fixed saturation and lightness

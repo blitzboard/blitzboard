@@ -617,7 +617,7 @@ $(() => {
             }
           } catch(e) {
               console.log(e);
-              if(e instanceof DuplicateNodeError) {
+              if(e instanceof Blitzboard.DuplicateNodeError) {
                 for(let marker of markers)
                   marker.clear();
                 markers = [];
