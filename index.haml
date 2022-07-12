@@ -322,6 +322,7 @@
     %script{type: 'text/javascript'}
       :plain
         let blitzboard;
+        let markers = [];
         $(() => {
               let defaultConfig =
                 `
@@ -431,6 +432,21 @@
                   }
                   updateAutoCompletion();
                   localStorage.setItem('pg', editor.getValue());
+                });
+                
+                blitzboard.beforeParse.push
+                
+                blitzboard.onParseError.push((e) => {
+                  if (!e.hasOwnProperty('location'))
+                    throw(e);
+                  let loc = e.location;
+                  // Mark leading characters in the error line
+                  markers.push(editor.markText({line: loc.start.line - 1, ch: 0}, {line: loc.start.line - 1, ch: loc.start.column - 1}, {className: 'syntax-error-line', message: e.message}));
+                  markers.push(editor.markText({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1}, {className: 'syntax-error', message: e.message}));
+                  // Mark following characters in the error line
+                  markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
+                    {className: 'syntax-error-line', message: e.message}));
+                  toastr.error(e.message, 'PG SyntaxError', {preventDuplicates: true})
                 });
                 
                 blitzboard.onEdgeAdded.push((edges) => {
@@ -550,7 +566,7 @@
                 
                 function updateGraph(input, newConfig = null) {
                   try {
-                    toastr.remove();
+
                     if(newConfig) {
                       blitzboard.setGraph(input, false);
                       blitzboard.setConfig(newConfig);

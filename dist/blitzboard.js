@@ -27549,6 +27549,8 @@ module.exports = class Blitzboard {
     this.onNodeFocused = [];
     this.onEdgeFocused = [];
     this.onUpdated = [];
+    this.beforeParse = [];
+    this.onParseError = [];
     this.maxLine = 0;
     this.scrollAnimationTimerId = null;
     this.screen = document.createElement('div');
@@ -28162,7 +28164,7 @@ module.exports = class Blitzboard {
   addNodes(nodes, update = true) {
     let newNodes;
     if (typeof nodes === 'string' || nodes instanceof String) {
-      let pg = tryPgParse(nodes);
+      let pg = this.tryPgParse(nodes);
       newNodes = pg.nodes;
     } else {
       newNodes = nodes;
@@ -28210,7 +28212,7 @@ module.exports = class Blitzboard {
   addEdges(edges, update = true) {
     let newEdges;
     if (typeof edges === 'string' || edges instanceof String) {
-      let pg = tryPgParse(edges);
+      let pg = this.tryPgParse(edges);
       newEdges = pg.edges
     } else {
       newEdges = edges
@@ -28240,6 +28242,24 @@ module.exports = class Blitzboard {
   }
 
 
+  tryPgParse(pg) {
+    for(let callback of this.beforeParse) {
+      callback();
+    }
+    for(let marker of markers)
+      marker.clear();
+    markers = [];
+    try {
+      return pgParser.parse(pg);
+    } catch(e) {
+      for(let callback of this.onParseError) {
+        callback(e);
+      }
+      console.log(e);
+      return null;
+    }
+  }
+
   createTitle(elem) {
     let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
       acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
@@ -28266,14 +28286,14 @@ module.exports = class Blitzboard {
     this.dragging = false;
     let newPg;
     if (!input) {
-      newPg = tryPgParse(''); // Set empty pg
+      newPg = this.tryPgParse(''); // Set empty pg
     }
     else if (typeof input === 'string' || input instanceof String) {
       try {
         newPg = JSON.parse(input);
       } catch (err) {
         if (err instanceof SyntaxError)
-          newPg = tryPgParse(input);
+          newPg = this.tryPgParse(input);
         else
           throw err;
       }
@@ -29043,8 +29063,6 @@ module.exports = class Blitzboard {
 }
 
 
-let markers = [];
-let nodeProps, edgeProps;
 
 function arrayEquals(a, b) {
   return Array.isArray(a) &&
@@ -29160,28 +29178,6 @@ function getRandomColor(str, saturation, brightness) {
 
 function isDateString(str) {
   return isNaN(str) && !isNaN(Date.parse(str))
-}
-
-function tryPgParse(pg) {
-  for(let marker of markers)
-    marker.clear();
-  markers = [];
-  try {
-    return pgParser.parse(pg);
-  } catch(e) {
-    console.log(e);
-    if (!e.hasOwnProperty('location'))
-      throw(e);
-    let loc = e.location;
-    // Mark leading characters in the error line
-    markers.push(editor.markText({line: loc.start.line - 1, ch: 0}, {line: loc.start.line - 1, ch: loc.start.column - 1}, {className: 'syntax-error-line', message: e.message}));
-    markers.push(editor.markText({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1}, {className: 'syntax-error', message: e.message}));
-    // Mark following characters in the error line
-    markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
-      {className: 'syntax-error-line', message: e.message}));
-    toastr.error(e.message, 'PG SyntaxError', {preventDuplicates: true})
-    return null;
-  }
 }
 
 function htmlTitle(html) {
