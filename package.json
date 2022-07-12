@@ -1,5 +1,5 @@
 {
-  "name": "blitz_board",
+  "name": "blitzboard",
   "version": "1.0.0",
   "description": "[![](https://data.jsdelivr.com/v1/package/gh/blitzboard/blitzboard/badge)](https://www.jsdelivr.com/package/gh/blitzboard/blitzboard)",
   "main": "blitzboard.js",
