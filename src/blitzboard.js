@@ -25,7 +25,7 @@ module.exports = class Blitzboard {
       saturation: '0%',
       brightness: '62%',
       limit: 10000,
-      width: defaultWidth,
+      width: defaultWidth
     },
     zoom: { 
       max: 3.0,
