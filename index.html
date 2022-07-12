@@ -481,7 +481,11 @@ $(() => {
           localStorage.setItem('pg', editor.getValue());
         });
         
-        blitzboard.beforeParse.push
+        blitzboard.beforeParse.push(() => {         
+          for(let marker of markers)
+            marker.clear();
+          markers = [];
+        });
         
         blitzboard.onParseError.push((e) => {
           if (!e.hasOwnProperty('location'))
@@ -613,7 +617,7 @@ $(() => {
         
         function updateGraph(input, newConfig = null) {
           try {
-
+            toastr.clear();
             if(newConfig) {
               blitzboard.setGraph(input, false);
               blitzboard.setConfig(newConfig);
@@ -1353,7 +1357,8 @@ $(() => {
           localStorage.setItem('config', configEditor.getValue());
           config = tryJsonParse(configEditor.getValue());
           saveCurrentGraph();
-          updateGraph(editor.getValue(), config);
+          if(config)
+            updateGraph(editor.getValue(), config);
           clearTimeout(configTimerId);
           blitzboard.hideLoader();
           configTimerId = null;
@@ -1378,7 +1383,7 @@ $(() => {
         configEditor.on('change', onConfigChanged);
         configEditor.on('inputRead', onConfigChanged);
   
-        if(editor.getValue()) {
+        if(editor.getValue() && config) {
           byProgram = true;
           updateGraph(editor.getValue(), config);
           byProgram = false;
