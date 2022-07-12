@@ -6,6 +6,8 @@ require('./pg_parser_browserified.js');
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
 
+const defaultWidth = 2;
+
 module.exports = class Blitzboard {
   static fontLoaded = false;
   static defaultConfig = {
@@ -22,7 +24,8 @@ module.exports = class Blitzboard {
       caption: ['label'],
       saturation: '0%',
       brightness: '62%',
-      limit: 10000
+      limit: 10000,
+      width: defaultWidth,
     },
     zoom: { 
       max: 3.0,
@@ -424,7 +427,7 @@ module.exports = class Blitzboard {
   updateTooltipLocation() {
     if(!this.elementWithTooltip)
       return;
-    let position, offset = 10;
+    let position, offset = 12;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
       let clientRect = this.container.getClientRects()[0];
@@ -704,7 +707,7 @@ module.exports = class Blitzboard {
       label: createLabelText(pgEdge, props),
       _title: tooltip || createTitleText(pgEdge),
       remoteId: id,
-      width: width || 1,
+      width: width || defaultWidth,
       hoverWidth: 0.5,
       smooth: this.map ? false : { roundness: 1 },
       chosen: this.retrieveConfigProp(pgEdge, 'edge', 'chosen'),
