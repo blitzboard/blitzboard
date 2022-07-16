@@ -1232,6 +1232,26 @@ $(() => {
             editor.execCommand('autocomplete', { completeSingle: false });
         });
         
+        function loadSample(sampleName, callback) {
+          let graph, config;
+          let graphPromise = new Promise((resolve, reject) => {
+            $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${sampleName}/graph.pg`, (res) => {
+              graph = res;
+              resolve();
+            });
+          });
+          let configPromise = new Promise((resolve, reject) => {
+            $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${sampleName}/config.js`, (res) => {
+              config = res;
+              resolve();
+            });
+          });
+          Promise.all([graphPromise, configPromise]).then(() => {
+            callback(graph, config);
+          });
+        }
+        
+        
         function reflectEditorChange() {
           localStorage.setItem('pg', editor.getValue());
           saveCurrentGraph();
