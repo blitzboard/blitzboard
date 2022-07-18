@@ -224,6 +224,9 @@
     max-height:600px;
     overflow-y:auto;
   }
+  .tooltip-sandbox {
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
@@ -268,7 +271,7 @@
 </label>
 </li>
 <li class='nav-item'>
-<label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='clone-btn' title='Clone graph'>
+<label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='clone-btn' title='Clone'>
 <span class='iconify text-white' data-color='white' data-height='16' data-icon='fa-regular:clone' data-width='16'></span>
 </label>
 </li>
@@ -362,6 +365,9 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 <input class='pe-none' id='options-show-config-input' type='checkbox'>
 <label for='options-show-config-input'>Show Config</label>
 </a>
+<a class='dropdown-item' href='#' id='options-sort'>
+<label class='w-100' for='options-auto-complete-input'>Sort</label>
+</a>
 </div>
 </div>
 <div class='float-btn btn btn-info p-0' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='reset-config-btn' title='Reset Config'>
@@ -369,6 +375,58 @@ You -> I :say word:Goodbye date:yesterday</textarea>
 </div>
 <div class='float-btn btn btn-info' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='zoom-fit-btn' style='padding:4px;' title='Fit'>
 <span class='iconify' data-height='24' data-icon='carbon:center-to-fit' data-width='24'></span>
+</div>
+</div>
+</div>
+<div class='modal' id='sort-modal' tabindex='-1'>
+<div class='modal-dialog'>
+<div class='modal-content'>
+<div class='modal-header'>
+<h5 class='modal-title'>Sort lines</h5>
+<button aria-label='Close' class='btn-close' data-bs-dismiss='modal' type='button'></button>
+</div>
+<div class='modal-body'>
+<p>
+<em class='text-danger d-none' id='comment-warning-line'>
+Warning: Comment lines will be deleted after sort.
+</em>
+</p>
+<div class='row my-3'>
+<div class='col-4'>
+Sort node lines by:
+</div>
+<div class='col-8'>
+<select id='sort-node-lines-select' style='min-width: 100px;'></select>
+</div>
+</div>
+<div class='row my-3'>
+<div class='col-4'>
+Sort edge lines by:
+</div>
+<div class='col-8'>
+<select id='sort-edge-lines-select' style='min-width: 100px;'></select>
+</div>
+</div>
+<div class='row my-3'>
+<div class='col-4'>
+Sort order:
+</div>
+<div class='col-8'>
+<input checked id='sort-order-asc-radio' name='sort-order' type='radio' value='1'>
+<label for='sort-order-asc-radio'>
+ASC
+</label>
+<input id='sort-order-desc-radio' name='sort-order' type='radio' value='-1'>
+<label for='sort-order-desc-radio'>
+DESC
+</label>
+</div>
+</div>
+</div>
+<div class='modal-footer'>
+<button class='btn btn-secondary' data-bs-dismiss='modal' type='button'>Cancel</button>
+<button class='btn btn-primary' id='sort-btn' type='button'>Sort</button>
+</div>
 </div>
 </div>
 </div>

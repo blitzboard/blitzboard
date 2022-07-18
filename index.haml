@@ -225,6 +225,9 @@
         max-height:600px;
         overflow-y:auto;
       }
+      .tooltip-sandbox {
+        pointer-events: none;
+      }
 
   %body
     #app
@@ -318,8 +321,43 @@
             %a#options-show-config.dropdown-item{ href: "#" }
               %input#options-show-config-input.pe-none{ type: "checkbox" }
               %label{:for => "options-show-config-input"} Show Config
+            %a#options-sort.dropdown-item{ href: "#" }
+              %label.w-100{:for => "options-auto-complete-input"} Sort
         #reset-config-btn.float-btn.btn.btn-info.p-0{ title: "Reset Config", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
           %span.iconify.text-white{ 'data-icon': 'ion:reload-outline', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
         #zoom-fit-btn.float-btn.btn.btn-info{ title: "Fit", href: '#', style: 'padding:4px;', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
           %span{:class => "iconify", 'data-icon': 'carbon:center-to-fit',  'data-width': 24, 'data-height': 24  }
+    #sort-modal.modal{:tabindex => "-1"}
+      .modal-dialog
+        .modal-content
+          .modal-header
+            %h5.modal-title Sort lines
+            %button.btn-close{"aria-label" => "Close", "data-bs-dismiss" => "modal", :type => "button"}
+          .modal-body
+            %p
+              %em#comment-warning-line.text-danger.d-none
+                Warning: Comment lines will be deleted after sort.
+            .row.my-3
+              .col-4
+                Sort node lines by:
+              .col-8
+                %select#sort-node-lines-select{ style: "min-width: 100px;" }
+            .row.my-3
+              .col-4
+                Sort edge lines by:
+              .col-8
+                %select#sort-edge-lines-select{ style: "min-width: 100px;" }
+            .row.my-3
+              .col-4
+                Sort order:
+              .col-8
+                %input#sort-order-asc-radio{ type: 'radio', value: 1, name: 'sort-order', checked: true}
+                %label{ for: 'sort-order-asc-radio' }
+                  ASC
+                %input#sort-order-desc-radio{ type: 'radio', value: -1,  name: 'sort-order' }
+                %label{ for: 'sort-order-desc-radio' }
+                  DESC
+          .modal-footer
+            %button.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} Cancel
+            %button#sort-btn.btn.btn-primary{:type => "button"} Sort
     %script{:src => "./src/sandbox.js"}

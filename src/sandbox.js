@@ -1,5 +1,6 @@
 let blitzboard;
 let markers = [];
+let editor, configEditor;
 $(() => {
   let defaultConfig =
     `
@@ -42,7 +43,6 @@ $(() => {
 
   let container = document.getElementById('graph');
   let pgTimerId = null, configTimerId = null;
-  let editor, configEditor;
   let localMode = true;
   blitzboard = new Blitzboard(container);
   let byProgram = false;
@@ -54,6 +54,8 @@ $(() => {
   let prevNetwork = null;
   let viewMode = loadConfig('viewMode');
   let savedGraphs = [];
+  let pgToBeSorted;
+  let sortModal = new bootstrap.Modal(document.getElementById('sort-modal'));
   let bufferedContent = ''; // A buffer to avoid calling editor.setValue() too often
   let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
   let dateTimeFormat = new Intl.DateTimeFormat('default', {
@@ -1086,6 +1088,90 @@ $(() => {
       showOrHideConfig();
     });
 
+
+    $('#options-sort').click((e) => {
+      if(/^\s*#/m.test(editor.getValue())) {
+        q('#comment-warning-line').classList.remove('d-none');
+      } else {
+        q('#comment-warning-line').classList.add('d-none');
+      }
+      pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
+      if(!pgToBeSorted) {
+        alert('Please write a valid graph before sort.');
+      }
+      q('#sort-node-lines-select').innerHTML = "<option value=''>None</option>" +
+        "<option value=':id'>id</option>" +
+        "<option value=':label'>label</option>" +
+        Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map((p) => `<option>${p[0]}</option>`);
+      q('#sort-edge-lines-select').innerHTML = "<option value=''>None</option>" +
+        "<option value=':from-to'>from&to</option>" +
+        "<option value=':label'>label</option>" +
+        Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map((p) => `<option>${p[0]}</option>`);
+      sortModal.show();
+    });
+
+
+
+    $('#sort-btn').click((e) => {
+      let newPG = '';
+      let oldPG = editor.getValue();
+      let oldPGlines = oldPG.split("\n");
+      let { nodes, edges } = pgToBeSorted;
+      let nodeKey = q('#sort-node-lines-select').value;
+      let edgeKey = q('#sort-edge-lines-select').value;
+      let order = parseInt(document.querySelector('input[name="sort-order"]:checked').value);
+
+      /// Order should be -1 (descending) or 1 (ascending)
+      function generateComparator(mapFunction) {
+        return (a, b) => {
+          let aVal = mapFunction(a);
+          let bVal = mapFunction(b);
+          return order * (bVal > aVal ? -1 : (aVal == bVal ? 0 : 1));
+        }
+      }
+      if(nodeKey) {
+        switch(nodeKey) {
+          case ':id':
+            nodes.sort(generateComparator((n) => n.id));
+            break;
+          case ':label':
+            nodes.sort(generateComparator((n) => n.labels?.[0]));
+            break;
+          default:
+            nodes.sort(generateComparator((n) => n.properties[nodeKey]?.[0]));
+            break;
+        }
+      }
+      if(edgeKey) {
+        switch(edgeKey) {
+          case ':from-to':
+            edges.sort(generateComparator((e) => `${e.from}-${e.to}`));
+            break;
+          case ':label':
+            edges.sort(generateComparator((e) => e.labels?.[0]));
+            break;
+          default:
+            edges.sort(generateComparator((e) => e.properties[edgeKey]?.[0]));
+            break;
+        }
+      }
+      // TODO: Preserve comment lines
+      // Here, location.{start,end}.offset cannot be used because the value of offset ignores comment lines.
+      // We use line and column instead of offset
+      for(let node of nodes) {
+        let end = node.location.end.line === node.location.start.line ?  node.location.end.line :  node.location.end.line - 1;
+        newPG += oldPGlines.slice(node.location.start.line - 1, end).map((l) => l + "\n");
+      }
+      for(let edge of edges) {
+        let end = edge.location.end.line === edge.location.start.line ?  edge.location.end.line :  edge.location.end.line - 1;
+        newPG += oldPGlines.slice(edge.location.start.line - 1, end).map((l) => l + "\n");
+      }
+      editor.setValue(newPG);
+      toastr.success(`Sorted!`, '', {preventDuplicates: true,  timeOut: 3000});
+      sortModal.hide();
+    });
+
+
     switch(viewMode) {
       case 'input-only':
         $('#input-only-btn').prop('checked', true);
@@ -1107,13 +1193,16 @@ $(() => {
     }
     let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl, {placement: 'bottom'});
+      return new bootstrap.Tooltip(tooltipTriggerEl, {placement: 'bottom', customClass: 'tooltip-sandbox'});
     })
+
+    $('.dropdown-item').on('mouseenter', (e) => {
+      tooltipList.forEach((t) => t.hide());
+    });
 
     $('.dropdown').on('click', (e) => {
       tooltipList.forEach((t) => t.hide());
     });
-
 
     if(!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
       saveCurrentGraph();
