@@ -24,7 +24,11 @@
     "url": "git+https://github.com/blitzboard/blitzboard.git"
   },
   "keywords": [],
-  "author": "Shota Matsumoto <shota.matsumoto@lifematics.co.jp>",
+  "author": {
+    "name": "Blitzboard contributors",
+    "email": "dev@blitzboard.io",
+    "url": "https://github.com/blitzboard/blitzboard/graphs/contributors"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/blitzboard/blitzboard/issues"
