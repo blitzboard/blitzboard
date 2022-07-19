@@ -1188,7 +1188,7 @@ $(() => {
       editor.setValue(newPG);
       toastr.success(`Sorted!`, '', {preventDuplicates: true,  timeOut: 3000});
 
-
+      localStorage.setItem('sortOrder', order.toString());
       localStorage.setItem('nodeSortKey', nodeKey);
       localStorage.setItem('edgeSortKey', edgeKey);
 
@@ -1234,6 +1234,11 @@ $(() => {
 
     loadSavedGraphs();
     showGraphName();
+
+    let oldOrder = localStorage.getItem('sortOrder');
+    if(oldOrder) {
+      q(`input[name="sort-order"][value="${oldOrder}"]`).checked = true;
+    }
   }
 
 });
