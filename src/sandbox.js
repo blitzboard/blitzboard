@@ -1099,14 +1099,27 @@ $(() => {
       if(!pgToBeSorted) {
         alert('Please write a valid graph before sort.');
       }
+      let oldNodeKey = localStorage.getItem('nodeSortKey');
+      let oldEdgeKey = localStorage.getItem('edgeSortKey');
+
       q('#sort-node-lines-select').innerHTML = "<option value=''>None</option>" +
         "<option value=':id'>id</option>" +
         "<option value=':label'>label</option>" +
-        Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map((p) => `<option>${p[0]}</option>`);
+        Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map((p) => {
+          if(p[0] === oldNodeKey) {
+            return `<option selected>${p[0]}</option>`;
+          }
+          return `<option>${p[0]}</option>`;
+        });
       q('#sort-edge-lines-select').innerHTML = "<option value=''>None</option>" +
         "<option value=':from-to'>from&to</option>" +
         "<option value=':label'>label</option>" +
-        Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map((p) => `<option>${p[0]}</option>`);
+        Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map((p) => {
+          if(p[0] === oldEdgeKey) {
+            return `<option selected>${p[0]}</option>`;
+          }
+          return `<option>${p[0]}</option>`;
+        });
       sortModal.show();
     });
 
@@ -1168,6 +1181,11 @@ $(() => {
       }
       editor.setValue(newPG);
       toastr.success(`Sorted!`, '', {preventDuplicates: true,  timeOut: 3000});
+
+
+      localStorage.setItem('nodeSortKey', nodeKey);
+      localStorage.setItem('edgeSortKey', edgeKey);
+
       sortModal.hide();
     });
 
