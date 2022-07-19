@@ -1180,7 +1180,9 @@ $(() => {
         let end = edge.location.end.line === edge.location.start.line ?  edge.location.end.line :  edge.location.end.line - 1;
         newPG += oldPGlines.slice(edge.location.start.line - 1, end).map((l) => l + "\n");
       }
+      byProgram = true;
       editor.setValue(newPG);
+      byProgram = false;
       toastr.success(`Sorted!`, '', {preventDuplicates: true,  timeOut: 3000});
 
       localStorage.setItem('sortOrder', order.toString());
@@ -1188,6 +1190,7 @@ $(() => {
       localStorage.setItem('edgeSortKey', edgeKey);
 
       sortModal.hide();
+      blitzboard.update(false);
     });
 
 
