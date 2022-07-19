@@ -1102,24 +1102,19 @@ $(() => {
       let oldNodeKey = localStorage.getItem('nodeSortKey');
       let oldEdgeKey = localStorage.getItem('edgeSortKey');
 
-      q('#sort-node-lines-select').innerHTML = "<option value=''>None</option>" +
-        "<option value=':id'>id</option>" +
-        "<option value=':label'>label</option>" +
-        Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map((p) => {
-          if(p[0] === oldNodeKey) {
-            return `<option selected>${p[0]}</option>`;
-          }
-          return `<option>${p[0]}</option>`;
-        });
-      q('#sort-edge-lines-select').innerHTML = "<option value=''>None</option>" +
-        "<option value=':from-to'>from&to</option>" +
-        "<option value=':label'>label</option>" +
-        Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map((p) => {
-          if(p[0] === oldEdgeKey) {
-            return `<option selected>${p[0]}</option>`;
-          }
-          return `<option>${p[0]}</option>`;
-        });
+      // Each option is a pair of value and text
+      let nodeOptions = [['', 'None'], [':id', 'id'], [':label', 'label']];
+      let edgeOptions = [['', 'None'], [':from-to', 'from&to'], [':label', 'label']];
+
+      nodeOptions = nodeOptions.concat(Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+      q('#sort-node-lines-select').innerHTML = nodeOptions.map((o) =>
+        `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected': ''}>${o[1]}</option>`
+      );
+
+      edgeOptions = edgeOptions.concat(Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+      q('#sort-edge-lines-select').innerHTML = edgeOptions.map((o) =>
+        `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected': ''}>${o[1]}</option>`
+      );
       sortModal.show();
     });
 
