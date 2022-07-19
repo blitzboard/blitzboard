@@ -1139,7 +1139,13 @@ $(() => {
         return (a, b) => {
           let aVal = mapFunction(a);
           let bVal = mapFunction(b);
-          return order * (bVal > aVal ? -1 : (aVal == bVal ? 0 : 1));
+          if(aVal === undefined && bVal === undefined || aVal === bVal)
+            return 0;
+          if(aVal === undefined)
+            return 1;
+          if(bVal === undefined)
+            return -1;
+          return order * (bVal > aVal ? -1 : 1);
         }
       }
       if(nodeKey) {
