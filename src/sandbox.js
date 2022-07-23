@@ -824,7 +824,20 @@ $(() => {
       completeSingle: false
     }
   });
+
+  editor.on('keydown', (cm, e) => {
+    if(e.keyCode === 83 && e.ctrlKey) {
+      // ctrl + S
+      showSortModal();
+      e.preventDefault();
+    }
+  });
   editor.setSize('100%', '100%');
+  
+  q('#sort-modal').addEventListener('keydown', (e) => {
+    if(e.keyCode === 13)
+      q('#sort-btn').click()
+  });
 
   toastr.options.timeOut = 0; // Set toastr persistent until remove() is called
 
@@ -1087,9 +1100,8 @@ $(() => {
       localStorage.setItem('optionsShowConfig', showConfig);
       showOrHideConfig();
     });
-
-
-    $('#options-sort').click((e) => {
+    
+    function showSortModal() {
       if(/^\s*#/m.test(editor.getValue())) {
         q('#comment-warning-line').classList.remove('d-none');
       } else {
@@ -1116,10 +1128,15 @@ $(() => {
         `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected': ''}>${o[1]}</option>`
       );
       sortModal.show();
+    }
+
+    $("#sort-modal").on("hidden.bs.modal", function () {
+      editor.focus();
     });
 
+    $('#options-sort').click(showSortModal);
 
-
+    
     $('#sort-btn').click((e) => {
       let newPG = '';
       let oldPG = editor.getValue();
