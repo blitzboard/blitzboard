@@ -928,12 +928,16 @@ module.exports = class Blitzboard {
     for(let edge of this.graph.edges) {
       if(!this.nodeMap[edge.from]) {
         this.warnings.push({
+          type: 'UndefinedNode',
+          node: edge.from,
           location: edge.location,
           message: `Source node is undefined: ${edge.from}`
         });
       }
       if(!this.nodeMap[edge.to]) {
         this.warnings.push({
+          type: 'UndefinedNode',
+          node: edge.to,
           location: edge.location,
           message: `Target node is undefined: ${edge.to}`
         });
