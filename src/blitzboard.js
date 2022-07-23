@@ -39,6 +39,9 @@ module.exports = class Blitzboard {
     },
     style: "border: solid 1px silver; background: radial-gradient(white, silver);",
     extraOptions: {
+      interaction: {
+        keyboard: true
+      }
     }
   };
   static tooltipMaxWidth = 600;
