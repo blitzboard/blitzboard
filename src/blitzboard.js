@@ -1118,7 +1118,10 @@ module.exports = class Blitzboard {
         dragView: this.config.layout !== 'map',
         zoomView: this.config.layout !== 'map',
         hover: true,
-        keyboard: true
+        keyboard: {
+          enabled: true, 
+          bindToWindow: false
+        }
       },
       physics: {
         enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical',
