@@ -544,7 +544,7 @@ module.exports = class Blitzboard {
       shape: 'dot',
       size: size || 25,
       degree: degree,
-      _title: tooltip || this.createTitle(pgNode),
+      _title: tooltip != null ? tooltip : this.createTitle(pgNode),
       fixed: {
         x: fixed,
         y: this.config.layout === 'timeline' ? false : fixed
@@ -707,7 +707,7 @@ module.exports = class Blitzboard {
       to: pgEdge.to,
       color: color,
       label: createLabelText(pgEdge, props),
-      _title: tooltip || this.createTitle(pgEdge),
+      _title: tooltip != null ? tooltip : this.createTitle(pgEdge),
       remoteId: id,
       width: width || defaultWidth,
       hoverWidth: 0.5,
