@@ -599,7 +599,7 @@ $(() => {
 
   q('#zoom-fit-btn').addEventListener('click', () => {
     if(blitzboard.network)
-      blitzboard.network.fit();
+      blitzboard.network.fit({animation: true});
   });
 
   q('#export-zip-btn').addEventListener('click', () => {

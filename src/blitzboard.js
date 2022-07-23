@@ -1181,6 +1181,13 @@ module.exports = class Blitzboard {
       this.map = null;
     }
 
+    this.network.canvas.body.container.addEventListener('keydown', (e) => {
+      // Key 0
+      if(e.keyCode === 48)
+        blitzboard.network.fit({animation: true});
+    });
+
+
     this.network.on('zoom', (e) => {
       blitzboard.updateTooltipLocation();
     });
@@ -1521,6 +1528,8 @@ module.exports = class Blitzboard {
         if(this.config.edge.onDoubleClick) {
           this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
         }
+      } else {
+        blitzboard.network.fit({animation: true});
       }
     });
 
