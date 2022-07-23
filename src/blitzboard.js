@@ -39,9 +39,6 @@ module.exports = class Blitzboard {
     },
     style: "border: solid 1px silver; background: radial-gradient(white, silver);",
     extraOptions: {
-      interaction: {
-        keyboard: true
-      }
     }
   };
   static tooltipMaxWidth = 600;
@@ -1121,6 +1118,7 @@ module.exports = class Blitzboard {
         dragView: this.config.layout !== 'map',
         zoomView: this.config.layout !== 'map',
         hover: true,
+        keyboard: true
       },
       physics: {
         enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical',
