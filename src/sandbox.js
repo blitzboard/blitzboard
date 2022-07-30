@@ -886,8 +886,10 @@ $(() => {
   editor.setSize('100%', '100%');
   
   q('#sort-modal').addEventListener('keydown', (e) => {
-    if(e.keyCode === 13)
-      q('#sort-btn').click()
+    if(e.keyCode === 13) {
+      q('#sort-btn').click();
+      e.preventDefault();
+    }
   });
 
   toastr.options.timeOut = 0; // Set toastr persistent until remove() is called
@@ -1012,305 +1014,309 @@ $(() => {
     }
   });
 
-  const urlParams = new URLSearchParams(window.location.search);
-  let sampleName = urlParams.get('sample');
-  if(sampleName) {
-    loadSample(sampleName, (graph, config) => {
-      localStorage.setItem('pg', graph);
-      localStorage.setItem('config', config);
-      localStorage.setItem('currentGraphName', newGraphName(sampleName));
-      window.location.href = window.location.href.split('?')[0];
-    });
-  } else {
-    let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
-      edgePropInParam = urlParams.get('displayedEdgeProps');
-    let configInParam = urlParams.get('config');
-    let graphNameInParam = urlParams.get('name');
-    let viewModeInParam = urlParams.get('viewMode');
-    if(pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
-      if(pgInParam) {
-        localStorage.setItem('pg', pgInParam);
-        if(graphNameInParam) {
-          localStorage.setItem('currentGraphName', graphNameInParam);
-        } else {
-          localStorage.setItem('currentGraphName', newGraphName());
-        }
-      }
-      if(configInParam)
-        localStorage.setItem('config', configInParam);
-      if(viewModeInParam)
-        localStorage.setItem('viewMode', viewModeInParam);
-      window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
-    }
+  setTimeout(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    let sampleName = urlParams.get('sample');
 
-    let initialPg = loadConfig('pg');
-
-    let configText = loadConfig('config');
-
-    if (!configText) {
-      configText = defaultConfig;
-    }
-    if(!config) {
-      config = tryJsonParse(configText);
-    }
-
-    if(config?.x2?.init) {
-      editor.setValue('');
-      let strParams = '?';
-      config.x2.init.parameters.forEach(parameter => {
-        strParams = strParams + parameter.key + '=' + parameter.value + '&';
+    if(sampleName) {
+      loadSample(sampleName, (graph, config) => {
+        localStorage.setItem('pg', graph);
+        localStorage.setItem('config', config);
+        localStorage.setItem('currentGraphName', newGraphName(sampleName));
+        window.location.href = window.location.href.split('?')[0];
       });
-      const strUrl = config.x2.url + config.x2.init.endpoint + strParams;
-      axios.get(strUrl).then((response) => {
-        editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+    } else {
+      let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
+        edgePropInParam = urlParams.get('displayedEdgeProps');
+      let configInParam = urlParams.get('config');
+      let graphNameInParam = urlParams.get('name');
+      let viewModeInParam = urlParams.get('viewMode');
+      if(pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
+        if(pgInParam) {
+          localStorage.setItem('pg', pgInParam);
+          if(graphNameInParam) {
+            localStorage.setItem('currentGraphName', graphNameInParam);
+          } else {
+            localStorage.setItem('currentGraphName', newGraphName());
+          }
+        }
+        if(configInParam)
+          localStorage.setItem('config', configInParam);
+        if(viewModeInParam)
+          localStorage.setItem('viewMode', viewModeInParam);
+        window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
+      }
+
+      let initialPg = loadConfig('pg');
+
+      let configText = loadConfig('config');
+
+      if (!configText) {
+        configText = defaultConfig;
+      }
+      if(!config) {
+        config = tryJsonParse(configText);
+      }
+
+      if(config?.x2?.init) {
+        editor.setValue('');
+        let strParams = '?';
+        config.x2.init.parameters.forEach(parameter => {
+          strParams = strParams + parameter.key + '=' + parameter.value + '&';
+        });
+        const strUrl = config.x2.url + config.x2.init.endpoint + strParams;
+        axios.get(strUrl).then((response) => {
+          editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+          editor.getDoc().clearHistory();
+        });
+      }
+      // Otherwise, load PG data from browser local storage
+      else if(initialPg) {
+        byProgram = true;
+        editor.setValue(initialPg);
+        byProgram = false;
         editor.getDoc().clearHistory();
-      });
-    }
-    // Otherwise, load PG data from browser local storage
-    else if(initialPg) {
-      byProgram = true;
-      editor.setValue(initialPg);
-      byProgram = false;
-      editor.getDoc().clearHistory();
-    }
-    try {
-      nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
-    } catch {
-      nodeLayout = null;
-    }
-    
-    configEditor.setValue(configText);
-    configEditor.getDoc().clearHistory();
-
-    function tryJsonParse(json) {
+      }
       try {
-        return looseJsonParse(json);
-      } catch(e) {
-        console.log(e);
-        toastr.error(e.toString(), 'JSON SyntaxError', {preventDuplicates: true});
-        return null;
+        nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
+      } catch {
+        nodeLayout = null;
       }
-    }
 
+      configEditor.setValue(configText);
+      configEditor.getDoc().clearHistory();
 
-    function reloadConfig() {
-      localStorage.setItem('config', configEditor.getValue());
-      config = tryJsonParse(configEditor.getValue());
-      saveCurrentGraph();
-      if(config)
-        updateGraph(editor.getValue(), config);
-      clearTimeout(configTimerId);
-      blitzboard.hideLoader();
-      configTimerId = null;
-    }
-
-    function onConfigChanged(delta) {
-      if(!configTimerId)
-        blitzboard.showLoader('');
-      clearTimeout(configTimerId);
-      configTimerId = setTimeout(reloadConfig, 2000);
-    }
-
-    configEditor.on('keydown', (cm, e) => {
-      if(e.ctrlKey && e.keyCode === 13) {
-        // ctrl + enter
-        reloadConfig();
-      }
-      // invoke only if timer is working
-      else if(configTimerId) onConfigChanged();
-    });
-
-    configEditor.on('change', onConfigChanged);
-    configEditor.on('inputRead', onConfigChanged);
-
-    if(editor.getValue() && config) {
-      byProgram = true;
-      updateGraph(editor.getValue(), config);
-      byProgram = false;
-    }
-
-    let autocompletionConfig = localStorage.getItem('autocompletion');
-    if(autocompletionConfig !== null) {
-      autocompletion = autocompletionConfig === 'true';
-      $('#options-auto-complete-input').prop('checked', autocompletion);
-    }
-
-
-    $('#options-auto-complete').click((e) => {
-      autocompletion = !$('#options-auto-complete-input').prop('checked');
-      $('#options-auto-complete-input').prop('checked', autocompletion);
-      e.preventDefault();
-      localStorage.setItem('autocompletion', autocompletion);
-    });
-
-    let optionsShowConfig = localStorage.getItem('optionsShowConfig');
-    if(optionsShowConfig !== null) {
-      showConfig = optionsShowConfig === 'true';
-      $('#options-show-config-input').prop('checked', showConfig);
-      showOrHideConfig();
-    }
-
-    $('#options-show-config').click((e) => {
-      showConfig = !$('#options-show-config-input').prop('checked');
-      $('#options-show-config-input').prop('checked', showConfig);
-      e.preventDefault();
-      localStorage.setItem('optionsShowConfig', showConfig);
-      showOrHideConfig();
-    });
-    
-    function showSortModal() {
-      if(/^\s*#/m.test(editor.getValue())) {
-        q('#comment-warning-line').classList.remove('d-none');
-      } else {
-        q('#comment-warning-line').classList.add('d-none');
-      }
-      pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
-      if(!pgToBeSorted) {
-        alert('Please write a valid graph before sort.');
-      }
-      let oldNodeKey = localStorage.getItem('nodeSortKey');
-      let oldEdgeKey = localStorage.getItem('edgeSortKey');
-
-      // Each option is a pair of value and text
-      let nodeOptions = [['', 'None'], [':id', 'id'], [':label', 'label']];
-      let edgeOptions = [['', 'None'], [':from-to', 'from&to'], [':label', 'label']];
-
-      nodeOptions = nodeOptions.concat(Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
-      q('#sort-node-lines-select').innerHTML = nodeOptions.map((o) =>
-        `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected': ''}>${o[1]}</option>`
-      );
-
-      edgeOptions = edgeOptions.concat(Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
-      q('#sort-edge-lines-select').innerHTML = edgeOptions.map((o) =>
-        `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected': ''}>${o[1]}</option>`
-      );
-      sortModal.show();
-    }
-
-    $("#sort-modal").on("hidden.bs.modal", function () {
-      editor.focus();
-    });
-
-    $('#options-sort').click(showSortModal);
-
-    
-    $('#sort-btn').click((e) => {
-      let newPG = '';
-      let oldPG = editor.getValue();
-      let oldPGlines = oldPG.split("\n");
-      let { nodes, edges } = pgToBeSorted;
-      let nodeKey = q('#sort-node-lines-select').value;
-      let edgeKey = q('#sort-edge-lines-select').value;
-      let order = parseInt(document.querySelector('input[name="sort-order"]:checked').value);
-
-      /// Order should be -1 (descending) or 1 (ascending)
-      function generateComparator(mapFunction) {
-        return (a, b) => {
-          let aVal = mapFunction(a);
-          let bVal = mapFunction(b);
-          if(aVal === undefined && bVal === undefined || aVal === bVal)
-            return 0;
-          if(aVal === undefined)
-            return 1;
-          if(bVal === undefined)
-            return -1;
-          return order * (bVal > aVal ? -1 : 1);
+      function tryJsonParse(json) {
+        try {
+          return looseJsonParse(json);
+        } catch(e) {
+          console.log(e);
+          toastr.error(e.toString(), 'JSON SyntaxError', {preventDuplicates: true});
+          return null;
         }
       }
-      if(nodeKey) {
-        switch(nodeKey) {
-          case ':id':
-            nodes.sort(generateComparator((n) => n.id));
-            break;
-          case ':label':
-            nodes.sort(generateComparator((n) => n.labels?.[0]));
-            break;
-          default:
-            nodes.sort(generateComparator((n) => n.properties[nodeKey]?.[0]));
-            break;
+
+
+      function reloadConfig() {
+        localStorage.setItem('config', configEditor.getValue());
+        config = tryJsonParse(configEditor.getValue());
+        saveCurrentGraph();
+        if(config)
+          updateGraph(editor.getValue(), config);
+        clearTimeout(configTimerId);
+        blitzboard.hideLoader();
+        configTimerId = null;
+      }
+
+      function onConfigChanged(delta) {
+        if(!configTimerId)
+          blitzboard.showLoader('');
+        clearTimeout(configTimerId);
+        configTimerId = setTimeout(reloadConfig, 2000);
+      }
+
+      configEditor.on('keydown', (cm, e) => {
+        if(e.ctrlKey && e.keyCode === 13) {
+          // ctrl + enter
+          reloadConfig();
         }
+        // invoke only if timer is working
+        else if(configTimerId) onConfigChanged();
+      });
+
+      configEditor.on('change', onConfigChanged);
+      configEditor.on('inputRead', onConfigChanged);
+
+      if(editor.getValue() && config) {
+        setTimeout(() => {
+          byProgram = true;
+          updateGraph(editor.getValue(), config);
+          byProgram = false;
+        }, 0);
       }
-      if(edgeKey) {
-        switch(edgeKey) {
-          case ':from-to':
-            edges.sort(generateComparator((e) => `${e.from}-${e.to}`));
-            break;
-          case ':label':
-            edges.sort(generateComparator((e) => e.labels?.[0]));
-            break;
-          default:
-            edges.sort(generateComparator((e) => e.properties[edgeKey]?.[0]));
-            break;
+
+      let autocompletionConfig = localStorage.getItem('autocompletion');
+      if(autocompletionConfig !== null) {
+        autocompletion = autocompletionConfig === 'true';
+        $('#options-auto-complete-input').prop('checked', autocompletion);
+      }
+
+
+      $('#options-auto-complete').click((e) => {
+        autocompletion = !$('#options-auto-complete-input').prop('checked');
+        $('#options-auto-complete-input').prop('checked', autocompletion);
+        e.preventDefault();
+        localStorage.setItem('autocompletion', autocompletion);
+      });
+
+      let optionsShowConfig = localStorage.getItem('optionsShowConfig');
+      if(optionsShowConfig !== null) {
+        showConfig = optionsShowConfig === 'true';
+        $('#options-show-config-input').prop('checked', showConfig);
+        showOrHideConfig();
+      }
+
+      $('#options-show-config').click((e) => {
+        showConfig = !$('#options-show-config-input').prop('checked');
+        $('#options-show-config-input').prop('checked', showConfig);
+        e.preventDefault();
+        localStorage.setItem('optionsShowConfig', showConfig);
+        showOrHideConfig();
+      });
+
+      function showSortModal() {
+        if(/^\s*#/m.test(editor.getValue())) {
+          q('#comment-warning-line').classList.remove('d-none');
+        } else {
+          q('#comment-warning-line').classList.add('d-none');
         }
+        pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
+        if(!pgToBeSorted) {
+          alert('Please write a valid graph before sort.');
+        }
+        let oldNodeKey = localStorage.getItem('nodeSortKey');
+        let oldEdgeKey = localStorage.getItem('edgeSortKey');
+
+        // Each option is a pair of value and text
+        let nodeOptions = [['', 'None'], [':id', 'id'], [':label', 'label']];
+        let edgeOptions = [['', 'None'], [':from-to', 'from&to'], [':label', 'label']];
+
+        nodeOptions = nodeOptions.concat(Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+        q('#sort-node-lines-select').innerHTML = nodeOptions.map((o) =>
+          `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected': ''}>${o[1]}</option>`
+        );
+
+        edgeOptions = edgeOptions.concat(Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+        q('#sort-edge-lines-select').innerHTML = edgeOptions.map((o) =>
+          `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected': ''}>${o[1]}</option>`
+        );
+        sortModal.show();
       }
-      // TODO: Preserve comment lines
-      // Here, location.{start,end}.offset cannot be used because the value of offset ignores comment lines.
-      // We use line and column instead of offset
-      for(let node of nodes) {
-        let end = node.location.end.line === node.location.start.line ?  node.location.end.line :  node.location.end.line - 1;
-        newPG += oldPGlines.slice(node.location.start.line - 1, end).map((l) => l + "\n");
+
+      $("#sort-modal").on("hidden.bs.modal", function () {
+        editor.focus();
+      });
+
+      $('#options-sort').click(showSortModal);
+
+
+      $('#sort-btn').click((e) => {
+        let newPG = '';
+        let oldPG = editor.getValue();
+        let oldPGlines = oldPG.split("\n");
+        let { nodes, edges } = pgToBeSorted;
+        let nodeKey = q('#sort-node-lines-select').value;
+        let edgeKey = q('#sort-edge-lines-select').value;
+        let order = parseInt(document.querySelector('input[name="sort-order"]:checked').value);
+
+        /// Order should be -1 (descending) or 1 (ascending)
+        function generateComparator(mapFunction) {
+          return (a, b) => {
+            let aVal = mapFunction(a);
+            let bVal = mapFunction(b);
+            if(aVal === undefined && bVal === undefined || aVal === bVal)
+              return 0;
+            if(aVal === undefined)
+              return 1;
+            if(bVal === undefined)
+              return -1;
+            return order * (bVal > aVal ? -1 : 1);
+          }
+        }
+        if(nodeKey) {
+          switch(nodeKey) {
+            case ':id':
+              nodes.sort(generateComparator((n) => n.id));
+              break;
+            case ':label':
+              nodes.sort(generateComparator((n) => n.labels?.[0]));
+              break;
+            default:
+              nodes.sort(generateComparator((n) => n.properties[nodeKey]?.[0]));
+              break;
+          }
+        }
+        if(edgeKey) {
+          switch(edgeKey) {
+            case ':from-to':
+              edges.sort(generateComparator((e) => `${e.from}-${e.to}`));
+              break;
+            case ':label':
+              edges.sort(generateComparator((e) => e.labels?.[0]));
+              break;
+            default:
+              edges.sort(generateComparator((e) => e.properties[edgeKey]?.[0]));
+              break;
+          }
+        }
+        // TODO: Preserve comment lines
+        // Here, location.{start,end}.offset cannot be used because the value of offset ignores comment lines.
+        // We use line and column instead of offset
+        for(let node of nodes) {
+          let end = node.location.end.line === node.location.start.line ?  node.location.end.line :  node.location.end.line - 1;
+          newPG += oldPGlines.slice(node.location.start.line - 1, end).map((l) => l + "\n");
+        }
+        for(let edge of edges) {
+          let end = edge.location.end.line === edge.location.start.line ?  edge.location.end.line :  edge.location.end.line - 1;
+          newPG += oldPGlines.slice(edge.location.start.line - 1, end).map((l) => l + "\n");
+        }
+        byProgram = true;
+        editor.setValue(newPG);
+        byProgram = false;
+        toastr.success(`Sorted!`, '', {preventDuplicates: true,  timeOut: 3000});
+
+        localStorage.setItem('sortOrder', order.toString());
+        localStorage.setItem('nodeSortKey', nodeKey);
+        localStorage.setItem('edgeSortKey', edgeKey);
+
+        sortModal.hide();
+        blitzboard.update(false);
+      });
+
+
+      switch(viewMode) {
+        case 'input-only':
+          $('#input-only-btn').prop('checked', true);
+          $('#input-area').resizable('disable');
+          $('#input-area').css('width', '100%');
+          $('#graph-pane').css('width', '0px');
+          onResize(null, null);
+          break;
+        case 'view-only':
+          $('#view-only-btn').prop('checked', true);
+          $('#input-area').resizable('disable');
+          $('#input-area').css('width', '0px');
+          $('#graph-pane').css('width', '100%');
+          onResize(null, null);
+          break;
+        default:
+          $('#double-column-btn').prop('checked', true);
+          break;
       }
-      for(let edge of edges) {
-        let end = edge.location.end.line === edge.location.start.line ?  edge.location.end.line :  edge.location.end.line - 1;
-        newPG += oldPGlines.slice(edge.location.start.line - 1, end).map((l) => l + "\n");
+      let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {placement: 'bottom', customClass: 'tooltip-sandbox'});
+      })
+
+      $('.dropdown-item').on('mouseenter', (e) => {
+        tooltipList.forEach((t) => t.hide());
+      });
+
+      $('.dropdown').on('click', (e) => {
+        tooltipList.forEach((t) => t.hide());
+      });
+
+      if(!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
+        saveCurrentGraph();
       }
-      byProgram = true;
-      editor.setValue(newPG);
-      byProgram = false;
-      toastr.success(`Sorted!`, '', {preventDuplicates: true,  timeOut: 3000});
 
-      localStorage.setItem('sortOrder', order.toString());
-      localStorage.setItem('nodeSortKey', nodeKey);
-      localStorage.setItem('edgeSortKey', edgeKey);
+      loadSavedGraphs();
+      showGraphName();
 
-      sortModal.hide();
-      blitzboard.update(false);
-    });
-
-
-    switch(viewMode) {
-      case 'input-only':
-        $('#input-only-btn').prop('checked', true);
-        $('#input-area').resizable('disable');
-        $('#input-area').css('width', '100%');
-        $('#graph-pane').css('width', '0px');
-        onResize(null, null);
-        break;
-      case 'view-only':
-        $('#view-only-btn').prop('checked', true);
-        $('#input-area').resizable('disable');
-        $('#input-area').css('width', '0px');
-        $('#graph-pane').css('width', '100%');
-        onResize(null, null);
-        break;
-      default:
-        $('#double-column-btn').prop('checked', true);
-        break;
+      let oldOrder = localStorage.getItem('sortOrder');
+      if(oldOrder) {
+        q(`input[name="sort-order"][value="${oldOrder}"]`).checked = true;
+      }
     }
-    let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl, {placement: 'bottom', customClass: 'tooltip-sandbox'});
-    })
-
-    $('.dropdown-item').on('mouseenter', (e) => {
-      tooltipList.forEach((t) => t.hide());
-    });
-
-    $('.dropdown').on('click', (e) => {
-      tooltipList.forEach((t) => t.hide());
-    });
-
-    if(!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
-      saveCurrentGraph();
-    }
-
-    loadSavedGraphs();
-    showGraphName();
-
-    let oldOrder = localStorage.getItem('sortOrder');
-    if(oldOrder) {
-      q(`input[name="sort-order"][value="${oldOrder}"]`).checked = true;
-    }
-  }
-
+  }, 0);
 });
