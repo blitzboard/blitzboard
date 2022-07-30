@@ -1,6 +1,8 @@
 let blitzboard;
 let markers = [];
 let editor, configEditor;
+let nodeLayout = null;
+
 $(() => {
   let defaultConfig =
     `
@@ -75,6 +77,7 @@ $(() => {
   if(!localStorage.getItem('currentGraphName')) {
     localStorage.setItem('currentGraphName', newGraphName());
   }
+  
 
   function scrollToLine(loc) {
     if(!loc)
@@ -250,12 +253,23 @@ $(() => {
   function updateGraph(input, newConfig = null) {
     try {
       toastr.clear();
+      console.log(nodeLayout);
       if(newConfig) {
-        blitzboard.setGraph(input, false);
+        blitzboard.setGraph(input, false, nodeLayout);
         blitzboard.setConfig(newConfig);
       } else {
-        blitzboard.setGraph(input);
+        blitzboard.setGraph(input, true, nodeLayout);
       }
+      nodeLayout = blitzboard.nodeLayout;
+      let layoutMap = {};
+      nodeLayout.graph.forEachNode(node => {
+        let position = nodeLayout.getNodePosition(node.id);
+        layoutMap[node.id] = {
+          x: Math.round(position.x),
+          y: Math.round(position.y),
+        }
+      });
+      localStorage.setItem('nodeLayout', JSON.stringify(layoutMap));
       if(blitzboard.warnings.length > 0) {
         for(let marker of markers)
           marker.clear();
@@ -553,6 +567,7 @@ $(() => {
     configEditor.getDoc().clearHistory();
     localStorage.setItem('pg', editor.getValue());
     localStorage.setItem('currentGraphName', graph.name);
+    nodeLayout = graph.layout;
     $('.dropdown-item.history-item').removeClass('active');
     $('.dropdown-item.history-item').removeClass('text-white');
     let i = savedGraphs.indexOf(graph);
@@ -575,9 +590,23 @@ $(() => {
       name = newGraphName();
     }
     let i = -1;
+    let layoutMap = {};
+    if(nodeLayout?.graph) {
+      nodeLayout.graph.forEachNode(node => {
+        let position = nodeLayout.getNodePosition(node.id);
+        layoutMap[node.id] = {
+          x: Math.round(position.x),
+          y: Math.round(position.y),
+        }
+      });
+    } else {
+      layoutMap = nodeLayout;
+    }
+    localStorage.setItem('nodeLayout', JSON.stringify(layoutMap));
     let graph = {
       pg: editor.getValue(),
       config: configEditor.getValue(),
+      layout: layoutMap,
       name: name,
       date: Date.now()
     };
@@ -1044,6 +1073,12 @@ $(() => {
       byProgram = false;
       editor.getDoc().clearHistory();
     }
+    try {
+      nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
+    } catch {
+      nodeLayout = null;
+    }
+    
     configEditor.setValue(configText);
     configEditor.getDoc().clearHistory();
 

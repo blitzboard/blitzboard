@@ -2,9 +2,10 @@ require("leaflet/dist/leaflet.css");
 require('@iconify/iconify');
 require('leaflet');
 require('./pg_parser_browserified.js');
-
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
+const createGraph = require("ngraph.graph");
+const createLayout = require("ngraph.forcelayout");
 
 const defaultWidth = 2;
 
@@ -78,6 +79,8 @@ module.exports = class Blitzboard {
     this.warnings = [];
     this.elementWithTooltip = null;
     
+    this.staticLayoutMode = true;
+    
     this.container.style.position = 'absolute';
     
     this.networkContainer = document.createElement('div');
@@ -129,6 +132,7 @@ module.exports = class Blitzboard {
     this.beforeParse = [];
     this.onParseError = [];
     this.maxLine = 0;
+    this.nodeLayout = null;
     this.scrollAnimationTimerId = null;
     this.screen = document.createElement('div');
     this.screenText = document.createElement('div');
@@ -511,7 +515,22 @@ module.exports = class Blitzboard {
     }
     
     let x, y, fixed, width;
-    ({x, y, fixed, width} = this.calcNodePosition(pgNode));
+
+    if(this.staticLayoutMode) {
+      fixed = true;
+      try {
+        ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
+      } catch {
+        this.nodeLayout.graph.addNode(pgNode.id);
+        ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
+      }
+      x *= 20;
+      y *= 20;
+      width = null;
+    } else {
+      ({x, y, fixed, width} = this.calcNodePosition(pgNode));
+    }
+    
 
     let url = retrieveHttpUrl(pgNode);
     let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
@@ -853,7 +872,7 @@ module.exports = class Blitzboard {
 
 
 
-  setGraph(input, update = true) {
+  setGraph(input, update = true, layout = null) {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
     this.prevMouseEvent = null;
@@ -863,11 +882,15 @@ module.exports = class Blitzboard {
       newPg = this.tryPgParse(''); // Set empty pg
     }
     else if (typeof input === 'string' || input instanceof String) {
+      console.log("parsing");
       try {
         newPg = JSON.parse(input);
       } catch (err) {
-        if (err instanceof SyntaxError)
+        if (err instanceof SyntaxError) {
+          console.log("pg parsing");
           newPg = this.tryPgParse(input);
+          console.log("pg parsed");
+        }
         else
           throw err;
       }
@@ -876,13 +899,15 @@ module.exports = class Blitzboard {
     }
     if (newPg === null || newPg === undefined)
       return;
+    console.log("parsed");
     this.graph = newPg;
+    
+    this.nodeLayout = layout;
 
     if(update)
       this.update();
   }
-
-
+  
 
   setConfig(config, update = true) {
     this.config = deepMerge(Blitzboard.defaultConfig, config);
@@ -945,14 +970,33 @@ module.exports = class Blitzboard {
     }
   }
   
+  doLayoutStep(step = 1) {
+    for(let i = 0; i < step; ++i) {
+      if(this.nodeLayout.step())
+        break;
+    }
+    let listToUpdate = [];
+    this.nodeLayout.graph.forEachNode(node => {
+      let position = this.nodeLayout.getNodePosition(node.id);
+      listToUpdate.push({
+        id: node.id,
+        x: position.x * 20,
+        y: position.y * 20
+      });
+    })
+    this.nodeDataSet.update(listToUpdate);
+  }
+  
   update(applyDiff = true) {
     let blitzboard = this;
     this.warnings = [];
-    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet;
+    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !this.staticLayoutMode;
     
     if(this.config.style && this.config.layout !== 'map') {
       this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
+    
+    console.log('Start to apply diff');
 
     if(applyDiff) {
       let nodesToDelete = new Set(Object.keys(this.nodeMap));
@@ -1043,6 +1087,43 @@ module.exports = class Blitzboard {
       this.timeInterval = this.maxTime - this.minTime;
     }
 
+    if(this.staticLayoutMode) {
+
+      let ngraph = createGraph();
+      this.graph.nodes.forEach(node => {
+        ngraph.addNode(node.id);
+      });
+      this.graph.edges.forEach(edge => {
+        ngraph.addLink(edge.from, edge.to);
+      });
+      
+      const physicsSettings = {
+        // timeStep: 0.1,
+        dimensions: 2,
+        // gravity: -1.2,
+        // theta: 1.8,
+        // springLength: 300,
+        springCoefficient: 0.7,
+        // dragCoefficient: 0.9,
+      };
+      if(!this.nodeLayout) {
+        this.nodeLayout = createLayout(ngraph, physicsSettings);
+        console.log("start layout");
+
+        for (let i = 0; i < 100; ++i) {
+          this.nodeLayout.step();
+        }
+        console.log("layout computed");
+      } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
+        // convert into layout of ngraph
+        let ngraphLayout = createLayout(ngraph, physicsSettings);
+        for(const [nodeId, position] of Object.entries(this.nodeLayout)) {
+          if(ngraphLayout.graph.hasNode(nodeId))
+            ngraphLayout.setNodePosition(nodeId, position.x, position.y);
+        }
+        this.nodeLayout = ngraphLayout;
+      }
+    }
 
     if(applyDiff) {
       this.validateGraph();
@@ -1052,7 +1133,7 @@ module.exports = class Blitzboard {
       }
       return;
     }
-
+    
     this.nodeProps = new Set(['id', 'label']);
     this.edgeProps = new Set(['label']);
     this.graph.nodes.forEach((node) => {
@@ -1575,6 +1656,9 @@ module.exports = class Blitzboard {
             easingFuntcion: "easeInOutQuad"
           }
       };
+      if(this.staticLayoutMode) {
+        animationOption.animation = false;
+      }
       this.network.moveTo({ ...{position: position}, ...animationOption });
     }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
   }
