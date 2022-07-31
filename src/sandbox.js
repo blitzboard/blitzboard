@@ -862,16 +862,20 @@ $(() => {
     a.remove();
     $('#export-btn').dropdown('toggle');
   });
+  
+  let extraKeys = {
+    Tab: 'autocomplete'
+  };
+  let searchKey = navigator.platform.startsWith('Mac') ? "Cmd-F" : "Ctrl-F";
+  extraKeys[searchKey] = "findPersistent";
 
   editor = CodeMirror.fromTextArea(q('#graph-input'), {
     lineNumbers: true,
-    viewportMargin: Infinity,
+    viewportMargin: 300,
     theme: "monokai",
     lineWrapping: true,
     mode: "pgMode",
-    extraKeys: {
-      Tab: 'autocomplete'
-    },
+    extraKeys,
     hintOptions: {
       completeSingle: false
     }
@@ -935,7 +939,7 @@ $(() => {
         var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
         cm.replaceSelection(spaces);
       },
-      "Shift-Tab": "indentLess"
+      "Shift-Tab": "indentLess",
     },
     hintOptions: {
       completeSingle: false,
