@@ -1656,13 +1656,14 @@ module.exports = class Blitzboard {
   scrollNetworkToPosition(position) {
     clearTimeout(this.scrollAnimationTimerId);
     this.scrollAnimationTimerId = setTimeout(() => {
-      blitzboard.network.renderer.dragging = true;
+      if(this.staticLayoutMode)
+        blitzboard.network.renderer.dragging = true;
       const animationOption = {
         scale: 1.0,
         animation:
           {
             duration: 500,
-            easingFuntcion: "easeInOutQuad"
+            easingFunction: "easeInOutQuad"
           }
       };
       this.network.moveTo({ ...{position: position}, ...animationOption });

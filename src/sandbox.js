@@ -53,6 +53,7 @@ $(() => {
   let autocompletion = true;
   let showConfig = false;
   let srcNode, lineEnd;
+  let focusTimerId = null;
   let prevNetwork = null;
   let viewMode = loadConfig('viewMode');
   let savedGraphs = [];
@@ -1003,14 +1004,18 @@ $(() => {
 
   editor.on('cursorActivity', (doc) => {
     if(!byProgram) {
-      const node = blitzboard.nodeLineMap[doc.getCursor().line + 1];
-      const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
+      if(focusTimerId)
+        clearTimeout(focusTimerId);
+      focusTimerId = setTimeout(() => {
+        const node = blitzboard.nodeLineMap[doc.getCursor().line + 1];
+        const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
 
-      if(node) {
-        blitzboard.scrollNodeIntoView(node)
-      } else if(edge){
-        blitzboard.scrollEdgeIntoView(edge)
-      }
+        if(node) {
+          blitzboard.scrollNodeIntoView(node)
+        } else if(edge){
+          blitzboard.scrollEdgeIntoView(edge)
+        }
+      }, blitzboard.staticLayoutMode ? 1000 : 100);
     }
   });
 
