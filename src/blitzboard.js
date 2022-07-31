@@ -517,7 +517,7 @@ module.exports = class Blitzboard {
     
     let x, y, fixed, width;
 
-    if(this.staticLayoutMode) {
+    if(this.staticLayoutMode && this.config.layout !== 'hierarchical' && this.config.layout !== 'map') {
       fixed = true;
       try {
         ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
