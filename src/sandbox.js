@@ -78,7 +78,29 @@ $(() => {
   if(!localStorage.getItem('currentGraphName')) {
     localStorage.setItem('currentGraphName', newGraphName());
   }
-  
+
+  function reloadConfig() {
+    localStorage.setItem('config', configEditor.getValue());
+    config = tryJsonParse(configEditor.getValue());
+    saveCurrentGraph();
+    if(config)
+      updateGraph(editor.getValue(), config);
+    clearTimeout(configTimerId);
+    blitzboard.hideLoader();
+    configTimerId = null;
+  }
+
+
+  function tryJsonParse(json) {
+    try {
+      return looseJsonParse(json);
+    } catch(e) {
+      console.log(e);
+      toastr.error(e.toString(), 'JSON SyntaxError', {preventDuplicates: true});
+      return null;
+    }
+  }
+
 
   function scrollToLine(loc) {
     if(!loc)
@@ -1095,27 +1117,7 @@ $(() => {
       configEditor.setValue(configText);
       configEditor.getDoc().clearHistory();
 
-      function tryJsonParse(json) {
-        try {
-          return looseJsonParse(json);
-        } catch(e) {
-          console.log(e);
-          toastr.error(e.toString(), 'JSON SyntaxError', {preventDuplicates: true});
-          return null;
-        }
-      }
 
-
-      function reloadConfig() {
-        localStorage.setItem('config', configEditor.getValue());
-        config = tryJsonParse(configEditor.getValue());
-        saveCurrentGraph();
-        if(config)
-          updateGraph(editor.getValue(), config);
-        clearTimeout(configTimerId);
-        blitzboard.hideLoader();
-        configTimerId = null;
-      }
 
       function onConfigChanged(delta) {
         if(!configTimerId)
