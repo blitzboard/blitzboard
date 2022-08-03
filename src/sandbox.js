@@ -40,6 +40,7 @@ $(() => {
   const q = document.querySelector.bind(document);
   const qa = document.querySelectorAll.bind(document);
 
+  const backendUrl = "http://132.145.114.202:7000";
 
   let container = document.getElementById('graph');
   let pgTimerId = null, configTimerId = null;
@@ -110,7 +111,27 @@ $(() => {
       byProgram = false;
     }
     updateAutoCompletion();
-    localStorage.setItem('pg', editor.getValue());
+    // localStorage.setItem('pg', editor.getValue());
+    // curl -XPOST -H 'Content-Type: application/json' -d @sample/pg_named.json 'http://132.145.114.202:7000/merge_graph/'
+    let tmpNodes = JSON.parse(JSON.stringify(blitzboard.graph.nodes));
+    let tmpEdges = JSON.parse(JSON.stringify(blitzboard.graph.edges));
+    for(let node of tmpNodes) {
+      delete node.location;
+    }
+    for(let edge of tmpEdges) {
+      delete edge.location;
+      delete edge.id;
+      edge.undirected = edge.direction === '--';
+      delete edge.direction;
+    }
+
+    axios.post(`${backendUrl}/merge_graph`, {
+      name: localStorage.getItem('currentGraphName'),
+      pg: {
+        nodes: tmpNodes,
+        edges: tmpEdges
+      }
+    });
   });
 
   blitzboard.beforeParse.push(() => {
@@ -444,7 +465,7 @@ $(() => {
       i = parseInt(suffixMatched[1]);
     }
     let name = baseName;
-    while(localStorage.getItem('saved-graph-' + name)) {
+    while(savedGraphs.indexOf(name) >= 0) {
       name =  baseName + '-' + (++i);
     }
     return name;
@@ -463,26 +484,14 @@ $(() => {
   function showGraphName() {
     $('#history-dropdown')[0].innerText = localStorage.getItem('currentGraphName');
   }
-
-  function loadSavedGraphs() {
-    savedGraphs = [];
-    for (let i = 0; i < localStorage.length; i++){
-      if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
-        try {
-          savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
-        } catch(e) {
-          localStorage.removeItem(localStorage.key(i));
-        }
-      }
-    }
-
+  
+  function updateHistoryMenu(graphs) {
     let menu = q('#history-menu');
     // clear menu
     while (menu.firstChild) {
       menu.removeChild(menu.firstChild);
     }
-    savedGraphs = savedGraphs.sort((a, b) => b.date - a.date);
-    for(let graph of savedGraphs) {
+    for(let graph of graphs) {
       let node = document.createElement('a');
       node.className = 'dropdown-item history-item mr-3';
       if(graph.name === localStorage.getItem('currentGraphName'))
@@ -490,7 +499,8 @@ $(() => {
       node.style = 'position:relative';
       node.appendChild(document.createTextNode(graph.name));
       node.appendChild(document.createElement("br"));
-      node.appendChild(document.createTextNode(dateTimeFormat.format(new Date(graph.date))));
+      if(graph.date)
+        node.appendChild(document.createTextNode(dateTimeFormat.format(new Date(graph.date))));
       let deleteButton = document.createElement('div');
       deleteButton.className = 'delete-history-btn btn btn-danger p-0';
       deleteButton.style = 'position:absolute; top: 5px; right: 5px; width: 25px; height: 25px';
@@ -511,6 +521,24 @@ $(() => {
     }
   }
 
+  function updateGraphList() {
+    savedGraphs = [];
+    axios.get(`${backendUrl}/list`).then(response => {
+      updateHistoryMenu(response.data.map((g) => { return { name: g };}));
+      savedGraphs = response.data;
+    });
+    // for (let i = 0; i < localStorage.length; i++){
+    //   if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
+    //     try {
+    //       savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
+    //     } catch(e) {
+    //       localStorage.removeItem(localStorage.key(i));
+    //     }
+    //   }
+    // }
+    // updateHistoryMenu(savedGraphs);
+  }
+
 
   $(document).on('click', '.edit-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
@@ -525,7 +553,7 @@ $(() => {
       }
       graph.name = newName;
       localStorage.setItem('saved-graph-' + graph.name, JSON.stringify(graph));
-      loadSavedGraphs();
+      updateGraphList();
     }
     e.stopPropagation();
   });
@@ -551,11 +579,11 @@ $(() => {
     configEditor.setValue(graph.config);
     editor.getDoc().clearHistory();
     configEditor.getDoc().clearHistory();
-    localStorage.setItem('pg', editor.getValue());
+    // localStorage.setItem('pg', editor.getValue());
     localStorage.setItem('currentGraphName', graph.name);
     $('.dropdown-item.history-item').removeClass('active');
     $('.dropdown-item.history-item').removeClass('text-white');
-    let i = savedGraphs.indexOf(graph);
+    let i = savedGraphs.indexOf(graph.name);
     $(`.dropdown-item.history-item:eq(${i})`).addClass('active');
     $(`.dropdown-item.history-item:eq(${i})`).addClass('text-white');
     reloadConfig();
@@ -566,7 +594,17 @@ $(() => {
   $(document).on('click', '.history-item', (e) => {
     let i = $('.history-item').index(e.target);
     let graph = savedGraphs[i];
-    loadGraph(graph);
+    axios.get(`${backendUrl}/query/?graph=${graph}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+      byProgram = true;
+      loadGraph({
+        name: graph,
+        pg: json2pg.translate(JSON.stringify(response.data.pg)),
+        config: configEditor.getValue() // as it is
+      });
+      byProgram = false;
+      editor.getDoc().clearHistory();
+    });
+    
   });
 
   function saveCurrentGraph() {
@@ -574,30 +612,30 @@ $(() => {
     if(!name) {
       name = newGraphName();
     }
-    let i = -1;
-    let graph = {
-      pg: editor.getValue(),
-      config: configEditor.getValue(),
-      name: name,
-      date: Date.now()
-    };
-    while(i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
-    if(i < savedGraphs.length) {
-      savedGraphs[i] = graph;
-    }
-    localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
+    // axios.post(`${backendUrl}/merge_graph`, {
+    //   name: name,
+    //   pg: blitzboard.graph
+    // });
+    //
+    // let graph = {
+    //   pg: editor.getValue(),
+    //   config: configEditor.getValue(),
+    //   name: name,
+    //   date: Date.now()
+    // };
+    // while(i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
+    // if(i < savedGraphs.length) {
+    //   savedGraphs[i] = graph;
+    // }
+    // localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
   }
 
   q('#new-btn').addEventListener('click', () => {
     let name = newGraphName();
     byProgram = true;
-    editor.setValue('');
-    configEditor.setValue(defaultConfig);
     localStorage.setItem('currentGraphName', name);
     saveCurrentGraph();
-    loadSavedGraphs();
-    showGraphName();
-    updateGraph('', defaultConfig);
+    updateGraphList();
     loadGraph({name:name, pg: '', config: defaultConfig});
     byProgram = false;
   });
@@ -607,7 +645,7 @@ $(() => {
     let name = newGraphName(localStorage.getItem('currentGraphName'));
     localStorage.setItem('currentGraphName', name);
     saveCurrentGraph();
-    loadSavedGraphs();
+    updateGraphList();
     showGraphName();
     blitzboard.update(false);
     toastr.success(`Your graph is cloned as <em>${name}</em> !`, '', {preventDuplicates: true,  timeOut: 3000});
@@ -662,7 +700,7 @@ $(() => {
               localStorage.setItem('pg', graph);
               localStorage.setItem('currentGraphName', name);
               saveCurrentGraph();
-              loadSavedGraphs();
+              updateGraphList();
               editor.getDoc().clearHistory();
               configEditor.getDoc().clearHistory();
               showGraphName();
@@ -938,7 +976,7 @@ $(() => {
 
 
   function reflectEditorChange() {
-    localStorage.setItem('pg', editor.getValue());
+    // localStorage.setItem('pg', editor.getValue());
     saveCurrentGraph();
     blitzboard.hideLoader();
 
@@ -1014,7 +1052,7 @@ $(() => {
       window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
     }
 
-    let initialPg = loadConfig('pg');
+    // let initialPg = loadConfig('pg');
 
     let configText = loadConfig('config');
 
@@ -1038,12 +1076,23 @@ $(() => {
       });
     }
     // Otherwise, load PG data from browser local storage
-    else if(initialPg) {
-      byProgram = true;
-      editor.setValue(initialPg);
-      byProgram = false;
-      editor.getDoc().clearHistory();
+    else {
+      // axios.get("http://132.145.114.202:7000/list_graph").then((response) => {
+      // });
+      axios.get(`${backendUrl}/query/?graph=${localStorage.getItem('currentGraphName')}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+        byProgram = true;
+        editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+        byProgram = false;
+        editor.getDoc().clearHistory();
+      });
+      // editor.setValue(initialPg);
     }
+    // else if(initialPg) {
+    //   byProgram = true;
+    //   editor.setValue(initialPg);
+    //   byProgram = false;
+    //   editor.getDoc().clearHistory();
+    // }
     configEditor.setValue(configText);
     configEditor.getDoc().clearHistory();
 
@@ -1269,7 +1318,7 @@ $(() => {
       saveCurrentGraph();
     }
 
-    loadSavedGraphs();
+    updateGraphList();
     showGraphName();
 
     let oldOrder = localStorage.getItem('sortOrder');
@@ -1279,3 +1328,4 @@ $(() => {
   }
 
 });
+  
