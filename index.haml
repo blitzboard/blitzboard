@@ -261,6 +261,9 @@
             %label.btn.text-white#clone-btn{ title: "Clone", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
               %span.iconify.text-white{ 'data-icon': 'fa-regular:clone', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
           %li.nav-item
+            %label.btn.text-white#save-btn{ title: "Save", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
+              %span.iconify.text-white{ 'data-icon': 'fa-regular:save', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
+          %li.nav-item
             %label.btn.text-white#import-btn{ title: "Import", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
               %input#import-btn-input{ type: "file", accept: ".zip" }
                 %svg.bi.bi-upload{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
@@ -286,7 +289,7 @@
                 %a.dropdown-item#embed-btn{ href: '#' }
                   JavaScript
           %li.nav-item
-            %label.btn.text-white#share-btn{ title: "Share", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom' }
+            %label.btn.d-none.text-white#share-btn{ title: "Share", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom' }
               %svg.bi.bi-share-fill{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
                 %path{:d => "M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"}
       #network-popUp

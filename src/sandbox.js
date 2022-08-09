@@ -1,47 +1,48 @@
 let blitzboard;
 let markers = [];
 let editor, configEditor;
+let savedGraphs = [];
 $(() => {
   let defaultConfig =
     `
-        {
-          node: {
-            caption: ['id'],
-            defaultIcon: true,
-          },
-          edge: {
-            caption: ['label'],
-          },
-          layout: 'default',
-        
-          /*
-          layout: 'hierarchical',
-          layoutSettings: {
-            enabled:true,
-            levelSeparation: 150,
-            nodeSpacing: 100,
-            treeSpacing: 200,
-            blockShifting: true,
-            edgeMinimization: true,
-            parentCentralization: true,
-            direction: 'UD',        // UD, DU, LR, RL
-            sortMethod: 'hubsize',  // hubsize, directed
-            shakeTowards: 'leaves'  // roots, leaves
-          },
-          layout: 'custom',
-          layoutSettings: {
-            x: 'x',
-            y: 'y'
-          },
-          */
-        }
-                `;
+{
+  node: {
+    caption: ['id'],
+    defaultIcon: true,
+  },
+  edge: {
+    caption: ['label'],
+  },
+  layout: 'default',
+
+  /*
+  layout: 'hierarchical',
+  layoutSettings: {
+    enabled:true,
+    levelSeparation: 150,
+    nodeSpacing: 100,
+    treeSpacing: 200,
+    blockShifting: true,
+    edgeMinimization: true,
+    parentCentralization: true,
+    direction: 'UD',        // UD, DU, LR, RL
+    sortMethod: 'hubsize',  // hubsize, directed
+    shakeTowards: 'leaves'  // roots, leaves
+  },
+  layout: 'custom',
+  layoutSettings: {
+    x: 'x',
+    y: 'y'
+  },
+  */
+}
+  `;
 
   const q = document.querySelector.bind(document);
   const qa = document.querySelectorAll.bind(document);
 
   const backendUrl = "http://132.145.114.202:7000";
-
+  
   let container = document.getElementById('graph');
   let pgTimerId = null, configTimerId = null;
   let localMode = true;
@@ -54,7 +55,6 @@ $(() => {
   let srcNode, lineEnd;
   let prevNetwork = null;
   let viewMode = loadConfig('viewMode');
-  let savedGraphs = [];
   let pgToBeSorted;
   let sortModal = new bootstrap.Modal(document.getElementById('sort-modal'));
   let bufferedContent = ''; // A buffer to avoid calling editor.setValue() too often
@@ -111,27 +111,6 @@ $(() => {
       byProgram = false;
     }
     updateAutoCompletion();
-    // localStorage.setItem('pg', editor.getValue());
-    // curl -XPOST -H 'Content-Type: application/json' -d @sample/pg_named.json 'http://132.145.114.202:7000/merge_graph/'
-    let tmpNodes = JSON.parse(JSON.stringify(blitzboard.graph.nodes));
-    let tmpEdges = JSON.parse(JSON.stringify(blitzboard.graph.edges));
-    for(let node of tmpNodes) {
-      delete node.location;
-    }
-    for(let edge of tmpEdges) {
-      delete edge.location;
-      delete edge.id;
-      edge.undirected = edge.direction === '--';
-      delete edge.direction;
-    }
-
-    axios.post(`${backendUrl}/merge_graph`, {
-      name: localStorage.getItem('currentGraphName'),
-      pg: {
-        nodes: tmpNodes,
-        edges: tmpEdges
-      }
-    });
   });
 
   blitzboard.beforeParse.push(() => {
@@ -521,11 +500,13 @@ $(() => {
     }
   }
 
-  function updateGraphList() {
+  function updateGraphList(callback = null) {
     savedGraphs = [];
     axios.get(`${backendUrl}/list`).then(response => {
       updateHistoryMenu(response.data.map((g) => { return { name: g };}));
       savedGraphs = response.data;
+      if(callback)
+        callback();
     });
     // for (let i = 0; i < localStorage.length; i++){
     //   if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
@@ -543,17 +524,37 @@ $(() => {
   $(document).on('click', '.edit-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
-    let graph = savedGraphs[i];
-    let newName = prompt('What is the new name of the graph?', graph.name);
+    let oldName = localStorage.getItem('currentGraphName');
+    let newName = prompt('What is the new name of the graph?', oldName);
     if(newName) {
-      localStorage.removeItem('saved-graph-' + graph.name);
-      if(localStorage.getItem('currentGraphName', graph.name)) {
-        localStorage.setItem('currentGraphName', newName);
-        showGraphName();
-      }
-      graph.name = newName;
-      localStorage.setItem('saved-graph-' + graph.name, JSON.stringify(graph));
-      updateGraphList();
+      let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
+      console.log(tmpNodes);
+      console.log(tmpEdges);
+      axios.request({
+        method: 'post',
+        url: `${backendUrl}/drop`,
+        data: `graph=${oldName}`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }).then((res) => {
+        axios.post(`${backendUrl}/create`, {
+          name: newName,
+          pg: {
+            nodes: tmpNodes,
+            edges: tmpEdges
+          }
+        }).then((res) => {
+          localStorage.setItem('currentGraphName', newName);
+          updateGraphList();
+          showGraphName();
+          toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true,  timeOut: 3000});
+        }).catch((error) => {
+          toastr.error(`Failed to save ${newName}..`, '', {preventDuplicates: true,  timeOut: 3000});
+        });
+      }).catch((error) => {
+        toastr.error(`Failed to drop ${oldName}..`, '', {preventDuplicates: true,  timeOut: 3000});
+      });
     }
     e.stopPropagation();
   });
@@ -561,14 +562,33 @@ $(() => {
   $(document).on('click', '.delete-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
-    let name = savedGraphs[i].name;
+    let name = savedGraphs[i];
     if(confirm(`Really delete ${name}?`)) {
-      localStorage.removeItem('saved-graph-' + name);
-      savedGraphs.splice(i, 1);
-      if(name == localStorage.getItem('currentGraphName')) {
-        loadGraph(savedGraphs[i > 0 ? i - 1 : i]);
-      }
-      item.remove();
+      // localStorage.removeItem('saved-graph-' + name);
+      // savedGraphs.splice(i, 1);
+      // if(name == localStorage.getItem('currentGraphName')) {
+      //   loadGraph(savedGraphs[i > 0 ? i - 1 : i]);
+      // }
+      axios.request({
+        method: 'post',
+        url: `${backendUrl}/drop`,
+        data: `graph=${name}`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }).then((res) => {
+        toastr.success(`${name} has been removed!`, '', {preventDuplicates: true,  timeOut: 3000});
+        updateGraphList(() => {
+          if(localStorage.getItem('currentGraphName') === name) {
+            localStorage.setItem('currentGraphName', savedGraphs[0]);
+            loadCurrentGraph();
+            showGraphName();
+          }
+        });
+      }).catch((error) => {
+        toastr.error(`Failed to drop ${name}..`, '', {preventDuplicates: true,  timeOut: 3000});
+      });
+      // item.remove();
     }
     e.stopPropagation();
   });
@@ -650,7 +670,51 @@ $(() => {
     blitzboard.update(false);
     toastr.success(`Your graph is cloned as <em>${name}</em> !`, '', {preventDuplicates: true,  timeOut: 3000});
   });
+  
+  function nodesAndEdgesForSaving() {
+    let tmpNodes = JSON.parse(JSON.stringify(blitzboard.graph.nodes));
+    let tmpEdges = JSON.parse(JSON.stringify(blitzboard.graph.edges));
+    for(let node of tmpNodes) {
+      delete node.location;
+    }
+    for(let edge of tmpEdges) {
+      delete edge.location;
+      delete edge.id;
+      edge.undirected = edge.direction === '--';
+      delete edge.direction;
+    }
+    return [tmpNodes, tmpEdges];
+  }
 
+  q('#save-btn').addEventListener('click', () => {
+
+    let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
+    
+    let graphName = localStorage.getItem('currentGraphName');
+    
+    axios.request({
+      method: 'post',
+      url: `${backendUrl}/drop`,
+      data: `graph=${localStorage.getItem('currentGraphName')}`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }).then((res) => {
+      axios.post(`${backendUrl}/create`, {
+        name: localStorage.getItem('currentGraphName'),
+        pg: {
+          nodes: tmpNodes,
+          edges: tmpEdges
+        }
+      }).then((res) => {
+        toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true,  timeOut: 3000});
+      }).catch((error) => {
+        toastr.error(`Failed to save ${graphName}..`, '', {preventDuplicates: true,  timeOut: 3000});
+      });
+    }).catch((error) => {
+      toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true,  timeOut: 3000});
+    });
+  });
 
   q('#reset-config-btn').addEventListener('click', () => {
     if(confirm("Really reset config?"))
@@ -1020,6 +1084,13 @@ $(() => {
       }
     }
   });
+  
+  function loadCurrentGraph() {
+    axios.get(`${backendUrl}/query/?graph=${localStorage.getItem('currentGraphName')}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+      editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+      editor.getDoc().clearHistory();
+    });
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
   let sampleName = urlParams.get('sample');
@@ -1079,12 +1150,7 @@ $(() => {
     else {
       // axios.get("http://132.145.114.202:7000/list_graph").then((response) => {
       // });
-      axios.get(`${backendUrl}/query/?graph=${localStorage.getItem('currentGraphName')}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
-        byProgram = true;
-        editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
-        byProgram = false;
-        editor.getDoc().clearHistory();
-      });
+      loadCurrentGraph();
       // editor.setValue(initialPg);
     }
     // else if(initialPg) {
