@@ -78,8 +78,12 @@ module.exports = class Blitzboard {
     this.prevZoomPosition = null;
     this.warnings = [];
     this.elementWithTooltip = null;
+    this.addedNodes = new Set();
+    this.addedEdges = new Set();
+    this.deletedNodes = new Set();
+    this.deletedEdges = new Set();
     
-    this.staticLayoutMode = true;
+    this.staticLayoutMode = false;
     
     this.container.style.position = 'absolute';
     
@@ -882,14 +886,11 @@ module.exports = class Blitzboard {
       newPg = this.tryPgParse(''); // Set empty pg
     }
     else if (typeof input === 'string' || input instanceof String) {
-      console.log("parsing");
       try {
         newPg = JSON.parse(input);
       } catch (err) {
         if (err instanceof SyntaxError) {
-          console.log("pg parsing");
           newPg = this.tryPgParse(input);
-          console.log("pg parsed");
         }
         else
           throw err;
@@ -899,7 +900,6 @@ module.exports = class Blitzboard {
     }
     if (newPg === null || newPg === undefined)
       return;
-    console.log("parsed");
     this.graph = newPg;
     
     this.nodeLayout = layout;
@@ -953,7 +953,8 @@ module.exports = class Blitzboard {
     for(let edge of this.graph.edges) {
       if(!this.nodeMap[edge.from]) {
         this.warnings.push({
-          type: 'UndefinedNode',
+          type: 'UndefinedNode', 
+          edge: edge,
           node: edge.from,
           location: edge.location,
           message: `Source node is undefined: ${edge.from}`
@@ -962,6 +963,7 @@ module.exports = class Blitzboard {
       if(!this.nodeMap[edge.to]) {
         this.warnings.push({
           type: 'UndefinedNode',
+          edge: edge,
           node: edge.to,
           location: edge.location,
           message: `Target node is undefined: ${edge.to}`
@@ -996,10 +998,11 @@ module.exports = class Blitzboard {
       this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
     
-    console.log('Start to apply diff');
 
     if(applyDiff) {
-      let nodesToDelete = new Set(Object.keys(this.nodeMap));
+      this.deletedNodes = new Set(Object.keys(this.nodeMap));
+      this.addedNodes = new Set();
+      this.addedEdges = new Set();
       let newEdgeMap = {};
 
       this.nodeLineMap = {};
@@ -1016,9 +1019,10 @@ module.exports = class Blitzboard {
         } else {
           let visNode = this.toVisNode(node, this.config.node.caption);
           this.nodeDataSet.add(visNode);
+          this.addedNodes.add(node.id);
         }
         this.nodeMap[node.id] = node;
-        nodesToDelete.delete(node.id);
+        this.deletedNodes.delete(node.id);
         if(node.location) {
           for (let i = node.location.start.line; i <= node.location.end.line; i++) {
             if (i < node.location.end.line || node.location.end.column > 1)
@@ -1030,6 +1034,8 @@ module.exports = class Blitzboard {
 
       this.graph.edges.forEach(edge => {
         let id = this.toNodePairString(edge);
+        if(!this.edgeMap[id])
+          this.addedEdges.add(id);
         while(newEdgeMap[id]) {
           id += '_';
         }
@@ -1046,18 +1052,18 @@ module.exports = class Blitzboard {
         }
       });
 
-      nodesToDelete.forEach((nodeId) => {
+      this.deletedNodes.forEach((nodeId) => {
         delete this.nodeMap[nodeId];
       });
-      this.nodeDataSet.remove([...nodesToDelete]);
+      this.nodeDataSet.remove([...this.deletedNodes]);
 
-      let edgesToDelete = [];
+      this.deletedEdges = [];
       for(let edgeId of Object.keys(this.edgeMap)) {
         if(!newEdgeMap[edgeId]) {
-          edgesToDelete.push(edgeId);
+          this.deletedEdges.push(edgeId);
         }
       }
-      this.edgeDataSet.remove(edgesToDelete);
+      this.edgeDataSet.remove(this.deletedEdges);
       this.edgeMap = newEdgeMap;
       if(this.map) {
         blitzboard.updateNodeLocationOnMap();
