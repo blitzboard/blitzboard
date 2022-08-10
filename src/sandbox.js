@@ -263,12 +263,19 @@ $(() => {
         let message = '';
         let addedNode = new Set();
         let addedLineStart = editor.lineCount();
+        let oldCursor = editor.getCursor();
         byProgram = true;
         for(let warning of blitzboard.warnings) {
-          if(warning.type === 'UndefinedNode') {
+          if(warning.type === 'UndefinedNode' && blitzboard.addedEdges.has(warning.edge.id)) {
             if(addedNode.has(warning.node))
               continue;
-            editor.setValue(editor.getValue() + "\n" + warning.node);
+            let line = editor.getLine(oldCursor.line);
+            let pos = {
+              line: oldCursor.line,
+              ch: line.length // set the character position to the end of the line
+            }
+            editor.replaceRange('\n' + warning.node, pos); // adds a new line
+            // editor.setValue(editor.getValue() + "\n" + warning.node);
             if(message !== '')
               message += ', ';
             message += `Missing node '${warning.node}' is created`;
@@ -284,10 +291,12 @@ $(() => {
               {className: 'syntax-warning-line', message: warning.message}));
           }
         }
-        if(addedLineStart !== editor.lineCount())
-          scrollToLine({start: { line: addedLineStart + 1, column: 1 }, end  : {line: editor.lineCount() + 1, column: 1}} );
+        if(addedLineStart !== editor.lineCount()) {
+          editor.setCursor(oldCursor);
+        }
         byProgram = false;
-        toastr.warning(message, {preventDuplicates: true})
+        if(message.length > 0) 
+          toastr.warning(message, {preventDuplicates: true})
       }
     } catch(e) {
       console.log(e);
