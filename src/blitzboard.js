@@ -19,13 +19,13 @@ module.exports = class Blitzboard {
       thumbnail: 'thumbnail',
       saturation: '100%',
       brightness: '37%',
-      limit: 500
+      limit: 4000
     },
     edge: {
       caption: ['label'],
       saturation: '0%',
       brightness: '62%',
-      limit: 10000,
+      limit: 50000,
       width: defaultWidth
     },
     zoom: { 
@@ -82,6 +82,8 @@ module.exports = class Blitzboard {
     this.addedEdges = new Set();
     this.deletedNodes = new Set();
     this.deletedEdges = new Set();
+    
+    this.staticLayoutMode = false;
     
     this.staticLayoutMode = false;
     
@@ -520,7 +522,7 @@ module.exports = class Blitzboard {
     
     let x, y, fixed, width;
 
-    if(this.staticLayoutMode) {
+    if(this.staticLayoutMode && this.config.layout !== 'hierarchical' && this.config.layout !== 'map') {
       fixed = true;
       try {
         ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
@@ -874,7 +876,9 @@ module.exports = class Blitzboard {
     return `<table style='fixed'>${flattend_props.join('')}</table>`;
   }
 
-
+  fit() {
+    this.network.fit({animation: !this.staticLayoutMode });
+  }
 
   setGraph(input, update = true, layout = null) {
     this.nodeColorMap = {};
@@ -886,10 +890,12 @@ module.exports = class Blitzboard {
       newPg = this.tryPgParse(''); // Set empty pg
     }
     else if (typeof input === 'string' || input instanceof String) {
+      console.log("parsing");
       try {
         newPg = JSON.parse(input);
       } catch (err) {
         if (err instanceof SyntaxError) {
+          newPg = this.tryPgParse(input);
           newPg = this.tryPgParse(input);
         }
         else
@@ -900,6 +906,7 @@ module.exports = class Blitzboard {
     }
     if (newPg === null || newPg === undefined)
       return;
+    console.log("parsed");
     this.graph = newPg;
     
     this.nodeLayout = layout;
@@ -974,8 +981,7 @@ module.exports = class Blitzboard {
   
   doLayoutStep(step = 1) {
     for(let i = 0; i < step; ++i) {
-      if(this.nodeLayout.step())
-        break;
+      this.nodeLayout.step();
     }
     let listToUpdate = [];
     this.nodeLayout.graph.forEachNode(node => {
@@ -998,7 +1004,6 @@ module.exports = class Blitzboard {
       this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
     
-
     if(applyDiff) {
       this.deletedNodes = new Set(Object.keys(this.nodeMap));
       this.addedNodes = new Set();
@@ -1114,12 +1119,6 @@ module.exports = class Blitzboard {
       };
       if(!this.nodeLayout) {
         this.nodeLayout = createLayout(ngraph, physicsSettings);
-        console.log("start layout");
-
-        for (let i = 0; i < 100; ++i) {
-          this.nodeLayout.step();
-        }
-        console.log("layout computed");
       } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
         // convert into layout of ngraph
         let ngraphLayout = createLayout(ngraph, physicsSettings);
@@ -1128,6 +1127,12 @@ module.exports = class Blitzboard {
             ngraphLayout.setNodePosition(nodeId, position.x, position.y);
         }
         this.nodeLayout = ngraphLayout;
+      }
+      for (let i = 0; i < 1000; ++i) {
+        if(this.nodeLayout.step()) {
+          console.log(`layout is stable at step #${i}`);
+          break;
+        }
       }
     }
 
@@ -1200,6 +1205,7 @@ module.exports = class Blitzboard {
     } else {
       layout.hierarchical = false;
     }
+    layout.improvedLayout = !this.staticLayoutMode;
 
     this.options = {
       layout:
@@ -1212,10 +1218,12 @@ module.exports = class Blitzboard {
         keyboard: {
           enabled: true, 
           bindToWindow: false
-        }
+        },
+        hideEdgesOnDrag: this.staticLayoutMode,
+        hideEdgesOnZoom: this.staticLayoutMode
       },
       physics: {
-        enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical',
+        enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical' && !this.staticLayoutMode,
         barnesHut: {
           springConstant:  this.config.layout === 'timeline' ? 0.004 : 0.016
         },
@@ -1276,7 +1284,7 @@ module.exports = class Blitzboard {
     this.network.canvas.body.container.addEventListener('keydown', (e) => {
       // Key 0
       if(e.keyCode === 48)
-        blitzboard.network.fit({animation: true});
+        blitzboard.fit();
     });
 
 
@@ -1306,7 +1314,6 @@ module.exports = class Blitzboard {
         });
       }
     });
-    
 
     function statisticsOfMap() {
       let lngKey =  blitzboard.config.layoutSettings.lng;
@@ -1608,6 +1615,10 @@ module.exports = class Blitzboard {
       }
     });
 
+    this.network.on("animationFinished", (e) => {
+      blitzboard.network.renderer.dragging = false;
+    });
+
     
     this.network.on("doubleClick", (e) => {
       clearTimeout(this.doubleClickTimer);
@@ -1621,7 +1632,7 @@ module.exports = class Blitzboard {
           this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
         }
       } else {
-        blitzboard.network.fit({animation: true});
+        this.fit();
       }
     });
 
@@ -1654,12 +1665,14 @@ module.exports = class Blitzboard {
   scrollNetworkToPosition(position) {
     clearTimeout(this.scrollAnimationTimerId);
     this.scrollAnimationTimerId = setTimeout(() => {
+      if(this.staticLayoutMode)
+        blitzboard.network.renderer.dragging = true;
       const animationOption = {
         scale: 1.0,
         animation:
           {
             duration: 500,
-            easingFuntcion: "easeInOutQuad"
+            easingFunction: "easeInOutQuad"
           }
       };
       if(this.staticLayoutMode) {
