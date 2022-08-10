@@ -182,7 +182,12 @@ $(() => {
     localMode = false;
     pgTimerId = setTimeout(retrieveGraph, 1000);
   });
+  
+  q('#options-backend-url-input').value = backendUrl;
 
+  q('#options-backend-url-input').addEventListener('change', (e) => {
+    localStorage.setItem('backendUrl', e.target.value);
+  });
 
   q('#share-btn').addEventListener('click', () => {
     let url = new URL(window.location);
@@ -559,57 +564,79 @@ $(() => {
 
   function updateGraphList(callback = null) {
     savedGraphs = [];
-    axios.get(`${backendUrl}/list`).then(response => {
-      updateHistoryMenu(response.data.map((g) => { return { name: g };}));
-      savedGraphs = response.data;
-      if(callback)
-        callback();
-    });
-    // for (let i = 0; i < localStorage.length; i++){
-    //   if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
-    //     try {
-    //       savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))));
-    //     } catch(e) {
-    //       localStorage.removeItem(localStorage.key(i));
-    //     }
-    //   }
-    // }
-    // updateHistoryMenu(savedGraphs);
+    if(remoteMode) {
+      axios.get(`${backendUrl}/list`).then(response => {
+        updateHistoryMenu(response.data.map((g) => {
+          return {name: g};
+        }));
+        savedGraphs = response.data;
+        if (callback)
+          callback();
+      });
+    } else {
+      for (let i = 0; i < localStorage.length; i++){
+        if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
+          try {
+            savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))).name);
+          } catch(e) {
+            localStorage.removeItem(localStorage.key(i));
+          }
+        }
+      }
+      updateHistoryMenu(savedGraphs.map((g) => {
+        return {name: g};
+      }));
+    }
   }
 
 
   $(document).on('click', '.edit-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
-    let oldName = localStorage.getItem('currentGraphName');
+    let oldName = savedGraphs[i];
     let newName = prompt('What is the new name of the graph?', oldName);
     if(newName) {
-      let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
-      axios.request({
-        method: 'post',
-        url: `${backendUrl}/drop`,
-        data: `graph=${oldName}`,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }).then((res) => {
-        axios.post(`${backendUrl}/create`, {
-          name: newName,
-          pg: {
-            nodes: tmpNodes,
-            edges: tmpEdges
-          }
+      if(remoteMode) {
+        let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
+        axios.request({
+          method: 'post',
+          url: `${backendUrl}/drop`,
+          data: `graph=${oldName}`,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         }).then((res) => {
-          localStorage.setItem('currentGraphName', newName);
-          updateGraphList();
-          showGraphName();
-          toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true,  timeOut: 3000});
+          axios.post(`${backendUrl}/create`, {
+            name: newName,
+            pg: {
+              nodes: tmpNodes,
+              edges: tmpEdges
+            }
+          }).then((res) => {
+            savedGraphs[i] = newName;
+            updateGraphList();
+            if(localStorage.getItem('currentGraphName') === oldName) {
+              localStorage.setItem('currentGraphName', newName);
+            }
+            showGraphName();
+            toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+          }).catch((error) => {
+            toastr.error(`Failed to save ${newName}..`, '', {preventDuplicates: true, timeOut: 3000});
+          });
         }).catch((error) => {
-          toastr.error(`Failed to save ${newName}..`, '', {preventDuplicates: true,  timeOut: 3000});
+          toastr.error(`Failed to drop ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
         });
-      }).catch((error) => {
-        toastr.error(`Failed to drop ${oldName}..`, '', {preventDuplicates: true,  timeOut: 3000});
-      });
+      } else {
+        let oldGraph =
+          JSON.parse(localStorage.getItem('saved-graph-' + oldName));
+        localStorage.removeItem('saved-graph-' + oldName);
+        if(localStorage.getItem('currentGraphName', oldName)) {
+          localStorage.setItem('currentGraphName', newName);
+          showGraphName();
+        }
+        localStorage.setItem('saved-graph-' + newName, JSON.stringify(oldGraph));
+        updateGraphList();
+      }
     }
     e.stopPropagation();
   });
@@ -670,17 +697,22 @@ $(() => {
   $(document).on('click', '.history-item', (e) => {
     let i = $('.history-item').index(e.target);
     let graph = savedGraphs[i];
-    axios.get(`${backendUrl}/query/?graph=${graph}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
-      byProgram = true;
-      loadGraph({
-        name: graph,
-        pg: json2pg.translate(JSON.stringify(response.data.pg)),
-        config: configEditor.getValue() // as it is
+    if(remoteMode) {
+      axios.get(`${backendUrl}/query/?graph=${graph}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+        byProgram = true;
+        loadGraph({
+          name: graph,
+          pg: json2pg.translate(JSON.stringify(response.data.pg)),
+          config: configEditor.getValue() // as it is
+        });
+        byProgram = false;
+        editor.getDoc().clearHistory();
       });
-      byProgram = false;
-      editor.getDoc().clearHistory();
-    });
-    
+    } else {
+      let graphName = savedGraphs[i];
+      let graph = JSON.parse(localStorage.getItem('saved-graph-' + graphName));
+      loadGraph(graph);
+    }
   });
 
   function saveCurrentGraph() {
@@ -702,34 +734,20 @@ $(() => {
       layoutMap = nodeLayout;
     }
     localStorage.setItem('nodeLayout', JSON.stringify(layoutMap));
-    let graph = {
-      pg: editor.getValue(),
-      config: configEditor.getValue(),
-      layout: layoutMap,
-      name: name,
-      date: Date.now()
-    };
-    // while(i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
-    // if(i < savedGraphs.length) {
-    //   savedGraphs[i] = graph;
-    // }
-    // localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
-    // axios.post(`${backendUrl}/merge_graph`, {
-    //   name: name,
-    //   pg: blitzboard.graph
-    // });
-    //
-    // let graph = {
-    //   pg: editor.getValue(),
-    //   config: configEditor.getValue(),
-    //   name: name,
-    //   date: Date.now()
-    // };
-    // while(i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
-    // if(i < savedGraphs.length) {
-    //   savedGraphs[i] = graph;
-    // }
-    // localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
+    if(!remoteMode) {
+      let graph = {
+        pg: editor.getValue(),
+        config: configEditor.getValue(),
+        layout: layoutMap,
+        name: name,
+        date: Date.now()
+      };
+      while(i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
+      if(i < savedGraphs.length) {
+        savedGraphs[i] = graph;
+      }
+      localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
+    }
   }
 
   q('#new-btn').addEventListener('click', () => {
@@ -767,6 +785,11 @@ $(() => {
     }
     return [tmpNodes, tmpEdges];
   }
+  
+  if(!remoteMode)
+  {
+    q('#save-btn').classList.add('d-none');
+  }
 
   q('#save-btn').addEventListener('click', () => {
 
@@ -774,28 +797,32 @@ $(() => {
     
     let graphName = localStorage.getItem('currentGraphName');
     
-    axios.request({
-      method: 'post',
-      url: `${backendUrl}/drop`,
-      data: `graph=${localStorage.getItem('currentGraphName')}`,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    }).then((res) => {
-      axios.post(`${backendUrl}/create`, {
-        name: localStorage.getItem('currentGraphName'),
-        pg: {
-          nodes: tmpNodes,
-          edges: tmpEdges
-        }
+    if(remoteMode) {
+      axios.request({
+        method: 'post',
+        url: `${backendUrl}/drop`,
+        data: `graph=${localStorage.getItem('currentGraphName')}`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       }).then((res) => {
-        toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true,  timeOut: 3000});
+        axios.post(`${backendUrl}/create`, {
+          name: localStorage.getItem('currentGraphName'),
+          pg: {
+            nodes: tmpNodes,
+            edges: tmpEdges
+          }
+        }).then((res) => {
+          toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+        }).catch((error) => {
+          toastr.error(`Failed to save ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
+        });
       }).catch((error) => {
-        toastr.error(`Failed to save ${graphName}..`, '', {preventDuplicates: true,  timeOut: 3000});
+        toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
       });
-    }).catch((error) => {
-      toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true,  timeOut: 3000});
-    });
+    } else {
+      
+    }
   });
 
   q('#reset-config-btn').addEventListener('click', () => {
@@ -1177,13 +1204,25 @@ $(() => {
   });
   
   function loadCurrentGraph() {
-    axios.get(`${backendUrl}/query/?graph=${localStorage.getItem('currentGraphName')}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
-      byProgram = true;
-      editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
-      editor.getDoc().clearHistory();
-      byProgram = false;
-      updateGraph(editor.getValue(), config);
-    });
+    if(remoteMode) {
+      axios.get(`${backendUrl}/query/?graph=${localStorage.getItem('currentGraphName')}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+        byProgram = true;
+        editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+        editor.getDoc().clearHistory();
+        byProgram = false;
+        updateGraph(editor.getValue(), config);
+      });
+    } else {
+      try {
+        let graph = JSON.parse(localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName')));
+        byProgram = true;
+        editor.setValue(graph.pg);
+        byProgram = false;
+        editor.getDoc().clearHistory();
+      } catch (e) {
+        
+      }
+    }
   }
 
   setTimeout(() => {

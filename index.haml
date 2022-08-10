@@ -256,6 +256,11 @@
         .dropdown.mx-3
           #history-dropdown.text-white.mx-0.dropdown-toggle{ type: 'button', 'data-bs-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false, style: "width: 220px; text-align: left; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;" }
           #history-menu.dropdown-menu{ 'aria-labelledby': "historyDropdown" }
+
+  
+        .text-white
+          Backend URL:
+          %input#options-backend-url-input{ type: "text" }
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
             %label.btn.text-white#new-btn{ title: "New", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
