@@ -843,6 +843,7 @@ $(() => {
           }
         }).then((res) => {
           toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+          updateGraphList();
         }).catch((error) => {
           toastr.error(`Failed to save ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
         });
