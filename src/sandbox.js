@@ -634,7 +634,7 @@ $(() => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-        }).then((res) => {
+        }).finally((res) => {
           axios.post(`${backendUrl}/create`, {
             name: newName,
             pg: {
@@ -834,7 +834,7 @@ $(() => {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-      }).then((res) => {
+      }).finally((res) => {
         axios.post(`${backendUrl}/create`, {
           name: localStorage.getItem('currentGraphName'),
           pg: {
