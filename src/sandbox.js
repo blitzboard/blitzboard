@@ -47,7 +47,7 @@ $(() => {
   const q = document.querySelector.bind(document);
   const qa = document.querySelectorAll.bind(document);
 
-  
+
   let container = document.getElementById('graph');
   let pgTimerId = null, configTimerId = null;
   let localMode = true;
@@ -71,24 +71,24 @@ $(() => {
     hour12: false,
   });
 
-  String.prototype.quoteIfNeeded = function() {
-    if(this.includes('"') || this.includes('#') || this.includes('\t') || this.includes(':') || this.includes(' ')) {
+  String.prototype.quoteIfNeeded = function () {
+    if (this.includes('"') || this.includes('#') || this.includes('\t') || this.includes(':') || this.includes(' ')) {
       return `"${this.replace(/\"/g, '""')}"`;
     }
     return this;
   }
 
 
-  if(!localStorage.getItem('currentGraphName')) {
+  if (!localStorage.getItem('currentGraphName')) {
     localStorage.setItem('currentGraphName', newGraphName());
   }
-  
+
 
   function reloadConfig() {
     localStorage.setItem('config', configEditor.getValue());
     config = tryJsonParse(configEditor.getValue());
     saveCurrentGraph();
-    if(config)
+    if (config)
       updateGraph(editor.getValue(), config);
     clearTimeout(configTimerId);
     blitzboard.hideLoader();
@@ -97,13 +97,13 @@ $(() => {
 
 
   function showSortModal() {
-    if(/^\s*#/m.test(editor.getValue())) {
+    if (/^\s*#/m.test(editor.getValue())) {
       q('#comment-warning-line').classList.remove('d-none');
     } else {
       q('#comment-warning-line').classList.add('d-none');
     }
     pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
-    if(!pgToBeSorted) {
+    if (!pgToBeSorted) {
       alert('Please write a valid graph before sort.');
     }
     let oldNodeKey = localStorage.getItem('nodeSortKey');
@@ -115,12 +115,12 @@ $(() => {
 
     nodeOptions = nodeOptions.concat(Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
     q('#sort-node-lines-select').innerHTML = nodeOptions.map((o) =>
-      `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected': ''}>${o[1]}</option>`
+      `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected' : ''}>${o[1]}</option>`
     );
 
     edgeOptions = edgeOptions.concat(Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
     q('#sort-edge-lines-select').innerHTML = edgeOptions.map((o) =>
-      `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected': ''}>${o[1]}</option>`
+      `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected' : ''}>${o[1]}</option>`
     );
     sortModal.show();
   }
@@ -128,7 +128,7 @@ $(() => {
   function tryJsonParse(json) {
     try {
       return looseJsonParse(json);
-    } catch(e) {
+    } catch (e) {
       console.log(e);
       toastr.error(e.toString(), 'JSON SyntaxError', {preventDuplicates: true});
       return null;
@@ -137,11 +137,14 @@ $(() => {
 
 
   function scrollToLine(loc) {
-    if(!loc)
+    if (!loc)
       return;
     byProgram = true;
     editor.scrollIntoView({line: loc.start.line - 1, ch: loc.start.column - 1}, 200);
-    editor.setSelection({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1});
+    editor.setSelection({line: loc.start.line - 1, ch: loc.start.column - 1}, {
+      line: loc.end.line - 1,
+      ch: loc.end.column - 1
+    });
     editor.focus();
     byProgram = false;
   }
@@ -149,12 +152,12 @@ $(() => {
   blitzboard.onNodeAdded.push((nodes) => {
     byProgram = true;
     let content = bufferedContent || editor.getValue();
-    for(let node of nodes) {
+    for (let node of nodes) {
       content += `\n${node.id.quoteIfNeeded()}`;
-      for(let label of node.labels)
+      for (let label of node.labels)
         content += ` :${label.quoteIfNeeded()}`;
-      for(let key in node.properties)
-        for(let value of node.properties[key])
+      for (let key in node.properties)
+        for (let value of node.properties[key])
           content += ` ${key.quoteIfNeeded()}:${value.quoteIfNeeded()}`;
     }
     bufferedContent = content;
@@ -163,7 +166,7 @@ $(() => {
 
 
   blitzboard.onUpdated.push((nodes) => {
-    if(bufferedContent) {
+    if (bufferedContent) {
       byProgram = true;
       editor.setValue(bufferedContent);
       bufferedContent = null;
@@ -173,7 +176,7 @@ $(() => {
   });
 
   blitzboard.beforeParse.push(() => {
-    for(let marker of markers)
+    for (let marker of markers)
       marker.clear();
     markers = [];
   });
@@ -183,8 +186,14 @@ $(() => {
       throw(e);
     let loc = e.location;
     // Mark leading characters in the error line
-    markers.push(editor.markText({line: loc.start.line - 1, ch: 0}, {line: loc.start.line - 1, ch: loc.start.column - 1}, {className: 'syntax-error-line', message: e.message}));
-    markers.push(editor.markText({line: loc.start.line - 1, ch: loc.start.column - 1}, {line: loc.end.line - 1, ch: loc.end.column - 1}, {className: 'syntax-error', message: e.message}));
+    markers.push(editor.markText({line: loc.start.line - 1, ch: 0}, {
+      line: loc.start.line - 1,
+      ch: loc.start.column - 1
+    }, {className: 'syntax-error-line', message: e.message}));
+    markers.push(editor.markText({line: loc.start.line - 1, ch: loc.start.column - 1}, {
+      line: loc.end.line - 1,
+      ch: loc.end.column - 1
+    }, {className: 'syntax-error', message: e.message}));
     // Mark following characters in the error line
     markers.push(editor.markText({line: loc.end.line - 1, ch: loc.end.column - 1}, {line: loc.end.line - 1, ch: 10000},
       {className: 'syntax-error-line', message: e.message}));
@@ -194,12 +203,12 @@ $(() => {
   blitzboard.onEdgeAdded.push((edges) => {
     byProgram = true;
     let content = bufferedContent || editor.getValue();
-    for(let edge of edges) {
+    for (let edge of edges) {
       content += `\n${edge.from.quoteIfNeeded()} ${edge.direction} ${edge.to.quoteIfNeeded()}`;
-      for(let label of edge.labels)
+      for (let label of edge.labels)
         content += ` :${label.quoteIfNeeded()}`;
-      for(let key in edge.properties)
-        for(let value of edge.properties[key])
+      for (let key in edge.properties)
+        for (let value of edge.properties[key])
           content += ` ${key.quoteIfNeeded()}:${value.quoteIfNeeded()}`;
     }
     bufferedContent = content;
@@ -211,7 +220,7 @@ $(() => {
     localMode = false;
     pgTimerId = setTimeout(retrieveGraph, 1000);
   });
-  
+
   q('#options-backend-url-input').value = backendUrl;
 
   q('#options-backend-url-input').addEventListener('change', (e) => {
@@ -226,13 +235,13 @@ $(() => {
     params.set('viewMode', viewMode);
     params.set('name', localStorage.getItem('currentGraphName'));
     url.search = params;
-    if(url.length > 7333) {
+    if (url.length > 7333) {
       alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
     } else {
       if (!navigator.clipboard) {
         alert("Sharing is not allowed under non-secure HTTP. Please export your graph or use HTTPS.");
       } else {
-        navigator.clipboard.writeText(url.toString()).then(function() {
+        navigator.clipboard.writeText(url.toString()).then(function () {
           alert("Your graph is now on clipboard!");
         });
       }
@@ -242,7 +251,7 @@ $(() => {
   function onResize(event, ui) {
     const totalWidth = $("#main-area").width();
     let width = $("#input-area").width();
-    if(width > totalWidth) {
+    if (width > totalWidth) {
       width = totalWidth;
       $('#input-area').css('width', width);
     }
@@ -258,7 +267,7 @@ $(() => {
   function onConfigResize(event, ui) {
     const totalHeight = $("#input-area").height();
     let height = $("#pg-area").height();
-    if(height > totalHeight) {
+    if (height > totalHeight) {
       height = totalHeight;
     }
     let left = $("#pg-area").width() - 50;
@@ -267,7 +276,7 @@ $(() => {
     $('#config-area').css('height', (totalHeight - height));
     $('#options-btn').css('bottom', bottom);
     $('#options-btn').css('left', left);
-    if(configCollapsed()) {
+    if (configCollapsed()) {
       $('#reset-config-btn').hide();
     } else {
       $('#reset-config-btn').show();
@@ -290,22 +299,20 @@ $(() => {
     candidateIds = new Set();
     candidatePropNames = new Set();
     candidateLabels = new Set();
-    for(let node of blitzboard.graph.nodes) {
+    for (let node of blitzboard.graph.nodes) {
       candidateIds.add(node.id);
-      for(let key in node.properties)
-      {
+      for (let key in node.properties) {
         candidatePropNames.add(key);
       }
-      for(let label of node.labels) {
+      for (let label of node.labels) {
         candidateLabels.add(':' + label);
       }
     }
-    for(let edge of blitzboard.graph.edges) {
-      for(let label of edge.labels) {
+    for (let edge of blitzboard.graph.edges) {
+      for (let label of edge.labels) {
         candidateLabels.add(':' + label);
       }
-      for(let key in edge.properties)
-      {
+      for (let key in edge.properties) {
         candidatePropNames.add(key);
       }
     }
@@ -314,13 +321,14 @@ $(() => {
   function updateGraph(input, newConfig = null) {
     try {
       toastr.clear();
-      
-      if(!blitzboard.staticLayoutMode && input.length >= 1000) {
+
+      // TODO: determine reasonable threshold
+      if (!blitzboard.staticLayoutMode && input.length >= 10000) {
         blitzboard.staticLayoutMode = true;
         toastr.warning("Static layout mode is enabled because input is large!");
       }
-       
-      if(newConfig) {
+
+      if (newConfig) {
         blitzboard.setGraph(input, false, nodeLayout);
         blitzboard.setConfig(newConfig);
       } else {
@@ -328,7 +336,7 @@ $(() => {
       }
       nodeLayout = blitzboard.nodeLayout;
       let layoutMap = {};
-      if(nodeLayout?.graph) {
+      if (nodeLayout?.graph) {
         nodeLayout.graph.forEachNode(node => {
           let position = nodeLayout.getNodePosition(node.id);
           layoutMap[node.id] = {
@@ -338,8 +346,8 @@ $(() => {
         });
       }
       localStorage.setItem('nodeLayout', JSON.stringify(layoutMap));
-      if(blitzboard.warnings.length > 0) {
-        for(let marker of markers)
+      if (blitzboard.warnings.length > 0) {
+        for (let marker of markers)
           marker.clear();
         markers = [];
         let message = '';
@@ -347,9 +355,9 @@ $(() => {
         let addedLineStart = editor.lineCount();
         let oldCursor = editor.getCursor();
         byProgram = true;
-        for(let warning of blitzboard.warnings) {
-          if(warning.type === 'UndefinedNode' && blitzboard.addedEdges.has(warning.edge.id)) {
-            if(addedNode.has(warning.node))
+        for (let warning of blitzboard.warnings) {
+          if (warning.type === 'UndefinedNode' && blitzboard.addedEdges.has(warning.edge.id)) {
+            if (addedNode.has(warning.node))
               continue;
             let line = editor.getLine(oldCursor.line);
             let pos = {
@@ -358,12 +366,12 @@ $(() => {
             }
             editor.replaceRange('\n' + warning.node, pos); // adds a new line
             // editor.setValue(editor.getValue() + "\n" + warning.node);
-            if(message !== '')
+            if (message !== '')
               message += ', ';
             message += `Missing node '${warning.node}' is created`;
             addedNode.add(warning.node);
           } else {
-            if(message !== '')
+            if (message !== '')
               message += ', ';
             message += warning.message;
             markers.push(editor.markText({
@@ -373,22 +381,24 @@ $(() => {
               {className: 'syntax-warning-line', message: warning.message}));
           }
         }
-        if(addedLineStart !== editor.lineCount()) {
+        if (addedLineStart !== editor.lineCount()) {
           editor.setCursor(oldCursor);
         }
         byProgram = false;
-        if(message.length > 0) 
+        if (message.length > 0)
           toastr.warning(message, {preventDuplicates: true})
       }
-    } catch(e) {
+    } catch (e) {
       console.log(e);
-      if(e instanceof Blitzboard.DuplicateNodeError) {
-        for(let marker of markers)
+      if (e instanceof Blitzboard.DuplicateNodeError) {
+        for (let marker of markers)
           marker.clear();
         markers = [];
-        for(let node of e.nodes) {
-          markers.push(editor.markText({line: node.location.start.line - 1,
-              ch: node.location.start.column - 1}, {line: node.location.end.line - 1, ch: node.location.end.column - 1 },
+        for (let node of e.nodes) {
+          markers.push(editor.markText({
+              line: node.location.start.line - 1,
+              ch: node.location.start.column - 1
+            }, {line: node.location.end.line - 1, ch: node.location.end.column - 1},
             {className: 'syntax-error-line', message: e.message}));
         }
         toastr.error(e.message, {preventDuplicates: true})
@@ -397,58 +407,56 @@ $(() => {
       }
       return null;
     }
-    if(blitzboard.network !== prevNetwork) {
+    if (blitzboard.network !== prevNetwork) {
       blitzboard.network.on("click", (e) => {
-        if(srcNode) {
-          if(e.nodes.length > 0) {
+        if (srcNode) {
+          if (e.nodes.length > 0) {
             let node = blitzboard.nodeMap[e.nodes[0]];
-            if(srcNode !== node.id) {
+            if (srcNode !== node.id) {
               let oldPg = editor.getValue();
               let lineNum = numberOfLines(oldPg) + 1;
               editor.setValue(oldPg + `\n${srcNode.quoteIfNeeded()} -> ${node.id.quoteIfNeeded()}`);
               updateGraph(editor.getValue());
-              scrollToLine({start: { line: lineNum, column: 1 }, end  : {line: lineNum + 1, column: 1}} );
+              scrollToLine({start: {line: lineNum, column: 1}, end: {line: lineNum + 1, column: 1}});
             }
           }
           srcNode = null;
           lineEnd = null;
-        }
-        else if(e.nodes.length > 0) {
+        } else if (e.nodes.length > 0) {
           let node = blitzboard.nodeMap[e.nodes[0]];
           scrollToLine(node.location);
-        } else if(e.edges.length > 0) {
+        } else if (e.edges.length > 0) {
           let edge = blitzboard.edgeMap[e.edges[0]];
           scrollToLine(edge.location);
         }
       });
       blitzboard.network.on("doubleClick", (e) => {
-        if(!blitzboard.config?.node?.onDoubleClick) {
-          if(e.nodes.length > 0) {
+        if (!blitzboard.config?.node?.onDoubleClick) {
+          if (e.nodes.length > 0) {
             const node = e.nodes[0];
             srcNode = node;
           } else if (blitzboard.map) {
-            let xKey =  blitzboard.config.layoutSettings.x;
-            let yKey =  blitzboard.config.layoutSettings.y;
+            let xKey = blitzboard.config.layoutSettings.x;
+            let yKey = blitzboard.config.layoutSettings.y;
             let oldPg = editor.getValue();
             let lineNum = numberOfLines(oldPg) + 1;
             let latLng = blitzboard.map.containerPointToLatLng([e.pointer.DOM.x, e.pointer.DOM.y]);
             editor.setValue(oldPg + `\n${newNodeName()} ${xKey}:${latLng.lng} ${yKey}:${latLng.lat}`);
             updateGraph(editor.getValue());
-            scrollToLine({start: { line: lineNum, ch: 0 }, end: {line: lineNum, ch: 0}} );
+            scrollToLine({start: {line: lineNum, ch: 0}, end: {line: lineNum, ch: 0}});
           }
         }
       });
       let canvas = q(".vis-network canvas");
-      canvas.addEventListener('mousemove', event =>
-      {
-        if(srcNode) {
+      canvas.addEventListener('mousemove', event => {
+        if (srcNode) {
           lineEnd = blitzboard.network.DOMtoCanvas(getMousePos(canvas, event));
           blitzboard.network.redraw();
         }
       });
 
       blitzboard.network.on("afterDrawing", (ctx) => {
-        if(srcNode && lineEnd) {
+        if (srcNode && lineEnd) {
           ctx.beginPath();
           let lineStart = blitzboard.network.getPosition(srcNode);
           ctx.moveTo(lineStart.x, lineStart.y);
@@ -458,13 +466,13 @@ $(() => {
       });
       prevNetwork = blitzboard.network;
     }
-    if(blitzboard.graph) {
+    if (blitzboard.graph) {
       updateAutoCompletion();
     }
   }
 
   window.onresize = onResize;
-  $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind( "resize", onResize).bind("create", onResize);
+  $('#input-area').resizable({handles: "e,s", grid: [1, 10000]}).bind("resize", onResize).bind("create", onResize);
   $('#pg-area').resizable({handles: "s", grid: [10000, 1]}).bind("resize", onConfigResize);
 
   onConfigResize(null, null);
@@ -481,22 +489,22 @@ $(() => {
   }
 
   $('.column-mode-btn').change(() => {
-    if(!$('#input-area').resizable( "option", "disabled"))
+    if (!$('#input-area').resizable("option", "disabled"))
       prevInputWidth = $('#input-area').css('width');
-    if(q('#input-only-btn').checked) {
+    if (q('#input-only-btn').checked) {
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '100%');
       $('#graph-pane').css('width', '0px');
       viewMode = 'input-only';
-    } else if(q('#double-column-btn').checked) {
+    } else if (q('#double-column-btn').checked) {
       const totalWidth = $("#main-area").width();
       $('#input-area').resizable('enable');
-      if(!prevInputWidth)
+      if (!prevInputWidth)
         prevInputWidth = totalWidth / 2;
       $('#input-area').css('width', prevInputWidth);
       $('#graph-pane').css('width', totalWidth - prevInputWidth);
       viewMode = 'double-column';
-    } else if(q('#view-only-btn').checked) {
+    } else if (q('#view-only-btn').checked) {
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '0px');
       $('#graph-pane').css('width', '100%');
@@ -521,7 +529,7 @@ $(() => {
                   `;
     let currentGraphName = localStorage.getItem('currentGraphName');
     let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
-    saveAs(new Blob([content], { type: 'text/plain' }), name + '.js');
+    saveAs(new Blob([content], {type: 'text/plain'}), name + '.js');
     $('#export-btn').dropdown('toggle');
   });
 
@@ -529,14 +537,14 @@ $(() => {
     // Check whether the name is suffixed by number like example-1
     let suffixMatched = baseName.match(/-(\d+$)/);
     let i = 0;
-    if(suffixMatched) {
+    if (suffixMatched) {
       let suffix = suffixMatched[0];
       baseName = baseName.substring(0, baseName.length - suffix.length);
       i = parseInt(suffixMatched[1]);
     }
     let name = baseName;
-    while(savedGraphs.indexOf(name) >= 0) {
-      name =  baseName + '-' + (++i);
+    while (savedGraphs.indexOf(name) >= 0) {
+      name = baseName + '-' + (++i);
     }
     return name;
   }
@@ -545,8 +553,8 @@ $(() => {
   function newNodeName(baseName = 'New') {
     let name = baseName;
     let i = 0;
-    while(blitzboard.nodeDataSet.get(name)) {
-      name =  baseName + '-' + (++i);
+    while (blitzboard.nodeDataSet.get(name)) {
+      name = baseName + '-' + (++i);
     }
     return name;
   }
@@ -554,22 +562,22 @@ $(() => {
   function showGraphName() {
     $('#history-dropdown')[0].innerText = localStorage.getItem('currentGraphName');
   }
-  
+
   function updateHistoryMenu(graphs) {
     let menu = q('#history-menu');
     // clear menu
     while (menu.firstChild) {
       menu.removeChild(menu.firstChild);
     }
-    for(let graph of graphs) {
+    for (let graph of graphs) {
       let node = document.createElement('a');
       node.className = 'dropdown-item history-item mr-3';
-      if(graph.name === localStorage.getItem('currentGraphName'))
+      if (graph.name === localStorage.getItem('currentGraphName'))
         node.className += ' active text-white';
       node.style = 'position:relative';
       node.appendChild(document.createTextNode(graph.name));
       node.appendChild(document.createElement("br"));
-      if(graph.date)
+      if (graph.date)
         node.appendChild(document.createTextNode(dateTimeFormat.format(new Date(graph.date))));
       let deleteButton = document.createElement('div');
       deleteButton.className = 'delete-history-btn btn btn-danger p-0';
@@ -593,7 +601,7 @@ $(() => {
 
   function updateGraphList(callback = null) {
     savedGraphs = [];
-    if(remoteMode) {
+    if (remoteMode) {
       axios.get(`${backendUrl}/list`).then(response => {
         updateHistoryMenu(response.data.map((g) => {
           return {name: g};
@@ -603,11 +611,11 @@ $(() => {
           callback();
       });
     } else {
-      for (let i = 0; i < localStorage.length; i++){
-        if ( localStorage.key(i).indexOf('saved-graph-') != -1 ) {
+      for (let i = 0; i < localStorage.length; i++) {
+        if (localStorage.key(i).indexOf('saved-graph-') != -1) {
           try {
             savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))).name);
-          } catch(e) {
+          } catch (e) {
             localStorage.removeItem(localStorage.key(i));
           }
         }
@@ -624,8 +632,8 @@ $(() => {
     let i = $('.history-item').index(item);
     let oldName = savedGraphs[i];
     let newName = prompt('What is the new name of the graph?', oldName);
-    if(newName) {
-      if(remoteMode) {
+    if (newName) {
+      if (remoteMode) {
         let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
         axios.request({
           method: 'post',
@@ -644,7 +652,7 @@ $(() => {
           }).then((res) => {
             savedGraphs[i] = newName;
             updateGraphList();
-            if(localStorage.getItem('currentGraphName') === oldName) {
+            if (localStorage.getItem('currentGraphName') === oldName) {
               localStorage.setItem('currentGraphName', newName);
             }
             showGraphName();
@@ -659,7 +667,7 @@ $(() => {
         let oldGraph =
           JSON.parse(localStorage.getItem('saved-graph-' + oldName));
         localStorage.removeItem('saved-graph-' + oldName);
-        if(localStorage.getItem('currentGraphName', oldName)) {
+        if (localStorage.getItem('currentGraphName', oldName)) {
           localStorage.setItem('currentGraphName', newName);
           showGraphName();
         }
@@ -674,7 +682,7 @@ $(() => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
     let name = savedGraphs[i];
-    if(confirm(`Really delete ${name}?`)) {
+    if (confirm(`Really delete ${name}?`)) {
       // localStorage.removeItem('saved-graph-' + name);
       // savedGraphs.splice(i, 1);
       // if(name == localStorage.getItem('currentGraphName')) {
@@ -688,16 +696,16 @@ $(() => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }).then((res) => {
-        toastr.success(`${name} has been removed!`, '', {preventDuplicates: true,  timeOut: 3000});
+        toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
         updateGraphList(() => {
-          if(localStorage.getItem('currentGraphName') === name) {
+          if (localStorage.getItem('currentGraphName') === name) {
             localStorage.setItem('currentGraphName', savedGraphs[0]);
             loadCurrentGraph();
             showGraphName();
           }
         });
       }).catch((error) => {
-        toastr.error(`Failed to drop ${name}..`, '', {preventDuplicates: true,  timeOut: 3000});
+        toastr.error(`Failed to drop ${name}..`, '', {preventDuplicates: true, timeOut: 3000});
       });
       // item.remove();
     }
@@ -726,7 +734,7 @@ $(() => {
   $(document).on('click', '.history-item', (e) => {
     let i = $('.history-item').index(e.target);
     let graph = savedGraphs[i];
-    if(remoteMode) {
+    if (remoteMode) {
       axios.get(`${backendUrl}/query/?graph=${graph}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
         byProgram = true;
         loadGraph({
@@ -746,12 +754,12 @@ $(() => {
 
   function saveCurrentGraph() {
     let name = localStorage.getItem('currentGraphName');
-    if(!name) {
+    if (!name) {
       name = newGraphName();
     }
     let i = -1;
     let layoutMap = {};
-    if(nodeLayout?.graph) {
+    if (nodeLayout?.graph) {
       nodeLayout.graph.forEachNode(node => {
         let position = nodeLayout.getNodePosition(node.id);
         layoutMap[node.id] = {
@@ -763,7 +771,7 @@ $(() => {
       layoutMap = nodeLayout;
     }
     localStorage.setItem('nodeLayout', JSON.stringify(layoutMap));
-    if(!remoteMode) {
+    if (!remoteMode) {
       let graph = {
         pg: editor.getValue(),
         config: configEditor.getValue(),
@@ -771,8 +779,8 @@ $(() => {
         name: name,
         date: Date.now()
       };
-      while(i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
-      if(i < savedGraphs.length) {
+      while (i < savedGraphs.length - 1 && savedGraphs[++i].name !== name) ;
+      if (i < savedGraphs.length) {
         savedGraphs[i] = graph;
       }
       localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
@@ -785,7 +793,7 @@ $(() => {
     localStorage.setItem('currentGraphName', name);
     saveCurrentGraph();
     updateGraphList();
-    loadGraph({name:name, pg: '', config: defaultConfig});
+    loadGraph({name: name, pg: '', config: defaultConfig});
     byProgram = false;
   });
 
@@ -797,16 +805,16 @@ $(() => {
     updateGraphList();
     showGraphName();
     blitzboard.update(false);
-    toastr.success(`Your graph is cloned as <em>${name}</em> !`, '', {preventDuplicates: true,  timeOut: 3000});
+    toastr.success(`Your graph is cloned as <em>${name}</em> !`, '', {preventDuplicates: true, timeOut: 3000});
   });
-  
+
   function nodesAndEdgesForSaving() {
     let tmpNodes = JSON.parse(JSON.stringify(blitzboard.graph.nodes));
     let tmpEdges = JSON.parse(JSON.stringify(blitzboard.graph.edges));
-    for(let node of tmpNodes) {
+    for (let node of tmpNodes) {
       delete node.location;
     }
-    for(let edge of tmpEdges) {
+    for (let edge of tmpEdges) {
       delete edge.location;
       delete edge.id;
       edge.undirected = edge.direction === '--';
@@ -814,19 +822,18 @@ $(() => {
     }
     return [tmpNodes, tmpEdges];
   }
-  
-  if(!remoteMode)
-  {
+
+  if (!remoteMode) {
     q('#save-btn').classList.add('d-none');
   }
 
   q('#save-btn').addEventListener('click', () => {
 
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
-    
+
     let graphName = localStorage.getItem('currentGraphName');
-    
-    if(remoteMode) {
+
+    if (remoteMode) {
       axios.request({
         method: 'post',
         url: `${backendUrl}/drop`,
@@ -851,12 +858,12 @@ $(() => {
         toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
       });
     } else {
-      
+
     }
   });
 
   q('#reset-config-btn').addEventListener('click', () => {
-    if(confirm("Really reset config?"))
+    if (confirm("Really reset config?"))
       configEditor.setValue(defaultConfig);
   });
 
@@ -870,7 +877,7 @@ $(() => {
     let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
     zip.file("graph.pg", editor.getValue());
     zip.file("config.js", configEditor.getValue());
-    zip.generateAsync({type:"blob"}).then(function (blob) {
+    zip.generateAsync({type: "blob"}).then(function (blob) {
       saveAs(blob, name + ".zip");
     });
     $('#export-btn').dropdown('toggle');
@@ -886,7 +893,7 @@ $(() => {
       let nameWithoutExtension = f.name.includes('.') ? f.name.split('.').slice(0, -1).join('.') : f.name;
       // Remove datetime part like '****_20200101123045
       nameWithoutExtension = nameWithoutExtension.replace(/_\d{8,15}$/, '');
-      JSZip.loadAsync(f).then(function(zip) {
+      JSZip.loadAsync(f).then(function (zip) {
         if (!zip.file("graph.pg") || !zip.file("config.js")) {
           alert("Invalid zip file");
         } else {
@@ -948,7 +955,7 @@ $(() => {
       query = query + "}]->(dst);";
       output = output + query + '\n';
     });
-    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.cypher');
+    saveAs(new Blob([output], {type: 'text/plain'}), 'graph_' + currentTimeString() + '.cypher');
     $('#export-btn').dropdown('toggle');
   });
 
@@ -992,7 +999,7 @@ $(() => {
       query = query + "WHERE src.id = '" + edge.from + "' AND dst.id = '" + edge.to + "';";
       output = output + query + '\n';
     });
-    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.pgql');
+    saveAs(new Blob([output], {type: 'text/plain'}), 'graph_' + currentTimeString() + '.pgql');
     $('#export-btn').dropdown('toggle');
   });
 
@@ -1002,27 +1009,77 @@ $(() => {
     let graphNameSQL = graphName.replace('\'', '').replace(' ', '_').replace('-', '_').toLowerCase(); // must be simple SQL name
     let output = "";
     let create_table_node = `
-                    CREATE TABLE ${graphNameSQL}_node (
-                      id VARCHAR2(255)
-                    , label VARCHAR2(255)
-                    , props VARCHAR2(4000)
-                    , CONSTRAINT node_pk PRIMARY KEY (id)
-                    , CONSTRAINT node_check CHECK (props IS JSON)
-                    );
-                  `;
+        CREATE TABLE ${graphNameSQL}_node
+        (
+            id VARCHAR2
+        (
+            255
+        )
+            , label VARCHAR2
+        (
+            255
+        )
+            , props VARCHAR2
+        (
+            4000
+        )
+            , CONSTRAINT node_pk PRIMARY KEY
+        (
+            id
+        )
+            , CONSTRAINT node_check CHECK
+        (
+            props IS JSON
+        )
+            );
+    `;
     let create_table_edge = `
-                    CREATE TABLE ${graphNameSQL}_edge (
-                      id VARCHAR2(255)
-                    , src VARCHAR2(255)
-                    , dst VARCHAR2(255)
-                    , label VARCHAR2(255)
-                    , props VARCHAR2(4000)
-                    , CONSTRAINT edge_pk PRIMARY KEY (id)
-                    , CONSTRAINT edge_fk_src FOREIGN KEY (src) REFERENCES node(id)
-                    , CONSTRAINT edge_fk_dst FOREIGN KEY (dst) REFERENCES node(id)
-                    , CONSTRAINT edge_check CHECK (props IS JSON)
-                    );
-                  `;
+        CREATE TABLE ${graphNameSQL}_edge
+        (
+            id VARCHAR2
+        (
+            255
+        )
+            , src VARCHAR2
+        (
+            255
+        )
+            , dst VARCHAR2
+        (
+            255
+        )
+            , label VARCHAR2
+        (
+            255
+        )
+            , props VARCHAR2
+        (
+            4000
+        )
+            , CONSTRAINT edge_pk PRIMARY KEY
+        (
+            id
+        )
+            , CONSTRAINT edge_fk_src FOREIGN KEY
+        (
+            src
+        ) REFERENCES node
+        (
+            id
+        )
+            , CONSTRAINT edge_fk_dst FOREIGN KEY
+        (
+            dst
+        ) REFERENCES node
+        (
+            id
+        )
+            , CONSTRAINT edge_check CHECK
+        (
+            props IS JSON
+        )
+            );
+    `;
     output = output + create_table_node + create_table_edge + "\n";
     pg.nodes.forEach(node => {
       let node_label = (node.labels[0] === undefined) ? "UNDEFINED" : node.labels[0]
@@ -1031,9 +1088,11 @@ $(() => {
         json = json + ", \"" + entry[0].toUpperCase() + "\":[\"" + entry[1] + "\"]"; // values are always stored as sting
       }
       json = json + "}";
-      let query = `INSERT INTO ${graphNameSQL}_node VALUES ('${node.id}', '${node_label.toUpperCase()}', '${json}');`;
+      let query = `INSERT INTO ${graphNameSQL}_node
+                   VALUES ('${node.id}', '${node_label.toUpperCase()}', '${json}');`;
       output = output + query + '\n';
     });
+
     function generateUuid() {
       let chars = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".split("");
       for (let i = 0, len = chars.length; i < len; i++) {
@@ -1048,6 +1107,7 @@ $(() => {
       }
       return chars.join("");
     }
+
     pg.edges.forEach(edge => {
       let edge_label = (edge.labels[0] === undefined) ? "UNDEFINED" : edge.labels[0]
       let json = "{\"FROM\":[\"" + edge.from + "\"], \"TO\":[\"" + edge.to + "\"]";
@@ -1055,10 +1115,11 @@ $(() => {
         json = json + ", \"" + entry[0].toUpperCase() + "\":[\"" + entry[1] + "\"]"; // values are always stored as sting
       }
       json = json + "}";
-      let query = `INSERT INTO ${graphNameSQL}_edge VALUES ('${generateUuid()}', '${edge.from}', '${edge.to}', '${edge_label.toUpperCase()}', '${json}');`;
+      let query = `INSERT INTO ${graphNameSQL}_edge
+                   VALUES ('${generateUuid()}', '${edge.from}', '${edge.to}', '${edge_label.toUpperCase()}', '${json}');`;
       output = output + query + '\n';
     });
-    saveAs(new Blob([output], { type: 'text/plain' }), 'graph_' + currentTimeString() + '.sql');
+    saveAs(new Blob([output], {type: 'text/plain'}), 'graph_' + currentTimeString() + '.sql');
     $('#export-btn').dropdown('toggle');
   });
 
@@ -1072,7 +1133,7 @@ $(() => {
     a.remove();
     $('#export-btn').dropdown('toggle');
   });
-  
+
   let extraKeys = {
     Tab: 'autocomplete'
   };
@@ -1092,16 +1153,16 @@ $(() => {
   });
 
   editor.on('keydown', (cm, e) => {
-    if(e.keyCode === 83 && e.ctrlKey) {
+    if (e.keyCode === 83 && e.ctrlKey) {
       // ctrl + S
       showSortModal();
       e.preventDefault();
     }
   });
   editor.setSize('100%', '100%');
-  
+
   q('#sort-modal').addEventListener('keydown', (e) => {
-    if(e.keyCode === 13) {
+    if (e.keyCode === 13) {
       q('#sort-btn').click();
       e.preventDefault();
     }
@@ -1112,7 +1173,7 @@ $(() => {
   let oldHint = CodeMirror.hint.anyword;
 
   CodeMirror.hint.pgMode = function (editor) {
-    let word =  /[\w$:]+/;
+    let word = /[\w$:]+/;
     let range = 200;
     let cur = editor.getCursor(), curLine = editor.getLine(cur.line);
     let end = cur.ch, start = end;
@@ -1142,10 +1203,10 @@ $(() => {
   configEditor = CodeMirror.fromTextArea(q('#config-input'), {
     viewportMargin: Infinity,
     theme: "monokai",
-    mode: { name: 'javascript', json: true },
+    mode: {name: 'javascript', json: true},
     lineWrapping: true,
     extraKeys: {
-      Tab: function(cm) {
+      Tab: function (cm) {
         var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
         cm.replaceSelection(spaces);
       },
@@ -1159,8 +1220,8 @@ $(() => {
   configEditor.setSize('100%', '100%');
 
   editor.on("inputRead", (instance) => {
-    if(autocompletion)
-      editor.execCommand('autocomplete', { completeSingle: false });
+    if (autocompletion)
+      editor.execCommand('autocomplete', {completeSingle: false});
   });
 
   function loadSample(sampleName, callback) {
@@ -1193,9 +1254,9 @@ $(() => {
     pgTimerId = null;
   }
 
-  function onEditorChanged(delta){
-    if(!byProgram) {
-      if(!pgTimerId)
+  function onEditorChanged(delta) {
+    if (!byProgram) {
+      if (!pgTimerId)
         blitzboard.showLoader("");
       clearTimeout(pgTimerId);
       localMode = true;
@@ -1206,35 +1267,35 @@ $(() => {
   }
 
   editor.on('keydown', (cm, e) => {
-    if(e.ctrlKey && e.keyCode === 13) {
+    if (e.ctrlKey && e.keyCode === 13) {
       // ctrl + enter
       reflectEditorChange();
     }
     // invoke only if timer is working
-    else if(pgTimerId) onEditorChanged();
+    else if (pgTimerId) onEditorChanged();
   });
   editor.on('change', onEditorChanged);
   editor.on('inputRead', onEditorChanged);
 
   editor.on('cursorActivity', (doc) => {
-    if(!byProgram) {
-      if(focusTimerId)
+    if (!byProgram) {
+      if (focusTimerId)
         clearTimeout(focusTimerId);
       focusTimerId = setTimeout(() => {
         const node = blitzboard.nodeLineMap[doc.getCursor().line + 1];
         const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
 
-        if(node) {
+        if (node) {
           blitzboard.scrollNodeIntoView(node)
-        } else if(edge){
+        } else if (edge) {
           blitzboard.scrollEdgeIntoView(edge)
         }
       }, blitzboard.staticLayoutMode ? 1000 : 100);
     }
   });
-  
+
   function loadCurrentGraph() {
-    if(remoteMode) {
+    if (remoteMode) {
       axios.get(`${backendUrl}/query/?graph=${localStorage.getItem('currentGraphName')}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
         byProgram = true;
         editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
@@ -1250,7 +1311,7 @@ $(() => {
         byProgram = false;
         editor.getDoc().clearHistory();
       } catch (e) {
-        
+
       }
     }
   }
@@ -1259,7 +1320,7 @@ $(() => {
     const urlParams = new URLSearchParams(window.location.search);
     let sampleName = urlParams.get('sample');
 
-    if(sampleName) {
+    if (sampleName) {
       loadSample(sampleName, (graph, config) => {
         localStorage.setItem('pg', graph);
         localStorage.setItem('config', config);
@@ -1297,11 +1358,11 @@ $(() => {
     if (!configText) {
       configText = defaultConfig;
     }
-    if(!config) {
+    if (!config) {
       config = tryJsonParse(configText);
     }
 
-    if(config?.x2?.init) {
+    if (config?.x2?.init) {
       editor.setValue('');
       let strParams = '?';
       config.x2.init.parameters.forEach(parameter => {
@@ -1313,12 +1374,12 @@ $(() => {
         editor.getDoc().clearHistory();
       });
     }
-    // Otherwise, load PG data from browser local storage
-    // else if(initialPg) {
-    //   byProgram = true;
-    //   editor.setValue(initialPg);
-    //   byProgram = false;
-    //   editor.getDoc().clearHistory();
+      // Otherwise, load PG data from browser local storage
+      // else if(initialPg) {
+      //   byProgram = true;
+      //   editor.setValue(initialPg);
+      //   byProgram = false;
+      //   editor.getDoc().clearHistory();
     // }
     else {
       // axios.get("http://132.145.114.202:7000/list_graph").then((response) => {
@@ -1332,7 +1393,7 @@ $(() => {
     } catch {
       nodeLayout = null;
     }
-    
+
     // else if(initialPg) {
     //   byProgram = true;
     //   editor.setValue(initialPg);
@@ -1343,199 +1404,198 @@ $(() => {
     configEditor.setValue(configText);
     configEditor.getDoc().clearHistory();
 
-      try {
-        nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
-      } catch {
-        nodeLayout = null;
+    try {
+      nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
+    } catch {
+      nodeLayout = null;
+    }
+
+    configEditor.setValue(configText);
+    configEditor.getDoc().clearHistory();
+
+
+    function onConfigChanged(delta) {
+      if (!configTimerId)
+        blitzboard.showLoader('');
+      clearTimeout(configTimerId);
+      configTimerId = setTimeout(reloadConfig, 2000);
+    }
+
+    configEditor.on('keydown', (cm, e) => {
+      if (e.ctrlKey && e.keyCode === 13) {
+        // ctrl + enter
+        reloadConfig();
       }
+      // invoke only if timer is working
+      else if (configTimerId) onConfigChanged();
+    });
 
-      configEditor.setValue(configText);
-      configEditor.getDoc().clearHistory();
+    configEditor.on('change', onConfigChanged);
+    configEditor.on('inputRead', onConfigChanged);
 
-
-
-      function onConfigChanged(delta) {
-        if(!configTimerId)
-          blitzboard.showLoader('');
-        clearTimeout(configTimerId);
-        configTimerId = setTimeout(reloadConfig, 2000);
-      }
-
-      configEditor.on('keydown', (cm, e) => {
-        if(e.ctrlKey && e.keyCode === 13) {
-          // ctrl + enter
-          reloadConfig();
-        }
-        // invoke only if timer is working
-        else if(configTimerId) onConfigChanged();
-      });
-
-      configEditor.on('change', onConfigChanged);
-      configEditor.on('inputRead', onConfigChanged);
-
-      if(editor.getValue() && config) {
-        setTimeout(() => {
-          byProgram = true;
-          updateGraph(editor.getValue(), config);
-          byProgram = false;
-        }, 0);
-      }
-
-      let autocompletionConfig = localStorage.getItem('autocompletion');
-      if(autocompletionConfig !== null) {
-        autocompletion = autocompletionConfig === 'true';
-        $('#options-auto-complete-input').prop('checked', autocompletion);
-      }
-
-
-      $('#options-auto-complete').click((e) => {
-        autocompletion = !$('#options-auto-complete-input').prop('checked');
-        $('#options-auto-complete-input').prop('checked', autocompletion);
-        e.preventDefault();
-        localStorage.setItem('autocompletion', autocompletion);
-      });
-
-      let optionsShowConfig = localStorage.getItem('optionsShowConfig');
-      if(optionsShowConfig !== null) {
-        showConfig = optionsShowConfig === 'true';
-        $('#options-show-config-input').prop('checked', showConfig);
-        showOrHideConfig();
-      }
-
-      $('#options-show-config').click((e) => {
-        showConfig = !$('#options-show-config-input').prop('checked');
-        $('#options-show-config-input').prop('checked', showConfig);
-        e.preventDefault();
-        localStorage.setItem('optionsShowConfig', showConfig);
-        showOrHideConfig();
-      });
-
-
-
-      $("#sort-modal").on("hidden.bs.modal", function () {
-        editor.focus();
-      });
-
-      $('#options-sort').click(showSortModal);
-
-
-      $('#sort-btn').click((e) => {
-        let newPG = '';
-        let oldPG = editor.getValue();
-        let oldPGlines = oldPG.split("\n");
-        let { nodes, edges } = pgToBeSorted;
-        let nodeKey = q('#sort-node-lines-select').value;
-        let edgeKey = q('#sort-edge-lines-select').value;
-        let order = parseInt(document.querySelector('input[name="sort-order"]:checked').value);
-
-        /// Order should be -1 (descending) or 1 (ascending)
-        function generateComparator(mapFunction) {
-          return (a, b) => {
-            let aVal = mapFunction(a);
-            let bVal = mapFunction(b);
-            if(aVal === undefined && bVal === undefined || aVal === bVal)
-              return 0;
-            if(aVal === undefined)
-              return 1;
-            if(bVal === undefined)
-              return -1;
-            return order * (bVal > aVal ? -1 : 1);
-          }
-        }
-        if(nodeKey) {
-          switch(nodeKey) {
-            case ':id':
-              nodes.sort(generateComparator((n) => n.id));
-              break;
-            case ':label':
-              nodes.sort(generateComparator((n) => n.labels?.[0]));
-              break;
-            default:
-              nodes.sort(generateComparator((n) => n.properties[nodeKey]?.[0]));
-              break;
-          }
-        }
-        if(edgeKey) {
-          switch(edgeKey) {
-            case ':from-to':
-              edges.sort(generateComparator((e) => `${e.from}-${e.to}`));
-              break;
-            case ':label':
-              edges.sort(generateComparator((e) => e.labels?.[0]));
-              break;
-            default:
-              edges.sort(generateComparator((e) => e.properties[edgeKey]?.[0]));
-              break;
-          }
-        }
-        // TODO: Preserve comment lines
-        // Here, location.{start,end}.offset cannot be used because the value of offset ignores comment lines.
-        // We use line and column instead of offset
-        for(let node of nodes) {
-          let end = node.location.end.line === node.location.start.line ?  node.location.end.line :  node.location.end.line - 1;
-          newPG += oldPGlines.slice(node.location.start.line - 1, end).map((l) => l + "\n");
-        }
-        for(let edge of edges) {
-          let end = edge.location.end.line === edge.location.start.line ?  edge.location.end.line :  edge.location.end.line - 1;
-          newPG += oldPGlines.slice(edge.location.start.line - 1, end).map((l) => l + "\n");
-        }
+    if (editor.getValue() && config) {
+      setTimeout(() => {
         byProgram = true;
-        editor.setValue(newPG);
+        updateGraph(editor.getValue(), config);
         byProgram = false;
-        toastr.success(`Sorted!`, '', {preventDuplicates: true,  timeOut: 3000});
+      }, 0);
+    }
 
-        localStorage.setItem('sortOrder', order.toString());
-        localStorage.setItem('nodeSortKey', nodeKey);
-        localStorage.setItem('edgeSortKey', edgeKey);
-
-        sortModal.hide();
-        blitzboard.update(false);
-      });
+    let autocompletionConfig = localStorage.getItem('autocompletion');
+    if (autocompletionConfig !== null) {
+      autocompletion = autocompletionConfig === 'true';
+      $('#options-auto-complete-input').prop('checked', autocompletion);
+    }
 
 
-      switch(viewMode) {
-        case 'input-only':
-          $('#input-only-btn').prop('checked', true);
-          $('#input-area').resizable('disable');
-          $('#input-area').css('width', '100%');
-          $('#graph-pane').css('width', '0px');
-          onResize(null, null);
-          break;
-        case 'view-only':
-          $('#view-only-btn').prop('checked', true);
-          $('#input-area').resizable('disable');
-          $('#input-area').css('width', '0px');
-          $('#graph-pane').css('width', '100%');
-          onResize(null, null);
-          break;
-        default:
-          $('#double-column-btn').prop('checked', true);
-          break;
+    $('#options-auto-complete').click((e) => {
+      autocompletion = !$('#options-auto-complete-input').prop('checked');
+      $('#options-auto-complete-input').prop('checked', autocompletion);
+      e.preventDefault();
+      localStorage.setItem('autocompletion', autocompletion);
+    });
+
+    let optionsShowConfig = localStorage.getItem('optionsShowConfig');
+    if (optionsShowConfig !== null) {
+      showConfig = optionsShowConfig === 'true';
+      $('#options-show-config-input').prop('checked', showConfig);
+      showOrHideConfig();
+    }
+
+    $('#options-show-config').click((e) => {
+      showConfig = !$('#options-show-config-input').prop('checked');
+      $('#options-show-config-input').prop('checked', showConfig);
+      e.preventDefault();
+      localStorage.setItem('optionsShowConfig', showConfig);
+      showOrHideConfig();
+    });
+
+
+    $("#sort-modal").on("hidden.bs.modal", function () {
+      editor.focus();
+    });
+
+    $('#options-sort').click(showSortModal);
+
+
+    $('#sort-btn').click((e) => {
+      let newPG = '';
+      let oldPG = editor.getValue();
+      let oldPGlines = oldPG.split("\n");
+      let {nodes, edges} = pgToBeSorted;
+      let nodeKey = q('#sort-node-lines-select').value;
+      let edgeKey = q('#sort-edge-lines-select').value;
+      let order = parseInt(document.querySelector('input[name="sort-order"]:checked').value);
+
+      /// Order should be -1 (descending) or 1 (ascending)
+      function generateComparator(mapFunction) {
+        return (a, b) => {
+          let aVal = mapFunction(a);
+          let bVal = mapFunction(b);
+          if (aVal === undefined && bVal === undefined || aVal === bVal)
+            return 0;
+          if (aVal === undefined)
+            return 1;
+          if (bVal === undefined)
+            return -1;
+          return order * (bVal > aVal ? -1 : 1);
+        }
       }
-      let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-      let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl, {placement: 'bottom', customClass: 'tooltip-sandbox'});
-      })
 
-      $('.dropdown-item').on('mouseenter', (e) => {
-        tooltipList.forEach((t) => t.hide());
-      });
-
-      $('.dropdown').on('click', (e) => {
-        tooltipList.forEach((t) => t.hide());
-      });
-
-      if(!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
-        saveCurrentGraph();
+      if (nodeKey) {
+        switch (nodeKey) {
+          case ':id':
+            nodes.sort(generateComparator((n) => n.id));
+            break;
+          case ':label':
+            nodes.sort(generateComparator((n) => n.labels?.[0]));
+            break;
+          default:
+            nodes.sort(generateComparator((n) => n.properties[nodeKey]?.[0]));
+            break;
+        }
       }
-
-      updateGraphList();
-      showGraphName();
-
-      let oldOrder = localStorage.getItem('sortOrder');
-      if(oldOrder) {
-        q(`input[name="sort-order"][value="${oldOrder}"]`).checked = true;
+      if (edgeKey) {
+        switch (edgeKey) {
+          case ':from-to':
+            edges.sort(generateComparator((e) => `${e.from}-${e.to}`));
+            break;
+          case ':label':
+            edges.sort(generateComparator((e) => e.labels?.[0]));
+            break;
+          default:
+            edges.sort(generateComparator((e) => e.properties[edgeKey]?.[0]));
+            break;
+        }
       }
+      // TODO: Preserve comment lines
+      // Here, location.{start,end}.offset cannot be used because the value of offset ignores comment lines.
+      // We use line and column instead of offset
+      for (let node of nodes) {
+        let end = node.location.end.line === node.location.start.line ? node.location.end.line : node.location.end.line - 1;
+        newPG += oldPGlines.slice(node.location.start.line - 1, end).map((l) => l + "\n");
+      }
+      for (let edge of edges) {
+        let end = edge.location.end.line === edge.location.start.line ? edge.location.end.line : edge.location.end.line - 1;
+        newPG += oldPGlines.slice(edge.location.start.line - 1, end).map((l) => l + "\n");
+      }
+      byProgram = true;
+      editor.setValue(newPG);
+      byProgram = false;
+      toastr.success(`Sorted!`, '', {preventDuplicates: true, timeOut: 3000});
+
+      localStorage.setItem('sortOrder', order.toString());
+      localStorage.setItem('nodeSortKey', nodeKey);
+      localStorage.setItem('edgeSortKey', edgeKey);
+
+      sortModal.hide();
+      blitzboard.update(false);
+    });
+
+
+    switch (viewMode) {
+      case 'input-only':
+        $('#input-only-btn').prop('checked', true);
+        $('#input-area').resizable('disable');
+        $('#input-area').css('width', '100%');
+        $('#graph-pane').css('width', '0px');
+        onResize(null, null);
+        break;
+      case 'view-only':
+        $('#view-only-btn').prop('checked', true);
+        $('#input-area').resizable('disable');
+        $('#input-area').css('width', '0px');
+        $('#graph-pane').css('width', '100%');
+        onResize(null, null);
+        break;
+      default:
+        $('#double-column-btn').prop('checked', true);
+        break;
+    }
+    let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {placement: 'bottom', customClass: 'tooltip-sandbox'});
+    })
+
+    $('.dropdown-item').on('mouseenter', (e) => {
+      tooltipList.forEach((t) => t.hide());
+    });
+
+    $('.dropdown').on('click', (e) => {
+      tooltipList.forEach((t) => t.hide());
+    });
+
+    if (!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
+      saveCurrentGraph();
+    }
+
+    updateGraphList();
+    showGraphName();
+
+    let oldOrder = localStorage.getItem('sortOrder');
+    if (oldOrder) {
+      q(`input[name="sort-order"][value="${oldOrder}"]`).checked = true;
+    }
   }, 0);
 });
   
