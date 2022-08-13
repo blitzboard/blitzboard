@@ -96,6 +96,35 @@ $(() => {
   }
 
 
+  function showSortModal() {
+    if(/^\s*#/m.test(editor.getValue())) {
+      q('#comment-warning-line').classList.remove('d-none');
+    } else {
+      q('#comment-warning-line').classList.add('d-none');
+    }
+    pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
+    if(!pgToBeSorted) {
+      alert('Please write a valid graph before sort.');
+    }
+    let oldNodeKey = localStorage.getItem('nodeSortKey');
+    let oldEdgeKey = localStorage.getItem('edgeSortKey');
+
+    // Each option is a pair of value and text
+    let nodeOptions = [['', 'None'], [':id', 'id'], [':label', 'label']];
+    let edgeOptions = [['', 'None'], [':from-to', 'from&to'], [':label', 'label']];
+
+    nodeOptions = nodeOptions.concat(Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+    q('#sort-node-lines-select').innerHTML = nodeOptions.map((o) =>
+      `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected': ''}>${o[1]}</option>`
+    );
+
+    edgeOptions = edgeOptions.concat(Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+    q('#sort-edge-lines-select').innerHTML = edgeOptions.map((o) =>
+      `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected': ''}>${o[1]}</option>`
+    );
+    sortModal.show();
+  }
+
   function tryJsonParse(json) {
     try {
       return looseJsonParse(json);
@@ -1380,34 +1409,7 @@ $(() => {
         showOrHideConfig();
       });
 
-      function showSortModal() {
-        if(/^\s*#/m.test(editor.getValue())) {
-          q('#comment-warning-line').classList.remove('d-none');
-        } else {
-          q('#comment-warning-line').classList.add('d-none');
-        }
-        pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
-        if(!pgToBeSorted) {
-          alert('Please write a valid graph before sort.');
-        }
-        let oldNodeKey = localStorage.getItem('nodeSortKey');
-        let oldEdgeKey = localStorage.getItem('edgeSortKey');
 
-        // Each option is a pair of value and text
-        let nodeOptions = [['', 'None'], [':id', 'id'], [':label', 'label']];
-        let edgeOptions = [['', 'None'], [':from-to', 'from&to'], [':label', 'label']];
-
-        nodeOptions = nodeOptions.concat(Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
-        q('#sort-node-lines-select').innerHTML = nodeOptions.map((o) =>
-          `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected': ''}>${o[1]}</option>`
-        );
-
-        edgeOptions = edgeOptions.concat(Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
-        q('#sort-edge-lines-select').innerHTML = edgeOptions.map((o) =>
-          `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected': ''}>${o[1]}</option>`
-        );
-        sortModal.show();
-      }
 
       $("#sort-modal").on("hidden.bs.modal", function () {
         editor.focus();
