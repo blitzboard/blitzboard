@@ -228,16 +228,21 @@ $(() => {
     localStorage.setItem('backendUrl', e.target.value);
     backendUrl = e.target.value;
     remoteMode = e.target.value.length > 0;
-    updateGraphList();
-    if(remoteMode) {
-      toastr.success(`Backend has been changed to ${backendUrl}`);
-      q('#save-btn').classList.remove('d-none');
-    }
-    else {
-      toastr.success(`Local mode has been enabled`);
-      q('#save-btn').classList.add('d-none');
-    }
-    
+    updateGraphList(() => {
+      if(savedGraphs.length > 0) {
+        loadGraphByName(savedGraphs[0]);
+      } else {
+        createNewGraph();
+      }
+      if(remoteMode) {
+        toastr.success(`Backend has been changed to ${backendUrl}`);
+        q('#save-btn').classList.remove('d-none');
+      }
+      else {
+        toastr.success(`Local mode has been enabled`);
+        q('#save-btn').classList.add('d-none');
+      }
+    });
   });
 
   q('#share-btn').addEventListener('click', () => {
@@ -634,6 +639,8 @@ $(() => {
       updateHistoryMenu(savedGraphs.map((g) => {
         return {name: g};
       }));
+      if (callback)
+        callback();
     }
   }
 
@@ -699,14 +706,28 @@ $(() => {
       // if(name == localStorage.getItem('currentGraphName')) {
       //   loadGraph(savedGraphs[i > 0 ? i - 1 : i]);
       // }
-      axios.request({
-        method: 'post',
-        url: `${backendUrl}/drop`,
-        data: `graph=${name}`,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }).then((res) => {
+      if(remoteMode) {
+        axios.request({
+          method: 'post',
+          url: `${backendUrl}/drop`,
+          data: `graph=${name}`,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }).then((res) => {
+          toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
+          updateGraphList(() => {
+            if (localStorage.getItem('currentGraphName') === name) {
+              localStorage.setItem('currentGraphName', savedGraphs[0]);
+              loadCurrentGraph();
+              showGraphName();
+            }
+          });
+        }).catch((error) => {
+          toastr.error(`Failed to drop ${name}..`, '', {preventDuplicates: true, timeOut: 3000});
+        });
+      } else {
+        localStorage.removeItem('saved-graph-' + name);
         toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
         updateGraphList(() => {
           if (localStorage.getItem('currentGraphName') === name) {
@@ -715,10 +736,7 @@ $(() => {
             showGraphName();
           }
         });
-      }).catch((error) => {
-        toastr.error(`Failed to drop ${name}..`, '', {preventDuplicates: true, timeOut: 3000});
-      });
-      // item.remove();
+      }
     }
     e.stopPropagation();
   });
@@ -743,15 +761,13 @@ $(() => {
     
     byProgram = false;
   }
-
-  $(document).on('click', '.history-item', (e) => {
-    let i = $('.history-item').index(e.target);
-    let graph = savedGraphs[i];
+  
+  function loadGraphByName(graphName) {
     if (remoteMode) {
-      axios.get(`${backendUrl}/query/?graph=${graph}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+      axios.get(`${backendUrl}/query/?graph=${graphName}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
         byProgram = true;
         loadGraph({
-          name: graph,
+          name: graphName,
           pg: json2pg.translate(JSON.stringify(response.data.pg)),
           config: configEditor.getValue() // as it is
         });
@@ -759,10 +775,15 @@ $(() => {
         editor.getDoc().clearHistory();
       });
     } else {
-      let graphName = savedGraphs[i];
       let graph = JSON.parse(localStorage.getItem('saved-graph-' + graphName));
       loadGraph(graph);
     }
+  }
+
+  $(document).on('click', '.history-item', (e) => {
+    let i = $('.history-item').index(e.target);
+    let graph = savedGraphs[i];
+    loadGraphByName(graph);
   });
 
   function saveCurrentGraph() {
@@ -806,10 +827,8 @@ $(() => {
     }
     return confirm(`Your change for ${localStorage.getItem('currentGraphName')} is not saved. Are you sure you want to continue without saving it?`);
   }
-
-  q('#new-btn').addEventListener('click', () => {
-    if(!confirmToChangeGraph())
-      return;
+  
+  function createNewGraph() {
     let name = newGraphName();
     byProgram = true;
     localStorage.setItem('currentGraphName', name);
@@ -817,6 +836,12 @@ $(() => {
     updateGraphList();
     loadGraph({name: name, pg: '', config: defaultConfig});
     byProgram = false;
+  }
+
+  q('#new-btn').addEventListener('click', () => {
+    if(!confirmToChangeGraph())
+      return;
+    createNewGraph();
   });
 
 
