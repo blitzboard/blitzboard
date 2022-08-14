@@ -8,6 +8,7 @@ let unsavedChangeExists = false;
 let backendUrl = localStorage.getItem('backendUrl');
 let remoteMode = !!backendUrl;
 
+
 $(() => {
   let defaultConfig =
     `
@@ -54,7 +55,7 @@ $(() => {
   blitzboard = new Blitzboard(container);
   let byProgram = false;
   let prevInputWidth = null;
-  let config, prevConfig;
+  let config = defaultConfig;
   let autocompletion = true;
   let showConfig = false;
   let srcNode, lineEnd;
@@ -86,7 +87,6 @@ $(() => {
 
 
   function reloadConfig() {
-    localStorage.setItem('config', configEditor.getValue());
     config = tryJsonParse(configEditor.getValue());
     saveCurrentGraph();
     if (config)
@@ -624,6 +624,7 @@ $(() => {
         if (callback)
           callback();
       }).catch((error) => {
+        console.log(error);
         toastr.error(`Failed to retrieve graph list from ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
       });
     } else {
@@ -747,7 +748,6 @@ $(() => {
     configEditor.setValue(graph.config);
     editor.getDoc().clearHistory();
     configEditor.getDoc().clearHistory();
-    // localStorage.setItem('pg', editor.getValue());
     localStorage.setItem('currentGraphName', graph.name);
     nodeLayout = graph.layout;
     $('.dropdown-item.history-item').removeClass('active');
@@ -969,7 +969,6 @@ $(() => {
               byProgram = true;
               editor.setValue(graph);
               configEditor.setValue(config);
-              localStorage.setItem('pg', graph);
               localStorage.setItem('currentGraphName', name);
               saveCurrentGraph();
               updateGraphList();
@@ -1373,6 +1372,9 @@ $(() => {
         byProgram = true;
         editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
         editor.getDoc().clearHistory();
+        configEditor.setValue(config);
+        if(!config)
+          config = defaultConfig;
         byProgram = false;
         updateGraph(editor.getValue(), config);
         setUnsavedStatus(false);
@@ -1382,119 +1384,74 @@ $(() => {
         let graph = JSON.parse(localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName')));
         byProgram = true;
         editor.setValue(graph.pg);
+        configEditor.setValue(graph.config);
+        config = tryJsonParse(graph.config);
         byProgram = false;
+        updateGraph(editor.getValue(), config);
         editor.getDoc().clearHistory();
       } catch (e) {
-
       }
     }
   }
 
-  setTimeout(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    let sampleName = urlParams.get('sample');
+  const urlParams = new URLSearchParams(window.location.search);
+  let sampleNameInParam = urlParams.get('sample');
 
-    if (sampleName) {
-      loadSample(sampleName, (graph, config) => {
-        localStorage.setItem('pg', graph);
-        localStorage.setItem('config', config);
-        localStorage.setItem('currentGraphName', newGraphName(sampleName));
+  if (sampleNameInParam) {
+    if(remoteMode) {
+      localStorage.setItem('sample', sampleNameInParam);
+      window.location.href = window.location.href.split('?')[0];
+    } else {
+      loadSample(sampleNameInParam, (graph, config) => {
+        localStorage.setItem('currentGraphName', newGraphName(sampleNameInParam));
+        byProgram = true;
+        editor.setValue(graph);
+        configEditor.setValue(config);
+        saveCurrentGraph();
         window.location.href = window.location.href.split('?')[0];
       });
-    } else {
-      let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
-        edgePropInParam = urlParams.get('displayedEdgeProps');
-      let configInParam = urlParams.get('config');
-      let graphNameInParam = urlParams.get('name');
-      let viewModeInParam = urlParams.get('viewMode');
-      if (pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
-        if (pgInParam) {
-          localStorage.setItem('pg', pgInParam);
-          if (graphNameInParam) {
-            localStorage.setItem('currentGraphName', graphNameInParam);
-          } else {
-            localStorage.setItem('currentGraphName', newGraphName());
-          }
+    }
+  } else if(!remoteMode) {
+    let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
+      edgePropInParam = urlParams.get('displayedEdgeProps');
+    let configInParam = urlParams.get('config');
+    let graphNameInParam = urlParams.get('name');
+    let viewModeInParam = urlParams.get('viewMode');
+    if (pgInParam || nodePropInParam || edgePropInParam || configInParam || viewModeInParam) {
+      byProgram = true;
+      if (pgInParam) {
+        editor.setValue(pgInParam);
+        if (graphNameInParam) {
+          localStorage.setItem('currentGraphName', graphNameInParam);
+        } else {
+          localStorage.setItem('currentGraphName', newGraphName());
         }
-        if (configInParam)
-          localStorage.setItem('config', configInParam);
-        if (viewModeInParam)
-          localStorage.setItem('viewMode', viewModeInParam);
-        window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
       }
+      if (configInParam)
+        configEditor.setValue(configInParam);
+      if (viewModeInParam)
+        localStorage.setItem('viewMode', viewModeInParam);
+      saveCurrentGraph();
+      window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
     }
+  }
 
-    // let initialPg = loadConfig('pg');
-    let initialPg = loadConfig('pg');
 
-    let configText = loadConfig('config');
-
-    if (!configText) {
-      configText = defaultConfig;
-    }
-    if (!config) {
-      config = tryJsonParse(configText);
-    }
-
-    if (config?.x2?.init) {
-      editor.setValue('');
-      let strParams = '?';
-      config.x2.init.parameters.forEach(parameter => {
-        strParams = strParams + parameter.key + '=' + parameter.value + '&';
-      });
-      const strUrl = config.x2.url + config.x2.init.endpoint + strParams;
-      axios.get(strUrl).then((response) => {
-        editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
-        editor.getDoc().clearHistory();
-        setUnsavedStatus(true);
-      });
-    }
-      // Otherwise, load PG data from browser local storage
-      // else if(initialPg) {
-      //   byProgram = true;
-      //   editor.setValue(initialPg);
-      //   byProgram = false;
-      //   editor.getDoc().clearHistory();
-    // }
-    else {
-      // axios.get("http://132.145.114.202:7000/list_graph").then((response) => {
-      // });
-      loadCurrentGraph();
-      // editor.setValue(initialPg);
-    }
-
+  setTimeout(() => {
     try {
       nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
     } catch {
       nodeLayout = null;
     }
-
-    // else if(initialPg) {
-    //   byProgram = true;
-    //   editor.setValue(initialPg);
-    //   byProgram = false;
-    //   editor.getDoc().clearHistory();
-    // }
-
-    configEditor.setValue(configText);
-    configEditor.getDoc().clearHistory();
-
-    try {
-      nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
-    } catch {
-      nodeLayout = null;
-    }
-
-    configEditor.setValue(configText);
-    configEditor.getDoc().clearHistory();
-
 
     function onConfigChanged(delta) {
-      if (!configTimerId)
-        blitzboard.showLoader('');
-      clearTimeout(configTimerId);
-      setUnsavedStatus(true);
-      configTimerId = setTimeout(reloadConfig, 2000);
+      if(!byProgram) {
+        if (!configTimerId)
+          blitzboard.showLoader('');
+        clearTimeout(configTimerId);
+        setUnsavedStatus(true);
+        configTimerId = setTimeout(reloadConfig, 2000);
+      }
     }
 
     configEditor.on('keydown', (cm, e) => {
@@ -1654,18 +1611,44 @@ $(() => {
       tooltipList.forEach((t) => t.hide());
     });
 
-    if (!localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
+    if (!remoteMode && !localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
       saveCurrentGraph();
+    }
+    
+    let sampleLoaded = false; 
+    if(remoteMode && !sampleNameInParam && localStorage.getItem('sample')) {
+      sampleLoaded = true;
+      let sampleName = localStorage.getItem('sample');
+      loadSample(sampleName, (graph, config) => {
+        byProgram = true;
+        editor.setValue(graph);
+        configEditor.setValue(config);
+        byProgram = false;
+        updateGraph(graph, config);
+        showGraphName();
+      });
+      localStorage.setItem('currentGraphName', newGraphName(sampleName));
+      localStorage.removeItem('sample');
+      setUnsavedStatus(true);
     }
 
     updateGraphList(() => {
-      if(!savedGraphs.includes(localStorage.getItem('currentGraphName'))) {
-        if(savedGraphs.length > 0)
-          loadGraphByName(savedGraphs[0]);
-        else
-          createNewGraph();
-      }
-      showGraphName();
+      if(!sampleLoaded) {
+        if (remoteMode) {
+          byProgram = true;
+          configEditor.setValue(defaultConfig);
+          byProgram = false;
+        }
+        if (!savedGraphs.includes(localStorage.getItem('currentGraphName'))) {
+          if (savedGraphs.length > 0)
+            loadGraphByName(savedGraphs[0]);
+          else
+            createNewGraph();
+        } else {
+          loadCurrentGraph();
+        }
+        showGraphName();
+      }    
     });
 
     let oldOrder = localStorage.getItem('sortOrder');
