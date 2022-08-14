@@ -260,9 +260,6 @@
         %li.nav-item
           %label.btn.disabled.text-white#save-btn{ title: "Save", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
             %span.iconify.text-white{ 'data-icon': 'fa-regular:save', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
-        .text-white
-          Backend URL:
-          %input#options-backend-url-input{ type: "text" }
         %ul.navbar-nav.justify-content-end{ style: 'margin-left: auto; margin-right: 0;' }
           %li.nav-item
             %label.btn.text-white#new-btn{ title: "New", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
@@ -330,7 +327,11 @@
             %a#options-sort.dropdown-item{ href: "#" }
               %label.w-100{:for => "options-auto-complete-input"} 
                 Sort
-                .pull-right.text-muted Ctrl-S
+                .pull-right.text-muted{style: "margin-left: 50px;"} Ctrl-S
+            .dropdown-item{ style: "cursor: default; background-color: white !important; color: black !important;"  }
+              Backend URL
+              %br
+              %input#options-backend-url-input{ type: "text", style: "cursor: text; width: 250px;"  }
         #reset-config-btn.float-btn.btn.btn-info.p-0{ title: "Reset Config", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
           %span.iconify.text-white{ 'data-icon': 'ion:reload-outline', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
         #zoom-fit-btn.float-btn.btn.btn-info{ title: "Fit", href: '#', style: 'padding:4px;', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}

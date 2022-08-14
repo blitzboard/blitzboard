@@ -226,6 +226,13 @@ $(() => {
 
   q('#options-backend-url-input').addEventListener('change', (e) => {
     localStorage.setItem('backendUrl', e.target.value);
+    backendUrl = e.target.value;
+    remoteMode = e.target.value.length > 0;
+    updateGraphList();
+    if(remoteMode)
+      toastr.success(`Backend has been changed to ${backendUrl}`);
+    else
+      toastr.success(`Local mode has been enabled`);
   });
 
   q('#share-btn').addEventListener('click', () => {
@@ -611,6 +618,8 @@ $(() => {
         savedGraphs = response.data;
         if (callback)
           callback();
+      }).catch((error) => {
+        toastr.error(`Failed to retrieve graph list from ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
       });
     } else {
       for (let i = 0; i < localStorage.length; i++) {

@@ -271,10 +271,6 @@
 <span class='iconify text-white' data-color='white' data-height='16' data-icon='fa-regular:save' data-width='16'></span>
 </label>
 </li>
-<div class='text-white'>
-Backend URL:
-<input id='options-backend-url-input' type='text'>
-</div>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
 <li class='nav-item'>
 <label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='new-btn' title='New'>
@@ -377,9 +373,14 @@ JavaScript
 <a class='dropdown-item' href='#' id='options-sort'>
 <label class='w-100' for='options-auto-complete-input'>
 Sort
-<div class='pull-right text-muted'>Ctrl-S</div>
+<div class='pull-right text-muted' style='margin-left: 50px;'>Ctrl-S</div>
 </label>
 </a>
+<div class='dropdown-item' style='cursor: default; background-color: white !important; color: black !important;'>
+Backend URL
+<br>
+<input id='options-backend-url-input' style='cursor: text; width: 250px;' type='text'>
+</div>
 </div>
 </div>
 <div class='float-btn btn btn-info p-0' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='reset-config-btn' title='Reset Config'>
