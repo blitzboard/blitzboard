@@ -890,7 +890,6 @@ module.exports = class Blitzboard {
       newPg = this.tryPgParse(''); // Set empty pg
     }
     else if (typeof input === 'string' || input instanceof String) {
-      console.log("parsing");
       try {
         newPg = JSON.parse(input);
       } catch (err) {
@@ -906,7 +905,6 @@ module.exports = class Blitzboard {
     }
     if (newPg === null || newPg === undefined)
       return;
-    console.log("parsed");
     this.graph = newPg;
     
     this.nodeLayout = layout;

@@ -781,9 +781,11 @@ $(() => {
   }
 
   $(document).on('click', '.history-item', (e) => {
-    let i = $('.history-item').index(e.target);
-    let graph = savedGraphs[i];
-    loadGraphByName(graph);
+    if(confirmToChangeGraph()) {
+      let i = $('.history-item').index(e.target);
+      let graph = savedGraphs[i];
+      loadGraphByName(graph);
+    }
   });
 
   function saveCurrentGraph() {
@@ -852,6 +854,7 @@ $(() => {
     updateGraphList();
     showGraphName();
     blitzboard.update(false);
+    setUnsavedStatus(true);
     toastr.success(`Your graph is cloned as <em>${name}</em> !`, '', {preventDuplicates: true, timeOut: 3000});
   });
 
@@ -1655,8 +1658,15 @@ $(() => {
       saveCurrentGraph();
     }
 
-    updateGraphList();
-    showGraphName();
+    updateGraphList(() => {
+      if(!savedGraphs.includes(localStorage.getItem('currentGraphName'))) {
+        if(savedGraphs.length > 0)
+          loadGraphByName(savedGraphs[0]);
+        else
+          createNewGraph();
+      }
+      showGraphName();
+    });
 
     let oldOrder = localStorage.getItem('sortOrder');
     if (oldOrder) {
