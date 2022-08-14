@@ -241,27 +241,6 @@
 <img src='./img/blitzboard-w_3.png' style='height: 23px;'>
 </a>
 </div>
-<div aria-label='Basic radio toggle button group' class='btn-group mx-3' role='group'>
-<input autocomplete='off' class='btn-check column-mode-btn' id='input-only-btn' name='view-mode' type='radio'>
-<label class='btn btn-secondary' data-bs-toggle='tooltip' data-placement='bottom' for='input-only-btn' title='Edit'>
-<svg class='bi bi-pencil' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
-<path d='M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z'></path>
-</svg>
-</label>
-<input autocomplete='off' class='btn-check column-mode-btn' id='double-column-btn' name='view-mode' type='radio'>
-<label class='btn btn-secondary' data-bs-toggle='tooltip' data-placement='bottom' for='double-column-btn' title='Split'>
-<svg class='bi bi-layout-split' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
-<path d='M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm8.5-1v12H14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H8.5zm-1 0H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h5.5V2z'></path>
-</svg>
-</label>
-<input autocomplete='off' class='btn-check column-mode-btn' id='view-only-btn' name='view-mode' type='radio'>
-<label class='btn btn-secondary' data-bs-toggle='tooltip' data-placement='bottom' for='view-only-btn' title='View'>
-<svg class='bi bi-eye' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
-<path d='M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z'></path>
-<path d='M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z'></path>
-</svg>
-</label>
-</div>
 <div class='dropdown ml-3'>
 <div aria-haspopup class='text-white mx-0 dropdown-toggle' data-bs-toggle='dropdown' id='history-dropdown' style='width: 220px; text-align: left; overflow: hidden; white-space: nowrap;text-overflow: ellipsis;' type='button'></div>
 <div aria-labelledby='historyDropdown' class='dropdown-menu' id='history-menu'></div>
@@ -272,6 +251,14 @@
 </label>
 </li>
 <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
+<input autocomplete='off' class='btn-check' id='view-only-btn' name='view-mode' type='checkbox'>
+<label class='me-3 btn btn-outline-secondary text-white' data-bs-toggle='tooltip' data-placement='bottom' for='view-only-btn' style='border: none' title='View only'>
+<svg class='bi bi-eye' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
+<path d='M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z'></path>
+<path d='M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z'></path>
+</svg>
+</label>
+</input>
 <li class='nav-item'>
 <label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='new-btn' title='New'>
 <svg class='bi bi-plus-lg' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>

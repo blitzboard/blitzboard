@@ -229,10 +229,15 @@ $(() => {
     backendUrl = e.target.value;
     remoteMode = e.target.value.length > 0;
     updateGraphList();
-    if(remoteMode)
+    if(remoteMode) {
       toastr.success(`Backend has been changed to ${backendUrl}`);
-    else
+      q('#save-btn').classList.remove('d-none');
+    }
+    else {
       toastr.success(`Local mode has been enabled`);
+      q('#save-btn').classList.add('d-none');
+    }
+    
   });
 
   q('#share-btn').addEventListener('click', () => {
@@ -496,15 +501,15 @@ $(() => {
     onConfigResize(null, null);
   }
 
-  $('.column-mode-btn').change(() => {
+  $('#view-only-btn').click(() => {
     if (!$('#input-area').resizable("option", "disabled"))
       prevInputWidth = $('#input-area').css('width');
-    if (q('#input-only-btn').checked) {
+    if (q('#view-only-btn').checked) {
       $('#input-area').resizable('disable');
-      $('#input-area').css('width', '100%');
-      $('#graph-pane').css('width', '0px');
-      viewMode = 'input-only';
-    } else if (q('#double-column-btn').checked) {
+      $('#input-area').css('width', '0px');
+      $('#graph-pane').css('width', '100%');
+      viewMode = 'view-only';
+    } else {
       const totalWidth = $("#main-area").width();
       $('#input-area').resizable('enable');
       if (!prevInputWidth)
@@ -512,11 +517,6 @@ $(() => {
       $('#input-area').css('width', prevInputWidth);
       $('#graph-pane').css('width', totalWidth - prevInputWidth);
       viewMode = 'double-column';
-    } else if (q('#view-only-btn').checked) {
-      $('#input-area').resizable('disable');
-      $('#input-area').css('width', '0px');
-      $('#graph-pane').css('width', '100%');
-      viewMode = 'view-only';
     }
     localStorage.setItem('viewMode', viewMode);
     onResize(null, null);
@@ -1602,13 +1602,6 @@ $(() => {
 
 
     switch (viewMode) {
-      case 'input-only':
-        $('#input-only-btn').prop('checked', true);
-        $('#input-area').resizable('disable');
-        $('#input-area').css('width', '100%');
-        $('#graph-pane').css('width', '0px');
-        onResize(null, null);
-        break;
       case 'view-only':
         $('#view-only-btn').prop('checked', true);
         $('#input-area').resizable('disable');
@@ -1617,7 +1610,7 @@ $(() => {
         onResize(null, null);
         break;
       default:
-        $('#double-column-btn').prop('checked', true);
+        $('#view-only-btn').prop('checked', false);
         break;
     }
     let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
