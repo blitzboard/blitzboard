@@ -3,7 +3,7 @@ let markers = [];
 let editor, configEditor;
 let nodeLayout = null;
 let savedGraphs = [];
-
+let unsavedChangeExists = false;
 
 let backendUrl = localStorage.getItem('backendUrl');
 let remoteMode = !!backendUrl;
@@ -70,6 +70,7 @@ $(() => {
     hour: 'numeric', minute: 'numeric', second: 'numeric',
     hour12: false,
   });
+
 
   String.prototype.quoteIfNeeded = function () {
     if (this.includes('"') || this.includes('#') || this.includes('\t') || this.includes(':') || this.includes(' ')) {
@@ -561,6 +562,7 @@ $(() => {
 
   function showGraphName() {
     $('#history-dropdown')[0].innerText = localStorage.getItem('currentGraphName');
+    $('title').html(localStorage.getItem('currentGraphName'));
   }
 
   function updateHistoryMenu(graphs) {
@@ -728,6 +730,8 @@ $(() => {
     $(`.dropdown-item.history-item:eq(${i})`).addClass('text-white');
     reloadConfig();
     showGraphName();
+    unsavedChangeExists = false;
+    
     byProgram = false;
   }
 
@@ -786,8 +790,17 @@ $(() => {
       localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
     }
   }
+  
+  function confirmToChangeGraph() {
+    if(!(remoteMode && unsavedChangeExists)) {
+      return true;
+    }
+    return confirm(`Your change for ${localStorage.getItem('currentGraphName')} is not saved. Are you sure you want to continue without saving it?`);
+  }
 
   q('#new-btn').addEventListener('click', () => {
+    if(!confirmToChangeGraph())
+      return;
     let name = newGraphName();
     byProgram = true;
     localStorage.setItem('currentGraphName', name);
@@ -826,6 +839,14 @@ $(() => {
   if (!remoteMode) {
     q('#save-btn').classList.add('d-none');
   }
+  
+  function setUnsavedStatus(unsaved) {
+    unsavedChangeExists = unsaved;
+    if(unsavedChangeExists)
+      q('#save-btn').classList.remove('disabled');
+    else
+      q('#save-btn').classList.add('disabled');
+  }
 
   q('#save-btn').addEventListener('click', () => {
 
@@ -851,6 +872,7 @@ $(() => {
         }).then((res) => {
           toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
           updateGraphList();
+          setUnsavedStatus(false);
         }).catch((error) => {
           toastr.error(`Failed to save ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
         });
@@ -884,8 +906,12 @@ $(() => {
   });
 
 
-  q('#import-btn').addEventListener('click', () => {
-    q('#import-btn-input').value = '';
+  q('#import-btn').addEventListener('click', (e) => {
+    if(!confirmToChangeGraph()) {
+      e.preventDefault();
+      return;
+    }
+    q('#import-btn').value = '';
   });
 
   q('#import-btn').addEventListener('change', (evt) => {
@@ -1134,6 +1160,15 @@ $(() => {
     $('#export-btn').dropdown('toggle');
   });
 
+  window.addEventListener("beforeunload",  (e) => {
+    if (!(remoteMode && unsavedChangeExists)) {
+      return undefined;
+    }
+
+    e.preventDefault();
+    return e.returnValue = "Your change is not saved. Are you sure you want to exit?";
+  });
+
   let extraKeys = {
     Tab: 'autocomplete'
   };
@@ -1260,6 +1295,7 @@ $(() => {
         blitzboard.showLoader("");
       clearTimeout(pgTimerId);
       localMode = true;
+      setUnsavedStatus(true);
       pgTimerId = setTimeout(() => {
         reflectEditorChange();
       }, 1000);
@@ -1302,6 +1338,7 @@ $(() => {
         editor.getDoc().clearHistory();
         byProgram = false;
         updateGraph(editor.getValue(), config);
+        setUnsavedStatus(false);
       });
     } else {
       try {
@@ -1372,6 +1409,7 @@ $(() => {
       axios.get(strUrl).then((response) => {
         editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
         editor.getDoc().clearHistory();
+        setUnsavedStatus(true);
       });
     }
       // Otherwise, load PG data from browser local storage
@@ -1418,6 +1456,7 @@ $(() => {
       if (!configTimerId)
         blitzboard.showLoader('');
       clearTimeout(configTimerId);
+      setUnsavedStatus(true);
       configTimerId = setTimeout(reloadConfig, 2000);
     }
 
