@@ -345,7 +345,7 @@ $(() => {
         blitzboard.staticLayoutMode = true;
         toastr.warning("Static layout mode is enabled because input is large!");
       }
-
+      
       if (newConfig) {
         blitzboard.setGraph(input, false, nodeLayout);
         blitzboard.setConfig(newConfig);

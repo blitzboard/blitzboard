@@ -71,7 +71,7 @@ module.exports = class Blitzboard {
     this.nodeColorMap = {};
     this.expandedNodes = [];
     this.nodeMap = {};
-    this.config = { node: {}, edge: {}};
+    this.config = Blitzboard.defaultConfig;
     this.nodeLineMap = {};
     this.edgeMap = {};
     this.edgeLineMap = {};
@@ -1074,6 +1074,9 @@ module.exports = class Blitzboard {
       if(this.config.layout === 'timeline') {
         blitzboard.updateNodeLocationOnTimeLine();
       }
+    } else {
+      this.addedNodes = new Set(this.graph.nodes.map((n) => n.id));
+      this.addedEdges = new Set(this.graph.edges.map((e) => e.id));
     }
     
     this.prevZoomPosition = null;
