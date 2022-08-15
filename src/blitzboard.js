@@ -1130,7 +1130,7 @@ module.exports = class Blitzboard {
         this.nodeLayout = ngraphLayout;
       }
       for (let i = 0; i < 1000; ++i) {
-        if(this.nodeLayout.step()) {
+        if(this.nodeLayout.step() && i >= 100) {
           console.log(`layout is stable at step #${i}`);
           break;
         }
