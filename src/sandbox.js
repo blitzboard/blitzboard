@@ -340,10 +340,13 @@ $(() => {
     try {
       toastr.clear();
 
-      // TODO: determine reasonable threshold
-      if (!blitzboard.staticLayoutMode && input.length >= 10000) {
+      const staticLayoutThreshold = 1000;
+      
+      if (!blitzboard.staticLayoutMode && editor.lineCount() >= staticLayoutThreshold) {
         blitzboard.staticLayoutMode = true;
         toastr.warning("Static layout mode is enabled because input is large!");
+      } else if(blitzboard.staticLayoutMode && editor.lineCount() < staticLayoutThreshold) {
+        blitzboard.staticLayoutMode = false;
       }
       
       if (newConfig) {
