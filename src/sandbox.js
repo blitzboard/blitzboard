@@ -656,35 +656,43 @@ $(() => {
     let newName = prompt('What is the new name of the graph?', oldName);
     if (newName) {
       if (remoteMode) {
-        let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
-        axios.request({
-          method: 'post',
-          url: `${backendUrl}/drop`,
-          data: `graph=${oldName}`,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }).finally((res) => {
-          axios.post(`${backendUrl}/create`, {
-            name: newName,
-            pg: {
-              nodes: tmpNodes,
-              edges: tmpEdges
-            }
-          }).then((res) => {
-            savedGraphs[i] = newName;
-            updateGraphList();
-            if (localStorage.getItem('currentGraphName') === oldName) {
-              localStorage.setItem('currentGraphName', newName);
-            }
-            showGraphName();
-            toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+        axios.get(`${backendUrl}/get/?graph=${oldName}`).then((response) => {
+          let properties = response.data;
+          axios.request({
+            method: 'post',
+            url: `${backendUrl}/drop`,
+            data: `graph=${oldName}`,
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }).finally((res) => {
+            let pgJSON = blitzboard.tryPgParse(properties.pg[0]);
+            let [nodes, edges] = nodesAndEdgesForSaving(pgJSON.nodes, pgJSON.edges);
+            let graph = {
+              name: newName,
+              properties,
+              pg: {
+                nodes,
+                edges
+              }
+            };
+            axios.post(`${backendUrl}/create`, graph).then((res) => {
+              savedGraphs[i] = newName;
+              updateGraphList();
+              if (localStorage.getItem('currentGraphName') === oldName) {
+                localStorage.setItem('currentGraphName', newName);
+              }
+              showGraphName();
+              toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+            }).catch((error) => {
+              toastr.error(`Failed to save ${newName}..`, '', {preventDuplicates: true, timeOut: 3000});
+            });
           }).catch((error) => {
-            toastr.error(`Failed to save ${newName}..`, '', {preventDuplicates: true, timeOut: 3000});
+            toastr.error(`Failed to drop ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
           });
         }).catch((error) => {
-          toastr.error(`Failed to drop ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
-        });
+          toastr.error(`Failed to retrieve ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
+        });;
       } else {
         let oldGraph =
           JSON.parse(localStorage.getItem('saved-graph-' + oldName));
@@ -767,12 +775,12 @@ $(() => {
   
   function loadGraphByName(graphName) {
     if (remoteMode) {
-      axios.get(`${backendUrl}/query/?graph=${graphName}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+      axios.get(`${backendUrl}/get/?graph=${graphName}`).then((response) => {
         byProgram = true;
         loadGraph({
           name: graphName,
-          pg: json2pg.translate(JSON.stringify(response.data.pg)),
-          config: configEditor.getValue() // as it is
+          pg: response.data.pg[0],
+          config: response.data.config[0]
         });
         byProgram = false;
         editor.getDoc().clearHistory();
@@ -861,9 +869,13 @@ $(() => {
     toastr.success(`Your graph is cloned as <em>${name}</em> !`, '', {preventDuplicates: true, timeOut: 3000});
   });
 
-  function nodesAndEdgesForSaving() {
-    let tmpNodes = JSON.parse(JSON.stringify(blitzboard.graph.nodes));
-    let tmpEdges = JSON.parse(JSON.stringify(blitzboard.graph.edges));
+  function nodesAndEdgesForSaving(nodes = null, edges = null) {
+    if(!nodes)
+      nodes = blitzboard.graph.nodes;
+    if(!edges)
+      edges = blitzboard.graph.edges;
+    let tmpNodes = JSON.parse(JSON.stringify(nodes));
+    let tmpEdges = JSON.parse(JSON.stringify(edges));
     for (let node of tmpNodes) {
       delete node.location;
     }
@@ -905,6 +917,10 @@ $(() => {
       }).finally((res) => {
         axios.post(`${backendUrl}/create`, {
           name: localStorage.getItem('currentGraphName'),
+          properties: {
+            pg: [editor.getValue()],
+            config: [configEditor.getValue()],
+          },
           pg: {
             nodes: tmpNodes,
             edges: tmpEdges
@@ -1371,11 +1387,11 @@ $(() => {
 
   function loadCurrentGraph() {
     if (remoteMode) {
-      axios.get(`${backendUrl}/query/?graph=${localStorage.getItem('currentGraphName')}&query=MATCH+%28v1%29-%5Be%5D-%3E%28v2%29`).then((response) => {
+      axios.get(`${backendUrl}/get/?graph=${localStorage.getItem('currentGraphName')}`).then((response) => {
         byProgram = true;
-        editor.setValue(json2pg.translate(JSON.stringify(response.data.pg)));
+        editor.setValue(response.data.pg[0]);
         editor.getDoc().clearHistory();
-        configEditor.setValue(config);
+        configEditor.setValue(response.data.config[0]);
         if(!config)
           config = defaultConfig;
         byProgram = false;
