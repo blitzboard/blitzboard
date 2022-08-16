@@ -27,7 +27,8 @@ function removeComment(text) {
         ++to;
     }
   }
-  result += text.substring(from, to);
+  if(!inComment)
+    result += text.substring(from, to);
   return result;
 }
 
