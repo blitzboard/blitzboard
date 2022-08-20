@@ -1395,8 +1395,7 @@ $(() => {
         editor.setValue(response.data.pg[0]);
         editor.getDoc().clearHistory();
         configEditor.setValue(response.data.config[0]);
-        if(!config)
-          config = defaultConfig;
+        config = tryJsonParse(response.data.config[0]);
         byProgram = false;
         updateGraph(editor.getValue(), config);
         setUnsavedStatus(false);
