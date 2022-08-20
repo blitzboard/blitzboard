@@ -66,6 +66,7 @@ $(() => {
   let sortModal = new bootstrap.Modal(document.getElementById('sort-modal'));
   let bufferedContent = ''; // A buffer to avoid calling editor.setValue() too often
   let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
+  let additionalAutocompleteTargets = [];
   let dateTimeFormat = new Intl.DateTimeFormat('default', {
     year: 'numeric', month: 'numeric', day: 'numeric',
     hour: 'numeric', minute: 'numeric', second: 'numeric',
@@ -629,6 +630,13 @@ $(() => {
       }).catch((error) => {
         console.log(error);
         toastr.error(`Failed to retrieve graph list from ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
+      });
+      
+      axios.get(`${backendUrl}/query_table?query=SELECT v.id, COUNT(*) AS cnt FROM MATCH (v) ON x2 GROUP BY v.id ORDER BY cnt DESC`).then(response => {
+        additionalAutocompleteTargets = response.data.table.records.map((r) => r.ID);
+      }).catch((error) => {
+        console.log(error);
+        toastr.error(`Failed to retrieve candidate nodes from ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
       });
     } else {
       for (let i = 0; i < localStorage.length; i++) {
@@ -1263,28 +1271,23 @@ $(() => {
   let oldHint = CodeMirror.hint.anyword;
 
   CodeMirror.hint.pgMode = function (editor) {
-    let word = /[\w$:]+/;
+    let word = /[^\s]+/;
     let range = 200;
     let cur = editor.getCursor(), curLine = editor.getLine(cur.line);
     let end = cur.ch, start = end;
     while (start && word.test(curLine.charAt(start - 1))) --start;
-    let curWord = start != end && curLine.slice(start, end);
+    let curWord = start !== end && curLine.slice(start, end);
 
     let list = [];
 
-    for (let id of candidateIds) {
-      if (id.includes(curWord) && id !== curWord)
-        list.push(id);
-    }
-
-    for (let prop of candidatePropNames) {
-      if (prop.includes(curWord) && prop !== curWord)
-        list.push(prop);
-    }
-
-    for (let label of candidateLabels) {
-      if (label.includes(curWord) && label !== curWord)
-        list.push(label);
+    
+    for (let candidateList of [candidateIds, candidatePropNames, candidateLabels, additionalAutocompleteTargets]) {
+      for (let candidate of candidateList) {
+        if (candidate.includes(curWord) && !list.includes(candidate) && candidate !== curWord)
+          list.push(candidate);
+        if(list.length >= 20) break;
+      }
+      if(list.length >= 20) break;
     }
 
     return {list: list, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
