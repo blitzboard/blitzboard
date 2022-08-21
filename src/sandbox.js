@@ -20,8 +20,9 @@ $(() => {
   edge: {
     caption: ['label'],
   },
+  
   layout: 'default',
-
+  
   /*
   layout: 'hierarchical',
   layoutSettings: {
@@ -36,6 +37,18 @@ $(() => {
     sortMethod: 'hubsize',  // hubsize, directed
     shakeTowards: 'leaves'  // roots, leaves
   },
+  */
+
+  /*
+  layout: 'map',
+  layoutSettings: {
+    lng: 'lng',
+    lat: 'lat'
+  },
+  */
+
+  
+  /*
   layout: 'custom',
   layoutSettings: {
     x: 'x',
