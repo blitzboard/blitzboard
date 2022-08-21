@@ -558,9 +558,44 @@ $(() => {
                   blitzboard.setConfig(config);
                   });
                   `;
+    
     let currentGraphName = localStorage.getItem('currentGraphName');
     let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
     saveAs(new Blob([content], {type: 'text/plain'}), name + '.js');
+    $('#export-btn').dropdown('toggle');
+  });
+
+
+  q('#export-csv-btn').addEventListener('click', () => {
+    let nodeContent = Papa.unparse(blitzboard.graph.nodes.map((n) => {
+      let data = {
+        id: n.id,
+        label: n.label
+      };
+      for(let prop of Object.keys(n.properties)) {
+        data[prop] = n.properties[prop][0]; 
+      }
+      return data;
+    }));
+    let edgeContent = Papa.unparse(blitzboard.graph.edges.map((e) => {
+      let data = {
+        from: e.from,
+        to: e.to,
+        label: e.label
+      };
+      for(let prop of Object.keys(e.properties)) {
+        data[prop] = e.properties[prop][0];
+      }
+      return data;
+    })); 
+    let currentGraphName = localStorage.getItem('currentGraphName');
+    let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
+    var zip = new JSZip();
+    zip.file("nodes.csv", nodeContent);
+    zip.file("edges.csv", edgeContent);
+    zip.generateAsync({type: "blob"}).then(function (blob) {
+      saveAs(blob, name + "-csv.zip");
+    });
     $('#export-btn').dropdown('toggle');
   });
 
