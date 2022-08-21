@@ -801,11 +801,10 @@ $(() => {
   }
 
   $(document).on('click', '.history-item', (e) => {
-    if(confirmToChangeGraph()) {
-      let i = $('.history-item').index(e.target);
-      let graph = savedGraphs[i];
-      loadGraphByName(graph);
-    }
+    confirmToSaveGraph();
+    let i = $('.history-item').index(e.target);
+    let graph = savedGraphs[i];
+    loadGraphByName(graph);
   });
 
   function saveCurrentGraph(saveOnRemote = false) {
@@ -847,33 +846,56 @@ $(() => {
   }
   
   function saveToBackend() {
-
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
     let graphName = localStorage.getItem('currentGraphName');
-    axios.post(`${backendUrl}/create`, {
-      name: graphName,
-      properties: {
-        pg: [editor.getValue()],
-        config: [configEditor.getValue()],
-      },
-      pg: {
-        nodes: tmpNodes,
-        edges: tmpEdges
-      }
-    }).then((res) => {
-      toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
-      updateGraphList();
-      setUnsavedStatus(false);
-    }).catch((error) => {
-      toastr.error(`Failed to create save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
-    });
+    let configValue = configEditor.getValue();
+    let pgValue = editor.getValue();
+    
+    function sendCreateRequest() {
+      axios.post(`${backendUrl}/create`, {
+        name: graphName,
+        properties: {
+          pg: [pgValue],
+          config: [configValue],
+        },
+        pg: {
+          nodes: tmpNodes,
+          edges: tmpEdges
+        }
+      }).then((res) => {
+        toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+        updateGraphList();
+        setUnsavedStatus(false);
+      }).catch((error) => {
+        toastr.error(`Failed to create save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
+      });
+    }
+    
+    if(savedGraphs.includes(graphName)) {
+      axios.request({
+        method: 'post',
+        url: `${backendUrl}/drop`,
+        data: `graph=${localStorage.getItem('currentGraphName')}`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }).finally((res) => {
+        sendCreateRequest();
+      }).catch((error) => {
+        toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
+      });
+    } else {
+      sendCreateRequest();
+    }
   }
   
-  function confirmToChangeGraph() {
+  function confirmToSaveGraph() {
     if(!(remoteMode && unsavedChangeExists)) {
       return true;
     }
-    return confirm(`Your change for ${localStorage.getItem('currentGraphName')} is not saved. Are you sure you want to continue without saving it?`);
+    if(confirm(`Save your change for ${localStorage.getItem('currentGraphName')} before leaving?`)) {
+      saveCurrentGraph();
+    }
   }
   
   function createNewGraph() {
@@ -886,8 +908,7 @@ $(() => {
   }
 
   q('#new-btn').addEventListener('click', () => {
-    if(!confirmToChangeGraph())
-      return;
+    confirmToSaveGraph();
     createNewGraph();
   });
 
@@ -932,25 +953,9 @@ $(() => {
   }
 
   q('#save-btn').addEventListener('click', () => {
-
-
     let graphName = localStorage.getItem('currentGraphName');
-
     if (remoteMode) {
-      axios.request({
-        method: 'post',
-        url: `${backendUrl}/drop`,
-        data: `graph=${localStorage.getItem('currentGraphName')}`,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }).finally((res) => {
-        saveToBackend();
-      }).catch((error) => {
-        toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
-      });
-    } else {
-
+      saveToBackend();
     }
   });
 
@@ -977,10 +982,7 @@ $(() => {
 
 
   q('#import-btn').addEventListener('click', (e) => {
-    if(!confirmToChangeGraph()) {
-      e.preventDefault();
-      return;
-    }
+    confirmToSaveGraph();
     q('#import-btn').value = '';
   });
 
