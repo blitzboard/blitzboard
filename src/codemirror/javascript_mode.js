@@ -926,7 +926,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     blockCommentStart: jsonMode ? null : "/*",
     blockCommentEnd: jsonMode ? null : "*/",
     blockCommentContinue: jsonMode ? null : " * ",
-    lineComment: jsonMode ? null : "//",
+    lineComment: "//",
     fold: "brace",
     closeBrackets: "()[]{}''\"\"``",
 

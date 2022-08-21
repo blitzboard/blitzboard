@@ -34,9 +34,10 @@
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/dialog/dialog.min.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/search/search.min.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/search/searchcursor.min.js"}
+    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/show-hint.min.js"}
+    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/anyword-hint.min.js"}
+    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/comment/comment.js"}
     %script{:src => "./src/codemirror/javascript_mode.js"}
-    %script{:src => "./src/codemirror/addon/show-hint.js"}
-    %script{:src => "./src/codemirror/addon/anyword-hint.js"}
     %script{:src => "./src/util.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"}
     %script{:crossorigin => "anonymous", :integrity => "sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM", :src => "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"}
@@ -63,6 +64,7 @@
           padding: 10px;
           text-align: center;
       }
+      .cm-s-monokai span.cm-variable { color: #e6db74; }
 
       .dg.main .close-button {
           background-color: rgba(0, 0, 0, 0.7);

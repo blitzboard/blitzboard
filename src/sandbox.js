@@ -1255,8 +1255,9 @@ $(() => {
   let extraKeys = {
     Tab: 'autocomplete'
   };
-  let searchKey = navigator.platform.startsWith('Mac') ? "Cmd-F" : "Ctrl-F";
-  extraKeys[searchKey] = "findPersistent";
+  let shortcutPrefix = navigator.platform.startsWith('Mac') ? "Cmd-" : "Ctrl-";
+  extraKeys[shortcutPrefix + "F"] = "findPersistent";
+  extraKeys[shortcutPrefix + "/"] = (cm) => cm.toggleComment();
 
   editor = CodeMirror.fromTextArea(q('#graph-input'), {
     lineNumbers: true,
@@ -1269,7 +1270,7 @@ $(() => {
       completeSingle: false
     }
   });
-
+  
   editor.on('keydown', (cm, e) => {
     if (e.keyCode === 83 && e.ctrlKey) {
       // ctrl + S
@@ -1313,18 +1314,23 @@ $(() => {
     return {list: list, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
   };
 
+
+  extraKeys = {
+    Tab: function (cm) {
+      var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+      cm.replaceSelection(spaces);
+    },
+    "Shift-Tab": "indentLess",
+  }
+  extraKeys[shortcutPrefix + "F"] = "findPersistent";
+  extraKeys[shortcutPrefix + "/"] = (cm) => cm.toggleComment();
+
   configEditor = CodeMirror.fromTextArea(q('#config-input'), {
     viewportMargin: Infinity,
     theme: "monokai",
     mode: {name: 'javascript', json: true},
     lineWrapping: true,
-    extraKeys: {
-      Tab: function (cm) {
-        var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
-        cm.replaceSelection(spaces);
-      },
-      "Shift-Tab": "indentLess",
-    },
+    extraKeys,
     hintOptions: {
       completeSingle: false,
     },
