@@ -89,7 +89,8 @@ $(() => {
 
   function reloadConfig() {
     config = tryJsonParse(configEditor.getValue());
-    saveCurrentGraph();
+    if(!remoteMode)
+      saveCurrentGraph();
     if (config)
       updateGraph(editor.getValue(), config);
     clearTimeout(configTimerId);
@@ -807,7 +808,7 @@ $(() => {
     }
   });
 
-  function saveCurrentGraph() {
+  function saveCurrentGraph(saveOnRemote = false) {
     let name = localStorage.getItem('currentGraphName');
     if (!name) {
       name = newGraphName();
@@ -839,7 +840,33 @@ $(() => {
         savedGraphs[i] = graph;
       }
       localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
+      updateGraphList();
+    } else {
+      saveToBackend();
     }
+  }
+  
+  function saveToBackend() {
+
+    let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
+    let graphName = localStorage.getItem('currentGraphName');
+    axios.post(`${backendUrl}/create`, {
+      name: graphName,
+      properties: {
+        pg: [editor.getValue()],
+        config: [configEditor.getValue()],
+      },
+      pg: {
+        nodes: tmpNodes,
+        edges: tmpEdges
+      }
+    }).then((res) => {
+      toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+      updateGraphList();
+      setUnsavedStatus(false);
+    }).catch((error) => {
+      toastr.error(`Failed to create save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
+    });
   }
   
   function confirmToChangeGraph() {
@@ -853,9 +880,8 @@ $(() => {
     let name = newGraphName();
     byProgram = true;
     localStorage.setItem('currentGraphName', name);
-    saveCurrentGraph();
-    updateGraphList();
     loadGraph({name: name, pg: '', config: defaultConfig});
+    saveCurrentGraph();
     byProgram = false;
   }
 
@@ -870,11 +896,8 @@ $(() => {
     let name = newGraphName(localStorage.getItem('currentGraphName'));
     localStorage.setItem('currentGraphName', name);
     saveCurrentGraph();
-    updateGraphList();
     showGraphName();
     blitzboard.update(false);
-    setUnsavedStatus(true);
-    toastr.success(`Your graph is cloned as <em>${name}</em> !`, '', {preventDuplicates: true, timeOut: 3000});
   });
 
   function nodesAndEdgesForSaving(nodes = null, edges = null) {
@@ -910,7 +933,6 @@ $(() => {
 
   q('#save-btn').addEventListener('click', () => {
 
-    let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
 
     let graphName = localStorage.getItem('currentGraphName');
 
@@ -923,23 +945,7 @@ $(() => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }).finally((res) => {
-        axios.post(`${backendUrl}/create`, {
-          name: localStorage.getItem('currentGraphName'),
-          properties: {
-            pg: [editor.getValue()],
-            config: [configEditor.getValue()],
-          },
-          pg: {
-            nodes: tmpNodes,
-            edges: tmpEdges
-          }
-        }).then((res) => {
-          toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
-          updateGraphList();
-          setUnsavedStatus(false);
-        }).catch((error) => {
-          toastr.error(`Failed to save ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
-        });
+        saveToBackend();
       }).catch((error) => {
         toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
       });
@@ -998,7 +1004,6 @@ $(() => {
               configEditor.setValue(config);
               localStorage.setItem('currentGraphName', name);
               saveCurrentGraph();
-              updateGraphList();
               editor.getDoc().clearHistory();
               configEditor.getDoc().clearHistory();
               showGraphName();
@@ -1339,7 +1344,8 @@ $(() => {
 
   function reflectEditorChange() {
     // localStorage.setItem('pg', editor.getValue());
-    saveCurrentGraph();
+    if(!remoteMode)
+      saveCurrentGraph();
     blitzboard.hideLoader();
 
     updateGraph(editor.getValue());
