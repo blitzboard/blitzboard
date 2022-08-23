@@ -226,6 +226,8 @@ module.exports = class Blitzboard {
       blitzboard.prevMouseEvent = e;
     }, true);
     
+    const balloonHandleSize = 12;
+    
     this.applyDynamicStyle(`
       .blitzboard-tooltip {
         position: absolute;
@@ -250,23 +252,21 @@ module.exports = class Blitzboard {
       .blitzboard-tooltip .blitzboard-tooltiptext-top {
         bottom: 125%;
         left: 50%;
-        margin-left: -6px;
       }
       
       .blitzboard-tooltip .blitzboard-tooltiptext-bottom {
         bottom: 100%;
         left: 50%;
-        margin-left: -6px;
       }
       
       
       .blitzboard-tooltip .blitzboard-tooltiptext-left {
-        top: 50%;
+        top: calc(50% - ${balloonHandleSize / 2}px);
         left: 0%;
       }
       
       .blitzboard-tooltip .blitzboard-tooltiptext-right {
-        top: -50%;
+        top: calc(-50% + ${balloonHandleSize / 2}px);
         left: 100%;
       }
       
@@ -274,31 +274,32 @@ module.exports = class Blitzboard {
       .blitzboard-tooltip .blitzboard-tooltiptext::after {
         content: "";
         position: absolute;
-        border-width: 6px;
+        top: -${balloonHandleSize / 2}px;
+        border-width: ${balloonHandleSize}px;
         border-style: solid;
       }
       
       .blitzboard-tooltip .blitzboard-tooltiptext-bottom::after {
-        top: -12px;
-        left: 50%;
+        top: -${balloonHandleSize * 2}px;
+        left: calc(50% - ${balloonHandleSize / 2}px);
         border-color: transparent transparent #555 transparent;
       }
       
       .blitzboard-tooltip .blitzboard-tooltiptext-left::after {
-        top: 50%;
+        top: calc(50% - ${balloonHandleSize}px);
         left: 100%;
         border-color: transparent transparent transparent #555;
       }
       
       .blitzboard-tooltip .blitzboard-tooltiptext-top::after {
         top: 100%;
-        left: 50%;
+        left: calc(50% - ${balloonHandleSize / 2}px);
         border-color: #555 transparent transparent transparent;
       }
 
       .blitzboard-tooltip .blitzboard-tooltiptext-right::after {
-        top: 50%;
-        left: -12px;
+        top: calc(50% - ${balloonHandleSize / 2}px);
+        left: -${balloonHandleSize * 2}px;
         border-color: transparent #555 transparent transparent;
       }
       
@@ -439,7 +440,7 @@ module.exports = class Blitzboard {
   updateTooltipLocation() {
     if(!this.elementWithTooltip)
       return;
-    let position, offset = 10;
+    let position, offset = 8;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
       let clientRect = this.container.getClientRects()[0];
@@ -1873,10 +1874,4 @@ function getRandomColor(str, saturation, brightness) {
 
 function isDateString(str) {
   return isNaN(str) && !isNaN(Date.parse(str))
-}
-
-function htmlTitle(html) {
-  const container = document.createElement("div");
-  container.innerHTML = html;
-  return container;
 }

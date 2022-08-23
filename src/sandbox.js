@@ -101,7 +101,7 @@ $(() => {
 
 
   function reloadConfig() {
-    config = tryJsonParse(configEditor.getValue());
+    config = parseConfig(configEditor.getValue());
     if(!remoteMode)
       saveCurrentGraph();
     if (config)
@@ -141,9 +141,18 @@ $(() => {
     sortModal.show();
   }
 
-  function tryJsonParse(json) {
+  function parseConfig(json) {
     try {
-      return looseJsonParse(json);
+      let config = looseJsonParse(json);
+      if(remoteMode) {
+        let oldTitleHandler = config.node.title;
+        config.node.title = (n) => {
+          let title = oldTitleHandler ? oldTitleHandler(n) : blitzboard.createTitle(n);
+          title += `<a href='#' class='expand-event-tree-link' data-node-id='${n.id}'>Show list of graphs</a>`;
+          return title;
+        };
+      }
+      return config;
     } catch (e) {
       console.log(e);
       toastr.error(e.toString(), 'JSON SyntaxError', {preventDuplicates: true});
@@ -364,6 +373,7 @@ $(() => {
         blitzboard.staticLayoutMode = false;
       }
       
+      
       if (newConfig) {
         blitzboard.setGraph(input, false, nodeLayout);
         blitzboard.setConfig(newConfig);
@@ -565,7 +575,16 @@ $(() => {
     $('#export-btn').dropdown('toggle');
   });
 
-
+  $(document).on('click', '.expand-event-tree-link', (e) => {
+    let nodeId = $(e.target).data('node-id');
+    axios.get(`${backendUrl}/query_table?query=SELECT v.GRAPH FROM MATCH (v) ON x2 WHERE v.ID = '${nodeId}' GROUP BY v.GRAPH`).then(response => {
+      e.target.outerHTML = "<i>" + response.data.table.records.map((r) => r.GRAPH).join('<br>') + "</i>";
+    }).catch((error) => {
+      console.log(error);
+      toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
+    });
+  });
+  
   q('#export-csv-btn').addEventListener('click', () => {
     let nodeContent = Papa.unparse(blitzboard.graph.nodes.map((n) => {
       let data = {
@@ -1451,27 +1470,26 @@ $(() => {
   });
 
   function loadCurrentGraph() {
+    
+    function loadValues(pgValue, configValue) {
+      byProgram = true;
+      editor.setValue(pgValue);
+      editor.getDoc().clearHistory();
+      configEditor.setValue(configValue);
+      config = parseConfig(configValue);
+      byProgram = false;
+      updateGraph(pgValue, config);
+    }
+    
     if (remoteMode) {
       axios.get(`${backendUrl}/get/?graph=${localStorage.getItem('currentGraphName')}`).then((response) => {
-        byProgram = true;
-        editor.setValue(response.data.pg[0]);
-        editor.getDoc().clearHistory();
-        configEditor.setValue(response.data.config[0]);
-        config = tryJsonParse(response.data.config[0]);
-        byProgram = false;
-        updateGraph(editor.getValue(), config);
+        loadValues(response.data.pg[0], response.data.config[0]);
         setUnsavedStatus(false);
       });
     } else {
       try {
         let graph = JSON.parse(localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName')));
-        byProgram = true;
-        editor.setValue(graph.pg);
-        configEditor.setValue(graph.config);
-        config = tryJsonParse(graph.config);
-        byProgram = false;
-        updateGraph(editor.getValue(), config);
-        editor.getDoc().clearHistory();
+        loadValues(graph.pg, graph.config);
       } catch (e) {
       }
     }
