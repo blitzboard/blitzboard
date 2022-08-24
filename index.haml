@@ -275,7 +275,9 @@
                   %path{:d => "M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"}
               .dropdown-menu.dropdown-menu-end{ 'aria-labelledby': "export-btn" }
                 %a#export-zip-btn.dropdown-item{ href: '#' }
-                  Zip
+                  PG & Config (Zip)
+                %a#export-csv-btn.dropdown-item{ href: '#' }
+                  CSV (Zip)
                 %a#export-cypher-btn.dropdown-item{ href: '#' }
                   Cypher Query
                 %a#export-pgql-btn.dropdown-item{ href: '#' }
@@ -286,8 +288,6 @@
                   PNG
                 %a.dropdown-item#embed-btn{ href: '#' }
                   JavaScript
-                %a#export-csv-btn.dropdown-item{ href: '#' }
-                  CSV
           %li.nav-item
             %label.btn.d-none.text-white#share-btn{ title: "Share", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom' }
               %svg.bi.bi-share-fill{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
