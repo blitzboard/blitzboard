@@ -608,12 +608,12 @@ $(() => {
       return data;
     })); 
     let currentGraphName = localStorage.getItem('currentGraphName');
-    let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
+    let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '-csv_' + currentTimeString();
     var zip = new JSZip();
     zip.file("nodes.csv", nodeContent);
     zip.file("edges.csv", edgeContent);
     zip.generateAsync({type: "blob"}).then(function (blob) {
-      saveAs(blob, name + "-csv.zip");
+      saveAs(blob, name + ".zip");
     });
     $('#export-btn').dropdown('toggle');
   });
@@ -1059,7 +1059,47 @@ $(() => {
       // Remove datetime part like '****_20200101123045
       nameWithoutExtension = nameWithoutExtension.replace(/_\d{8,15}$/, '');
       JSZip.loadAsync(f).then(function (zip) {
-        if (!zip.file("graph.pg") || !zip.file("config.js")) {
+        if (zip.file("nodes.csv") && zip.file("edges.csv")) {
+          nameWithoutExtension = nameWithoutExtension.replace(/-csv$/, '');
+          zip.file("nodes.csv").async("string").then(function success(content) {
+            let nodes = Papa.parse(content, {header: true}).data;
+            zip.file("edges.csv").async("string").then(function success(content) {
+              let edges = Papa.parse(content, {header: true}).data;
+              // The same process as #new-btn is clicked
+              let name = newGraphName(nameWithoutExtension);
+              localStorage.setItem('currentGraphName', name);
+
+              let nodeContent = nodes.map((n) => {
+                let line = n.id.quoteIfNeeded();
+                if(n.label)
+                  line += " :" + n.label.quoteIfNeeded();
+                for(let key of Object.keys(n)) {
+                  if(key !== 'id' && key !== 'label') {
+                    line += ` ${key.quoteIfNeeded()}:${n[key].quoteIfNeeded()}`;
+                  }
+                }
+                return line;
+              }).join("\n");
+
+              let edgeContent = edges.map((e) => {
+                let line = `${e.from.quoteIfNeeded()} -> ${e.to.quoteIfNeeded()}`;
+                if(e.label)
+                  line += " :" + e.label.quoteIfNeeded();
+                for(let key of Object.keys(e)) {
+                  if(key !== 'from' && key !== 'to' && key !== 'label') {
+                    line += ` ${key.quoteIfNeeded()}:${e[key].quoteIfNeeded()}`;
+                  }
+                }
+                return line;
+              }).join("\n");
+              
+              loadValues(nodeContent + "\n" + edgeContent, defaultConfig);
+              saveCurrentGraph();
+              showGraphName();
+            });
+          });
+        }
+        else if (!zip.file("graph.pg") || !zip.file("config.js")) {
           alert("Invalid zip file");
         } else {
           zip.file("graph.pg").async("string").then(function success(content) {
@@ -1469,17 +1509,18 @@ $(() => {
     }
   });
 
+
+  function loadValues(pgValue, configValue) {
+    byProgram = true;
+    editor.setValue(pgValue);
+    editor.getDoc().clearHistory();
+    configEditor.setValue(configValue);
+    config = parseConfig(configValue);
+    byProgram = false;
+    updateGraph(pgValue, config);
+  }
+  
   function loadCurrentGraph() {
-    
-    function loadValues(pgValue, configValue) {
-      byProgram = true;
-      editor.setValue(pgValue);
-      editor.getDoc().clearHistory();
-      configEditor.setValue(configValue);
-      config = parseConfig(configValue);
-      byProgram = false;
-      updateGraph(pgValue, config);
-    }
     
     if (remoteMode) {
       axios.get(`${backendUrl}/get/?graph=${localStorage.getItem('currentGraphName')}`).then((response) => {
