@@ -1074,7 +1074,7 @@ $(() => {
                 if(n.label)
                   line += " :" + n.label.quoteIfNeeded();
                 for(let key of Object.keys(n)) {
-                  if(key !== 'id' && key !== 'label') {
+                  if(key !== 'id' && key !== 'label' && n[key]?.length > 0) {
                     line += ` ${key.quoteIfNeeded()}:${n[key].quoteIfNeeded()}`;
                   }
                 }
@@ -1086,7 +1086,7 @@ $(() => {
                 if(e.label)
                   line += " :" + e.label.quoteIfNeeded();
                 for(let key of Object.keys(e)) {
-                  if(key !== 'from' && key !== 'to' && key !== 'label') {
+                  if(key !== 'from' && key !== 'to' && key !== 'label' && e[key]?.length > 0) {
                     line += ` ${key.quoteIfNeeded()}:${e[key].quoteIfNeeded()}`;
                   }
                 }
