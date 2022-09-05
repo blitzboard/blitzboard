@@ -923,7 +923,7 @@ $(() => {
     let pgValue = editor.getValue();
 
     axios.get(`${backendUrl}/get/?graph=${localStorage.getItem('currentGraphName')}`).then((response) => {
-      if (response.data.lastUpdate[0] > localStorage.getItem('lastUpdate')) {
+      if (response.data.lastUpdate && response.data.lastUpdate[0] > localStorage.getItem('lastUpdate')) {
         alert("This data has been updated outside. Please reload first.");
       } else {
         let now = Date.now();
