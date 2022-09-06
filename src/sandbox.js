@@ -589,7 +589,7 @@ $(() => {
     let nodeContent = Papa.unparse(blitzboard.graph.nodes.map((n) => {
       let data = {
         id: n.id,
-        label: n.label
+        label: n.labels[0]
       };
       for(let prop of Object.keys(n.properties)) {
         data[prop] = n.properties[prop][0]; 
@@ -600,7 +600,7 @@ $(() => {
       let data = {
         from: e.from,
         to: e.to,
-        label: e.label
+        label: e.labels[0]
       };
       for(let prop of Object.keys(e.properties)) {
         data[prop] = e.properties[prop][0];
