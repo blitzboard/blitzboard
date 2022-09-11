@@ -545,10 +545,10 @@ You -> I :say word:Goodbye date:yesterday`;
     onConfigResize(null, null);
   }
 
-  $('#view-only-btn').click(() => {
+  $('#edit-panel-btn').click(() => {
     if (!$('#input-area').resizable("option", "disabled"))
       prevInputWidth = $('#input-area').css('width');
-    if (q('#view-only-btn').checked) {
+    if (!q('#edit-panel-btn').checked) {
       $('#input-area').resizable('disable');
       $('#input-area').css('width', '0px');
       $('#graph-pane').css('width', '100%');
@@ -1740,14 +1740,14 @@ You -> I :say word:Goodbye date:yesterday`;
 
     switch (viewMode) {
       case 'view-only':
-        $('#view-only-btn').prop('checked', true);
+        $('#edit-panel-btn').prop('checked', false);
         $('#input-area').resizable('disable');
         $('#input-area').css('width', '0px');
         $('#graph-pane').css('width', '100%');
         onResize(null, null);
         break;
       default:
-        $('#view-only-btn').prop('checked', false);
+        $('#edit-panel-btn').prop('checked', true);
         break;
     }
     let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
