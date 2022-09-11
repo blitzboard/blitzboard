@@ -80,6 +80,7 @@ You -> I :say word:Goodbye date:yesterday`;
   let showConfig = false;
   let srcNode, lineEnd;
   let focusTimerId = null;
+  let lastUpdate = null;
   let prevNetwork = null;
   let viewMode = loadConfig('viewMode');
   let pgToBeSorted;
@@ -108,6 +109,11 @@ You -> I :say word:Goodbye date:yesterday`;
   }
   currentGraphName = localStorage.getItem('currentGraphName');
 
+  if(remoteMode) {
+    axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
+      lastUpdate = response.data.lastUpdate[0];
+    });
+  }
 
   function reloadConfig() {
     config = parseConfig(configEditor.getValue());
@@ -853,6 +859,8 @@ You -> I :say word:Goodbye date:yesterday`;
     reloadConfig();
     showGraphName();
     unsavedChangeExists = false;
+    if(remoteMode && graph.lastUpdate)
+      lastUpdate = graph.lastUpdate;
     
     byProgram = false;
   }
@@ -864,7 +872,8 @@ You -> I :say word:Goodbye date:yesterday`;
         loadGraph({
           name: graphName,
           pg: response.data.pg[0],
-          config: response.data.config[0]
+          config: response.data.config[0],
+          lastUpdate: response.data.lastUpdate[0]
         });
         byProgram = false;
         editor.getDoc().clearHistory();
@@ -925,43 +934,53 @@ You -> I :say word:Goodbye date:yesterday`;
     let graphName = currentGraphName;
     let configValue = configEditor.getValue();
     let pgValue = editor.getValue();
-    
-    function sendCreateRequest() {
-      axios.post(`${backendUrl}/create`, {
-        name: graphName,
-        properties: {
-          pg: [pgValue],
-          config: [configValue],
-        },
-        pg: {
-          nodes: tmpNodes,
-          edges: tmpEdges
+
+    axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
+      if (response.data.lastUpdate && response.data.lastUpdate[0] > lastUpdate) {
+        alert("This data has been updated outside. Please reload first.");
+      } else {
+        let now = Date.now();
+        lastUpdate = now;
+        
+        function sendCreateRequest() {
+          axios.post(`${backendUrl}/create`, {
+            name: graphName,
+            properties: {
+              pg: [pgValue],
+              config: [configValue],
+              lastUpdate: [now],
+            },
+            pg: {
+              nodes: tmpNodes,
+              edges: tmpEdges
+            }
+          }).then((res) => {
+            toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+            updateGraphList();
+            setUnsavedStatus(false);
+          }).catch((error) => {
+            toastr.error(`Failed to create save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
+          });
         }
-      }).then((res) => {
-        toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
-        updateGraphList();
-        setUnsavedStatus(false);
-      }).catch((error) => {
-        toastr.error(`Failed to create save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
-      });
-    }
-    
-    if(savedGraphs.includes(graphName)) {
-      axios.request({
-        method: 'post',
-        url: `${backendUrl}/drop`,
-        data: `graph=${currentGraphName}`,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }).finally((res) => {
-        sendCreateRequest();
-      }).catch((error) => {
-        toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
-      });
-    } else {
-      sendCreateRequest();
-    }
+        
+        if(savedGraphs.includes(graphName)) {
+          axios.request({
+            method: 'post',
+            url: `${backendUrl}/drop`,
+            data: `graph=${currentGraphName}`,
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }).finally((res) => {
+            sendCreateRequest();
+          }).catch((error) => {
+            toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
+          });
+        } else {
+          sendCreateRequest();
+        }
+      }
+    });
   }
   
   function confirmToSaveGraph() {
