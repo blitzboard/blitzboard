@@ -436,6 +436,8 @@ You -> I :say word:Goodbye date:yesterday`;
           editor.setCursor(oldCursor);
         }
         byProgram = false;
+        if (addedNode.size > 0)
+          updateGraph(editor.getValue());
         if (message.length > 0)
           toastr.warning(message, {preventDuplicates: true})
       }
