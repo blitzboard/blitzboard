@@ -1559,6 +1559,9 @@ You -> I :say word:Goodbye date:yesterday`;
         window.location.href = window.location.href.split('?')[0];
       });
     }
+  } else if(urlParams.get('backendURL')) {
+    localStorage.setItem('backendUrl', urlParams.get("backendURL"));
+    window.location.href = window.location.href.split('?')[0]; // Jump to URL without query parameter
   } else if(!remoteMode) {
     let pgInParam = urlParams.get('pg'), nodePropInParam = urlParams.get('displayedNodeProps'),
       edgePropInParam = urlParams.get('displayedEdgeProps');
