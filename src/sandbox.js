@@ -1793,9 +1793,8 @@ You -> I :say word:Goodbye date:yesterday`;
       loadSample(sampleName, (graph, config) => {
         byProgram = true;
         editor.setValue(graph);
-        configEditor.setValue(config);
         byProgram = false;
-        updateGraph(graph, config);
+        configEditor.setValue(config);
         showGraphName();
       });
       currentGraphName = newGraphName(sampleName);
