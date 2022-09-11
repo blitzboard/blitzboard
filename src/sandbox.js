@@ -72,6 +72,8 @@ You -> I :say word:Goodbye date:yesterday`;
   let localMode = true;
   blitzboard = new Blitzboard(container);
   let byProgram = false;
+  let currentGraphName;
+  let noGraphLoaded = false;
   let prevInputWidth = null;
   let config = defaultConfig;
   let autocompletion = true;
@@ -101,8 +103,10 @@ You -> I :say word:Goodbye date:yesterday`;
 
 
   if (!localStorage.getItem('currentGraphName')) {
+    noGraphLoaded = true;
     localStorage.setItem('currentGraphName', newGraphName());
   }
+  currentGraphName = localStorage.getItem('currentGraphName');
 
 
   function reloadConfig() {
@@ -280,7 +284,7 @@ You -> I :say word:Goodbye date:yesterday`;
     params.set('pg', editor.getValue());
     params.set('config', configEditor.getValue());
     params.set('viewMode', viewMode);
-    params.set('name', localStorage.getItem('currentGraphName'));
+    params.set('name', currentGraphName);
     url.search = params;
     if (url.length > 7333) {
       alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
@@ -576,7 +580,6 @@ You -> I :say word:Goodbye date:yesterday`;
                   });
                   `;
     
-    let currentGraphName = localStorage.getItem('currentGraphName');
     let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
     saveAs(new Blob([content], {type: 'text/plain'}), name + '.js');
     $('#export-btn').dropdown('toggle');
@@ -614,7 +617,6 @@ You -> I :say word:Goodbye date:yesterday`;
       }
       return data;
     })); 
-    let currentGraphName = localStorage.getItem('currentGraphName');
     let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '-csv_' + currentTimeString();
     var zip = new JSZip();
     zip.file("nodes.csv", nodeContent);
@@ -652,8 +654,8 @@ You -> I :say word:Goodbye date:yesterday`;
   }
 
   function showGraphName() {
-    $('#history-dropdown')[0].innerText = localStorage.getItem('currentGraphName');
-    $('title').html(localStorage.getItem('currentGraphName'));
+    $('#history-dropdown')[0].innerText = currentGraphName;
+    $('title').html(currentGraphName);
   }
 
   function updateHistoryMenu(graphs) {
@@ -665,7 +667,7 @@ You -> I :say word:Goodbye date:yesterday`;
     for (let graph of graphs) {
       let node = document.createElement('a');
       node.className = 'dropdown-item history-item mr-3';
-      if (graph.name === localStorage.getItem('currentGraphName'))
+      if (graph.name === currentGraphName)
         node.className += ' active text-white';
       node.style = 'position:relative';
       node.appendChild(document.createTextNode(graph.name));
@@ -717,7 +719,11 @@ You -> I :say word:Goodbye date:yesterday`;
       for (let i = 0; i < localStorage.length; i++) {
         if (localStorage.key(i).indexOf('saved-graph-') != -1) {
           try {
-            savedGraphs.push(JSON.parse(localStorage.getItem(localStorage.key(i))).name);
+            let graph = JSON.parse(localStorage.getItem(localStorage.key(i)));
+            if(graph.name && graph.pg && graph.config)
+              savedGraphs.push(graph.name);
+            else
+              localStorage.removeItem(localStorage.key(i));
           } catch (e) {
             localStorage.removeItem(localStorage.key(i));
           }
@@ -762,8 +768,8 @@ You -> I :say word:Goodbye date:yesterday`;
             axios.post(`${backendUrl}/create`, graph).then((res) => {
               savedGraphs[i] = newName;
               updateGraphList();
-              if (localStorage.getItem('currentGraphName') === oldName) {
-                localStorage.setItem('currentGraphName', newName);
+              if (currentGraphName === oldName) {
+                currentGraphName = newName;
               }
               showGraphName();
               toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
@@ -780,8 +786,8 @@ You -> I :say word:Goodbye date:yesterday`;
         let oldGraph =
           JSON.parse(localStorage.getItem('saved-graph-' + oldName));
         localStorage.removeItem('saved-graph-' + oldName);
-        if (localStorage.getItem('currentGraphName', oldName)) {
-          localStorage.setItem('currentGraphName', newName);
+        if (currentGraphName === oldName) {
+          currentGraphName = newName;
           showGraphName();
         }
         localStorage.setItem('saved-graph-' + newName, JSON.stringify(oldGraph));
@@ -796,11 +802,6 @@ You -> I :say word:Goodbye date:yesterday`;
     let i = $('.history-item').index(item);
     let name = savedGraphs[i];
     if (confirm(`Really delete ${name}?`)) {
-      // localStorage.removeItem('saved-graph-' + name);
-      // savedGraphs.splice(i, 1);
-      // if(name == localStorage.getItem('currentGraphName')) {
-      //   loadGraph(savedGraphs[i > 0 ? i - 1 : i]);
-      // }
       if(remoteMode) {
         axios.request({
           method: 'post',
@@ -812,8 +813,8 @@ You -> I :say word:Goodbye date:yesterday`;
         }).then((res) => {
           toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
           updateGraphList(() => {
-            if (localStorage.getItem('currentGraphName') === name) {
-              localStorage.setItem('currentGraphName', savedGraphs[0]);
+            if (currentGraphName === name) {
+              currentGraphName = savedGraphs[0];
               loadCurrentGraph();
               showGraphName();
             }
@@ -825,8 +826,8 @@ You -> I :say word:Goodbye date:yesterday`;
         localStorage.removeItem('saved-graph-' + name);
         toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
         updateGraphList(() => {
-          if (localStorage.getItem('currentGraphName') === name) {
-            localStorage.setItem('currentGraphName', savedGraphs[0]);
+          if (currentGraphName === name) {
+            currentGraphName = savedGraphs[0];
             loadCurrentGraph();
             showGraphName();
           }
@@ -842,7 +843,7 @@ You -> I :say word:Goodbye date:yesterday`;
     configEditor.setValue(graph.config);
     editor.getDoc().clearHistory();
     configEditor.getDoc().clearHistory();
-    localStorage.setItem('currentGraphName', graph.name);
+    currentGraphName = graph.name;
     nodeLayout = graph.layout;
     $('.dropdown-item.history-item').removeClass('active');
     $('.dropdown-item.history-item').removeClass('text-white');
@@ -882,7 +883,7 @@ You -> I :say word:Goodbye date:yesterday`;
   });
 
   function saveCurrentGraph(saveOnRemote = false) {
-    let name = localStorage.getItem('currentGraphName');
+    let name = currentGraphName;
     if (!name) {
       name = newGraphName();
     }
@@ -921,7 +922,7 @@ You -> I :say word:Goodbye date:yesterday`;
   
   function saveToBackend() {
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
-    let graphName = localStorage.getItem('currentGraphName');
+    let graphName = currentGraphName;
     let configValue = configEditor.getValue();
     let pgValue = editor.getValue();
     
@@ -949,7 +950,7 @@ You -> I :say word:Goodbye date:yesterday`;
       axios.request({
         method: 'post',
         url: `${backendUrl}/drop`,
-        data: `graph=${localStorage.getItem('currentGraphName')}`,
+        data: `graph=${currentGraphName}`,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -967,7 +968,7 @@ You -> I :say word:Goodbye date:yesterday`;
     if(!(remoteMode && unsavedChangeExists)) {
       return true;
     }
-    if(confirm(`Save your change for ${localStorage.getItem('currentGraphName')} before leaving?`)) {
+    if(confirm(`Save your change for ${currentGraphName} before leaving?`)) {
       saveCurrentGraph();
     }
   }
@@ -975,7 +976,7 @@ You -> I :say word:Goodbye date:yesterday`;
   function createNewGraph() {
     let name = newGraphName();
     byProgram = true;
-    localStorage.setItem('currentGraphName', name);
+    currentGraphName = name;
     loadGraph({name: name, pg: '', config: defaultConfig});
     saveCurrentGraph();
     byProgram = false;
@@ -988,8 +989,7 @@ You -> I :say word:Goodbye date:yesterday`;
 
 
   q('#clone-btn').addEventListener('click', () => {
-    let name = newGraphName(localStorage.getItem('currentGraphName'));
-    localStorage.setItem('currentGraphName', name);
+    currentGraphName = newGraphName(currentGraphName);
     saveCurrentGraph();
     showGraphName();
     blitzboard.update(false);
@@ -1027,7 +1027,6 @@ You -> I :say word:Goodbye date:yesterday`;
   }
 
   q('#save-btn').addEventListener('click', () => {
-    let graphName = localStorage.getItem('currentGraphName');
     if (remoteMode) {
       saveToBackend();
     }
@@ -1044,7 +1043,6 @@ You -> I :say word:Goodbye date:yesterday`;
 
   q('#export-zip-btn').addEventListener('click', () => {
     var zip = new JSZip();
-    let currentGraphName = localStorage.getItem('currentGraphName');
     let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
     zip.file("graph.pg", editor.getValue());
     zip.file("config.js", configEditor.getValue());
@@ -1074,7 +1072,7 @@ You -> I :say word:Goodbye date:yesterday`;
               let edges = Papa.parse(content, {header: true}).data;
               // The same process as #new-btn is clicked
               let name = newGraphName(nameWithoutExtension);
-              localStorage.setItem('currentGraphName', name);
+              currentGraphName = name;
 
               let nodeContent = nodes.map((n) => {
                 let line = n.id.quoteIfNeeded();
@@ -1118,7 +1116,7 @@ You -> I :say word:Goodbye date:yesterday`;
               byProgram = true;
               editor.setValue(graph);
               configEditor.setValue(config);
-              localStorage.setItem('currentGraphName', name);
+              currentGraphName = name;
               saveCurrentGraph();
               editor.getDoc().clearHistory();
               configEditor.getDoc().clearHistory();
@@ -1171,7 +1169,7 @@ You -> I :say word:Goodbye date:yesterday`;
 
   q('#export-pgql-btn').addEventListener('click', () => {
     let pg = pgParser.parse(editor.getValue());
-    let graphName = localStorage.getItem('currentGraphName');
+    let graphName = currentGraphName;
     let graphNamePGQL = graphName.replace('\'', '').replace(' ', '_').replace('-', '_').toLowerCase(); // must be simple SQL name
     let output = "";
     output = output + "CREATE PROPERTY GRAPH " + graphNamePGQL + ";\n";
@@ -1215,7 +1213,7 @@ You -> I :say word:Goodbye date:yesterday`;
 
   q('#export-sql-btn').addEventListener('click', () => {
     let pg = pgParser.parse(editor.getValue());
-    let graphName = localStorage.getItem('currentGraphName');
+    let graphName = currentGraphName;
     let graphNameSQL = graphName.replace('\'', '').replace(' ', '_').replace('-', '_').toLowerCase(); // must be simple SQL name
     let output = "";
     let create_table_node = `
@@ -1345,10 +1343,10 @@ You -> I :say word:Goodbye date:yesterday`;
   });
 
   window.addEventListener("beforeunload",  (e) => {
+    localStorage.setItem('currentGraphName', currentGraphName);
     if (!(remoteMode && unsavedChangeExists)) {
       return undefined;
     }
-
     e.preventDefault();
     return e.returnValue = "Your change is not saved. Are you sure you want to exit?";
   });
@@ -1528,15 +1526,14 @@ You -> I :say word:Goodbye date:yesterday`;
   }
   
   function loadCurrentGraph() {
-    
     if (remoteMode) {
-      axios.get(`${backendUrl}/get/?graph=${localStorage.getItem('currentGraphName')}`).then((response) => {
+      axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
         loadValues(response.data.pg[0], response.data.config[0]);
         setUnsavedStatus(false);
       });
     } else {
       try {
-        let graph = JSON.parse(localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName')));
+        let graph = JSON.parse(localStorage.getItem('saved-graph-' + currentGraphName));
         if(graph.pg.length > 0 && graph.config.length > 0)
           loadValues(graph.pg, graph.config);
       } catch (e) {
@@ -1553,7 +1550,8 @@ You -> I :say word:Goodbye date:yesterday`;
       window.location.href = window.location.href.split('?')[0];
     } else {
       loadSample(sampleNameInParam, (graph, config) => {
-        localStorage.setItem('currentGraphName', newGraphName(sampleNameInParam));
+        currentGraphName = newGraphName(sampleNameInParam);
+        localStorage.setItem('currentGraphName', currentGraphName);
         byProgram = true;
         editor.setValue(graph);
         configEditor.setValue(config);
@@ -1572,10 +1570,11 @@ You -> I :say word:Goodbye date:yesterday`;
       if (pgInParam) {
         editor.setValue(pgInParam);
         if (graphNameInParam) {
-          localStorage.setItem('currentGraphName', graphNameInParam);
+          currentGraphName = graphNameInParam;
         } else {
-          localStorage.setItem('currentGraphName', newGraphName());
+          currentGraphName = newGraphName()
         }
+        localStorage.setItem('currentGraphName', currentGraphName);
       }
       if (configInParam)
         configEditor.setValue(configInParam);
@@ -1761,7 +1760,7 @@ You -> I :say word:Goodbye date:yesterday`;
       tooltipList.forEach((t) => t.hide());
     });
 
-    if (!remoteMode && !localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName'))) {
+    if (!remoteMode && !localStorage.getItem('saved-graph-' + currentGraphName)) {
       saveCurrentGraph();
     }
     
@@ -1777,7 +1776,7 @@ You -> I :say word:Goodbye date:yesterday`;
         updateGraph(graph, config);
         showGraphName();
       });
-      localStorage.setItem('currentGraphName', newGraphName(sampleName));
+      currentGraphName = newGraphName(sampleName);
       localStorage.removeItem('sample');
       setUnsavedStatus(true);
     }
@@ -1789,14 +1788,14 @@ You -> I :say word:Goodbye date:yesterday`;
           configEditor.setValue(defaultConfig);
           byProgram = false;
         }
-        if (!savedGraphs.includes(localStorage.getItem('currentGraphName'))) {
+        if (!savedGraphs.includes(currentGraphName)) {
           if (savedGraphs.length > 0)
             loadGraphByName(savedGraphs[0]);
           else
             createNewGraph();
         } else {
           loadCurrentGraph();
-          if(configEditor.getValue() === '') {
+          if(configEditor.getValue() === '' && noGraphLoaded) {
             byProgram = true;
             editor.setValue(defaultGraph);
             byProgram = false;
