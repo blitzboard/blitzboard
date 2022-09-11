@@ -10,9 +10,14 @@ let remoteMode = !!backendUrl;
 
 
 $(() => {
+  let defaultGraph =
+    `I :person name:"your name"
+You :person
+Graph :graph
+I -> Graph :say word:Hello date:today
+You -> I :say word:Goodbye date:yesterday`;
   let defaultConfig =
-    `
-{
+    `{
   node: {
     caption: ['id'],
     defaultIcon: true,
@@ -1530,7 +1535,8 @@ $(() => {
     } else {
       try {
         let graph = JSON.parse(localStorage.getItem('saved-graph-' + localStorage.getItem('currentGraphName')));
-        loadValues(graph.pg, graph.config);
+        if(graph.pg.length > 0 && graph.config.length > 0)
+          loadValues(graph.pg, graph.config);
       } catch (e) {
       }
     }
@@ -1788,11 +1794,17 @@ $(() => {
             createNewGraph();
         } else {
           loadCurrentGraph();
+          if(configEditor.getValue() === '') {
+            byProgram = true;
+            editor.setValue(defaultGraph);
+            byProgram = false;
+            configEditor.setValue(defaultConfig);
+          }
         }
         showGraphName();
-      }    
+      }
     });
-
+    
     let oldOrder = localStorage.getItem('sortOrder');
     if (oldOrder) {
       q(`input[name="sort-order"][value="${oldOrder}"]`).checked = true;
