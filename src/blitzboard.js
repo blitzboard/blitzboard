@@ -1227,7 +1227,8 @@ module.exports = class Blitzboard {
       physics: {
         enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical' && !this.staticLayoutMode,
         barnesHut: {
-          springConstant:  this.config.layout === 'timeline' ? 0.004 : 0.016
+          springConstant:  this.config.layout === 'timeline' ? 0.004 : 0.016,
+          gravitationalConstant: -4000,
         },
         stabilization: {
           enabled: false,
