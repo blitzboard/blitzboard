@@ -1383,6 +1383,14 @@ You -> I :say word:Goodbye date:yesterday`;
     theme: "monokai",
     lineWrapping: true,
     mode: "pgMode",
+    specialChars: /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u200b\u200e\u200f\u2028\u2029\u202d\u202e\u2066\u2067\u2069\ufeff\ufff9-\ufffc　：]/,
+    specialCharPlaceholder: (char) => {
+      const node = document.createElement('span');
+      node.className = 'double-byte-highlight';
+      if(char === '：' || char === '　')
+        node.innerText = char;
+      return node;
+    },
     extraKeys,
     hintOptions: {
       completeSingle: false
@@ -1448,6 +1456,14 @@ You -> I :say word:Goodbye date:yesterday`;
     theme: "monokai",
     mode: {name: 'javascript', json: true},
     lineWrapping: true,
+    specialChars: /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u200b\u200e\u200f\u2028\u2029\u202d\u202e\u2066\u2067\u2069\ufeff\ufff9-\ufffc　：]/,
+    specialCharPlaceholder: (char) => {
+      const node = document.createElement('span');
+      node.className = 'double-byte-highlight';
+      if(char === '：' || char === '　')
+        node.innerText = char;
+      return node;
+    },
     extraKeys,
     hintOptions: {
       completeSingle: false,
