@@ -8,6 +8,8 @@ let unsavedChangeExists = false;
 let backendUrl = localStorage.getItem('backendUrl');
 let remoteMode = !!backendUrl;
 
+let clientIsMac = navigator.platform.startsWith('Mac');
+
 
 $(() => {
   let defaultGraph =
@@ -1386,7 +1388,7 @@ You -> I :say word:Goodbye date:yesterday`;
   let extraKeys = {
     Tab: 'autocomplete'
   };
-  let shortcutPrefix = navigator.platform.startsWith('Mac') ? "Cmd-" : "Ctrl-";
+  let shortcutPrefix = clientIsMac ? "Cmd-" : "Ctrl-";
   extraKeys[shortcutPrefix + "F"] = "findPersistent";
   extraKeys[shortcutPrefix + "/"] = (cm) => cm.toggleComment();
 
@@ -1411,7 +1413,7 @@ You -> I :say word:Goodbye date:yesterday`;
   });
   
   editor.on('keydown', (cm, e) => {
-    if (e.keyCode === 83 && e.ctrlKey) {
+    if (e.keyCode === 83 && (!clientIsMac && e.ctrlKey || clientIsMac && e.metaKey)) {
       // ctrl + S
       showSortModal();
       e.preventDefault();
@@ -1858,6 +1860,9 @@ You -> I :say word:Goodbye date:yesterday`;
         showGraphName();
       }
     });
+
+    if(clientIsMac)
+      q('#sort-shortcut-text').innerText = 'Cmd-S'; 
     
     let oldOrder = localStorage.getItem('sortOrder');
     if (oldOrder) {
