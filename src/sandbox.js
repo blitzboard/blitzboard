@@ -999,11 +999,19 @@ You -> I :say word:Goodbye date:yesterday`;
   
   function createNewGraph() {
     let name = newGraphName();
-    byProgram = true;
-    currentGraphName = name;
-    loadGraph({name: name, pg: '', config: defaultConfig});
-    saveCurrentGraph();
-    byProgram = false;
+
+    loadSample('new', (graph, config) => {
+      byProgram = true;
+      currentGraphName = name;
+      loadGraph({name: name, pg: graph, config: config});
+      saveCurrentGraph();
+    }, () => {
+      byProgram = true;
+      currentGraphName = name;
+      loadGraph({name: name, pg: '', config: defaultConfig});
+      saveCurrentGraph();
+      byProgram = false;
+    })
   }
 
   q('#new-btn').addEventListener('click', () => {
@@ -1482,22 +1490,25 @@ You -> I :say word:Goodbye date:yesterday`;
       editor.execCommand('autocomplete', {completeSingle: false});
   });
 
-  function loadSample(sampleName, callback) {
+  function loadSample(sampleName, callback, callbackOnError = null) {
     let graph, config;
     let graphPromise = new Promise((resolve, reject) => {
       $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${sampleName}/graph.pg`, (res) => {
         graph = res;
         resolve();
-      });
+      }).fail(() => reject());
     });
     let configPromise = new Promise((resolve, reject) => {
       $.get(`https://raw.githubusercontent.com/blitzboard/samples/main/${sampleName}/config.js`, (res) => {
         config = res;
         resolve();
-      });
+      }).fail(() => reject());
     });
     Promise.all([graphPromise, configPromise]).then(() => {
       callback(graph, config);
+    }, () => {
+      if(callbackOnError !== null)
+        callbackOnError();
     });
   }
 
