@@ -2,7 +2,7 @@ let blitzboard;
 let markers = [];
 let editor, configEditor;
 let nodeLayout = null;
-let savedGraphs = [];
+let savedGraphNames = [];
 let unsavedChangeExists = false;
 
 let backendUrl = localStorage.getItem('backendUrl');
@@ -268,8 +268,8 @@ You -> I :say word:Goodbye date:yesterday`;
     backendUrl = e.target.value;
     remoteMode = e.target.value.length > 0;
     updateGraphList(() => {
-      if(savedGraphs.length > 0) {
-        loadGraphByName(savedGraphs[0]);
+      if(savedGraphNames.length > 0) {
+        loadGraphByName(savedGraphNames[0]);
       } else {
         createNewGraph();
       }
@@ -643,7 +643,7 @@ You -> I :say word:Goodbye date:yesterday`;
       i = parseInt(suffixMatched[1]);
     }
     let name = baseName;
-    while (savedGraphs.indexOf(name) >= 0) {
+    while (savedGraphNames.indexOf(name) >= 0) {
       name = baseName + '-' + (++i);
     }
     return name;
@@ -701,13 +701,13 @@ You -> I :say word:Goodbye date:yesterday`;
   }
 
   function updateGraphList(callback = null) {
-    savedGraphs = [];
+    savedGraphNames = [];
     if (remoteMode) {
       axios.get(`${backendUrl}/list`).then(response => {
         updateHistoryMenu(response.data.map((g) => {
           return {name: g};
         }));
-        savedGraphs = response.data;
+        savedGraphNames = response.data;
         if (callback)
           callback();
       }).catch((error) => {
@@ -722,12 +722,13 @@ You -> I :say word:Goodbye date:yesterday`;
         toastr.error(`Failed to retrieve candidate nodes from ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
       });
     } else {
+      graphsFromLocalStorage = [];
       for (let i = 0; i < localStorage.length; i++) {
         if (localStorage.key(i).indexOf('saved-graph-') != -1) {
           try {
             let graph = JSON.parse(localStorage.getItem(localStorage.key(i)));
             if(graph.name && graph.pg && graph.config)
-              savedGraphs.push(graph.name);
+              graphsFromLocalStorage.push(graph);
             else
               localStorage.removeItem(localStorage.key(i));
           } catch (e) {
@@ -735,7 +736,8 @@ You -> I :say word:Goodbye date:yesterday`;
           }
         }
       }
-      updateHistoryMenu(savedGraphs.map((g) => {
+      savedGraphNames = graphsFromLocalStorage.sort((a, b) => b.date - a.date).map((g) => g.name);
+      updateHistoryMenu(savedGraphNames.map((g) => {
         return {name: g};
       }));
       if (callback)
@@ -747,7 +749,7 @@ You -> I :say word:Goodbye date:yesterday`;
   $(document).on('click', '.edit-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
-    let oldName = savedGraphs[i];
+    let oldName = savedGraphNames[i];
     let newName = prompt('What is the new name of the graph?', oldName);
     if (newName) {
       if (remoteMode) {
@@ -772,7 +774,7 @@ You -> I :say word:Goodbye date:yesterday`;
               }
             };
             axios.post(`${backendUrl}/create`, graph).then((res) => {
-              savedGraphs[i] = newName;
+              savedGraphNames[i] = newName;
               updateGraphList();
               if (currentGraphName === oldName) {
                 currentGraphName = newName;
@@ -789,14 +791,15 @@ You -> I :say word:Goodbye date:yesterday`;
           toastr.error(`Failed to retrieve ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
         });;
       } else {
-        let oldGraph =
+        let graph =
           JSON.parse(localStorage.getItem('saved-graph-' + oldName));
         localStorage.removeItem('saved-graph-' + oldName);
         if (currentGraphName === oldName) {
           currentGraphName = newName;
           showGraphName();
         }
-        localStorage.setItem('saved-graph-' + newName, JSON.stringify(oldGraph));
+        graph.name = newName;
+        localStorage.setItem('saved-graph-' + newName, JSON.stringify(graph));
         updateGraphList();
       }
     }
@@ -806,7 +809,7 @@ You -> I :say word:Goodbye date:yesterday`;
   $(document).on('click', '.delete-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
-    let name = savedGraphs[i];
+    let name = savedGraphNames[i];
     if (confirm(`Really delete ${name}?`)) {
       if(remoteMode) {
         axios.request({
@@ -820,7 +823,7 @@ You -> I :say word:Goodbye date:yesterday`;
           toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
           updateGraphList(() => {
             if (currentGraphName === name) {
-              currentGraphName = savedGraphs[0];
+              currentGraphName = savedGraphNames[0];
               loadCurrentGraph();
               showGraphName();
             }
@@ -833,7 +836,7 @@ You -> I :say word:Goodbye date:yesterday`;
         toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
         updateGraphList(() => {
           if (currentGraphName === name) {
-            currentGraphName = savedGraphs[0];
+            currentGraphName = savedGraphNames[0];
             loadCurrentGraph();
             showGraphName();
           }
@@ -844,6 +847,8 @@ You -> I :say word:Goodbye date:yesterday`;
   });
 
   function loadGraph(graph) {
+    if(!graph)
+      return;
     byProgram = true;
     editor.setValue(graph.pg);
     configEditor.setValue(graph.config);
@@ -853,7 +858,7 @@ You -> I :say word:Goodbye date:yesterday`;
     nodeLayout = graph.layout;
     $('.dropdown-item.history-item').removeClass('active');
     $('.dropdown-item.history-item').removeClass('text-white');
-    let i = savedGraphs.indexOf(graph.name);
+    let i = savedGraphNames.indexOf(graph.name);
     $(`.dropdown-item.history-item:eq(${i})`).addClass('active');
     $(`.dropdown-item.history-item:eq(${i})`).addClass('text-white');
     reloadConfig();
@@ -887,7 +892,7 @@ You -> I :say word:Goodbye date:yesterday`;
   $(document).on('click', '.history-item', (e) => {
     confirmToSaveGraph();
     let i = $('.history-item').index(e.target);
-    let graph = savedGraphs[i];
+    let graph = savedGraphNames[i];
     loadGraphByName(graph);
   });
 
@@ -918,9 +923,9 @@ You -> I :say word:Goodbye date:yesterday`;
         name: name,
         date: Date.now()
       };
-      while (i < savedGraphs.length - 1 && savedGraphs[++i].name !== name) ;
-      if (i < savedGraphs.length) {
-        savedGraphs[i] = graph;
+      while (i < savedGraphNames.length - 1 && savedGraphNames[++i].name !== name) ;
+      if (i < savedGraphNames.length) {
+        savedGraphNames[i] = graph;
       }
       localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
       updateGraphList();
@@ -963,7 +968,7 @@ You -> I :say word:Goodbye date:yesterday`;
           });
         }
         
-        if(savedGraphs.includes(graphName)) {
+        if(savedGraphNames.includes(graphName)) {
           axios.request({
             method: 'post',
             url: `${backendUrl}/drop`,
@@ -1825,9 +1830,9 @@ You -> I :say word:Goodbye date:yesterday`;
           configEditor.setValue(defaultConfig);
           byProgram = false;
         }
-        if (!savedGraphs.includes(currentGraphName)) {
-          if (savedGraphs.length > 0)
-            loadGraphByName(savedGraphs[0]);
+        if (!savedGraphNames.includes(currentGraphName)) {
+          if (savedGraphNames.length > 0)
+            loadGraphByName(savedGraphNames[0]);
           else
             createNewGraph();
         } else {
