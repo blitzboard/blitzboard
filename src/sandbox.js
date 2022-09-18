@@ -1386,7 +1386,8 @@ You -> I :say word:Goodbye date:yesterday`;
   });
 
   let extraKeys = {
-    Tab: 'autocomplete'
+    Tab: 'autocomplete',
+    Esc: (cm) => cm.closeDialog()
   };
   let shortcutPrefix = clientIsMac ? "Cmd-" : "Ctrl-";
   extraKeys[shortcutPrefix + "F"] = "findPersistent";
@@ -1398,6 +1399,9 @@ You -> I :say word:Goodbye date:yesterday`;
     theme: "monokai",
     lineWrapping: true,
     mode: "pgMode",
+    search: {
+      bottom: true
+    },
     specialChars: /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u200b\u200e\u200f\u2028\u2029\u202d\u202e\u2066\u2067\u2069\ufeff\ufff9-\ufffc　：]/,
     specialCharPlaceholder: (char) => {
       const node = document.createElement('span');
@@ -1713,6 +1717,8 @@ You -> I :say word:Goodbye date:yesterday`;
       editor.focus();
     });
 
+    $('#options-search').click(() => editor.execCommand("findPersistent"));
+    $('#options-replace').click(() => editor.execCommand("replace"));
     $('#options-sort').click(showSortModal);
 
 
@@ -1861,8 +1867,11 @@ You -> I :say word:Goodbye date:yesterday`;
       }
     });
 
-    if(clientIsMac)
-      q('#sort-shortcut-text').innerText = 'Cmd-S'; 
+    if(clientIsMac) {
+      q('#search-shortcut-text').innerText = 'Cmd-F';
+      q('#replace-shortcut-text').innerText = 'Option-Cmd-S';
+      q('#sort-shortcut-text').innerText = 'Cmd-S';
+    }
     
     let oldOrder = localStorage.getItem('sortOrder');
     if (oldOrder) {

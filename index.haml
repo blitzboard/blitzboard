@@ -32,8 +32,8 @@
     %script{:src => "./src/codemirror/simple.js"}
     %script{:src => "./src/codemirror/pg_mode.js"}
     %script{:src => "./src/codemirror/mark-selection.js"}
-    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/dialog/dialog.min.js"}
-    %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/search/search.min.js"}
+    %script{:src => "./src/codemirror/dialog.js"}
+    %script{:src => "./src/codemirror/search.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/search/searchcursor.min.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/show-hint.min.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/anyword-hint.min.js"}
@@ -321,6 +321,14 @@
             %a#options-show-config.dropdown-item{ href: "#" }
               %input#options-show-config-input.pe-none{ type: "checkbox" }
               %label{:for => "options-show-config-input"} Show Config
+            %a#options-search.dropdown-item{ href: "#" }
+              %label.w-100
+                Search
+                #search-shortcut-text.pull-right.text-muted{style: "margin-left: 50px;"} Ctrl-F
+            %a#options-replace.dropdown-item{ href: "#" }
+              %label.w-100
+                Replace
+                #replace-shortcut-text.pull-right.text-muted{style: "margin-left: 50px;"} Shift-Ctrl-F
             %a#options-sort.dropdown-item{ href: "#" }
               %label.w-100{:for => "options-auto-complete-input"} 
                 Sort

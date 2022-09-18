@@ -32,8 +32,8 @@
 <script src='./src/codemirror/simple.js'></script>
 <script src='./src/codemirror/pg_mode.js'></script>
 <script src='./src/codemirror/mark-selection.js'></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/dialog/dialog.min.js'></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/search/search.min.js'></script>
+<script src='./src/codemirror/dialog.js'></script>
+<script src='./src/codemirror/search.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/search/searchcursor.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/show-hint.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/anyword-hint.min.js'></script>
@@ -363,6 +363,18 @@ JavaScript
 <a class='dropdown-item' href='#' id='options-show-config'>
 <input class='pe-none' id='options-show-config-input' type='checkbox'>
 <label for='options-show-config-input'>Show Config</label>
+</a>
+<a class='dropdown-item' href='#' id='options-search'>
+<label class='w-100'>
+Search
+<div class='pull-right text-muted' id='search-shortcut-text' style='margin-left: 50px;'>Ctrl-F</div>
+</label>
+</a>
+<a class='dropdown-item' href='#' id='options-replace'>
+<label class='w-100'>
+Replace
+<div class='pull-right text-muted' id='replace-shortcut-text' style='margin-left: 50px;'>Shift-Ctrl-F</div>
+</label>
 </a>
 <a class='dropdown-item' href='#' id='options-sort'>
 <label class='w-100' for='options-auto-complete-input'>
