@@ -637,25 +637,35 @@ module.exports = class Blitzboard {
       };
     }
 
+    function registerIcon(icon) {
+      if(icon.includes(':')) { // For icons in iconify
+        Iconify.loadIcons([icon], iconRegisterer(icon));
+        attrs['customIcon'] = {
+          name: icon
+        };
+      } else { // For icon codes in Ionicons (to be backward compatible)
+        let code = String.fromCharCode(parseInt(icon, 16));
+        attrs['customIcon'] = {
+          face: 'Ionicons',
+          size: attrs.size * 1.5,
+          code: code,
+          color: 'white'
+        };
+      }
+    }
+    
+    let iconIsDefined = false;
     for(let label of pgNode.labels) {
       let icon;
       if (icon = this.config.node.icon?.[label]) {
-        if(icon.includes(':')) { // For icons in iconify
-          Iconify.loadIcons([icon], iconRegisterer(icon));
-          attrs['customIcon'] = {
-            name: icon
-          };
-        } else { // For icon codes in Ionicons (to be backward compatible)
-          let code = String.fromCharCode(parseInt(icon, 16));
-          attrs['customIcon'] = {
-            face: 'Ionicons',
-            size: attrs.size * 1.5,
-            code: code,
-            color: 'white'
-          };
-          break;
-        }
+        registerIcon(icon);
+        iconIsDefined = true;
+        break;
       }
+    }
+    
+    if(!iconIsDefined && this.config.node.icon['']) {
+      registerIcon(this.config.node.icon['']);
     }
 
 
