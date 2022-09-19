@@ -1004,6 +1004,42 @@ module.exports = class Blitzboard {
     this.nodeDataSet.update(listToUpdate);
   }
   
+  /// Return a set of upstream nodes from node specified by srcNodeId
+  getUpstreamNodes(srcNodeId) {
+    const edges = this.graph.edges;
+    const upstreamNodes = new Set();
+    const stack = [srcNodeId];
+    while(stack.length > 0) {
+      const nodeId = stack.pop();
+      upstreamNodes.add(nodeId);
+      for(let edge of edges) {
+        if(edge.to === nodeId && !upstreamNodes.has(edge.from)) {
+          upstreamNodes.add(edge.from);
+          stack.push(edge.from);
+        }
+      }
+    }
+    return upstreamNodes;
+  }
+
+  /// Return a set of downstream nodes from node specified by srcNodeId
+  getDownstreamNodes(srcNodeId) {
+    const edges = this.graph.edges;
+    const downStreamNodes = new Set();
+    const stack = [srcNodeId];
+    while(stack.length > 0) {
+      const nodeId = stack.pop();
+      downStreamNodes.add(nodeId);
+      for(let edge of edges) {
+        if(edge.from === nodeId && !downStreamNodes.has(edge.to)) {
+          downStreamNodes.add(edge.to);
+          stack.push(edge.to);
+        }
+      }
+    }
+    return downStreamNodes;
+  }
+  
   update(applyDiff = true) {
     let blitzboard = this;
     this.warnings = [];
@@ -1379,6 +1415,7 @@ module.exports = class Blitzboard {
       this.updateNodeLocationOnMap();
     }
     
+    
     this.network.on("hoverNode", (e) => {
       this.network.canvas.body.container.style.cursor = 'default';
       const node = this.nodeDataSet.get(e.node);
@@ -1390,6 +1427,7 @@ module.exports = class Blitzboard {
             color: '#8888ff',
           });
         }
+        
         if (this.config.node.onHover) {
           this.config.node.onHover(this.getNode(e.node));
         }
@@ -1398,8 +1436,6 @@ module.exports = class Blitzboard {
           node: node
         };
         this.showTooltip();
-      } else if(node && node.degree > 1 && !this.expandedNodes.includes(e.node)) {
-        this.network.canvas.body.container.style.cursor = 'pointer';
       }
     });
 
@@ -1625,6 +1661,15 @@ module.exports = class Blitzboard {
         } else {
           this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
         }
+      }
+
+      if(e.nodes.length > 0) {
+        let node = e.nodes[0]
+        let upstreamNodes = this.getUpstreamNodes(node);
+        let downstreamNodes = this.getDownstreamNodes(node);
+        this.network.setSelection({nodes: [], edges: []}); // reset
+        this.highlightedNodes = Array.from(upstreamNodes).concat(Array.from(downstreamNodes));
+        this.network.selectNodes( this.highlightedNodes, true);
       }
     });
 
