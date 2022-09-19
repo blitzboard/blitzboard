@@ -664,7 +664,7 @@ module.exports = class Blitzboard {
       }
     }
     
-    if(!iconIsDefined && this.config.node.icon['']) {
+    if(!iconIsDefined && this.config.node.icon?.['']) {
       registerIcon(this.config.node.icon['']);
     }
 
