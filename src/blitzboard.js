@@ -15,7 +15,7 @@ module.exports = class Blitzboard {
     doubleClickWait: 200,
     node: {
       caption: ['id'],
-      defaultIcon: true,
+      autoIcon: true,
       thumbnail: 'thumbnail',
       saturation: '100%',
       brightness: '37%',
@@ -666,12 +666,12 @@ module.exports = class Blitzboard {
       }
     }
     
-    if(!iconIsDefined && this.config.node.icon?.['']) {
-      registerIcon(this.config.node.icon['']);
+    if(!iconIsDefined && this.config.node.icon?.['_default']) {
+      registerIcon(this.config.node.icon['_default']);
     }
 
 
-    if(!attrs['customIcon'] && this.config.node.defaultIcon) {
+    if(!attrs['customIcon'] && (this.config.node.defaultIcon || this.config.node.autoIcon)) {
       for(let label of pgNode.labels) {
         let lowerLabel = label.toLowerCase();
         if (!Blitzboard.loadedIcons[lowerLabel]) {
@@ -1532,7 +1532,7 @@ module.exports = class Blitzboard {
       this.updateTooltipLocation();
       for(let node of this.graph.nodes) {
         node = this.nodeDataSet.get(node.id);
-        if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon)) {
+        if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon || this.config.node.autoIcon)) {
           let position = this.network.getPosition(node.id);
           let pgNode = this.nodeMap[node.id];
           if(node.customIcon) {
