@@ -449,6 +449,8 @@ module.exports = class Blitzboard {
       offset += this.elementWithTooltip.node.size * this.network.getScale();
     }
     else {
+      if(!this.prevMouseEvent)
+        return;
       position = {
         x: this.prevMouseEvent.clientX,
         y: this.prevMouseEvent.clientY
@@ -1665,10 +1667,10 @@ module.exports = class Blitzboard {
 
       if(e.nodes.length > 0) {
         let node = e.nodes[0]
-        let upstreamNodes = this.getUpstreamNodes(node);
-        let downstreamNodes = this.getDownstreamNodes(node);
+        this.upstreamNodes = this.getUpstreamNodes(node);
+        this.downstreamNodes = this.getDownstreamNodes(node);
         this.network.setSelection({nodes: [], edges: []}); // reset
-        this.highlightedNodes = Array.from(upstreamNodes).concat(Array.from(downstreamNodes));
+        this.highlightedNodes = Array.from(this.upstreamNodes).concat(Array.from(this.downstreamNodes));
         this.network.selectNodes( this.highlightedNodes, true);
       }
     });
