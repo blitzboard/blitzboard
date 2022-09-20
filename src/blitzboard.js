@@ -440,7 +440,7 @@ module.exports = class Blitzboard {
   updateTooltipLocation() {
     if(!this.elementWithTooltip)
       return;
-    let position, offset = 8;
+    let position, offset = 20;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
       let clientRect = this.container.getClientRects()[0];
