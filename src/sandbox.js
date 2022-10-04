@@ -806,8 +806,7 @@ You -> I :say word:Goodbye date:yesterday`;
               pg: {
                 nodes,
                 edges
-              },
-              updatedBy: 'blitzboard'
+              }
             };
             axios.post(`${backendUrl}/create`, graph).then((res) => {
               savedGraphNames[i] = newName;
@@ -1006,7 +1005,7 @@ You -> I :say word:Goodbye date:yesterday`;
               pg: [pgValue],
               config: [configValue],
               lastUpdate: [now],
-              updatedBy: 'blitzboard'
+              updatedBy: ['blitzboard']
             },
             pg: {
               nodes: tmpNodes,
