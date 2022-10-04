@@ -113,7 +113,7 @@ You -> I :say word:Goodbye date:yesterday`;
 
   if(remoteMode) {
     axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
-      lastUpdate = response.data.lastUpdate[0];
+      lastUpdate = response.data.properties?.lastUpdate[0];
     });
   }
 
@@ -166,6 +166,7 @@ You -> I :say word:Goodbye date:yesterday`;
         config.node.title = (n) => {
           let title = oldTitleHandler ? oldTitleHandler(n) : blitzboard.createTitle(n);
           title += `<a href='#' class='expand-event-tree-link' data-node-id='${n.id}'>Show list of graphs</a>`;
+          title += `<br><a href='#' class='show-all-path-link' data-node-id='${n.id}'>Show all paths</a>`;
           return title;
         };
       }
@@ -602,6 +603,44 @@ You -> I :say word:Goodbye date:yesterday`;
       toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
     });
   });
+
+  $(document).on('click', '.show-all-path-link', (e) => {
+    let nodeId = $(e.target).data('node-id');
+    const maxDepth = 5;
+
+    // Get upstream and upstream
+    axios.get(`${backendUrl}/query_path?match=ALL (n1)->{1,${maxDepth}}(n2)&where=n2.id='${nodeId}'`).then(response => {
+      let upstreamPg = response.data.pg;
+      axios.get(`${backendUrl}/query_path?match=ALL (n2)->{1,${maxDepth}}(n3)&where=n2.id='${nodeId}'`).then(response => {
+        let downstreamPg = response.data.pg;
+        let mergedNodes = {};
+        let mergedEdges = {};
+
+        for(let node of upstreamPg.nodes.concat(downstreamPg.nodes)) {
+          if(node.labels.length === 1 && node.labels[0] === '') {
+            node.labels = [];
+          }
+          mergedNodes[node.id] = node;
+        }
+
+        for(let edge of upstreamPg.edges.concat(downstreamPg.edges)) {
+          if(edge.labels.length === 1 && edge.labels[0] === '') {
+            edge.labels = [];
+          }
+          mergedEdges[edge.from + '-' + edge.to] = edge;
+        }
+        let mergedPg = {
+          nodes: Object.values(mergedNodes),
+          edges: Object.values(mergedEdges),
+        };
+        let content = json2pg.translate(JSON.stringify(mergedPg));
+        editor.setValue(content);
+      });
+    }).catch((error) => {
+      console.log(error);
+      toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
+    });
+  });
   
   q('#export-csv-btn').addEventListener('click', () => {
     let nodeContent = Papa.unparse(blitzboard.graph.nodes.map((n) => {
@@ -756,7 +795,7 @@ You -> I :say word:Goodbye date:yesterday`;
     if (newName) {
       if (remoteMode) {
         axios.get(`${backendUrl}/get/?graph=${oldName}`).then((response) => {
-          let properties = response.data;
+          let properties = response.data.properties;
           axios.request({
             method: 'post',
             url: `${backendUrl}/drop`,
@@ -876,11 +915,12 @@ You -> I :say word:Goodbye date:yesterday`;
     if (remoteMode) {
       axios.get(`${backendUrl}/get/?graph=${graphName}`).then((response) => {
         byProgram = true;
+        let props = response.data.properties;
         loadGraph({
           name: graphName,
-          pg: response.data.pg[0],
-          config: response.data.config[0],
-          lastUpdate: response.data.lastUpdate[0]
+          pg: props.pg[0],
+          config: props.config[0],
+          lastUpdate: props.lastUpdate[0]
         });
         byProgram = false;
         editor.getDoc().clearHistory();
@@ -943,7 +983,8 @@ You -> I :say word:Goodbye date:yesterday`;
     let pgValue = editor.getValue();
 
     axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
-      if (response.data.lastUpdate && response.data.lastUpdate[0] > lastUpdate) {
+      let props = response.data.properties;
+      if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
         alert("This data has been updated outside. Please reload first.");
       } else {
         let now = Date.now();
@@ -1585,7 +1626,8 @@ You -> I :say word:Goodbye date:yesterday`;
   function loadCurrentGraph() {
     if (remoteMode) {
       axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
-        loadValues(response.data.pg[0], response.data.config[0]);
+        let props = response.data.properties;
+        loadValues(props.pg[0], props.config[0]);
         setUnsavedStatus(false);
       });
     } else {
