@@ -617,16 +617,10 @@ You -> I :say word:Goodbye date:yesterday`;
         let mergedEdges = {};
 
         for(let node of upstreamPg.nodes.concat(downstreamPg.nodes)) {
-          if(node.labels.length === 1 && node.labels[0] === '') {
-            node.labels = [];
-          }
           mergedNodes[node.id] = node;
         }
 
         for(let edge of upstreamPg.edges.concat(downstreamPg.edges)) {
-          if(edge.labels.length === 1 && edge.labels[0] === '') {
-            edge.labels = [];
-          }
           mergedEdges[edge.from + '-' + edge.to] = edge;
         }
         let mergedPg = {
@@ -812,7 +806,8 @@ You -> I :say word:Goodbye date:yesterday`;
               pg: {
                 nodes,
                 edges
-              }
+              },
+              updatedBy: 'blitzboard'
             };
             axios.post(`${backendUrl}/create`, graph).then((res) => {
               savedGraphNames[i] = newName;
@@ -914,16 +909,30 @@ You -> I :say word:Goodbye date:yesterday`;
   function loadGraphByName(graphName) {
     if (remoteMode) {
       axios.get(`${backendUrl}/get/?graph=${graphName}`).then((response) => {
-        byProgram = true;
         let props = response.data.properties;
-        loadGraph({
-          name: graphName,
-          pg: props.pg[0],
-          config: props.config[0],
-          lastUpdate: props.lastUpdate[0]
-        });
-        byProgram = false;
-        editor.getDoc().clearHistory();
+        let config = props?.config?.[0] || defaultConfig;
+        if(!props?.pg === undefined || !props?.config === undefined) {
+          axios.get(`${backendUrl}/get/?graph=${graphName}&response=pg`).then((response) => {
+            byProgram = true;
+            loadGraph({
+              name: graphName,
+              pg: json2pg.translate(JSON.stringify(response.data.pg)),
+              config
+            });
+            byProgram = false;
+            editor.getDoc().clearHistory();
+          });
+        } else {
+          byProgram = true;
+          loadGraph({
+            name: graphName,
+            pg: props.pg[0],
+            config: props.config[0],
+            lastUpdate: props.lastUpdate[0]
+          });
+          byProgram = false;
+          editor.getDoc().clearHistory();
+        }
       });
     } else {
       let graph = JSON.parse(localStorage.getItem('saved-graph-' + graphName));
@@ -997,6 +1006,7 @@ You -> I :say word:Goodbye date:yesterday`;
               pg: [pgValue],
               config: [configValue],
               lastUpdate: [now],
+              updatedBy: 'blitzboard'
             },
             pg: {
               nodes: tmpNodes,
@@ -1627,8 +1637,16 @@ You -> I :say word:Goodbye date:yesterday`;
     if (remoteMode) {
       axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
         let props = response.data.properties;
-        loadValues(props.pg[0], props.config[0]);
-        setUnsavedStatus(false);
+        let config = props?.config?.[0] || defaultConfig;
+        if(!props?.pg === undefined || !props?.config === undefined) {
+          axios.get(`${backendUrl}/get/?graph=${currentGraphName}&response=pg`).then((response) => {
+            loadValues( json2pg.translate(JSON.stringify(response.data.pg)), config);
+            setUnsavedStatus(false);
+          });
+        } else {
+          loadValues(props.pg[0], config);
+          setUnsavedStatus(false);
+        }
       });
     } else {
       try {
