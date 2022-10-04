@@ -910,7 +910,7 @@ You -> I :say word:Goodbye date:yesterday`;
       axios.get(`${backendUrl}/get/?graph=${graphName}`).then((response) => {
         let props = response.data.properties;
         let config = props?.config?.[0] || defaultConfig;
-        if(!props?.pg === undefined || !props?.config === undefined) {
+        if(props?.pg === undefined || props?.config === undefined) {
           axios.get(`${backendUrl}/get/?graph=${graphName}&response=pg`).then((response) => {
             byProgram = true;
             loadGraph({
@@ -1637,7 +1637,7 @@ You -> I :say word:Goodbye date:yesterday`;
       axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
         let props = response.data.properties;
         let config = props?.config?.[0] || defaultConfig;
-        if(!props?.pg === undefined || !props?.config === undefined) {
+        if(props?.pg === undefined || props?.config === undefined) {
           axios.get(`${backendUrl}/get/?graph=${currentGraphName}&response=pg`).then((response) => {
             loadValues( json2pg.translate(JSON.stringify(response.data.pg)), config);
             setUnsavedStatus(false);
