@@ -755,7 +755,7 @@ module.exports = class Blitzboard {
       chosen: this.retrieveConfigProp(pgEdge, 'edge', 'chosen'),
       arrows: {
         to: {
-          enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false'
+          enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false' || pgEdge.undirected === false
         },
       }
     };
