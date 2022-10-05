@@ -431,6 +431,8 @@ module.exports = class Blitzboard {
   }
   
   tooltipPosition() {
+    if(!this.prevMouseEvent)
+      return null;
     if(window.innerWidth < window.innerHeight) {
       return this.prevMouseEvent.clientY < window.innerHeight / 2 ? 'bottom' : 'top';
     }
