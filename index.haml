@@ -102,6 +102,20 @@
         position: relative;
       }
 
+      #metagraph-pane {
+        flex: 1;
+        position: relative;
+      }
+
+      #metagraph-modal-graph {
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        position:absolute;
+        z-index: 2;
+      }
+
       #graph {
         height: 100%;
         width: 100%;
@@ -374,4 +388,12 @@
           .modal-footer
             %button.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} Cancel
             %button#sort-btn.btn.btn-primary{:type => "button"} Sort
+    #metagraph-modal.modal{:tabindex => "-1"}
+      .modal-dialog{ style: "max-width: 80vw;" }
+        .modal-content
+          .modal-body{ style: "overflow-y:auto;" }
+            #metagraph-pane{ style: "height: 80vh; width: 100%;" }
+              #metagraph-modal-graph
+            %button.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} close
+
     %script{:src => "./src/sandbox.js"}

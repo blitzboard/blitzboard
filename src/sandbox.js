@@ -87,6 +87,7 @@ You -> I :say word:Goodbye date:yesterday`;
   let viewMode = loadConfig('viewMode');
   let pgToBeSorted;
   let sortModal = new bootstrap.Modal(document.getElementById('sort-modal'));
+  let metaGraphModal = new bootstrap.Modal(document.getElementById('metagraph-modal'));
   let bufferedContent = ''; // A buffer to avoid calling editor.setValue() too often
   let candidatePropNames = new Set(), candidateLabels = new Set(), candidateIds = new Set();
   let additionalAutocompleteTargets = [];
@@ -618,6 +619,9 @@ You -> I :say word:Goodbye date:yesterday`;
 
         for(let node of upstreamPg.nodes.concat(downstreamPg.nodes)) {
           mergedNodes[node.id] = node;
+          if(node.id === nodeId) {
+            node.labels = ['target'];
+          }
         }
 
         for(let edge of upstreamPg.edges.concat(downstreamPg.edges)) {
@@ -627,8 +631,15 @@ You -> I :say word:Goodbye date:yesterday`;
           nodes: Object.values(mergedNodes),
           edges: Object.values(mergedEdges),
         };
-        let content = json2pg.translate(JSON.stringify(mergedPg));
-        editor.setValue(content);
+        let metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
+        metaGraphModal.show();
+        metaBlitzboard.setGraph(mergedPg, false);
+        let tmpConfig = JSON.parse(JSON.stringify(config)); // deepcopy
+        tmpConfig.node ||= {};
+        tmpConfig.node.color ||= {};
+        tmpConfig.node.color.target = "#FF4444";
+        console.log(tmpConfig);
+        metaBlitzboard.setConfig(tmpConfig, true);
       });
     }).catch((error) => {
       console.log(error);

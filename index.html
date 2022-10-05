@@ -101,6 +101,20 @@
     position: relative;
   }
   
+  #metagraph-pane {
+    flex: 1;
+    position: relative;
+  }
+  
+  #metagraph-modal-graph {
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    position:absolute;
+    z-index: 2;
+  }
+  
   #graph {
     height: 100%;
     width: 100%;
@@ -445,6 +459,18 @@ DESC
 <div class='modal-footer'>
 <button class='btn btn-secondary' data-bs-dismiss='modal' type='button'>Cancel</button>
 <button class='btn btn-primary' id='sort-btn' type='button'>Sort</button>
+</div>
+</div>
+</div>
+</div>
+<div class='modal' id='metagraph-modal' tabindex='-1'>
+<div class='modal-dialog' style='max-width: 80vw;'>
+<div class='modal-content'>
+<div class='modal-body' style='overflow-y:auto;'>
+<div id='metagraph-pane' style='height: 80vh; width: 100%;'>
+<div id='metagraph-modal-graph'></div>
+</div>
+<button class='btn btn-secondary' data-bs-dismiss='modal' type='button'>close</button>
 </div>
 </div>
 </div>
