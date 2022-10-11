@@ -113,13 +113,13 @@ module.exports = class Blitzboard {
     this.tooltipDummy.style.position = 'absolute';
     this.tooltipDummy.classList.add('blitzboard-tooltip');
     this.tooltipDummy.style['background-color'] = 'rgba(0, 0, 0, 0)';
-    this.tooltipDummy.style['z-index'] = '998';
+    this.tooltipDummy.style['z-index'] = '2000';
 
     this.tooltip = document.createElement('span');
     this.tooltip.style.display = 'none';
     this.tooltip.classList.add('blitzboard-tooltiptext');
     this.tooltip.classList.add('blitzboard-tooltiptext-top');
-    this.tooltip.style['z-index'] = '999';
+    this.tooltip.style['z-index'] = '2001';
 
 
     this.minTime = new Date(8640000000000000);
