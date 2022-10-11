@@ -638,6 +638,7 @@ You -> I :say word:Goodbye date:yesterday`;
         tmpConfig.node ||= {};
         tmpConfig.node.color ||= {};
         tmpConfig.node.color.target = "#FF4444";
+        tmpConfig.extraOptions = { physics: false };
         metaBlitzboard.setConfig(tmpConfig, true);
       });
     }).catch((error) => {
