@@ -1,6 +1,7 @@
 let blitzboard;
 let metaBlitzboard = null;
 let graphOnModal = null;
+let configOnModal = null;
 let targetNodeIdOnModal = null;
 let markers = [];
 let editor, configEditor;
@@ -395,10 +396,6 @@ You -> I :say word:Goodbye date:yesterday`;
         blitzboard.staticLayoutMode = false;
       }
 
-      if(config.layout === 'hierarchical-scc') {
-
-      }
-
       if (newConfig) {
         blitzboard.setGraph(input, false, nodeLayout);
         blitzboard.setConfig(newConfig);
@@ -616,21 +613,22 @@ You -> I :say word:Goodbye date:yesterday`;
 
     let downstreamNodeIds = blitzboard.getDownstreamNodes(targetNodeIdOnModal);
     let upstreamNodeIds = blitzboard.getUpstreamNodes(targetNodeIdOnModal);
-    console.log({downstreamNodeIds});
-    console.log({downstreamNodeIds});
+    $('#metagraph-modal-title')[0].innerText = targetNodeIdOnModal;
 
-    let subPg = {};
-    subPg.nodes = blitzboard.graph.nodes.filter(n => downstreamNodeIds.has(n.id) ||upstreamNodeIds.has(n.id));
-    subPg.edges = blitzboard.graph.edges.filter(e => upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to) ||
+    graphOnModal = {};
+    graphOnModal.nodes = blitzboard.graph.nodes.filter(n => downstreamNodeIds.has(n.id) ||upstreamNodeIds.has(n.id));
+    graphOnModal.edges = blitzboard.graph.edges.filter(e => upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to) ||
         downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to));
 
     if(!metaBlitzboard)
       metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
     metaGraphModal.show();
-    metaBlitzboard.setGraph(subPg, false);
-    let tmpConfig = JSON.parse(JSON.stringify(config)); // deepcopy
-    tmpConfig.edge ||= {};
-    tmpConfig.edge.color = (e) => {
+    metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)), false);
+    configOnModal = JSON.parse(JSON.stringify(config)); // deepcopy
+    $('#all-graphs-checkbox').prop('checked', false);
+    $('#hierarchical-checkbox').prop('checked', false);
+    configOnModal.edge ||= {};
+    configOnModal.edge.color = (e) => {
       let inUpstream = upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to);
       let inDownstream = downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to);
       if(inUpstream && inDownstream) {
@@ -641,7 +639,7 @@ You -> I :say word:Goodbye date:yesterday`;
         return "#c92424";
       }
     };
-    metaBlitzboard.setConfig(tmpConfig, true);
+    metaBlitzboard.setConfig(configOnModal, true);
   });
   
   q('#export-csv-btn').addEventListener('click', () => {
@@ -1809,7 +1807,19 @@ You -> I :say word:Goodbye date:yesterday`;
           toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
         });
       } else {
-        metaBlitzboard.setGraph(graphOnModal);
+        metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)));
+      }
+    });
+
+
+    $('#hierarchical-checkbox').click((e) => {
+      if($(e.target).prop('checked')) {
+        let tmpConfig = JSON.parse(JSON.stringify(configOnModal)); // deepcopy
+        tmpConfig.layout = 'hierarchical-scc';
+        metaBlitzboard.setConfig(tmpConfig);
+      } else {
+        metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)), false);
+        metaBlitzboard.setConfig(configOnModal);
       }
     });
 

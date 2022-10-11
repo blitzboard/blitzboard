@@ -466,13 +466,20 @@ DESC
 <div class='modal' id='metagraph-modal' tabindex='-1'>
 <div class='modal-dialog' style='max-width: 90vw;'>
 <div class='modal-content'>
+<div class='modal-header my-0'>
+<div id='metagraph-modal-title'></div>
+</div>
 <div class='modal-body' style='overflow-y:auto;'>
-<div id='metagraph-pane' style='height: 85vh; width: 100%;'>
+<div id='metagraph-pane' style='height: 75vh; width: 100%;'>
 <div id='metagraph-modal-graph'></div>
 </div>
+<div class='pull-right'>
 <input id='all-graphs-checkbox' type='checkbox'>
 <label for='all-graphs-checkbox'>All graphs</label>
-<button class='btn btn-secondary' data-bs-dismiss='modal' type='button'>close</button>
+<input class='ms-5' id='hierarchical-checkbox' type='checkbox'>
+<label for='hierarchical-checkbox'>Hierarchical</label>
+<button class='ms-5 btn btn-secondary' data-bs-dismiss='modal' type='button'>close</button>
+</div>
 </div>
 </div>
 </div>

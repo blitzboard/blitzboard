@@ -391,12 +391,17 @@
     #metagraph-modal.modal{:tabindex => "-1"}
       .modal-dialog{ style: "max-width: 90vw;" }
         .modal-content
+          .modal-header.my-0
+            #metagraph-modal-title
           .modal-body{ style: "overflow-y:auto;" }
-            #metagraph-pane{ style: "height: 85vh; width: 100%;" }
+            #metagraph-pane{ style: "height: 75vh; width: 100%;" }
               #metagraph-modal-graph
-            %input#all-graphs-checkbox{ type: "checkbox" }
-            %label{:for => "all-graphs-checkbox"} All graphs
-            %button.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} close
+            .pull-right
+              %input#all-graphs-checkbox{ type: "checkbox" }
+              %label{:for => "all-graphs-checkbox"} All graphs
+              %input.ms-5#hierarchical-checkbox{ type: "checkbox" }
+              %label{:for => "hierarchical-checkbox"} Hierarchical
+              %button.ms-5.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} close
 
     %script{:src => "./src/sandbox.js"}
     %script{:src => "./src/scc.js"}
