@@ -1,4 +1,7 @@
 let blitzboard;
+let metaBlitzboard = null;
+let graphOnModal = null;
+let targetNodeIdOnModal = null;
 let markers = [];
 let editor, configEditor;
 let nodeLayout = null;
@@ -391,8 +394,11 @@ You -> I :say word:Goodbye date:yesterday`;
       } else if(blitzboard.staticLayoutMode && editor.lineCount() < staticLayoutThreshold) {
         blitzboard.staticLayoutMode = false;
       }
-      
-      
+
+      if(config.layout === 'hierarchical-scc') {
+
+      }
+
       if (newConfig) {
         blitzboard.setGraph(input, false, nodeLayout);
         blitzboard.setConfig(newConfig);
@@ -606,45 +612,36 @@ You -> I :say word:Goodbye date:yesterday`;
   });
 
   $(document).on('click', '.show-all-path-link', (e) => {
-    let nodeId = $(e.target).data('node-id');
-    const maxDepth = 5;
+    targetNodeIdOnModal = $(e.target).data('node-id');
 
-    // Get upstream and upstream
-    axios.get(`${backendUrl}/query_path?match=ALL (n1)->{1,${maxDepth}}(n2)&where=n2.id='${nodeId}'`).then(response => {
-      let upstreamPg = response.data.pg;
-      axios.get(`${backendUrl}/query_path?match=ALL (n2)->{1,${maxDepth}}(n3)&where=n2.id='${nodeId}'`).then(response => {
-        let downstreamPg = response.data.pg;
-        let mergedNodes = {};
-        let mergedEdges = {};
+    let downstreamNodeIds = blitzboard.getDownstreamNodes(targetNodeIdOnModal);
+    let upstreamNodeIds = blitzboard.getUpstreamNodes(targetNodeIdOnModal);
+    console.log({downstreamNodeIds});
+    console.log({downstreamNodeIds});
 
-        for(let node of upstreamPg.nodes.concat(downstreamPg.nodes)) {
-          mergedNodes[node.id] = node;
-          if(node.id === nodeId) {
-            node.labels = ['target'];
-          }
-        }
+    let subPg = {};
+    subPg.nodes = blitzboard.graph.nodes.filter(n => downstreamNodeIds.has(n.id) ||upstreamNodeIds.has(n.id));
+    subPg.edges = blitzboard.graph.edges.filter(e => upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to) ||
+        downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to));
 
-        for(let edge of upstreamPg.edges.concat(downstreamPg.edges)) {
-          mergedEdges[edge.from + '-' + edge.to] = edge;
-        }
-        let mergedPg = {
-          nodes: Object.values(mergedNodes),
-          edges: Object.values(mergedEdges),
-        };
-        let metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
-        metaGraphModal.show();
-        metaBlitzboard.setGraph(mergedPg, false);
-        let tmpConfig = JSON.parse(JSON.stringify(config)); // deepcopy
-        tmpConfig.node ||= {};
-        tmpConfig.node.color ||= {};
-        tmpConfig.node.color.target = "#FF4444";
-        tmpConfig.extraOptions = { physics: false };
-        metaBlitzboard.setConfig(tmpConfig, true);
-      });
-    }).catch((error) => {
-      console.log(error);
-      toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
-    });
+    if(!metaBlitzboard)
+      metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
+    metaGraphModal.show();
+    metaBlitzboard.setGraph(subPg, false);
+    let tmpConfig = JSON.parse(JSON.stringify(config)); // deepcopy
+    tmpConfig.edge ||= {};
+    tmpConfig.edge.color = (e) => {
+      let inUpstream = upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to);
+      let inDownstream = downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to);
+      if(inUpstream && inDownstream) {
+        return "#edc821";
+      } else if(inUpstream) {
+        return "#2e2edb";
+      } else if(inDownstream) {
+        return "#c92424";
+      }
+    };
+    metaBlitzboard.setConfig(tmpConfig, true);
   });
   
   q('#export-csv-btn').addEventListener('click', () => {
@@ -1782,6 +1779,39 @@ You -> I :say word:Goodbye date:yesterday`;
       showOrHideConfig();
     });
 
+
+    $('#all-graphs-checkbox').click((e) => {
+      let fromAllGraph = $(e.target).prop('checked');
+      const maxDepth = 5;
+      if(fromAllGraph) {
+        axios.get(`${backendUrl}/query_path?match=ALL (n1)->{1,${maxDepth}}(n2)&where=n2.id='${targetNodeIdOnModal}'`).then(response => {
+          let upstreamPg = response.data.pg;
+          axios.get(`${backendUrl}/query_path?match=ALL (n2)->{1,${maxDepth}}(n3)&where=n2.id='${targetNodeIdOnModal}'`).then(response => {
+            let downstreamPg = response.data.pg;
+            let mergedNodes = {};
+            let mergedEdges = {};
+
+            for(let node of upstreamPg.nodes.concat(downstreamPg.nodes)) {
+              mergedNodes[node.id] = node;
+            }
+
+            for(let edge of upstreamPg.edges.concat(downstreamPg.edges)) {
+              mergedEdges[edge.from + '-' + edge.to] = edge;
+            }
+            let mergedPg = {
+              nodes: Object.values(mergedNodes),
+              edges: Object.values(mergedEdges),
+            };
+            metaBlitzboard.setGraph(mergedPg);
+          });
+        }).catch((error) => {
+          console.log(error);
+          toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
+        });
+      } else {
+        metaBlitzboard.setGraph(graphOnModal);
+      }
+    });
 
     $("#sort-modal").on("hidden.bs.modal", function () {
       editor.focus();

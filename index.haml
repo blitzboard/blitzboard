@@ -394,6 +394,9 @@
           .modal-body{ style: "overflow-y:auto;" }
             #metagraph-pane{ style: "height: 85vh; width: 100%;" }
               #metagraph-modal-graph
+            %input#all-graphs-checkbox{ type: "checkbox" }
+            %label{:for => "all-graphs-checkbox"} All graphs
             %button.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} close
 
     %script{:src => "./src/sandbox.js"}
+    %script{:src => "./src/scc.js"}

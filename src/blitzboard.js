@@ -2,6 +2,7 @@ require("leaflet/dist/leaflet.css");
 require('@iconify/iconify');
 require('leaflet');
 require('./pg_parser_browserified.js');
+require('./scc.js');
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
 const createGraph = require("ngraph.graph");
@@ -1047,7 +1048,7 @@ module.exports = class Blitzboard {
   update(applyDiff = true) {
     let blitzboard = this;
     this.warnings = [];
-    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !this.staticLayoutMode;
+    applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !this.staticLayoutMode && this.config.layout !== 'hierarchical-scc';
     
     if(this.config.style && this.config.layout !== 'map') {
       this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
@@ -1188,6 +1189,35 @@ module.exports = class Blitzboard {
       }
     }
 
+    if(this.config.layout === 'hierarchical-scc') {
+      let sccList = detectAllSCC(this.graph.edges);
+      this.graph.nodes = this.graph.nodes.filter(n => {
+        for(let scc of sccList) {
+          if(scc.has(n.id))
+            return false;
+        }
+        return true;
+      });
+
+      // convert set to array
+      let sccArrayList = sccList.map(scc => Array.from(scc));
+      let sccMap = {};
+      for(let scc of sccArrayList) {
+        let sccId = scc.join('\n');
+        for(let node of scc) {
+          sccMap[node] = sccId;
+        }
+      }
+      for(let sccId of new Set(Object.values(sccMap))) {
+        this.graph.nodes.push({ id: sccId, labels: [], properties: [], location: { start: { line: 0, column: 0}, end: { line: 0, column: 0} } });
+      }
+
+      for(let edge of this.graph.edges) {
+        edge.from = sccMap[edge.from] || edge.from;
+        edge.to = sccMap[edge.to] || edge.to;
+      }
+    }
+
     if(applyDiff) {
       this.validateGraph();
 
@@ -1252,7 +1282,7 @@ module.exports = class Blitzboard {
       randomSeed: 1
     };
 
-    if(this.config.layout === 'hierarchical') {
+    if(this.config.layout === 'hierarchical' || this.config.layout === 'hierarchical-scc') {
       layout.hierarchical = this.config.layoutSettings;
     } else {
       layout.hierarchical = false;
