@@ -399,8 +399,9 @@
             .pull-right
               %input#all-graphs-checkbox{ type: "checkbox" }
               %label{:for => "all-graphs-checkbox"} All graphs
-              %input.ms-5#hierarchical-checkbox{ type: "checkbox" }
-              %label{:for => "hierarchical-checkbox"} Hierarchical
+              #hierarchical-div{ style: 'display: inline' }
+                %input.ms-5#hierarchical-checkbox{ type: "checkbox" }
+                %label{:for => "hierarchical-checkbox"} Hierarchical-SCC
               %button.ms-5.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} close
 
     %script{:src => "./src/sandbox.js"}

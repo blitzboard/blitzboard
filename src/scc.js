@@ -24,43 +24,59 @@ function detectAllSCC(edges) {
   return sccList;
 }
 
+
+function mergeSCCList(nodes, sccList) {
+  let existingSCC = sccList.filter(scc => {
+    for(let node of nodes) {
+      if(scc.has(node))
+        return true;
+    }
+    return false;
+  });
+  if(existingSCC.length > 1) {
+    let newSCC = new Set();
+    for(let scc of existingSCC) {
+      sccList.splice(sccList.indexOf(scc), 1);
+      for(let node of scc) {
+        newSCC.add(node);
+      }
+    }
+    newSCC = new Set([...newSCC, ...nodes]);
+    sccList.push(newSCC);
+  } else if(existingSCC.length === 1) {
+    for(let node of nodes) {
+      existingSCC[0].add(node);
+    }
+  } else {
+    sccList.push(new Set(nodes));
+  }
+}
+
 function detectSCCRecursive(adjacencyList, nodeStack, visited, sccList) {
   let srcNode = nodeStack[nodeStack.length - 1];
-  console.log({srcNode});
-  console.log(nodeStack);
   for(let dstNode of adjacencyList[srcNode]) {
     if(nodeStack.length > 1 && nodeStack.includes(dstNode)) {
       // SCC has been detected
       let newLoop = nodeStack.slice(nodeStack.indexOf(dstNode));
-      let existingSCC = sccList.filter(scc => {
-        for(let node of newLoop) {
-          if(scc.has(node))
-            return true;
+      mergeSCCList(newLoop, sccList);
+    } else  {
+      let existingSCC = sccList.filter(scc => scc.has(dstNode));
+      if(existingSCC.length > 0) {
+        existingSCC = existingSCC[0];
+        let index = nodeStack.length - 1;
+        while(index >= 0 && !existingSCC.has(nodeStack[index])) {
+          --index;
         }
-        return false;
-      });
-      if(existingSCC.length > 1) {
-        let newSCC = new Set();
-        for(let scc of existingSCC) {
-          sccList.splice(sccList.indexOf(scc), 1);
-          for(let node of scc) {
-            newSCC.add(node);
-          }
+        if(index >= 0) {
+          mergeSCCList(nodeStack.slice(index), sccList);
         }
-        newSCC = new Set([...newSCC, ...newLoop]);
-        sccList.push(newSCC);
-      } else if(existingSCC.length === 1) {
-        for(let node of newLoop) {
-          existingSCC[0].add(node);
-        }
-      } else {
-        sccList.push(new Set(newLoop));
       }
-    } else if(!visited[dstNode]) {
-      visited[dstNode] = true;
-      nodeStack.push(dstNode);
-      detectSCCRecursive(adjacencyList, nodeStack, visited, sccList);
-      nodeStack.pop();
+      else if(!visited[dstNode]) {
+        visited[dstNode] = true;
+        nodeStack.push(dstNode);
+        detectSCCRecursive(adjacencyList, nodeStack, visited, sccList);
+        nodeStack.pop();
+      }
     }
   }
 }

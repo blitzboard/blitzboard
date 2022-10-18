@@ -493,8 +493,10 @@ You -> I :say word:Goodbye date:yesterday`;
           srcNode = null;
           lineEnd = null;
         } else if (e.nodes.length > 0) {
-          let node = blitzboard.nodeMap[e.nodes[0]];
-          scrollToLine(node.location);
+          if(!blitzboard.network.isCluster(e.nodes[0])) {
+            let node = blitzboard.nodeMap[e.nodes[0]];
+            scrollToLine(node.location);
+          }
         } else if (e.edges.length > 0) {
           let edge = blitzboard.edgeMap[e.edges[0]];
           scrollToLine(edge.location);
@@ -608,6 +610,23 @@ You -> I :say word:Goodbye date:yesterday`;
     });
   });
 
+  function addHighlightOptionOnModal(config) {
+    let downstreamNodeIds = blitzboard.getDownstreamNodes(targetNodeIdOnModal);
+    let upstreamNodeIds = blitzboard.getUpstreamNodes(targetNodeIdOnModal);
+    config.edge ||= {};
+    config.edge.color = (e) => {
+      let inUpstream = upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to);
+      let inDownstream = downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to);
+      if(inUpstream && inDownstream) {
+        return "#edc821";
+      } else if(inUpstream) {
+        return "#2e2edb";
+      } else if(inDownstream) {
+        return "#c92424";
+      }
+    };
+  }
+
   $(document).on('click', '.show-all-path-link', (e) => {
     targetNodeIdOnModal = $(e.target).data('node-id');
 
@@ -620,6 +639,7 @@ You -> I :say word:Goodbye date:yesterday`;
     graphOnModal.edges = blitzboard.graph.edges.filter(e => upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to) ||
         downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to));
 
+
     if(!metaBlitzboard)
       metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
     metaGraphModal.show();
@@ -627,18 +647,14 @@ You -> I :say word:Goodbye date:yesterday`;
     configOnModal = JSON.parse(JSON.stringify(config)); // deepcopy
     $('#all-graphs-checkbox').prop('checked', false);
     $('#hierarchical-checkbox').prop('checked', false);
-    configOnModal.edge ||= {};
-    configOnModal.edge.color = (e) => {
-      let inUpstream = upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to);
-      let inDownstream = downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to);
-      if(inUpstream && inDownstream) {
-        return "#edc821";
-      } else if(inUpstream) {
-        return "#2e2edb";
-      } else if(inDownstream) {
-        return "#c92424";
-      }
-    };
+    if(config.layout === 'hierarchical-scc') {
+      // If layout is already hierarchical-scc, hide config
+      $('#hierarchical-div').hide();
+    } else {
+      $('#hierarchical-div').show();
+    }
+    addHighlightOptionOnModal(configOnModal);
+
     metaBlitzboard.setConfig(configOnModal, true);
   });
   
@@ -1816,6 +1832,7 @@ You -> I :say word:Goodbye date:yesterday`;
       if($(e.target).prop('checked')) {
         let tmpConfig = JSON.parse(JSON.stringify(configOnModal)); // deepcopy
         tmpConfig.layout = 'hierarchical-scc';
+        addHighlightOptionOnModal(tmpConfig);
         metaBlitzboard.setConfig(tmpConfig);
       } else {
         metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)), false);

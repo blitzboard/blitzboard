@@ -12,6 +12,7 @@ const defaultWidth = 2;
 
 module.exports = class Blitzboard {
   static fontLoaded = false;
+  static SCCColor = '#edc821';
   static defaultConfig = {
     doubleClickWait: 200,
     node: {
@@ -560,12 +561,22 @@ module.exports = class Blitzboard {
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
     let size  = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
     let tooltip  = this.retrieveConfigProp(pgNode, 'node', 'title');
+    let clusterId = null;
 
     color = color || this.nodeColorMap[group];
     
     if(opacity < 1) {
       let rgb = this.getHexColors(color);
       color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
+    }
+    let precomputePosition = this.hierarchicalPositionMap != null ? this.hierarchicalPositionMap[pgNode.id] : undefined;
+    if(precomputePosition) {
+      x = precomputePosition.x;
+      y = precomputePosition.y;
+    }
+    if(this.sccMap[pgNode.id]) {
+      color = Blitzboard.SCCColor;
+      clusterId = this.sccMap[pgNode.id];
     }
 
     let attrs = {
@@ -577,9 +588,10 @@ module.exports = class Blitzboard {
       degree: degree,
       _title: tooltip != null ? tooltip : this.createTitle(pgNode),
       fixed: {
-        x: fixed,
-        y: this.config.layout === 'timeline' ? false : fixed
+        x: precomputePosition ? true : fixed,
+        y: this.config.layout === 'timeline' || precomputePosition ? true : fixed
       },
+
       borderWidth: url ? 3 : 1,
       url: url,
       x: x,
@@ -589,6 +601,7 @@ module.exports = class Blitzboard {
         color: url ? 'blue' : 'black',
         strokeWidth: 2,
       },
+      clusterId,
       fixedByTime: fixed
     };
     
@@ -624,7 +637,8 @@ module.exports = class Blitzboard {
             height: size
           });
           let img = new Image();
-          svg.querySelectorAll("path,circle,ellipse,rect").forEach((path) => {
+          svg.querySelectorAll(
+            "path,circle,ellipse,rect").forEach((path) => {
             path.style.fill = "white";
             path.style.stroke = "white";
           });
@@ -741,6 +755,11 @@ module.exports = class Blitzboard {
       let rgb = this.getHexColors(color);
       color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
     }
+    let smooth = this.map || this.config.layout === 'hierarchical-scc' ? false : { roundness: 1 };
+
+    if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.to]) {
+      smooth = { roundness: 0.5 };
+    }
     
     let attrs = {
       id: id,
@@ -752,7 +771,7 @@ module.exports = class Blitzboard {
       remoteId: id,
       width: width || defaultWidth,
       hoverWidth: 0.5,
-      smooth: this.map ? false : { roundness: 1 },
+      smooth: smooth,
       chosen: this.retrieveConfigProp(pgEdge, 'edge', 'chosen'),
       arrows: {
         to: {
@@ -935,6 +954,19 @@ module.exports = class Blitzboard {
     if(config.layout === 'hierarchical') {
       // Remove redundant settings when layout is hierarchical
       this.config.layoutSettings = config.layoutSettings;
+    } else if (config.layout === 'hierarchical-scc') {
+      this.config.layoutSettings = {
+        enabled:true,
+        levelSeparation: 150,
+        nodeSpacing: 100,
+        treeSpacing: 200,
+        blockShifting: true,
+        edgeMinimization: true,
+        parentCentralization: true,
+        direction: 'LR',
+        sortMethod: 'directed',
+        shakeTowards: 'leaves'
+      };
     }
     if(update)
       this.update(false);
@@ -1043,6 +1075,71 @@ module.exports = class Blitzboard {
       }
     }
     return downStreamNodes;
+  }
+
+  computeHierarchicalSCCPositions() {
+    this.hierarchicalPositionMap = {};
+    let sccList = detectAllSCC(this.graph.edges);
+    console.log({sccList});
+    let tmpNodes = this.graph.nodes.filter(n => {
+      for(let scc of sccList) {
+        if(scc.has(n.id))
+          return false;
+      }
+      return true;
+    });
+
+    // convert set to array
+    let sccArrayList = sccList.map(scc => Array.from(scc));
+    this.sccMap = {};
+    let sccReverseMap = {};
+    for(let scc of sccArrayList) {
+      let sccId = scc.join('\n');
+      for(let node of scc) {
+        this.sccMap[node] = sccId;
+        sccReverseMap[sccId] = scc;
+      }
+    }
+    for(let sccId of new Set(Object.values(this.sccMap))) {
+      tmpNodes.push({ id: sccId, labels: [], properties: [], location: { start: { line: 0, column: 0}, end: { line: 0, column: 0} } });
+    }
+
+    let tmpEdges = JSON.parse(JSON.stringify(this.graph.edges));
+
+    for(let edge of tmpEdges) {
+      edge.from = this.sccMap[edge.from] || edge.from;
+      edge.to = this.sccMap[edge.to] || edge.to;
+    }
+
+    let tmpNodeDataSet = new visData.DataSet();
+    tmpNodeDataSet.add(tmpNodes);
+
+    let tmpEdgeDataSet = new visData.DataSet(tmpEdges);
+    let tmpOptions = {
+      layout: {
+        hierarchical: this.config.layoutSettings
+      }
+    }
+    let tmpNetwork = new visNetwork.Network(this.networkContainer, { nodes: tmpNodeDataSet, edges: tmpEdgeDataSet }, tmpOptions);
+    for(let node of tmpNodes) {
+      let position = tmpNetwork.getPosition(node.id);
+      if(sccReverseMap[node.id] !== undefined) {
+        // The node is cluster
+        let i = 0;
+
+        this.hierarchicalPositionMap[node.id] = position;
+
+        for(let sccNodeId of sccReverseMap[node.id]) {
+          this.hierarchicalPositionMap[sccNodeId] = {
+            x: position.x,
+            y: position.y + i * 100,
+          };
+          i += 1;
+        }
+      } else {
+        this.hierarchicalPositionMap[node.id] = position;
+      }
+    }
   }
   
   update(applyDiff = true) {
@@ -1190,32 +1287,10 @@ module.exports = class Blitzboard {
     }
 
     if(this.config.layout === 'hierarchical-scc') {
-      let sccList = detectAllSCC(this.graph.edges);
-      this.graph.nodes = this.graph.nodes.filter(n => {
-        for(let scc of sccList) {
-          if(scc.has(n.id))
-            return false;
-        }
-        return true;
-      });
-
-      // convert set to array
-      let sccArrayList = sccList.map(scc => Array.from(scc));
-      let sccMap = {};
-      for(let scc of sccArrayList) {
-        let sccId = scc.join('\n');
-        for(let node of scc) {
-          sccMap[node] = sccId;
-        }
-      }
-      for(let sccId of new Set(Object.values(sccMap))) {
-        this.graph.nodes.push({ id: sccId, labels: [], properties: [], location: { start: { line: 0, column: 0}, end: { line: 0, column: 0} } });
-      }
-
-      for(let edge of this.graph.edges) {
-        edge.from = sccMap[edge.from] || edge.from;
-        edge.to = sccMap[edge.to] || edge.to;
-      }
+      this.computeHierarchicalSCCPositions();
+    } else {
+      this.hierarchicalPositionMap = null;
+      this.sccMap = {};
     }
 
     if(applyDiff) {
@@ -1282,7 +1357,7 @@ module.exports = class Blitzboard {
       randomSeed: 1
     };
 
-    if(this.config.layout === 'hierarchical' || this.config.layout === 'hierarchical-scc') {
+    if(this.config.layout === 'hierarchical') {
       layout.hierarchical = this.config.layoutSettings;
     } else {
       layout.hierarchical = false;
@@ -1293,7 +1368,7 @@ module.exports = class Blitzboard {
       layout:
         layout,
       interaction: {
-        dragNodes: this.config.layout !== 'map',
+        dragNodes: this.config.layout !== 'map' && this.config.layout !== 'hierarchical-scc',
         dragView: this.config.layout !== 'map',
         zoomView: this.config.layout !== 'map',
         hover: true,
@@ -1311,7 +1386,7 @@ module.exports = class Blitzboard {
           gravitationalConstant: -4000,
         },
         stabilization: {
-          enabled: false,
+          enabled: this.config.layout === 'hierarchical-scc',
           iterations: 200,
           updateInterval: 25
         }
@@ -1331,6 +1406,26 @@ module.exports = class Blitzboard {
 
     this.options = Object.assign(this.options, this.config.extraOptions);
     this.network = new visNetwork.Network(this.networkContainer, data, this.options);
+
+    for(let clusterId of Object.values(this.sccMap)) {
+      let position = this.hierarchicalPositionMap[clusterId];
+      let clusterOptions = {
+        joinCondition: function (n) {
+          return n.clusterId === clusterId;
+        },
+        clusterNodeProperties: {
+          id: clusterId,
+          color: Blitzboard.SCCColor,
+          x: position.x,
+          y: position.y,
+          fixed: true,
+          shape: 'dot',
+          label: clusterId
+        }
+      };
+      this.network.cluster(clusterOptions);
+    }
+
 
     if(this.config.layout === 'map') {
       this.mapContainer.style.display = 'block';
@@ -1375,6 +1470,11 @@ module.exports = class Blitzboard {
       blitzboard.updateTooltipLocation();
     });
 
+    this.network.on('stabilizationIterationsDone', (e) => {
+      blitzboard.options.physics.enabled = false;
+      blitzboard.network.setOptions(blitzboard.options);
+    });
+
     this.network.on('resize', (e) => {
       if(blitzboard.config.layout === 'map') {
         // Fix scale to 1.0 (delay is needed to override scale set by vis-network)  
@@ -1390,10 +1490,10 @@ module.exports = class Blitzboard {
 
     this.network.on('dragStart', (e) => {
       const node = this.nodeDataSet.get(e.nodes[0]);
-      if(e.nodes.length > 0) {
+      if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
         this.nodeDataSet.update({
           id: e.nodes[0],
-          fixed: node.fixedByTime ? {x: true, y: true } : false
+          fixed: node?.fixedByTime ? {x: true, y: true } : false
         });
       }
     });
@@ -1470,6 +1570,8 @@ module.exports = class Blitzboard {
           node: node
         };
         this.showTooltip();
+      } else if(this.network.isCluster(e.node)) {
+        this.network.canvas.body.container.style.cursor = 'pointer';
       }
     });
 
@@ -1677,8 +1779,12 @@ module.exports = class Blitzboard {
 
     function clickHandler(e) {
       blitzboard.doubleClickTimer = null;
-      if (e.nodes.length > 0) {
-        if (blitzboard.config.node.onClick) {
+      if (e.nodes.length > 0 ) {
+        if(e.nodes.length === 1 && blitzboard.network.isCluster(e.nodes[0])) {
+          blitzboard.network.openCluster(e.nodes[0]);
+          blitzboard.network.stabilize(100);
+        }
+        else if (blitzboard.config.node.onClick) {
           blitzboard.config.node.onClick(blitzboard.getNode(e.nodes[0]));
         }
       } else if (e.edges.length > 0) {
@@ -1697,7 +1803,7 @@ module.exports = class Blitzboard {
         }
       }
 
-      if(e.nodes.length > 0) {
+      if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])){
         let node = e.nodes[0]
         this.upstreamNodes = this.getUpstreamNodes(node);
         this.downstreamNodes = this.getDownstreamNodes(node);
@@ -1715,7 +1821,7 @@ module.exports = class Blitzboard {
     this.network.on("doubleClick", (e) => {
       clearTimeout(this.doubleClickTimer);
       this.doubleClickTimer = null;
-      if(e.nodes.length > 0) {
+      if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
         if(this.config.node.onDoubleClick) {
           this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
         }
