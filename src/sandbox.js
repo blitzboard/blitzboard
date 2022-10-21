@@ -628,7 +628,7 @@ You -> I :say word:Goodbye date:yesterday`;
   }
 
   $(document).on('click', '.show-all-path-link', (e) => {
-    targetNodeIdOnModal = $(e.target).data('node-id');
+    targetNodeIdOnModal = $(e.target).attr('data-node-id');
 
     let downstreamNodeIds = blitzboard.getDownstreamNodes(targetNodeIdOnModal);
     let upstreamNodeIds = blitzboard.getUpstreamNodes(targetNodeIdOnModal);
