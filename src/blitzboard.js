@@ -1894,29 +1894,10 @@ module.exports = class Blitzboard {
     }
   }
 
-  setSCCMode(mode) {
-    if(this.sccMode === 'only-scc' && mode !== 'only-scc') {
-      this.showHiddenNodes();
-    }
-    switch (mode) {
-      case 'expand':
-        this.sccMode = mode;
-        break;
-      case 'cluster':
-        this.sccMode = mode;
-        break;
-      case 'only-scc':
-        this.sccMode = mode;
-        break;
-      default:
-        throw new Error("SCC mode must be one of 'expand', 'cluster' or 'only-scc'")
-    }
-    this.updateSCCStatus();
-  }
 
   updateSCCStatus() {
     if(this.config.layout === 'hierarchical-scc') {
-      switch (this.sccMode) {
+      switch (this.config.sccMode) {
         case 'expand':
           this.expandSCC();
           break;

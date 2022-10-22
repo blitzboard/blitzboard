@@ -560,21 +560,6 @@ $(() => {
     $('#export-btn').dropdown('toggle');
   });
 
-  q('#cluster-scc-button').addEventListener('click', (e) => {
-    $('#scc-dropdown-button')[0].innerText = "SCC mode: cluster";
-    blitzboard.setSCCMode('cluster');
-  });
-
-  q('#expand-scc-button').addEventListener('click', (e) => {
-    $('#scc-dropdown-button')[0].innerText = "SCC mode: expand";
-    blitzboard.setSCCMode('expand');
-  });
-
-  q('#only-scc-button').addEventListener('click', (e) => {
-    $('#scc-dropdown-button')[0].innerText = "SCC mode: only SCC";
-    blitzboard.setSCCMode('only-scc');
-  });
-
 
   $(document).on('click', '.expand-event-tree-link', (e) => {
     let nodeId = $(e.target).data('node-id');

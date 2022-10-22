@@ -370,13 +370,6 @@
           %span.iconify.text-white{ 'data-icon': 'ion:reload-outline', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
         #zoom-fit-btn.float-btn.btn.btn-info{ title: "Fit", href: '#', style: 'padding:4px;', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
           %span{:class => "iconify", 'data-icon': 'carbon:center-to-fit',  'data-width': 24, 'data-height': 24  }
-        #switch-scc-dropdown.dropdown{ :style => "display: none", }
-          %button#scc-dropdown-button.btn.rounded.btn-secondary.dropdown-toggle{"aria-expanded" => "false", "style" => "width: 200px;", "aria-haspopup" => "true", "data-bs-toggle" => "dropdown", :type => "button"}
-            SCC mode: cluster
-          .dropdown-menu{"aria-labelledby" => "dropdownMenuButton"}
-            %a#cluster-scc-button.dropdown-item{:href => "#"} Cluster SCC
-            %a#expand-scc-button.dropdown-item{:href => "#"} Expand SCC
-            %a#only-scc-button.dropdown-item{:href => "#"} Only SCC
     #sort-modal.modal{:tabindex => "-1"}
       .modal-dialog
         .modal-content
