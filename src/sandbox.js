@@ -1049,7 +1049,6 @@ $(() => {
   
   function createNewGraph(templateIndex) {
     let template = pageTemplates[templateIndex];
-    console.log({template});
     let name = newGraphName(template.name);
     byProgram = true;
     currentGraphName = name;
@@ -1069,7 +1068,16 @@ $(() => {
 
 
   q('#clone-btn').addEventListener('click', () => {
-    currentGraphName = newGraphName(currentGraphName);
+    let newName = prompt('What is the name of the cloned graph?', currentGraphName);
+    if(newName === null)
+      return;
+    while(savedGraphNames.indexOf(newName) >= 0) {
+      alert(`"${newName}" already exists. Please specify a different name.`)
+      newName = prompt('What is the name of the cloned graph?', newName);
+      if(newName === null)
+        return;
+    }
+    currentGraphName = newName;
     saveCurrentGraph();
     showGraphName();
     blitzboard.update(false);
