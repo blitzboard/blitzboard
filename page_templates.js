@@ -52,10 +52,6 @@ let baseConfig = `{
 
 
 let pageTemplates = [
-  { name: 'Blank page' ,
-    pg: '',
-    config: baseConfig
-  },
   {
     name: 'RelationShip',
     pg: `
@@ -70,6 +66,10 @@ Shiro :dog color:silver
 
 Choco -- Shiro :friend since:2018
 `,
+    config: baseConfig
+  },
+  { name: 'Blank page' ,
+    pg: '',
     config: baseConfig
   },
 ];
