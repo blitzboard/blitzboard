@@ -289,8 +289,8 @@ $(() => {
     if (height > totalHeight) {
       height = totalHeight;
     }
-    let left = $("#pg-area").width() - 50;
-    let bottom = (totalHeight - height) + 10;
+    let left = $("#pg-area").width() - 60;
+    let bottom = (totalHeight - height) + 20;
     $('#pg-area').css('height', height);
     $('#config-area').css('height', (totalHeight - height));
     $('#options-btn').css('bottom', bottom);

@@ -138,8 +138,6 @@
     position: absolute;
     width: 40px;
     height: 40px;
-    right: 10px;
-    bottom: 10px;
   }
   
   .double-byte-highlight {
@@ -156,19 +154,22 @@
   
   #options-btn {
     z-index: 996;
-    background: #272822;
-    border: #272822;
+    background: transparent;
+    border: none;
   }
   
   #reset-config-btn {
+    right: 10px;
+    bottom: 10px;
     z-index: 995;
-    background: #272822;
-    border: #272822;
+    background: transparent;
+    border: none;
   }
   
   #zoom-fit-btn {
     z-index: 994;
     background-color: transparent;
+    position: absolute;
     color: #272822;
     border: 0px;
     top: 60px;
@@ -183,6 +184,11 @@
     bottom: 60px;
     right: 40px;
   }
+  
+  body {
+    overflow: hidden;
+  }
+  
   
   span .highlighted {
     background: rgba(200, 200, 0, 0.5);
