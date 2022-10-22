@@ -281,9 +281,14 @@
             %label.me-3.btn.btn-outline-secondary.text-white{for: 'edit-panel-btn', style: 'border: none', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom', title: 'Edit mode' }
               %span.iconify.text-white{ 'data-icon':  'clarity:edit-solid', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
           %li.nav-item
-            %label.btn.text-white#new-btn{ title: "New", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
-              %svg.bi.bi-plus-lg{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
-                %path{:d => "M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"}
+            .dropdown{ title: "New", 'data-bs-toggle': 'tooltip', 'aria-haspopup': true}
+              #new-btn.btn.dropdown-toggle{ type: 'button', 'data-bs-toggle': 'dropdown', style:"width: 38px;" }
+                %svg.bi.bi-plus-lg{:fill => "white", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+                  %path{:d => "M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"}
+              #templates-dropdown.dropdown-menu.dropdown-menu-end{ 'aria-labelledby': "new-btn" }
+            -#%label.btn.text-white#new-btn{ title: "New", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
+            -#  %svg.bi.bi-plus-lg{:fill => "currentColor", :height => "16", :viewbox => "0 0 16 16", :width => "16", :xmlns => "http://www.w3.org/2000/svg"}
+            -#    %path{:d => "M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"}
           %li.nav-item
             %label.btn.text-white#clone-btn{ title: "Clone", href: '#', 'data-bs-toggle': 'tooltip', 'data-placement': 'bottom'}
               %span.iconify.text-white{ 'data-icon': 'fa-regular:clone', 'data-color': 'white', 'data-width': 16, 'data-height': 16  }
@@ -421,5 +426,6 @@
                 %label{:for => "hierarchical-checkbox"} Hierarchical-SCC
               %button.ms-5.btn.btn-secondary{"data-bs-dismiss" => "modal", :type => "button"} close
 
+    %script{:src => "./page_templates.js"}
     %script{:src => "./src/sandbox.js"}
     %script{:src => "./src/scc.js"}

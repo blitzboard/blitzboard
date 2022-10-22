@@ -16,62 +16,9 @@ let clientIsMac = navigator.platform.startsWith('Mac');
 
 
 $(() => {
-  let defaultGraph =
-    `I :person name:"your name"
-You :person
-Graph :graph
-I -> Graph :say word:Hello date:today
-You -> I :say word:Goodbye date:yesterday`;
-  let defaultConfig =
-    `{
-  node: {
-    caption: ['id'],
-    defaultIcon: true,
-  },
-  edge: {
-    caption: ['label'],
-  },
-  
-  layout: 'default',
-  
-  /*
-  layout: 'hierarchical',
-  layoutSettings: {
-    enabled:true,
-    levelSeparation: 150,
-    nodeSpacing: 100,
-    treeSpacing: 200,
-    blockShifting: true,
-    edgeMinimization: true,
-    parentCentralization: true,
-    direction: 'UD',        // UD, DU, LR, RL
-    sortMethod: 'hubsize',  // hubsize, directed
-    shakeTowards: 'leaves'  // roots, leaves
-  },
-  */
-
-  /*
-  layout: 'map',
-  layoutSettings: {
-    lng: 'lng',
-    lat: 'lat'
-  },
-  */
-
-  
-  /*
-  layout: 'custom',
-  layoutSettings: {
-    x: 'x',
-    y: 'y'
-  },
-  */
-}
-  `;
-
+  let defaultConfig = pageTemplates[0].config;
   const q = document.querySelector.bind(document);
   const qa = document.querySelectorAll.bind(document);
-
 
   let container = document.getElementById('graph');
   let pgTimerId = null, configTimerId = null;
@@ -121,6 +68,13 @@ You -> I :say word:Goodbye date:yesterday`;
       lastUpdate = response.data.properties?.lastUpdate[0];
     });
   }
+  let templatesContent = '';
+  let i = 0;
+  for(let template of pageTemplates) {
+    templatesContent += `<a class="template-dropdown dropdown-item" href="#" data-index="${i}">${template.name}</a>`;
+    ++i;
+  }
+  q('#templates-dropdown').innerHTML = templatesContent;
 
   function reloadConfig() {
     config = parseConfig(configEditor.getValue());
@@ -279,7 +233,7 @@ You -> I :say word:Goodbye date:yesterday`;
       if(savedGraphNames.length > 0) {
         loadGraphByName(savedGraphNames[0]);
       } else {
-        createNewGraph();
+        createNewGraph(0);
       }
       if(remoteMode) {
         toastr.success(`Backend has been changed to ${backendUrl}`);
@@ -1093,26 +1047,24 @@ You -> I :say word:Goodbye date:yesterday`;
     }
   }
   
-  function createNewGraph() {
-    let name = newGraphName();
-
-    loadSample('new', (graph, config) => {
-      byProgram = true;
-      currentGraphName = name;
-      loadGraph({name: name, pg: graph, config: config});
-      saveCurrentGraph();
-    }, () => {
-      byProgram = true;
-      currentGraphName = name;
-      loadGraph({name: name, pg: '', config: defaultConfig});
-      saveCurrentGraph();
-      byProgram = false;
-    })
+  function createNewGraph(templateIndex) {
+    let template = pageTemplates[templateIndex];
+    console.log({template});
+    let name = newGraphName(template.name);
+    byProgram = true;
+    currentGraphName = name;
+    loadGraph({
+      name: name,
+      pg: template.pg,
+      config: template.config
+    });
+    byProgram = false;
   }
 
-  q('#new-btn').addEventListener('click', () => {
+
+  $('.template-dropdown').on('click', (e) => {
     confirmToSaveGraph();
-    createNewGraph();
+    createNewGraph($(e.target).data('index'));
   });
 
 
@@ -2002,12 +1954,12 @@ You -> I :say word:Goodbye date:yesterday`;
           if (savedGraphNames.length > 0)
             loadGraphByName(savedGraphNames[0]);
           else
-            createNewGraph();
+            createNewGraph(0);
         } else {
           loadCurrentGraph();
           if(configEditor.getValue() === '' && noGraphLoaded) {
             byProgram = true;
-            editor.setValue(defaultGraph);
+            editor.setValue(pageTemplates[0].pg);
             byProgram = false;
             configEditor.setValue(defaultConfig);
           }
@@ -2028,4 +1980,3 @@ You -> I :say word:Goodbye date:yesterday`;
     }
   }, 0);
 });
-  

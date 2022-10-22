@@ -288,11 +288,14 @@
 </label>
 </input>
 <li class='nav-item'>
-<label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='new-btn' title='New'>
-<svg class='bi bi-plus-lg' fill='currentColor' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
+<div aria-haspopup class='dropdown' data-bs-toggle='tooltip' title='New'>
+<div class='btn dropdown-toggle' data-bs-toggle='dropdown' id='new-btn' style='width: 38px;' type='button'>
+<svg class='bi bi-plus-lg' fill='white' height='16' viewbox='0 0 16 16' width='16' xmlns='http://www.w3.org/2000/svg'>
 <path d='M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z'></path>
 </svg>
-</label>
+</div>
+<div aria-labelledby='new-btn' class='dropdown-menu dropdown-menu-end' id='templates-dropdown'></div>
+</div>
 </li>
 <li class='nav-item'>
 <label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#' id='clone-btn' title='Clone'>
@@ -506,6 +509,7 @@ DESC
 </div>
 </div>
 </div>
+<script src='./page_templates.js'></script>
 <script src='./src/sandbox.js'></script>
 <script src='./src/scc.js'></script>
 </body>
