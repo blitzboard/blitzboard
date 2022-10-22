@@ -85,6 +85,7 @@ module.exports = class Blitzboard {
     this.deletedNodes = new Set();
     this.deletedEdges = new Set();
     this.sccMode = 'cluster';
+    this.configChoice = null;
     
     this.staticLayoutMode = false;
     
@@ -123,6 +124,35 @@ module.exports = class Blitzboard {
     this.tooltip.classList.add('blitzboard-tooltiptext');
     this.tooltip.classList.add('blitzboard-tooltiptext-top');
     this.tooltip.style['z-index'] = '2001';
+
+    this.configChoiceDiv = document.createElement('div');
+    this.configChoiceDiv.id = "blitzboard-config-choice-div";
+    this.configChoiceDiv.style =
+      `
+      max-width: 400px;
+      bottom: 60px;
+      right: 100px;
+      position: absolute;
+      z-index: 2000;
+      display: none;
+    `;
+
+    this.configChoiceLabel = document.createElement('label');
+    this.configChoiceLabel.id = "blitzboard-config-choice-label";
+    this.configChoiceLabel.style =
+      `
+      max-width: 200px;
+      display: inline;
+    `;
+
+    this.configChoiceDropdown = document.createElement('select');
+    this.configChoiceDropdown.id = "blitzboard-config-choice-dropdown";
+    this.configChoiceDropdown.style =
+      `
+      max-width: 200px;
+      display: inline;
+    `;
+
 
 
     this.minTime = new Date(8640000000000000);
@@ -170,11 +200,20 @@ module.exports = class Blitzboard {
     container.appendChild(this.screen);
     container.appendChild(this.networkContainer);
     container.appendChild(this.mapContainer);
+    container.appendChild(this.configChoiceDiv);
+    this.configChoiceDiv.appendChild(this.configChoiceLabel);
+    this.configChoiceDiv.appendChild(this.configChoiceDropdown);
     document.body.appendChild(this.tooltipDummy);
     this.tooltipDummy.appendChild(this.tooltip);
     this.tooltip.addEventListener('mouseleave', (e) => {
       if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
         blitzboard.hideTooltip();
+    });
+
+
+    this.configChoiceDropdown.addEventListener('change', (e) => {
+      this.configChoice = e.target.value;
+      this.update(false);
     });
 
     this.container.addEventListener('wheel', (e) => {
@@ -971,6 +1010,21 @@ module.exports = class Blitzboard {
         shakeTowards: 'leaves'
       };
     }
+
+    if(this.config.configChoices?.configs) {
+
+      this.configChoice = this.config.configChoices?.default;
+      let configContent = '';
+      for(let name of Object.keys(this.config.configChoices.configs)) {
+        configContent += `<option ${name === this.configChoice ? 'selected' : ''}>${name}</option>`
+      }
+      this.configChoiceDropdown.innerHTML = configContent;
+      this.configChoiceLabel.innerText = this.config.configChoices.label ? this.config.configChoices.label + ': ' : '';
+      this.configChoiceDiv.style.display = 'block';
+    } else {
+      this.configChoiceDiv.style.display = 'none';
+    }
+
     if(update)
       this.update(false);
   }
@@ -1148,6 +1202,19 @@ module.exports = class Blitzboard {
   update(applyDiff = true) {
     let blitzboard = this;
     this.warnings = [];
+
+    if(this.config.configChoices?.configs) {
+      let chosenConfig;
+      if(this.configChoice) {
+        chosenConfig = this.config.configChoices.configs[this.configChoice];
+      } else {
+        chosenConfig = Object.values(this.config.configChoices.configs)[0];
+      }
+      if(chosenConfig) {
+        this.config = deepMerge(this.config, chosenConfig);
+      }
+    }
+
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !this.staticLayoutMode && this.config.layout !== 'hierarchical-scc';
     
     if(this.config.style && this.config.layout !== 'map') {
