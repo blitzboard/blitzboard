@@ -84,6 +84,7 @@ module.exports = class Blitzboard {
     this.addedEdges = new Set();
     this.deletedNodes = new Set();
     this.deletedEdges = new Set();
+    this.sccMode = 'cluster';
     
     this.staticLayoutMode = false;
     
@@ -445,6 +446,7 @@ module.exports = class Blitzboard {
     if(!this.elementWithTooltip)
       return;
     let position, offset = 20;
+    const edgeOffset = 10;
     if(this.elementWithTooltip.node) {
       position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
       let clientRect = this.container.getClientRects()[0];
@@ -459,6 +461,7 @@ module.exports = class Blitzboard {
         x: this.prevMouseEvent.clientX,
         y: this.prevMouseEvent.clientY
       };
+      offset += edgeOffset;
     }
     position.x += window.scrollX;
     position.y += window.scrollY;
@@ -1407,24 +1410,7 @@ module.exports = class Blitzboard {
     this.options = Object.assign(this.options, this.config.extraOptions);
     this.network = new visNetwork.Network(this.networkContainer, data, this.options);
 
-    for(let clusterId of Object.values(this.sccMap)) {
-      let position = this.hierarchicalPositionMap[clusterId];
-      let clusterOptions = {
-        joinCondition: function (n) {
-          return n.clusterId === clusterId;
-        },
-        clusterNodeProperties: {
-          id: clusterId,
-          color: Blitzboard.SCCColor,
-          x: position.x,
-          y: position.y,
-          fixed: true,
-          shape: 'dot',
-          label: clusterId
-        }
-      };
-      this.network.cluster(clusterOptions);
-    }
+    this.clusterSCC();
 
 
     if(this.config.layout === 'map') {
@@ -1834,11 +1820,100 @@ module.exports = class Blitzboard {
       }
     });
 
+    this.updateSCCStatus();
+
     for(let callback of this.onUpdated) {
       callback();
     }
   }
 
+  setSCCMode(mode) {
+    if(this.sccMode === 'only-scc' && mode !== 'only-scc') {
+      this.showHiddenNodes();
+    }
+    switch (mode) {
+      case 'expand':
+        this.sccMode = mode;
+        break;
+      case 'cluster':
+        this.sccMode = mode;
+        break;
+      case 'only-scc':
+        this.sccMode = mode;
+        break;
+      default:
+        throw new Error("SCC mode must be one of 'expand', 'cluster' or 'only-scc'")
+    }
+    this.updateSCCStatus();
+  }
+
+  updateSCCStatus() {
+    if(this.config.layout === 'hierarchical-scc') {
+      switch (this.sccMode) {
+        case 'expand':
+          this.expandSCC();
+          break;
+        case 'cluster':
+          this.clusterSCC();
+          break;
+        case 'only-scc':
+          this.hideExceptSCC();
+          break;
+      }
+    }
+  }
+
+  clusterSCC() {
+    for(let clusterId of Object.values(this.sccMap)) {
+      let position = this.hierarchicalPositionMap[clusterId];
+      let clusterOptions = {
+        joinCondition: function (n) {
+          return n.clusterId === clusterId;
+        },
+        clusterNodeProperties: {
+          id: clusterId,
+          color: Blitzboard.SCCColor,
+          x: position.x,
+          y: position.y,
+          fixed: true,
+          shape: 'dot',
+          label: clusterId
+        }
+      };
+      this.network.cluster(clusterOptions);
+    }
+  }
+
+  expandSCC() {
+    let nodeIndices = new Set(blitzboard.network.clustering.body.nodeIndices);
+
+    for(let clusterId of Array.from(new Set(Object.values(this.sccMap)))) {
+      if(!nodeIndices.has(clusterId))
+        continue;
+      blitzboard.network.openCluster(clusterId);
+    }
+    blitzboard.network.stabilize(100);
+  }
+
+  showHiddenNodes() {
+    console.log("hidden");
+    let toBeUpdated = [];
+    for(let node of this.nodeDataSet._data.values()) {
+      if(node.hidden)
+        toBeUpdated.push({id: node.id, hidden: false});
+    }
+    this.nodeDataSet.update(toBeUpdated);
+  }
+
+  hideExceptSCC() {
+    this.expandSCC();
+    let toBeUpdated = [];
+    for(let node of this.nodeDataSet._data.values()) {
+      if(node.clusterId >= 0)
+        toBeUpdated.push({id: node.id, hidden: true});
+    }
+    this.nodeDataSet.update(toBeUpdated);
+  }
 
   scrollNodeIntoView(node, select = true) {
     if(typeof(node) === 'string')
