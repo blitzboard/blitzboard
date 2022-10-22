@@ -1079,7 +1079,7 @@ module.exports = class Blitzboard {
 
   computeHierarchicalSCCPositions() {
     this.hierarchicalPositionMap = {};
-    let sccList = detectAllSCC(this.graph.edges);
+    let sccList = stronglyConnectedComponents(this.graph.edges);
     console.log({sccList});
     let tmpNodes = this.graph.nodes.filter(n => {
       for(let scc of sccList) {

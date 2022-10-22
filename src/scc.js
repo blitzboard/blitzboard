@@ -1,82 +1,50 @@
-/// A function to find all strongly connected components in given graph
+/// A function to find all strongly connected components in given graph using Tarjan's algorithm
 /// Input: list of edges
-/// Output: list of strongly connected components (each component is a set of nodes)
-function detectAllSCC(edges) {
+/// Output: list of strongly connected components whose size is larger than 1 (each component is a set of nodes)
+function stronglyConnectedComponents(edges) {
   let sccList = [];
   let visited = {};
+  let component = {};
   let adjacencyList = {};
+  let root = {};
   for(let edge of edges) {
-    visited[edge.from] = false;
-    visited[edge.to] = false;
     adjacencyList[edge.from] = adjacencyList[edge.from] || [];
     adjacencyList[edge.to] = adjacencyList[edge.to] || [];
     adjacencyList[edge.from].push(edge.to);
   }
-  console.log({adjacencyList});
   let nodeStack = [];
-  for(let node of Object.keys(visited)) {
+  for(let node of Object.keys(adjacencyList)) {
     if(!visited[node]) {
-      nodeStack = [node];
-      detectSCCRecursive(adjacencyList, nodeStack, visited, sccList);
+      stronglyConnectedComponentsRecursive(node, adjacencyList, nodeStack, visited, sccList, root, component, 0);
     }
   }
-
   return sccList;
 }
 
-
-function mergeSCCList(nodes, sccList) {
-  let existingSCC = sccList.filter(scc => {
-    for(let node of nodes) {
-      if(scc.has(node))
-        return true;
+function stronglyConnectedComponentsRecursive(node, adjacencyList, nodeStack, visited, sccList, root, component, depth) {
+  root[node] = depth;
+  visited[node] = depth;
+  depth += 1;
+  nodeStack.push(node);
+  for(let dst of adjacencyList[node]) {
+    if(!(dst in visited)) {
+      stronglyConnectedComponentsRecursive(dst, adjacencyList, nodeStack, visited, sccList, root, component, depth);
     }
-    return false;
-  });
-  if(existingSCC.length > 1) {
-    let newSCC = new Set();
-    for(let scc of existingSCC) {
-      sccList.splice(sccList.indexOf(scc), 1);
-      for(let node of scc) {
-        newSCC.add(node);
-      }
+    if(!(dst in component)) {
+      root[node] = Math.min(root[node], root[dst]);
     }
-    newSCC = new Set([...newSCC, ...nodes]);
-    sccList.push(newSCC);
-  } else if(existingSCC.length === 1) {
-    for(let node of nodes) {
-      existingSCC[0].add(node);
-    }
-  } else {
-    sccList.push(new Set(nodes));
   }
-}
 
-function detectSCCRecursive(adjacencyList, nodeStack, visited, sccList) {
-  let srcNode = nodeStack[nodeStack.length - 1];
-  for(let dstNode of adjacencyList[srcNode]) {
-    if(nodeStack.length > 1 && nodeStack.includes(dstNode)) {
-      // SCC has been detected
-      let newLoop = nodeStack.slice(nodeStack.indexOf(dstNode));
-      mergeSCCList(newLoop, sccList);
-    } else  {
-      let existingSCC = sccList.filter(scc => scc.has(dstNode));
-      if(existingSCC.length > 0) {
-        existingSCC = existingSCC[0];
-        let index = nodeStack.length - 1;
-        while(index >= 0 && !existingSCC.has(nodeStack[index])) {
-          --index;
-        }
-        if(index >= 0) {
-          mergeSCCList(nodeStack.slice(index), sccList);
-        }
-      }
-      else if(!visited[dstNode]) {
-        visited[dstNode] = true;
-        nodeStack.push(dstNode);
-        detectSCCRecursive(adjacencyList, nodeStack, visited, sccList);
-        nodeStack.pop();
-      }
+  if(root[node] === visited[node]) {
+    component[node] = root[node];
+    let newComponent =  new Set([node]);
+    while(nodeStack[nodeStack.length - 1] !== node) {
+      let tmpNode = nodeStack.pop();
+      component[tmpNode] = root[node];
+      newComponent.add(tmpNode);
     }
+    nodeStack.pop();
+    if(newComponent.size > 1)
+      sccList.push(newComponent);
   }
 }
