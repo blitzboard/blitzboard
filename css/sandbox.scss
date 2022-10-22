@@ -1,17 +1,7 @@
-.dropdown-menu{
-    padding: 0.9rem 0;
-    border-radius: 0.5rem;
-}
 
-.dropdown-item{
-    padding-bottom: 0.3rem;
-    input{
-        padding: 0.3rem 0.6rem;
-        border: 1px solid #cfcfcf;
-        border-radius: 0.2rem;
-    }
+body{
+    font-family: Arvo;
 }
-
 
 .nav-item{
     display:block;
@@ -23,7 +13,7 @@
 
 
 #export-btn{
-    margin-right: 2rem;
+    margin-right: 1rem;
     &::after{
     display: none;
 }
@@ -34,6 +24,10 @@
     }
 }
 
+#options-dropdown{
+    height: 40px;
+    width: 40px;
+}
                 
 
 .navbar-nav{
@@ -132,8 +126,6 @@
 
 .float-btn {
     position: absolute;
-    width: 40px;
-    height: 40px;
 }
 
 .double-byte-highlight {
@@ -155,11 +147,12 @@
 }
 
 #reset-config-btn {
-    right: 10px;
-    bottom: 10px;
+    width: 40px;
+    height: 40px;
     z-index: 995;
     background: transparent;
     border: none;
+    line-height: 2.3;
 }
 
 #zoom-fit-btn {
@@ -225,11 +218,63 @@ span .syntax-warning-line {
 .dropdown-item, .dropdown-item input, .dropdown-item label{
     cursor: pointer
 }
+.dropdown-menu{
+    padding: 0.9rem 0;
+    border-radius: 0.5rem;
+    background-color: #161717;
+.dropdown-item{
+    padding-bottom: 0.3rem;
+    color:#fff;
+    input{
+        padding: 0.3rem 0.6rem;
+        border: 1px solid #cfcfcf;
+        border-radius: 0.2rem;
+        margin: 0.3rem 0;
+    }
+}
+
+.dropdown-menu[data-bs-popper]{
+    margin-top: 1rem;
+}
 
 .dropdown-item.active {
-    background: #047bff;
+    background: #50a1ff;
     color: black;
+    &:hover{
+        background: #3c7fcb;
+    }
 }
+.dropdown-item:focus, .dropdown-item:hover{
+    background-color: #252b31;
+}
+}
+
+.btn-secondary{
+    background-color: #fff;
+    border-color: #fff;
+    span{
+        color: #161717;
+    }
+    &:hover{
+        background-color: #ccd2dc;
+        border-color: #ccd2dc;
+    }
+}
+
+.delete-history-btn{
+    background-color: rgb(76, 74, 94);
+    border-color: rgb(76, 74, 94);
+    span{
+        color: #fff;
+    }
+    &:hover{
+        background-color: rgb(46, 45, 58);
+    border-color: rgb(46, 45, 58);
+    }
+}
+
+
+
 
 #history-dropdown.dropdown-toggle::after {
     display: inline-block;
@@ -269,3 +314,4 @@ span .syntax-warning-line {
 .btn-check:active+.btn-outline-secondary, .btn-check:checked+.btn-outline-secondary, .btn-outline-secondary.active, .btn-outline-secondary.dropdown-toggle.show, .btn-outline-secondary:active{
     background-color: #353d44;
 }
+

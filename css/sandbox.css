@@ -1,16 +1,5 @@
-.dropdown-menu {
-  padding: 0.9rem 0;
-  border-radius: 0.5rem;
-}
-
-.dropdown-item {
-  padding-bottom: 0.3rem;
-}
-
-.dropdown-item input {
-  padding: 0.3rem 0.6rem;
-  border: 1px solid #cfcfcf;
-  border-radius: 0.2rem;
+body {
+  font-family: Arvo;
 }
 
 .nav-item {
@@ -23,7 +12,7 @@
 }
 
 #export-btn {
-  margin-right: 2rem;
+  margin-right: 1rem;
 }
 
 #export-btn::after {
@@ -32,6 +21,11 @@
 
 #new-btn::after {
   display: none;
+}
+
+#options-dropdown {
+  height: 40px;
+  width: 40px;
 }
 
 .navbar-nav {
@@ -131,8 +125,6 @@
 
 .float-btn {
   position: absolute;
-  width: 40px;
-  height: 40px;
 }
 
 .double-byte-highlight {
@@ -154,11 +146,12 @@
 }
 
 #reset-config-btn {
-  right: 10px;
-  bottom: 10px;
+  width: 40px;
+  height: 40px;
   z-index: 995;
   background: transparent;
   border: none;
+  line-height: 2.3;
 }
 
 #zoom-fit-btn {
@@ -224,9 +217,67 @@ span .syntax-warning-line {
   cursor: pointer;
 }
 
-.dropdown-item.active {
-  background: #047bff;
+.dropdown-menu {
+  padding: 0.9rem 0;
+  border-radius: 0.5rem;
+  background-color: #161717;
+}
+
+.dropdown-menu .dropdown-item {
+  padding-bottom: 0.3rem;
+  color: #fff;
+}
+
+.dropdown-menu .dropdown-item input {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #cfcfcf;
+  border-radius: 0.2rem;
+  margin: 0.3rem 0;
+}
+
+.dropdown-menu .dropdown-menu[data-bs-popper] {
+  margin-top: 1rem;
+}
+
+.dropdown-menu .dropdown-item.active {
+  background: #50a1ff;
   color: black;
+}
+
+.dropdown-menu .dropdown-item.active:hover {
+  background: #3c7fcb;
+}
+
+.dropdown-menu .dropdown-item:focus, .dropdown-menu .dropdown-item:hover {
+  background-color: #252b31;
+}
+
+.btn-secondary {
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.btn-secondary span {
+  color: #161717;
+}
+
+.btn-secondary:hover {
+  background-color: #ccd2dc;
+  border-color: #ccd2dc;
+}
+
+.delete-history-btn {
+  background-color: #4c4a5e;
+  border-color: #4c4a5e;
+}
+
+.delete-history-btn span {
+  color: #fff;
+}
+
+.delete-history-btn:hover {
+  background-color: #2e2d3a;
+  border-color: #2e2d3a;
 }
 
 #history-dropdown.dropdown-toggle::after {
