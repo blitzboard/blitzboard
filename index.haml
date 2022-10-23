@@ -50,6 +50,7 @@
     %script{:src => "https://cdn.jsdelivr.net/npm/jszip@3.2.1/dist/jszip.js"}
     %script{:src => "https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.4/FileSaver.min.js"}
     %script{:src => "./dist/blitzboard.bundle.js"}
+    %link{:href => "https://fonts.googleapis.com/css?family=Arvo", :type => "text/css", :rel => "stylesheet"}/
   %body
     #app
       %nav#header.navbar.navbar-expand-md.navbar-light.bg-white.shadow-sm.sticky-top
@@ -148,7 +149,7 @@
               %label.w-100{:for => "options-auto-complete-input"} 
                 Sort
                 #sort-shortcut-text.pull-right.text-muted{style: "margin-left: 50px;"} Ctrl-S
-            .dropdown-item{ style: "cursor: default; background-color: white !important; color: black !important;"  }
+            #backendUrlDropdown.dropdown-item
               Backend URL
               %br
               %input#options-backend-url-input{ type: "text", style: "cursor: text; width: 250px;", "placeholder": "If empty, local storage is used" }
