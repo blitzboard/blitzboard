@@ -993,26 +993,8 @@ module.exports = class Blitzboard {
 
   setConfig(config, update = true) {
     this.config = deepMerge(Blitzboard.defaultConfig, config);
-    if(config.layout === 'hierarchical') {
-      // Remove redundant settings when layout is hierarchical
-      this.config.layoutSettings = config.layoutSettings;
-    } else if (config.layout === 'hierarchical-scc') {
-      this.config.layoutSettings = {
-        enabled:true,
-        levelSeparation: 150,
-        nodeSpacing: 100,
-        treeSpacing: 200,
-        blockShifting: true,
-        edgeMinimization: true,
-        parentCentralization: true,
-        direction: 'LR',
-        sortMethod: 'directed',
-        shakeTowards: 'leaves'
-      };
-    }
 
     if(this.config.configChoices?.configs) {
-
       this.configChoice = this.config.configChoices?.default;
       let configContent = '';
       for(let name of Object.keys(this.config.configChoices.configs)) {
@@ -1023,6 +1005,11 @@ module.exports = class Blitzboard {
       this.configChoiceDiv.style.display = 'block';
     } else {
       this.configChoiceDiv.style.display = 'none';
+    }
+
+    if(config.layout === 'hierarchical') {
+      // Remove redundant settings when layout is hierarchical
+      this.config.layoutSettings = config.layoutSettings;
     }
 
     if(update)
@@ -1213,6 +1200,22 @@ module.exports = class Blitzboard {
       if(chosenConfig) {
         this.config = deepMerge(this.config, chosenConfig);
       }
+    }
+
+
+    if (this.config.layout === 'hierarchical-scc') {
+      this.config.layoutSettings = {
+        enabled:true,
+        levelSeparation: 150,
+        nodeSpacing: 100,
+        treeSpacing: 200,
+        blockShifting: true,
+        edgeMinimization: true,
+        parentCentralization: true,
+        direction: 'LR',
+        sortMethod: 'directed',
+        shakeTowards: 'leaves'
+      };
     }
 
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !this.staticLayoutMode && this.config.layout !== 'hierarchical-scc';
