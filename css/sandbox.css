@@ -13,6 +13,7 @@ body {
 
 #export-btn {
   margin-right: 1rem;
+  width: 40px;
 }
 
 #export-btn::after {
@@ -151,7 +152,7 @@ body {
   z-index: 995;
   background: transparent;
   border: none;
-  line-height: 2.3;
+  line-height: 3.3;
 }
 
 #zoom-fit-btn {
@@ -161,7 +162,7 @@ body {
   color: #272822;
   border: 0px;
   top: 4.4rem;
-  right: 0.5rem;
+  right: 1rem;
 }
 
 #switch-scc-dropdown {
@@ -314,10 +315,44 @@ span .syntax-warning-line {
   pointer-events: none;
 }
 
+.btn-check + .btn-outline-secondary .edit-off, .btn-check + .btn-outline-secondary .edit-off, .btn-outline-secondary .edit-off, .btn-outline-secondary.dropdown-toggle.show .edit-off, .btn-outline-secondary .edit-off {
+  display: block;
+}
+
+.btn-check + .btn-outline-secondary .edit, .btn-check + .btn-outline-secondary .edit, .btn-outline-secondary .edit, .btn-outline-secondary.dropdown-toggle.show .edit, .btn-outline-secondary .edit {
+  display: none;
+}
+
 .btn-check:active + .btn-outline-secondary, .btn-check:checked + .btn-outline-secondary, .btn-outline-secondary.active, .btn-outline-secondary.dropdown-toggle.show, .btn-outline-secondary:active {
   background-color: #353d44;
 }
 
+.btn-check:active + .btn-outline-secondary .edit-off, .btn-check:checked + .btn-outline-secondary .edit-off, .btn-outline-secondary.active .edit-off, .btn-outline-secondary.dropdown-toggle.show .edit-off, .btn-outline-secondary:active .edit-off {
+  display: none;
+}
+
+.btn-check:active + .btn-outline-secondary .edit, .btn-check:checked + .btn-outline-secondary .edit, .btn-outline-secondary.active .edit, .btn-outline-secondary.dropdown-toggle.show .edit, .btn-outline-secondary:active .edit {
+  display: block;
+}
+
 #backendUrlDropdown {
   cursor: default;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+}
+
+.material-symbols-outlined {
+  color: #fff;
+  font-size: 24px;
+  display: block;
+  vertical-align: middle;
+}
+
+.label {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  display: inline-table;
 }
