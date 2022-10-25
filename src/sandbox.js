@@ -217,12 +217,6 @@ $(() => {
     byProgram = false;
   });
 
-  q('#url-input').addEventListener('change', () => {
-    clearTimeout(pgTimerId);
-    localMode = false;
-    pgTimerId = setTimeout(retrieveGraph, 1000);
-  });
-
   q('#options-backend-url-input').value = backendUrl;
 
   q('#options-backend-url-input').addEventListener('change', (e) => {
@@ -289,18 +283,12 @@ $(() => {
     if (height > totalHeight) {
       height = totalHeight;
     }
-    let left = $("#pg-area").width() - 60;
-    let bottom = (totalHeight - height) + 20;
     $('#pg-area').css('height', height);
     $('#config-area').css('height', (totalHeight - height));
-    $('#options-btn').css('bottom', bottom);
-    $('#options-btn').css('left', left);
     if (configCollapsed()) {
       $('#reset-config-btn').hide();
     } else {
       $('#reset-config-btn').show();
-      $('#reset-config-btn').css('left', left);
-      $('#reset-config-btn').css('bottom', bottom - 70);
     }
   };
 
