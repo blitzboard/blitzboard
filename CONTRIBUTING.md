@@ -19,9 +19,3 @@ Please change it to `dist/blitzboard.bundle.js` during development.
 For production, execute the following command to update `dist/blitzboard.bundle.min.js`:
 
     npm run build
-
-
-## Develop HTML
-
-The `index.html` is automatically generated from `index.haml` by `watch_haml_change.sh` (requires [haml](https://github.com/haml/haml)).
-
