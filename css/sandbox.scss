@@ -90,6 +90,7 @@ body {
 #config-area {
   flex: 1;
   height: 0%;
+  position: relative;
 }
 
 #graph-pane {
@@ -150,6 +151,8 @@ body {
   z-index: 996;
   background: transparent;
   border: none;
+  bottom: 20px;
+  right: 20px;
 }
 
 #reset-config-btn {
@@ -158,6 +161,8 @@ body {
   z-index: 995;
   background: transparent;
   border: none;
+  top: 20px;
+  right: 20px;
   line-height: 3.3;
 }
 
@@ -185,6 +190,9 @@ body {
   overflow: hidden;
 }
 
+#options-dropdown {
+  padding: 0;
+}
 
 span .highlighted {
   background: rgba(200, 200, 0, 0.5);

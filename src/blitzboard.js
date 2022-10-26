@@ -800,7 +800,7 @@ module.exports = class Blitzboard {
     let smooth = this.map || this.config.layout === 'hierarchical-scc' ? false : { roundness: 1 };
 
     let dashes = false;
-    if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.to]) {
+    if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.from] === this.sccMap[pgEdge.to]) {
       smooth = { roundness: 0.5 };
       dashes = true;
     }
