@@ -130,8 +130,8 @@ module.exports = class Blitzboard {
     this.configChoiceDiv.style =
       `
       max-width: 400px;
-      bottom: 60px;
-      right: 100px;
+      top: 20px;
+      right: 80px;
       position: absolute;
       z-index: 2000;
       display: none;
@@ -799,10 +799,11 @@ module.exports = class Blitzboard {
     }
     let smooth = this.map || this.config.layout === 'hierarchical-scc' ? false : { roundness: 1 };
 
+    let dashes = false;
     if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.to]) {
       smooth = { roundness: 0.5 };
+      dashes = true;
     }
-    
     let attrs = {
       id: id,
       from: pgEdge.from,
@@ -813,6 +814,7 @@ module.exports = class Blitzboard {
       remoteId: id,
       width: width || defaultWidth,
       hoverWidth: 0.5,
+      dashes,
       smooth: smooth,
       chosen: this.retrieveConfigProp(pgEdge, 'edge', 'chosen'),
       arrows: {
