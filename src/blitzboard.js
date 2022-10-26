@@ -1628,8 +1628,6 @@ module.exports = class Blitzboard {
           node: node
         };
         this.showTooltip();
-      } else if(this.network.isCluster(e.node)) {
-        this.network.canvas.body.container.style.cursor = 'pointer';
       }
     });
 
@@ -1838,11 +1836,7 @@ module.exports = class Blitzboard {
     function clickHandler(e) {
       blitzboard.doubleClickTimer = null;
       if (e.nodes.length > 0 ) {
-        if(e.nodes.length === 1 && blitzboard.network.isCluster(e.nodes[0])) {
-          blitzboard.network.openCluster(e.nodes[0]);
-          blitzboard.network.stabilize(100);
-        }
-        else if (blitzboard.config.node.onClick) {
+        if (blitzboard.config.node.onClick) {
           blitzboard.config.node.onClick(blitzboard.getNode(e.nodes[0]));
         }
       } else if (e.edges.length > 0) {
@@ -1938,18 +1932,17 @@ module.exports = class Blitzboard {
   }
 
   expandSCC() {
-    let nodeIndices = new Set(blitzboard.network.clustering.body.nodeIndices);
+    let nodeIndices = new Set(this.network.clustering.body.nodeIndices);
 
     for(let clusterId of Array.from(new Set(Object.values(this.sccMap)))) {
       if(!nodeIndices.has(clusterId))
         continue;
-      blitzboard.network.openCluster(clusterId);
+      this.network.openCluster(clusterId);
     }
-    blitzboard.network.stabilize(100);
+    this.network.stabilize(100);
   }
 
   showHiddenNodes() {
-    console.log("hidden");
     let toBeUpdated = [];
     for(let node of this.nodeDataSet._data.values()) {
       if(node.hidden)
@@ -1992,7 +1985,7 @@ module.exports = class Blitzboard {
     clearTimeout(this.scrollAnimationTimerId);
     this.scrollAnimationTimerId = setTimeout(() => {
       if(this.staticLayoutMode)
-        blitzboard.network.renderer.dragging = true;
+        this.network.renderer.dragging = true;
       const animationOption = {
         scale: 1.0,
         animation:
