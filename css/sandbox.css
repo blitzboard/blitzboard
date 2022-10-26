@@ -84,7 +84,6 @@ body {
 #config-area {
   flex: 1;
   height: 0%;
-  position: relative;
 }
 
 #graph-pane {
@@ -141,16 +140,10 @@ body {
   display: none;
 }
 
-#options-dropdown {
-  padding: 0;
-}
-
 #options-btn {
   z-index: 996;
   background: transparent;
   border: none;
-  bottom: 20px;
-  right: 20px;
 }
 
 #reset-config-btn {
@@ -159,8 +152,6 @@ body {
   z-index: 995;
   background: transparent;
   border: none;
-  top: 20px;
-  right: 20px;
   line-height: 3.3;
 }
 
@@ -354,7 +345,7 @@ span .syntax-warning-line {
 
 .material-symbols-outlined {
   color: #fff;
-  font-size: 24px;
+  font-size: 20px;
   display: block;
   vertical-align: middle;
 }
