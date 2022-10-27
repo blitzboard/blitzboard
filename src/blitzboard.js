@@ -74,6 +74,7 @@ module.exports = class Blitzboard {
     this.expandedNodes = [];
     this.nodeMap = {};
     this.config = Blitzboard.defaultConfig;
+    this.baseConfig = this.config;
     this.nodeLineMap = {};
     this.edgeMap = {};
     this.edgeLineMap = {};
@@ -1014,6 +1015,7 @@ module.exports = class Blitzboard {
       this.config.layoutSettings = config.layoutSettings;
     }
 
+    this.baseConfig = deepMerge({}, this.config); // Save config before apply configChoices
     if(update)
       this.update(false);
   }
@@ -1192,15 +1194,15 @@ module.exports = class Blitzboard {
     let blitzboard = this;
     this.warnings = [];
 
-    if(this.config.configChoices?.configs) {
+    if(this.baseConfig.configChoices?.configs) {
       let chosenConfig;
       if(this.configChoice) {
-        chosenConfig = this.config.configChoices.configs[this.configChoice];
+        chosenConfig = this.baseConfig.configChoices.configs[this.configChoice];
       } else {
-        chosenConfig = Object.values(this.config.configChoices.configs)[0];
+        chosenConfig = Object.values(this.baseConfig.configChoices.configs)[0];
       }
       if(chosenConfig) {
-        this.config = deepMerge(this.config, chosenConfig);
+        this.config = deepMerge(this.baseConfig, chosenConfig);
       }
     }
 
