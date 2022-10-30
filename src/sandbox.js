@@ -174,6 +174,72 @@ $(() => {
       bufferedContent = null;
       byProgram = false;
     }
+    if (blitzboard.network !== prevNetwork) {
+      blitzboard.network.on("click", (e) => {
+        if (srcNode) {
+          if (e.nodes.length > 0) {
+            let node = blitzboard.nodeMap[e.nodes[0]];
+            if (srcNode !== node.id) {
+              let oldPg = editor.getValue();
+              let lineNum = numberOfLines(oldPg) + 1;
+              editor.setValue(oldPg + `\n${srcNode.quoteIfNeeded()} -> ${node.id.quoteIfNeeded()}`);
+              updateGraph(editor.getValue());
+              scrollToLine({start: {line: lineNum, column: 1}, end: {line: lineNum + 1, column: 1}});
+            }
+          }
+          srcNode = null;
+          lineEnd = null;
+        } else if (e.nodes.length > 0) {
+          if(!blitzboard.network.isCluster(e.nodes[0])) {
+            let node = blitzboard.nodeMap[e.nodes[0]];
+            scrollToLine(node.location);
+          } else {
+            let nodes = blitzboard.network.clustering.getNodesInCluster(e.nodes[0]);
+            let node = blitzboard.nodeMap[nodes[0]];
+            if(node)
+              scrollToLine(node.location);
+          }
+        } else if (e.edges.length > 0) {
+          let edge = blitzboard.edgeMap[e.edges[0]];
+          scrollToLine(edge.location);
+        }
+      });
+      blitzboard.network.on("doubleClick", (e) => {
+        if (!blitzboard.config?.node?.onDoubleClick) {
+          if (e.nodes.length > 0) {
+            const node = e.nodes[0];
+            srcNode = node;
+          } else if (blitzboard.map) {
+            let xKey = blitzboard.config.layoutSettings.x;
+            let yKey = blitzboard.config.layoutSettings.y;
+            let oldPg = editor.getValue();
+            let lineNum = numberOfLines(oldPg) + 1;
+            let latLng = blitzboard.map.containerPointToLatLng([e.pointer.DOM.x, e.pointer.DOM.y]);
+            editor.setValue(oldPg + `\n${newNodeName()} ${xKey}:${latLng.lng} ${yKey}:${latLng.lat}`);
+            updateGraph(editor.getValue());
+            scrollToLine({start: {line: lineNum, ch: 0}, end: {line: lineNum, ch: 0}});
+          }
+        }
+      });
+      let canvas = q(".vis-network canvas");
+      canvas.addEventListener('mousemove', event => {
+        if (srcNode) {
+          lineEnd = blitzboard.network.DOMtoCanvas(getMousePos(canvas, event));
+          blitzboard.network.redraw();
+        }
+      });
+
+      blitzboard.network.on("afterDrawing", (ctx) => {
+        if (srcNode && lineEnd) {
+          ctx.beginPath();
+          let lineStart = blitzboard.network.getPosition(srcNode);
+          ctx.moveTo(lineStart.x, lineStart.y);
+          ctx.lineTo(lineEnd.x, lineEnd.y);
+          ctx.stroke();
+        }
+      });
+      prevNetwork = blitzboard.network;
+    }
     updateAutoCompletion();
   });
 
@@ -424,67 +490,6 @@ $(() => {
         toastr.error(e.toString(), 'Error occured while rendering', {preventDuplicates: true})
       }
       return null;
-    }
-    if (blitzboard.network !== prevNetwork) {
-      blitzboard.network.on("click", (e) => {
-        if (srcNode) {
-          if (e.nodes.length > 0) {
-            let node = blitzboard.nodeMap[e.nodes[0]];
-            if (srcNode !== node.id) {
-              let oldPg = editor.getValue();
-              let lineNum = numberOfLines(oldPg) + 1;
-              editor.setValue(oldPg + `\n${srcNode.quoteIfNeeded()} -> ${node.id.quoteIfNeeded()}`);
-              updateGraph(editor.getValue());
-              scrollToLine({start: {line: lineNum, column: 1}, end: {line: lineNum + 1, column: 1}});
-            }
-          }
-          srcNode = null;
-          lineEnd = null;
-        } else if (e.nodes.length > 0) {
-          if(!blitzboard.network.isCluster(e.nodes[0])) {
-            let node = blitzboard.nodeMap[e.nodes[0]];
-            scrollToLine(node.location);
-          }
-        } else if (e.edges.length > 0) {
-          let edge = blitzboard.edgeMap[e.edges[0]];
-          scrollToLine(edge.location);
-        }
-      });
-      blitzboard.network.on("doubleClick", (e) => {
-        if (!blitzboard.config?.node?.onDoubleClick) {
-          if (e.nodes.length > 0) {
-            const node = e.nodes[0];
-            srcNode = node;
-          } else if (blitzboard.map) {
-            let xKey = blitzboard.config.layoutSettings.x;
-            let yKey = blitzboard.config.layoutSettings.y;
-            let oldPg = editor.getValue();
-            let lineNum = numberOfLines(oldPg) + 1;
-            let latLng = blitzboard.map.containerPointToLatLng([e.pointer.DOM.x, e.pointer.DOM.y]);
-            editor.setValue(oldPg + `\n${newNodeName()} ${xKey}:${latLng.lng} ${yKey}:${latLng.lat}`);
-            updateGraph(editor.getValue());
-            scrollToLine({start: {line: lineNum, ch: 0}, end: {line: lineNum, ch: 0}});
-          }
-        }
-      });
-      let canvas = q(".vis-network canvas");
-      canvas.addEventListener('mousemove', event => {
-        if (srcNode) {
-          lineEnd = blitzboard.network.DOMtoCanvas(getMousePos(canvas, event));
-          blitzboard.network.redraw();
-        }
-      });
-
-      blitzboard.network.on("afterDrawing", (ctx) => {
-        if (srcNode && lineEnd) {
-          ctx.beginPath();
-          let lineStart = blitzboard.network.getPosition(srcNode);
-          ctx.moveTo(lineStart.x, lineStart.y);
-          ctx.lineTo(lineEnd.x, lineEnd.y);
-          ctx.stroke();
-        }
-      });
-      prevNetwork = blitzboard.network;
     }
     if (blitzboard.graph) {
       updateAutoCompletion();
