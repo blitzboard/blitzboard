@@ -13,6 +13,7 @@ const defaultWidth = 2;
 module.exports = class Blitzboard {
   static fontLoaded = false;
   static SCCColor = '#edc821';
+  static maxZoomForMap = 18;
   static defaultConfig = {
     doubleClickWait: 200,
     node: {
@@ -42,13 +43,11 @@ module.exports = class Blitzboard {
     },
     style: "border: solid 1px silver; background: radial-gradient(white, silver);",
     extraOptions: {
-    }
+    },
   };
   static tooltipMaxWidth = 600;
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
   static iconSizeCoef = 1.5;
-  static minScaleOnMap = 0.3;
-  static maxScaleOnMap = 1.0;
   static mapContainerId = 'map';
   static edgeDelimiter = '-';
   static nodeTemplate = {
@@ -89,8 +88,7 @@ module.exports = class Blitzboard {
     this.configChoice = null;
     
     this.staticLayoutMode = false;
-    
-    this.staticLayoutMode = false;
+    this.mapAdjustTimer = null;
     
     this.container.style.position = 'absolute';
     
@@ -227,12 +225,6 @@ module.exports = class Blitzboard {
           }
           blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
         }
-        let newScale = blitzboard.map._zoom / 12 + 0.4;
-        newScale = Math.min(Blitzboard.maxScaleOnMap, Math.max(newScale, Blitzboard.minScaleOnMap));
-        setTimeout( () => {
-          blitzboard.network.moveTo({scale: newScale});
-          blitzboard.updateNodeLocationOnMap();
-        }, 10);
         blitzboard.map.invalidateSize();
         e.preventDefault();
         e.stopPropagation(); // Inhibit zoom on vis-network
@@ -492,7 +484,7 @@ module.exports = class Blitzboard {
       let clientRect = this.container.getClientRects()[0];
       position.x += clientRect.x;
       position.y += clientRect.y;
-      offset += this.elementWithTooltip.node.size * this.network.getScale();
+      offset += this.elementWithTooltip.node._size * this.network.getScale();
     }
     else {
       if(!this.prevMouseEvent)
@@ -627,7 +619,7 @@ module.exports = class Blitzboard {
       color: color,
       label: createLabelText(pgNode, props),
       shape: 'dot',
-      size: size || 25,
+      _size: size || 25,
       degree: degree,
       _title: tooltip != null ? tooltip : this.createTitle(pgNode),
       fixed: {
@@ -647,7 +639,11 @@ module.exports = class Blitzboard {
       clusterId,
       fixedByTime: fixed
     };
-    
+
+    if(this.config.layout !== 'map') {
+      attrs.size = attrs._size;
+    }
+
     let otherProps = this.retrieveConfigPropAll(pgNode,
       'node', ['color', 'size', 'opacity', 'title']);
     
@@ -674,7 +670,7 @@ module.exports = class Blitzboard {
             }
           }
           icon = icon || icons[0];
-          let size = attrs.size * Blitzboard.iconSizeCoef;
+          let size = attrs._size * Blitzboard.iconSizeCoef;
           let svg = Iconify.renderSVG(`${icon.prefix}:${icon.name}`, {
             width: size,
             height: size
@@ -709,7 +705,7 @@ module.exports = class Blitzboard {
         let code = String.fromCharCode(parseInt(icon, 16));
         attrs['customIcon'] = {
           face: 'Ionicons',
-          size: attrs.size * 1.5,
+          size: attrs._size * 1.5,
           code: code,
           color: 'white'
         };
@@ -1128,7 +1124,6 @@ module.exports = class Blitzboard {
   computeHierarchicalSCCPositions() {
     this.hierarchicalPositionMap = {};
     let sccList = stronglyConnectedComponents(this.graph.edges);
-    console.log({sccList});
     let tmpNodes = this.graph.nodes.filter(n => {
       for(let scc of sccList) {
         if(scc.has(n.id))
@@ -1325,8 +1320,7 @@ module.exports = class Blitzboard {
       this.timeInterval = this.maxTime - this.minTime;
     }
 
-    if(this.staticLayoutMode) {
-
+    if(this.staticLayoutMode && this.config.layout !== 'map') {
       let ngraph = createGraph();
       this.graph.nodes.forEach(node => {
         ngraph.addNode(node.id);
@@ -1499,6 +1493,7 @@ module.exports = class Blitzboard {
           center: center,
           zoom: statistics.scale,
           minZoom: 3,
+          maxZoom: Blitzboard.maxZoomForMap,
           zoomSnap: 0.01,
           zoomControl: false,
         });
@@ -1507,8 +1502,8 @@ module.exports = class Blitzboard {
         });
         tileLayer.addTo(this.map);
 
-        this.map.on('move', () => blitzboard.updateNodeLocationOnMap());
-        this.map.on('zoom', () => blitzboard.updateNodeLocationOnMap());
+        this.map.on('move', () => blitzboard.updateViewForMap());
+        this.map.on('zoom', () => blitzboard.updateViewForMap());
       }
       blitzboard.network.moveTo({scale: 1.0});
     } else {
@@ -1538,11 +1533,6 @@ module.exports = class Blitzboard {
     this.network.on('resize', (e) => {
       if(blitzboard.config.layout === 'map') {
         // Fix scale to 1.0 (delay is needed to override scale set by vis-network)  
-        let newScale = Math.min(Blitzboard.maxScaleOnMap, Math.max(blitzboard.network.getScale(), Blitzboard.minScaleOnMap));
-        setTimeout( () => {
-          blitzboard.network.moveTo({scale: newScale});
-          blitzboard.updateNodeLocationOnMap();
-        }, 10); 
         blitzboard.map.invalidateSize();
       }
     });
@@ -1730,9 +1720,9 @@ module.exports = class Blitzboard {
           if(node.customIcon) {
             if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
               ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
-                position.x - node.size * Blitzboard.iconSizeCoef / 2, position.y - node.size * Blitzboard.iconSizeCoef / 2,
-                node.size * Blitzboard.iconSizeCoef, 
-                node.size * Blitzboard.iconSizeCoef);
+                position.x - node._size * Blitzboard.iconSizeCoef / 2, position.y - node._size * Blitzboard.iconSizeCoef / 2,
+                node._size * Blitzboard.iconSizeCoef,
+                node._size * Blitzboard.iconSizeCoef);
             } else { // Ionicons
               ctx.font = `${node.customIcon.size}px Ionicons`;
               ctx.fillStyle = "white";
@@ -1748,10 +1738,10 @@ module.exports = class Blitzboard {
               let lowerLabel = label.toLowerCase();
               if (Blitzboard.loadedIcons[lowerLabel]) {
                 if(Blitzboard.loadedIcons[lowerLabel] != 'retrieving...')
-                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node.size * Blitzboard.iconSizeCoef / 2,
-                    position.y - node.size * Blitzboard.iconSizeCoef / 2,
-                    node.size * Blitzboard.iconSizeCoef,
-                    node.size * Blitzboard.iconSizeCoef);
+                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node._size * Blitzboard.iconSizeCoef / 2,
+                    position.y - node._size * Blitzboard.iconSizeCoef / 2,
+                    node._size * Blitzboard.iconSizeCoef,
+                    node._size * Blitzboard.iconSizeCoef);
                 break;
               }
             }
@@ -2002,22 +1992,77 @@ module.exports = class Blitzboard {
       this.network.moveTo({ ...{position: position}, ...animationOption });
     }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
   }
-  
+
+  updateViewForMap() {
+    if(!this.map)
+      return;
+    let zoomDiff = Blitzboard.maxZoomForMap - this.map.getZoom();
+    let offsetFromOrigin = this.map.latLngToContainerPoint([0, 0]);
+    offsetFromOrigin.x -= this.map.getContainer().clientWidth / 2;
+    offsetFromOrigin.y -= this.map.getContainer().clientHeight / 2;
+    let newScale = 1 / Math.pow(2, zoomDiff);
+    let newPosition = {
+      x: -offsetFromOrigin.x / newScale,
+      y: -offsetFromOrigin.y / newScale
+    };
+    this.network.moveTo({
+      scale: newScale,
+      position: newPosition
+    });
+
+
+    let blitzboard = this;
+    if (this.mapAdjustTimer) {
+      clearTimeout(this.mapAdjustTimer);
+    }
+    let newSize = Math.max(1 / newScale, 25);
+    this.mapAdjustTimer = setTimeout(() => {
+      this.network.setOptions({
+        nodes: {
+          size: newSize
+        }
+      });
+      blitzboard.mapAdjustTimer = null;
+    }, 100);
+  }
+
+
   updateNodeLocationOnMap() {
+    if(!this.map)
+      return;
     let nodePositions = [];
     let lngKey =  this.config.layoutSettings.lng;
     let latKey =  this.config.layoutSettings.lat;
+
+    let originalCenter = this.map.getCenter();
+    this.map.panTo([0, 0]);
+    this.map.setZoom(Blitzboard.maxZoomForMap);
+    let containerOffset = {
+      x: this.networkContainer.clientWidth / 2,
+      y: this.networkContainer.clientHeight / 2,
+    }
+
     this.graph.nodes.forEach(node => {
       if(node.properties[latKey] && node.properties[lngKey]) {
-        let point = this.map.latLngToContainerPoint([node.properties[latKey][0], node.properties[lngKey][0]]);
-        point = this.network.DOMtoCanvas(point);
+        let lat = node.properties[latKey][0],
+          lng = node.properties[lngKey][0];
+        if(typeof(lat) === 'string') {
+          lat = parseFloat(lat);
+        }
+        if(typeof(lng) === 'string') {
+          lng = parseFloat(lng);
+        }
+        let point = this.map.latLngToContainerPoint([lat, lng]);
         nodePositions.push({
           id: node.id,
-          x: point.x, y: point.y, fixed: true
+          x: point.x - containerOffset.x, y: point.y - containerOffset.y, fixed: true
         });
       }
     });
     this.nodeDataSet.update(nodePositions);
+
+    this.map.panTo(originalCenter);
+    this.updateViewForMap();
   }
 
 
