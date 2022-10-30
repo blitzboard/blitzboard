@@ -1,7 +1,7 @@
 let baseConfig = `{
   node: {
     caption: ['id'],
-    defaultIcon: true,
+    autoIcon: true,
     /*
     icon: {
       'person': 'carbon:person',
