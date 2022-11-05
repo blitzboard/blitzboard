@@ -1179,15 +1179,10 @@ $(() => {
               let config = content;
               // The same process as #new-btn is clicked
               let name = newGraphName(nameWithoutExtension);
-              byProgram = true;
-              editor.setValue(graph);
-              configEditor.setValue(config);
               currentGraphName = name;
+              loadValues( graph, config);
               saveCurrentGraph();
-              editor.getDoc().clearHistory();
-              configEditor.getDoc().clearHistory();
               showGraphName();
-              byProgram = false;
             });
           });
         }
