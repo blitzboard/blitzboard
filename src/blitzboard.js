@@ -1261,6 +1261,9 @@ module.exports = class Blitzboard {
     if(this.config.style && this.config.layout !== 'map') {
       this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
+
+
+    this.hideTooltip();
     
     if(applyDiff) {
       this.deletedNodes = new Set(Object.keys(this.nodeMap));
@@ -1357,6 +1360,13 @@ module.exports = class Blitzboard {
         }
       });
       this.timeInterval = this.maxTime - this.minTime;
+    }
+
+    if(this.config.layout === 'map' && this.map) {
+      let originalZoom = this.map.getZoom();
+      this.map.setZoom(Blitzboard.maxZoomForMap);
+      this.updateNodeLocationOnMap();
+      this.map.setZoom(originalZoom);
     }
 
     if(this.staticLayoutMode && this.config.layout !== 'map') {
@@ -1527,10 +1537,11 @@ module.exports = class Blitzboard {
       let center = this.config?.layoutSettings?.center || statistics.center;
       if(this.map) {
         this.map.panTo(center);
+        this.map.setZoom(Blitzboard.maxZoomForMap);
       } else {
         this.map = L.map(this.mapContainer, {
           center: center,
-          zoom: statistics.scale,
+          zoom: Blitzboard.maxZoomForMap,
           minZoom: 3,
           maxZoom: Blitzboard.maxZoomForMap,
           zoomSnap: 0.01,
@@ -1545,6 +1556,7 @@ module.exports = class Blitzboard {
         this.map.on('zoom', () => blitzboard.updateViewForMap());
       }
       this.updateNodeLocationOnMap();
+      setTimeout(() => blitzboard.map.fitBounds(L.latLngBounds([statistics.latMin, statistics.lngMax], [statistics.latMax, statistics.lngMin] )));
       blitzboard.network.moveTo({scale: 1.0});
     } else {
       this.mapContainer.style.display = 'none';
@@ -1592,8 +1604,8 @@ module.exports = class Blitzboard {
       let lngKey =  blitzboard.config.layoutSettings.lng;
       let latKey =  blitzboard.config.layoutSettings.lat;
       let lngSum = 0, latSum = 0, count = 0,
-        lngMax = Number.MIN_VALUE, lngMin = Number.MAX_VALUE,
-        latMax = Number.MIN_VALUE, latMin = Number.MAX_VALUE;
+        lngMax = -Number.MAX_VALUE, lngMin = Number.MAX_VALUE,
+        latMax = -Number.MAX_VALUE, latMin = Number.MAX_VALUE;
       blitzboard.graph.nodes.forEach(node => {
         if(node.properties[latKey] && node.properties[lngKey]) {
           let lng = parseFloat(node.properties[lngKey][0]);
@@ -1611,7 +1623,10 @@ module.exports = class Blitzboard {
         return [0, 0];
       return {
         center: [latSum / count, lngSum / count],
-        scale: Math.max( -Math.log2(Math.max(Math.abs(lngMax - lngMin), Math.abs(latMax - latMin)) / 1000), 0)
+        latMin,
+        latMax,
+        lngMin,
+        lngMax
       };
     }
 
@@ -2071,7 +2086,6 @@ module.exports = class Blitzboard {
     let latKey =  this.config.layoutSettings.lat;
 
     this.mapOrigin = this.map.getCenter();
-    this.map.setZoom(Blitzboard.maxZoomForMap);
     let containerOffset = {
       x: this.networkContainer.clientWidth / 2,
       y: this.networkContainer.clientHeight / 2,
@@ -2088,7 +2102,7 @@ module.exports = class Blitzboard {
           lng = parseFloat(lng);
         }
         let point = this.map.latLngToContainerPoint([lat, lng]);
-        
+
         nodePositions.push({
           id: node.id,
           x: point.x - containerOffset.x, y: point.y - containerOffset.y, fixed: true
