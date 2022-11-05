@@ -1264,6 +1264,9 @@ module.exports = class Blitzboard {
 
 
     this.hideTooltip();
+
+    this.nodeLineMap = {};
+    this.edgeLineMap = {};
     
     if(applyDiff) {
       this.deletedNodes = new Set(Object.keys(this.nodeMap));
@@ -1271,8 +1274,6 @@ module.exports = class Blitzboard {
       this.addedEdges = new Set();
       let newEdgeMap = {};
 
-      this.nodeLineMap = {};
-      this.edgeLineMap = {};
       this.maxLine = 0;
       this.graph.nodes.forEach(node => {
         let existingNode = this.nodeMap[node.id];
