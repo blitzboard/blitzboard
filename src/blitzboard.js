@@ -174,11 +174,7 @@ module.exports = class Blitzboard {
     this.scrollAnimationTimerId = null;
     this.screen = document.createElement('div');
     this.screenText = document.createElement('div');
-    this.screenText.style = `
-      font-size: 2rem;
-      background-color: rgba(255, 255, 255, 0.5);
-      padding: 10px;
-    `;
+    this.screenText.classList.add('blitzboard-loader');
     this.screen.appendChild(this.screenText);
     this.screenText.innerText = "Now loading...";
     this.screen.style = `
@@ -346,6 +342,49 @@ module.exports = class Blitzboard {
       .blitzboard-tooltip a {
         color: #88BBFF;
       }
+      
+      .blitzboard-loader,
+      .blitzboard-loader:after {
+        border-radius: 50%;
+        width: 10em;
+        height: 10em;
+      }
+      .blitzboard-loader {
+        margin: 60px auto;
+        font-size: 10px;
+        position: relative;
+        text-indent: -9999em;
+        border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+        border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+        border-left: 1.1em solid #ffffff;
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        transform: translateZ(0);
+        -webkit-animation: load8 1.1s infinite linear;
+        animation: load8 1.1s infinite linear;
+      }
+      @-webkit-keyframes load8 {
+        0% {
+          -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes load8 {
+        0% {
+          -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+
     `);
   }
 
@@ -794,7 +833,7 @@ module.exports = class Blitzboard {
       let rgb = this.getHexColors(color);
       color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
     }
-    let smooth = this.map || this.config.layout === 'hierarchical-scc' ? false : { roundness: 1 };
+    let smooth = this.config.layout === 'map' || this.config.layout === 'hierarchical-scc' ? false : { roundness: 1 };
 
     let dashes = false;
     if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.from] === this.sccMap[pgEdge.to]) {
@@ -1505,6 +1544,7 @@ module.exports = class Blitzboard {
         this.map.on('move', () => blitzboard.updateViewForMap());
         this.map.on('zoom', () => blitzboard.updateViewForMap());
       }
+      this.updateNodeLocationOnMap();
       blitzboard.network.moveTo({scale: 1.0});
     } else {
       this.mapContainer.style.display = 'none';
@@ -1594,12 +1634,8 @@ module.exports = class Blitzboard {
         blitzboard.prevZoomPosition = pos;
       }
     });
-    
-    if(this.map) {
-      this.updateNodeLocationOnMap();
-    }
-    
-    
+
+
     this.network.on("hoverNode", (e) => {
       this.network.canvas.body.container.style.cursor = 'default';
       const node = this.nodeDataSet.get(e.node);
@@ -1998,7 +2034,7 @@ module.exports = class Blitzboard {
     if(!this.map)
       return;
     let zoomDiff = Blitzboard.maxZoomForMap - this.map.getZoom();
-    let offsetFromOrigin = this.map.latLngToContainerPoint([0, 0]);
+    let offsetFromOrigin = this.map.latLngToContainerPoint(this.mapOrigin);
     offsetFromOrigin.x -= this.map.getContainer().clientWidth / 2;
     offsetFromOrigin.y -= this.map.getContainer().clientHeight / 2;
     let newScale = 1 / Math.pow(2, zoomDiff);
@@ -2034,8 +2070,7 @@ module.exports = class Blitzboard {
     let lngKey =  this.config.layoutSettings.lng;
     let latKey =  this.config.layoutSettings.lat;
 
-    let originalCenter = this.map.getCenter();
-    this.map.panTo([0, 0]);
+    this.mapOrigin = this.map.getCenter();
     this.map.setZoom(Blitzboard.maxZoomForMap);
     let containerOffset = {
       x: this.networkContainer.clientWidth / 2,
@@ -2053,6 +2088,7 @@ module.exports = class Blitzboard {
           lng = parseFloat(lng);
         }
         let point = this.map.latLngToContainerPoint([lat, lng]);
+        
         nodePositions.push({
           id: node.id,
           x: point.x - containerOffset.x, y: point.y - containerOffset.y, fixed: true
@@ -2061,7 +2097,6 @@ module.exports = class Blitzboard {
     });
     this.nodeDataSet.update(nodePositions);
 
-    this.map.panTo(originalCenter);
     this.updateViewForMap();
   }
 
@@ -2107,10 +2142,9 @@ module.exports = class Blitzboard {
     }
   }
   
-  showLoader(text = "Now loading...") {
+  showLoader() {
     this.screen.style.display = 'flex';
-    this.screenText.innerText = text;
-    this.screenText.style.display = text ? 'block' : 'none';
+    this.screenText.style.display = 'block';
   }
   
   hideLoader() {

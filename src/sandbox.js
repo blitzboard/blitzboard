@@ -80,10 +80,10 @@ $(() => {
     config = parseConfig(configEditor.getValue());
     if(!remoteMode)
       saveCurrentGraph();
-    if (config)
-      updateGraph(editor.getValue(), config);
+    if (config) {
+      triggerGraphUpdate(editor.getValue(), config);
+    }
     clearTimeout(configTimerId);
-    blitzboard.hideLoader();
     configTimerId = null;
   }
 
@@ -1561,7 +1561,7 @@ $(() => {
   function onEditorChanged(delta) {
     if (!byProgram) {
       if (!pgTimerId)
-        blitzboard.showLoader("");
+        blitzboard.showLoader();
       clearTimeout(pgTimerId);
       localMode = true;
       setUnsavedStatus(true);
@@ -1599,6 +1599,10 @@ $(() => {
     }
   });
 
+  function triggerGraphUpdate(pgValue, config) {
+    blitzboard.showLoader();
+    setTimeout(() => { updateGraph(pgValue, config); blitzboard.hideLoader(); } );
+  }
 
   function loadValues(pgValue, configValue) {
     byProgram = true;
@@ -1607,7 +1611,7 @@ $(() => {
     configEditor.setValue(configValue);
     config = parseConfig(configValue);
     byProgram = false;
-    setTimeout(() => { updateGraph(pgValue, config); blitzboard.hideLoader(); } );
+    triggerGraphUpdate(pgValue, config);
   }
   
   function loadCurrentGraph() {
@@ -1690,12 +1694,12 @@ $(() => {
       nodeLayout = null;
     }
 
-    blitzboard.showLoader("");
+    blitzboard.showLoader();
 
     function onConfigChanged(delta) {
       if(!byProgram) {
         if (!configTimerId)
-          blitzboard.showLoader('');
+          blitzboard.showLoader();
         clearTimeout(configTimerId);
         setUnsavedStatus(true);
         configTimerId = setTimeout(reloadConfig, 2000);
@@ -1713,14 +1717,6 @@ $(() => {
 
     configEditor.on('change', onConfigChanged);
     configEditor.on('inputRead', onConfigChanged);
-
-    if (editor.getValue() && config) {
-      setTimeout(() => {
-        byProgram = true;
-        updateGraph(editor.getValue(), config);
-        byProgram = false;
-      }, 0);
-    }
 
     let autocompletionConfig = localStorage.getItem('autocompletion');
     if (autocompletionConfig !== null) {
