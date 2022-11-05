@@ -1714,15 +1714,16 @@ module.exports = class Blitzboard {
       this.updateTooltipLocation();
       for(let node of this.graph.nodes) {
         node = this.nodeDataSet.get(node.id);
+        let nodeSize = this.config.layout === 'map' && this.nodeSizeOnMap ? this.nodeSizeOnMap : node._size;
         if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon || this.config.node.autoIcon)) {
           let position = this.network.getPosition(node.id);
           let pgNode = this.nodeMap[node.id];
           if(node.customIcon) {
             if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
               ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
-                position.x - node._size * Blitzboard.iconSizeCoef / 2, position.y - node._size * Blitzboard.iconSizeCoef / 2,
-                node._size * Blitzboard.iconSizeCoef,
-                node._size * Blitzboard.iconSizeCoef);
+                position.x - nodeSize * Blitzboard.iconSizeCoef / 2, position.y - nodeSize * Blitzboard.iconSizeCoef / 2,
+                nodeSize * Blitzboard.iconSizeCoef,
+                nodeSize * Blitzboard.iconSizeCoef);
             } else { // Ionicons
               ctx.font = `${node.customIcon.size}px Ionicons`;
               ctx.fillStyle = "white";
@@ -1738,10 +1739,10 @@ module.exports = class Blitzboard {
               let lowerLabel = label.toLowerCase();
               if (Blitzboard.loadedIcons[lowerLabel]) {
                 if(Blitzboard.loadedIcons[lowerLabel] != 'retrieving...')
-                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - node._size * Blitzboard.iconSizeCoef / 2,
-                    position.y - node._size * Blitzboard.iconSizeCoef / 2,
-                    node._size * Blitzboard.iconSizeCoef,
-                    node._size * Blitzboard.iconSizeCoef);
+                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - nodeSize * Blitzboard.iconSizeCoef / 2,
+                    position.y - nodeSize * Blitzboard.iconSizeCoef / 2,
+                    nodeSize * Blitzboard.iconSizeCoef,
+                    nodeSize * Blitzboard.iconSizeCoef);
                 break;
               }
             }
@@ -2010,16 +2011,15 @@ module.exports = class Blitzboard {
       position: newPosition
     });
 
-
     let blitzboard = this;
     if (this.mapAdjustTimer) {
       clearTimeout(this.mapAdjustTimer);
     }
-    let newSize = Math.max(1 / newScale, 25);
+    this.nodeSizeOnMap = Math.max(5 / newScale, 25);
     this.mapAdjustTimer = setTimeout(() => {
       this.network.setOptions({
         nodes: {
-          size: newSize
+          size: this.nodeSizeOnMap
         }
       });
       blitzboard.mapAdjustTimer = null;
