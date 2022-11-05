@@ -1551,9 +1551,9 @@ $(() => {
     // localStorage.setItem('pg', editor.getValue());
     if(!remoteMode)
       saveCurrentGraph();
-    blitzboard.hideLoader();
 
     updateGraph(editor.getValue());
+    blitzboard.hideLoader();
     clearTimeout(pgTimerId);
     pgTimerId = null;
   }
@@ -1607,7 +1607,7 @@ $(() => {
     configEditor.setValue(configValue);
     config = parseConfig(configValue);
     byProgram = false;
-    updateGraph(pgValue, config);
+    setTimeout(() => { updateGraph(pgValue, config); blitzboard.hideLoader(); } );
   }
   
   function loadCurrentGraph() {
@@ -1689,6 +1689,8 @@ $(() => {
     } catch {
       nodeLayout = null;
     }
+
+    blitzboard.showLoader("");
 
     function onConfigChanged(delta) {
       if(!byProgram) {
