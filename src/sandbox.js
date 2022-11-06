@@ -1084,19 +1084,28 @@ $(() => {
 
 
   q('#clone-btn').addEventListener('click', () => {
-    let newName = prompt('What is the name of the cloned graph?', currentGraphName);
-    if(newName === null)
-      return;
-    while(savedGraphNames.indexOf(newName) >= 0) {
-      alert(`"${newName}" already exists. Please specify a different name.`)
-      newName = prompt('What is the name of the cloned graph?', newName);
-      if(newName === null)
-        return;
-    }
-    currentGraphName = newName;
-    saveCurrentGraph();
-    showGraphName();
-    blitzboard.update(false);
+    Swal.fire({
+      text: `What is the name of the cloned page?`,
+      inputValue: currentGraphName,
+      input: 'text',
+      showCancelButton: true,
+      inputPlaceholder: 'Name',
+      confirmButtonText: 'Clone',
+      inputValidator: (value) => {
+        if(value.trim().length === 0) {
+          return 'Page name must not be empty.';
+        }
+        if(savedGraphNames.indexOf(value) >= 0)
+          return `"${value}" already exists. Please specify a different name.`;
+      }
+    }).then((result) => {
+      if(result.isConfirmed) {
+        currentGraphName = result.value.trim();
+        saveCurrentGraph();
+        showGraphName();
+        blitzboard.update(false);
+      }
+    })
   });
 
   function nodesAndEdgesForSaving(nodes = null, edges = null) {
