@@ -761,59 +761,69 @@ $(() => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
     let oldName = savedGraphNames[i];
-    let newName = prompt('What is the new name of the graph?', oldName);
-    if (newName) {
-      if (remoteMode) {
-        axios.get(`${backendUrl}/get/?graph=${oldName}`).then((response) => {
-          let properties = response.data.properties;
-          axios.request({
-            method: 'post',
-            url: `${backendUrl}/drop`,
-            data: `graph=${oldName}`,
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-          }).finally((res) => {
-            let pgJSON = blitzboard.tryPgParse(properties.pg[0]);
-            let [nodes, edges] = nodesAndEdgesForSaving(pgJSON.nodes, pgJSON.edges);
-            let graph = {
-              name: newName,
-              properties,
-              pg: {
-                nodes,
-                edges
-              }
-            };
-            axios.post(`${backendUrl}/create`, graph).then((res) => {
-              savedGraphNames[i] = newName;
-              updateGraphList();
-              if (currentGraphName === oldName) {
-                currentGraphName = newName;
-              }
-              showGraphName();
-              toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+
+    Swal.fire({
+      text: `What is the new name of the page?`,
+      inputValue: oldName,
+      input: 'text',
+      showCancelButton: true,
+      inputPlaceholder: 'New name',
+      confirmButtonText: 'Rename',
+    }).then((result) => {
+      if(result.isConfirmed && result.value) {
+        let newName = result.value;
+        if (remoteMode) {
+          axios.get(`${backendUrl}/get/?graph=${oldName}`).then((response) => {
+            let properties = response.data.properties;
+            axios.request({
+              method: 'post',
+              url: `${backendUrl}/drop`,
+              data: `graph=${oldName}`,
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+            }).finally((res) => {
+              let pgJSON = blitzboard.tryPgParse(properties.pg[0]);
+              let [nodes, edges] = nodesAndEdgesForSaving(pgJSON.nodes, pgJSON.edges);
+              let graph = {
+                name: newName,
+                properties,
+                pg: {
+                  nodes,
+                  edges
+                }
+              };
+              axios.post(`${backendUrl}/create`, graph).then((res) => {
+                savedGraphNames[i] = newName;
+                updateGraphList();
+                if (currentGraphName === oldName) {
+                  currentGraphName = newName;
+                }
+                showGraphName();
+                toastr.success(`${newName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+              }).catch((error) => {
+                toastr.error(`Failed to save ${newName}..`, '', {preventDuplicates: true, timeOut: 3000});
+              });
             }).catch((error) => {
-              toastr.error(`Failed to save ${newName}..`, '', {preventDuplicates: true, timeOut: 3000});
+              toastr.error(`Failed to drop ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
             });
           }).catch((error) => {
-            toastr.error(`Failed to drop ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
-          });
-        }).catch((error) => {
-          toastr.error(`Failed to retrieve ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
-        });;
-      } else {
-        let graph =
-          JSON.parse(localStorage.getItem('saved-graph-' + oldName));
-        localStorage.removeItem('saved-graph-' + oldName);
-        if (currentGraphName === oldName) {
-          currentGraphName = newName;
-          showGraphName();
+            toastr.error(`Failed to retrieve ${oldName}..`, '', {preventDuplicates: true, timeOut: 3000});
+          });;
+        } else {
+          let graph =
+            JSON.parse(localStorage.getItem('saved-graph-' + oldName));
+          localStorage.removeItem('saved-graph-' + oldName);
+          if (currentGraphName === oldName) {
+            currentGraphName = newName;
+            showGraphName();
+          }
+          graph.name = newName;
+          localStorage.setItem('saved-graph-' + newName, JSON.stringify(graph));
+          updateGraphList();
         }
-        graph.name = newName;
-        localStorage.setItem('saved-graph-' + newName, JSON.stringify(graph));
-        updateGraphList();
       }
-    }
+    })
     e.stopPropagation();
   });
 
@@ -1030,7 +1040,7 @@ $(() => {
 
     return Swal.fire({
       title: 'Save change?',
-      text: `Save your change for ${currentGraphName} before leaving?`,
+      text: `Save your change for "${currentGraphName}" before leaving?`,
       icon: 'warning',
       showDenyButton: true,
       showCancelButton: true,
