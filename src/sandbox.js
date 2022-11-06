@@ -831,16 +831,37 @@ $(() => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
     let name = savedGraphNames[i];
-    if (confirm(`Really delete ${name}?`)) {
-      if(remoteMode) {
-        axios.request({
-          method: 'post',
-          url: `${backendUrl}/drop`,
-          data: `graph=${name}`,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }).then((res) => {
+
+
+    Swal.fire({
+      text: `Really delete ${name}?`,
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: 'Delete',
+    }).then((result) => {
+      if(result.isConfirmed) {
+        if (remoteMode) {
+          axios.request({
+            method: 'post',
+            url: `${backendUrl}/drop`,
+            data: `graph=${name}`,
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }).then((res) => {
+            toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
+            updateGraphList(() => {
+              if (currentGraphName === name) {
+                currentGraphName = savedGraphNames[0];
+                loadCurrentGraph();
+                showGraphName();
+              }
+            });
+          }).catch((error) => {
+            toastr.error(`Failed to drop ${name}..`, '', {preventDuplicates: true, timeOut: 3000});
+          });
+        } else {
+          localStorage.removeItem('saved-graph-' + name);
           toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
           updateGraphList(() => {
             if (currentGraphName === name) {
@@ -849,21 +870,9 @@ $(() => {
               showGraphName();
             }
           });
-        }).catch((error) => {
-          toastr.error(`Failed to drop ${name}..`, '', {preventDuplicates: true, timeOut: 3000});
-        });
-      } else {
-        localStorage.removeItem('saved-graph-' + name);
-        toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
-        updateGraphList(() => {
-          if (currentGraphName === name) {
-            currentGraphName = savedGraphNames[0];
-            loadCurrentGraph();
-            showGraphName();
-          }
-        });
+        }
       }
-    }
+    });
     e.stopPropagation();
   });
 
@@ -1045,7 +1054,7 @@ $(() => {
       showDenyButton: true,
       showCancelButton: true,
       confirmButtonText: 'Save',
-      denyButtonText: `Don't save`,
+      denyButtonText: `Discard`,
     }).then((result) => {
       if (result.isConfirmed && callback) {
         saveCurrentGraph(callback);
