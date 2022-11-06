@@ -819,7 +819,7 @@ $(() => {
 
 
     Swal.fire({
-      text: `Really delete ${name}?`,
+      text: `Delete ${name}?`,
       showCancelButton: true,
       confirmButtonColor: "#d33",
       confirmButtonText: 'Delete',
@@ -1062,6 +1062,7 @@ $(() => {
       config: template.config
     });
     byProgram = false;
+    saveCurrentGraph();
   }
 
 
@@ -1134,7 +1135,7 @@ $(() => {
 
   q('#reset-config-btn').addEventListener('click', () => {
     Swal.fire({
-      text: `Really reset config?`,
+      text: `Reset config?`,
       showCancelButton: true,
       confirmButtonText: 'Reset',
       confirmButtonColor: "#d33",
