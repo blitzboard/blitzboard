@@ -415,7 +415,7 @@ $(() => {
         for (let marker of markers)
           marker.clear();
         markers = [];
-        let message = '';
+        let warningMessage = '', infoMessage = '';
         let addedNode = new Set();
         let addedLineStart = editor.lineCount();
         let oldCursor = editor.getCursor();
@@ -431,14 +431,14 @@ $(() => {
             }
             editor.replaceRange('\n' + warning.node, pos); // adds a new line
             // editor.setValue(editor.getValue() + "\n" + warning.node);
-            if (message !== '')
-              message += ', ';
-            message += `Missing node '${warning.node}' is created`;
+            if (infoMessage !== '')
+              infoMessage += ', ';
+            infoMessage += `Missing node '${warning.node}' is created`;
             addedNode.add(warning.node);
           } else {
-            if (message !== '')
-              message += ', ';
-            message += warning.message;
+            if (warningMessage !== '')
+              warningMessage += ', ';
+            warningMessage += warning.message;
             markers.push(editor.markText({
                 line: warning.location.start.line - 1,
                 ch: warning.location.start.column - 1
@@ -452,8 +452,10 @@ $(() => {
         byProgram = false;
         if (addedNode.size > 0)
           updateGraph(editor.getValue());
-        if (message.length > 0)
-          toastr.warning(message, {preventDuplicates: true})
+        if (infoMessage.length > 0)
+          toastr.info(infoMessage, {preventDuplicates: true})
+        if (warningMessage.length > 0)
+          toastr.warning(warningMessage, {preventDuplicates: true})
       }
     } catch (e) {
       console.log(e);
