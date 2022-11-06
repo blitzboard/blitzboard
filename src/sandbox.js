@@ -96,7 +96,11 @@ $(() => {
     }
     pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
     if (!pgToBeSorted) {
-      alert('Please write a valid graph before sort.');
+      Swal.fire({
+        text: `Please write a valid graph before sort.`,
+        icon: "error",
+      });
+      return;
     }
     let oldNodeKey = localStorage.getItem('nodeSortKey');
     let oldEdgeKey = localStorage.getItem('edgeSortKey');
@@ -970,7 +974,10 @@ $(() => {
     axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
       let props = response.data.properties;
       if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
-        alert("This data has been updated outside. Please reload first.");
+        Swal.fire({
+          text: "This data has been updated outside. Please reload first.",
+          icon: "error",
+        });
       } else {
         let now = Date.now();
         lastUpdate = now;
@@ -1207,7 +1214,10 @@ $(() => {
           });
         }
         else if (!zip.file("graph.pg") || !zip.file("config.js")) {
-          alert("Invalid zip file");
+          Swal.fire({
+            text: "Invalid zip file",
+            icon: "error",
+          });
         } else {
           zip.file("graph.pg").async("string").then(function success(content) {
             let graph = content;
@@ -1223,7 +1233,10 @@ $(() => {
           });
         }
       }, function (e) {
-        alert("Error reading " + f.name + ": " + e.message);
+        Swal.fire({
+          text: `Error reading ${f.name}: ${e.message}`,
+          icon: "error",
+        });
       });
     }
 
