@@ -306,27 +306,6 @@ $(() => {
     });
   });
 
-  q('#share-btn').addEventListener('click', () => {
-    let url = new URL(window.location);
-    let params = new URLSearchParams();
-    params.set('pg', editor.getValue());
-    params.set('config', configEditor.getValue());
-    params.set('viewMode', viewMode);
-    params.set('name', currentGraphName);
-    url.search = params;
-    if (url.length > 7333) {
-      alert("The content is too large for sharing via URI (Current: " + url.length + " / Max: 7333). Please export instead.");
-    } else {
-      if (!navigator.clipboard) {
-        alert("Sharing is not allowed under non-secure HTTP. Please export your graph or use HTTPS.");
-      } else {
-        navigator.clipboard.writeText(url.toString()).then(function () {
-          alert("Your graph is now on clipboard!");
-        });
-      }
-    }
-  });
-
   function onResize(event, ui) {
     const totalWidth = $("#main-area").width();
     let width = $("#input-area").width();
