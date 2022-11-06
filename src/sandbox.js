@@ -916,13 +916,14 @@ $(() => {
   }
 
   $(document).on('click', '.history-item', (e) => {
-    confirmToSaveGraph();
     let i = $('.history-item').index(e.target);
     let graph = savedGraphNames[i];
-    loadGraphByName(graph);
+    confirmToSaveGraph(() => {
+      loadGraphByName(graph);
+    });
   });
 
-  function saveCurrentGraph(saveOnRemote = false) {
+  function saveCurrentGraph(callback = null) {
     let name = currentGraphName;
     if (!name) {
       name = newGraphName();
@@ -955,12 +956,14 @@ $(() => {
       }
       localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
       updateGraphList();
+      if(callback)
+        callback();
     } else {
-      saveToBackend();
+      saveToBackend(callback);
     }
   }
   
-  function saveToBackend() {
+  function saveToBackend(callback = null) {
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
     let graphName = currentGraphName;
     let configValue = configEditor.getValue();
@@ -991,6 +994,8 @@ $(() => {
             toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
             updateGraphList();
             setUnsavedStatus(false);
+            if(callback)
+              callback();
           }).catch((error) => {
             toastr.error(`Failed to create save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
           });
@@ -1016,13 +1021,28 @@ $(() => {
     });
   }
   
-  function confirmToSaveGraph() {
+  function confirmToSaveGraph(callback = null) {
     if(!(remoteMode && unsavedChangeExists)) {
-      return true;
+      if(callback)
+        callback();
+      return Promise.resolve(); // Empty promise (resolved immediately)
     }
-    if(confirm(`Save your change for ${currentGraphName} before leaving?`)) {
-      saveCurrentGraph();
-    }
+
+    return Swal.fire({
+      title: 'Save change?',
+      text: `Save your change for ${currentGraphName} before leaving?`,
+      icon: 'warning',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Save',
+      denyButtonText: `Don't save`,
+    }).then((result) => {
+      if (result.isConfirmed && callback) {
+        saveCurrentGraph(callback);
+      } else if(result.isDenied && callback) {
+        callback();
+      }
+    })
   }
   
   function createNewGraph(templateIndex) {
@@ -1040,8 +1060,7 @@ $(() => {
 
 
   $('.template-dropdown').on('click', (e) => {
-    confirmToSaveGraph();
-    createNewGraph($(e.target).data('index'));
+    confirmToSaveGraph(() => createNewGraph($(e.target).data('index')));
   });
 
 
@@ -1120,11 +1139,13 @@ $(() => {
 
 
   q('#import-btn').addEventListener('click', (e) => {
-    confirmToSaveGraph();
-    q('#import-btn').value = '';
+    confirmToSaveGraph(() => {
+      q('#import-input').value = '';
+      q('#import-input').click();
+    });
   });
 
-  q('#import-btn').addEventListener('change', (evt) => {
+  q('#import-input').addEventListener('change', (evt) => {
     function handleFile(f) {
       let nameWithoutExtension = f.name.includes('.') ? f.name.split('.').slice(0, -1).join('.') : f.name;
       // Remove datetime part like '****_20200101123045

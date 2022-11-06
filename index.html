@@ -40,6 +40,7 @@
     <script src='./src/codemirror/mark-selection.js'></script>
     <script src='./src/codemirror/dialog.js'></script>
     <script src='./src/codemirror/search.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/search/searchcursor.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/show-hint.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/anyword-hint.min.js'></script>
@@ -120,10 +121,11 @@
                 <li class='nav-item'>
                     <label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' for='import-btn'
                         href='#' title='Import'>
-                        <input accept='.zip' id='import-btn' type='file'>
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" id='import-btn'>
                             file_upload
                         </span>
+                        </label>
+                        <input accept='.zip' id='import-input' type='file'>
                         </input>
                     </label>
                 </li>
