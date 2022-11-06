@@ -1034,7 +1034,6 @@ $(() => {
     }
 
     return Swal.fire({
-      title: 'Save change?',
       text: `Save your change for "${currentGraphName}" before leaving?`,
       icon: 'warning',
       showDenyButton: true,
