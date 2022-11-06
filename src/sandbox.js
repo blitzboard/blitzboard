@@ -1137,8 +1137,16 @@ $(() => {
   });
 
   q('#reset-config-btn').addEventListener('click', () => {
-    if (confirm("Really reset config?"))
-      configEditor.setValue(defaultConfig);
+    Swal.fire({
+      text: `Really reset config?`,
+      showCancelButton: true,
+      confirmButtonText: 'Reset',
+      confirmButtonColor: "#d33",
+    }).then(result => {
+      if(result.isConfirmed) {
+        configEditor.setValue(defaultConfig);
+      }
+    })
   });
 
   q('#zoom-fit-btn').addEventListener('click', () => {
