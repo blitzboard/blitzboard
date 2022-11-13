@@ -53,7 +53,7 @@ let baseConfig = `{
 
 let pageTemplates = [
   {
-    name: 'RelationShip',
+    name: 'Relationship',
     pg: `
 Alice :person age:15
 Bob :person age:15
