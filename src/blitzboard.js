@@ -663,7 +663,7 @@ module.exports = class Blitzboard {
       _title: tooltip != null ? tooltip : this.createTitle(pgNode),
       fixed: {
         x: precomputePosition ? true : fixed,
-        y: this.config.layout === 'timeline' || precomputePosition ? true : fixed
+        y: this.config.layout === 'timeline' ? false : (precomputePosition ? true : fixed),
       },
 
       borderWidth: url ? 3 : 1,
