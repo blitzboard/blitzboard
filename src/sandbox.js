@@ -310,6 +310,21 @@ $(() => {
     });
   });
 
+  toastr.subscribe(() => {
+    updateToastrPosition();
+  });
+
+  function updateToastrPosition() {
+    const toastrOffset = 20;
+    const totalWidth = $("#main-area").width();
+    let width = $("#input-area").width();
+    if(q('#edit-panel-btn').checked) {
+      $('.toast-top-right').css('right', totalWidth - width + toastrOffset);
+    } else {
+      $('.toast-top-right').css('right', toastrOffset);
+    }
+  }
+
   function onResize(event, ui) {
     const totalWidth = $("#main-area").width();
     let width = $("#input-area").width();
@@ -319,6 +334,7 @@ $(() => {
     }
     localStorage.setItem('inputAreaWidth', width);
     $('#graph-pane').css('width', (totalWidth - width));
+    updateToastrPosition();
     onConfigResize(null, null);
   }
 
@@ -382,7 +398,6 @@ $(() => {
       
       if (!blitzboard.staticLayoutMode && editor.lineCount() >= staticLayoutThreshold) {
         blitzboard.staticLayoutMode = true;
-        toastr.warning("Static layout mode is enabled because input is large!");
       } else if(blitzboard.staticLayoutMode && editor.lineCount() < staticLayoutThreshold) {
         blitzboard.staticLayoutMode = false;
       }
@@ -514,6 +529,8 @@ $(() => {
       $('#input-area').css('width', prevInputWidth);
       $('#graph-pane').css('width', totalWidth - prevInputWidth);
       viewMode = 'double-column';
+      editor.refresh();
+      configEditor.refresh();
     }
     localStorage.setItem('viewMode', viewMode);
     onResize(null, null);
@@ -1511,6 +1528,7 @@ $(() => {
   });
 
   toastr.options.timeOut = 0; // Set toastr persistent until remove() is called
+  toastr.options.positionClass = "toast-top-right";
 
   let oldHint = CodeMirror.hint.anyword;
 
