@@ -834,7 +834,6 @@ $(() => {
     let i = $('.history-item').index(item);
     let name = savedGraphNames[i];
 
-
     Swal.fire({
       text: `Delete ${name}?`,
       showCancelButton: true,
@@ -1000,47 +999,32 @@ $(() => {
       } else {
         let now = Date.now();
         lastUpdate = now;
-        
-        function sendCreateRequest() {
-          axios.post(`${backendUrl}/create`, {
-            name: graphName,
-            properties: {
-              pg: [pgValue],
-              config: [configValue],
-              lastUpdate: [now],
-              updatedBy: ['blitzboard']
-            },
-            pg: {
-              nodes: tmpNodes,
-              edges: tmpEdges
-            }
-          }).then((res) => {
-            toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
-            updateGraphList();
-            setUnsavedStatus(false);
-            if(callback)
-              callback();
-          }).catch((error) => {
-            toastr.error(`Failed to create save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
-          });
-        }
-        
-        if(savedGraphNames.includes(graphName)) {
-          axios.request({
-            method: 'post',
-            url: `${backendUrl}/drop`,
-            data: `graph=${currentGraphName}`,
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-          }).finally((res) => {
-            sendCreateRequest();
-          }).catch((error) => {
-            toastr.error(`Failed to drop ${graphName}..`, '', {preventDuplicates: true, timeOut: 3000});
-          });
-        } else {
-          sendCreateRequest();
-        }
+
+        let savedData = {
+          name: graphName,
+          properties: {
+            pg: [pgValue],
+            config: [configValue],
+            lastUpdate: [now],
+            updatedBy: ['blitzboard']
+          },
+          pg: {
+            nodes: tmpNodes,
+            edges: tmpEdges
+          }
+        };
+
+        let action = savedGraphNames.includes(graphName) ? 'update' : 'create';
+
+        axios.post(`${backendUrl}/${action}`, savedData).then((res) => {
+          toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
+          updateGraphList();
+          setUnsavedStatus(false);
+          if(callback)
+            callback();
+        }).catch((error) => {
+          toastr.error(`Failed to save ${graphName} ..`, '', {preventDuplicates: true, timeOut: 3000});
+        });
       }
     });
   }
