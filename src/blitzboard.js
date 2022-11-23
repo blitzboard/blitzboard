@@ -47,6 +47,7 @@ module.exports = class Blitzboard {
     style: "border: solid 1px silver; background: radial-gradient(white, silver);",
     extraOptions: {
     },
+    dimensions: 2,
   };
   static tooltipMaxWidth = 600;
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
@@ -267,7 +268,6 @@ module.exports = class Blitzboard {
       parent: this.container,
       controller: true,
       getTooltip: (elem) => {
-        console.log(elem);
         if(!elem?.object)
           return null;
         return {
@@ -618,16 +618,17 @@ module.exports = class Blitzboard {
       this.nodeColorMap[group] = getRandomColor(group, this.config.node.saturation, this.config.node.brightness);
     }
     
-    let x, y, fixed, width;
+    let x, y, z, fixed, width;
 
     fixed = true;
     try {
-      ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
+      ({x, y, z = 0} = this.nodeLayout.getNodePosition(pgNode.id));
     } catch {
       this.nodeLayout.graph.addNode(pgNode.id);
-      ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
+      ({x, y, z = 0} = this.nodeLayout.getNodePosition(pgNode.id));
     }
     width = null;
+
 
     let url = retrieveHttpUrl(pgNode);
     let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
@@ -679,6 +680,7 @@ module.exports = class Blitzboard {
       url: url,
       x: x,
       y: y,
+      z: z,
       chosen: this.retrieveConfigProp(pgNode, 'node', 'chosen'),
       font: {
         color: url ? 'blue' : 'black',
@@ -1364,24 +1366,24 @@ module.exports = class Blitzboard {
       
       const physicsSettings = {
         // timeStep: 0.1,
-        dimensions: 2,
+        dimensions: this.config.dimensions,
         // gravity: -1.2,
         // theta: 1.8,
-        springLength: 50,
+        springLength: 200,
         springCoefficient: 0.7,
         // dragCoefficient: 0.9,
       };
-      if(!this.nodeLayout) {
-        this.nodeLayout = createLayout(ngraph, physicsSettings);
-      } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
-        // convert into layout of ngraph
-        let ngraphLayout = createLayout(ngraph, physicsSettings);
-        for(const [nodeId, position] of Object.entries(this.nodeLayout)) {
-          if(ngraphLayout.graph.hasNode(nodeId))
-            ngraphLayout.setNodePosition(nodeId, position.x, position.y);
-        }
-        this.nodeLayout = ngraphLayout;
-      }
+      // if(!this.nodeLayout) {
+      this.nodeLayout = createLayout(ngraph, physicsSettings);
+      // } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
+      //   // convert into layout of ngraph
+      //   let ngraphLayout = createLayout(ngraph, physicsSettings);
+      //   for(const [nodeId, position] of Object.entries(this.nodeLayout)) {
+      //     if(ngraphLayout.graph.hasNode(nodeId))
+      //       ngraphLayout.setNodePosition(nodeId, position.x, position.y);
+      //   }
+      //   this.nodeLayout = ngraphLayout;
+      // }
       for (let i = 0; i < 1000; ++i) {
         if(this.nodeLayout.step() && i >= 100) {
           console.log(`layout is stable at step #${i}`);
@@ -1521,8 +1523,9 @@ module.exports = class Blitzboard {
       opacity: 1, // TODO
       stroked: false,
       filled: true,
+      billboard: true,
       coordinateSystem: DeckGL.COORDINATE_SYSTEM.CARTESIAN,
-      getPosition: (n) => [n.x, n.y, 0],
+      getPosition: (n) => [n.x, n.y, n.z],
       getRadius: (n) => n.size, // TODO
       radiusMinPixels: 1,
       getFillColor: (n) => n.color,
@@ -1535,12 +1538,12 @@ module.exports = class Blitzboard {
       data: this.edgeDataSet,
       getWidth: edge => edge.width,
       getSourcePosition: (edge) => {
-        let {x, y} = blitzboard.nodeDataSet[edge.from];
-        return [x, y, 0];
+        let {x, y, z} = blitzboard.nodeDataSet[edge.from];
+        return [x, y, z];
       },
       getTargetPosition: (edge) => {
-        let {x, y} = blitzboard.nodeDataSet[edge.to];
-        return [x, y, 0];
+        let {x, y, z} = blitzboard.nodeDataSet[edge.to];
+        return [x, y, z];
       },
       getColor: (d) => d.color,
       widthUnits: 'common',
@@ -1554,8 +1557,8 @@ module.exports = class Blitzboard {
       data: Object.values(this.nodeDataSet),
       pickable: true,
       getPosition: (node) => {
-        let {x, y} = blitzboard.nodeLayout.getNodePosition(node.id);
-        return [x, y + node.size, 0];
+        let {x, y, z} = blitzboard.nodeLayout.getNodePosition(node.id);
+        return [x, y + node.size, z];
       },
       getText: node => node.label,
       getSize: fontSize,
@@ -1577,9 +1580,9 @@ module.exports = class Blitzboard {
       data: this.edgeDataSet,
       pickable: true,
       getPosition: (edge) => {
-        let {x: fromX, y: fromY} = blitzboard.nodeDataSet[edge.from];
-        let {x: toX, y: toY} = blitzboard.nodeDataSet[edge.to];
-        return [(fromX + toX) / 2, (fromY + toY) / 2, 0];
+        let {x: fromX, y: fromY, z: fromZ} = blitzboard.nodeDataSet[edge.from];
+        let {x: toX, y: toY, z: toZ} = blitzboard.nodeDataSet[edge.to];
+        return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
       },
       getText: edge => edge.label,
       getSize: fontSize,
@@ -1616,7 +1619,7 @@ module.exports = class Blitzboard {
         }
       },
       sizeScale: 1,
-      getPosition: (n) => [n.x, n.y, 0],
+      getPosition: (n) => [n.x, n.y, n.z],
       getSize: n => 4,
       sizeUnits: 'common',
       getColor: n => [255, 0, 0],
@@ -1626,7 +1629,7 @@ module.exports = class Blitzboard {
     });
 
 
-    const view = new DeckGL.OrthographicView({});
+    const view = this.config.dimensions == 2 ? new DeckGL.OrthographicView({}) : new DeckGL.OrbitView({});
 
     let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
 
