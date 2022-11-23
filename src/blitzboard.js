@@ -266,6 +266,14 @@ module.exports = class Blitzboard {
     this.network = new DeckGL.Deck({
       parent: this.container,
       controller: true,
+      getTooltip: (elem) => {
+        console.log(elem);
+        if(!elem?.object)
+          return null;
+        return {
+          html: elem.object._title
+        }
+      },
     });
     
     this.applyDynamicStyle(`
