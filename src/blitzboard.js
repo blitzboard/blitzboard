@@ -3,12 +3,15 @@ require('@iconify/iconify');
 require('leaflet');
 require('./pg_parser_browserified.js');
 require('./scc.js');
+const DeckGL = require('@deck.gl/core');
+const DeckGLLayers = require('@deck.gl/layers');
+
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
 const createGraph = require("ngraph.graph");
 const createLayout = require("ngraph.forcelayout");
 
-const defaultWidth = 2;
+const defaultWidth = 1;
 
 module.exports = class Blitzboard {
   static fontLoaded = false;
@@ -87,7 +90,7 @@ module.exports = class Blitzboard {
     this.sccMode = 'cluster';
     this.configChoice = null;
     
-    this.staticLayoutMode = false;
+    this.staticLayoutMode = true;
     this.mapAdjustTimer = null;
     
     this.container.style.position = 'absolute';
@@ -193,7 +196,7 @@ module.exports = class Blitzboard {
     let blitzboard = this;
 
     container.appendChild(this.screen);
-    container.appendChild(this.networkContainer);
+    // container.appendChild(this.networkContainer);
     container.appendChild(this.mapContainer);
     container.appendChild(this.configChoiceDiv);
     this.configChoiceDiv.appendChild(this.configChoiceLabel);
@@ -226,7 +229,7 @@ module.exports = class Blitzboard {
         e.stopPropagation(); // Inhibit zoom on vis-network
       }
     }, true);
-    
+
     this.container.addEventListener('mouseout', (e) => {
       blitzboard.dragging = false;
     }, true);
@@ -234,7 +237,7 @@ module.exports = class Blitzboard {
     this.container.addEventListener('mouseup', (e) => {
       blitzboard.dragging = false;
     }, true);
-    
+
     this.container.addEventListener('mousemove', (e) => {
       if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMouseEvent) {
         blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
@@ -258,6 +261,12 @@ module.exports = class Blitzboard {
     }, true);
     
     const balloonHandleSize = 12;
+
+
+    this.network = new DeckGL.Deck({
+      parent: this.container,
+      controller: true,
+    });
     
     this.applyDynamicStyle(`
       .blitzboard-tooltip {
@@ -603,21 +612,14 @@ module.exports = class Blitzboard {
     
     let x, y, fixed, width;
 
-    if(this.staticLayoutMode && this.config.layout !== 'hierarchical' && this.config.layout !== 'map') {
-      fixed = true;
-      try {
-        ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
-      } catch {
-        this.nodeLayout.graph.addNode(pgNode.id);
-        ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
-      }
-      x *= 20;
-      y *= 20;
-      width = null;
-    } else {
-      ({x, y, fixed, width} = this.calcNodePosition(pgNode));
+    fixed = true;
+    try {
+      ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
+    } catch {
+      this.nodeLayout.graph.addNode(pgNode.id);
+      ({x, y} = this.nodeLayout.getNodePosition(pgNode.id));
     }
-    
+    width = null;
 
     let url = retrieveHttpUrl(pgNode);
     let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
@@ -638,27 +640,26 @@ module.exports = class Blitzboard {
     let clusterId = null;
 
     color = color || this.nodeColorMap[group];
-    
-    if(opacity < 1) {
-      let rgb = this.getHexColors(color);
-      color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-    }
-    let precomputePosition = this.hierarchicalPositionMap != null ? this.hierarchicalPositionMap[pgNode.id] : undefined;
-    if(precomputePosition) {
-      x = precomputePosition.x;
-      y = precomputePosition.y;
-    }
+
     if(this.sccMap[pgNode.id]) {
       color = Blitzboard.SCCColor;
       clusterId = this.sccMap[pgNode.id];
     }
 
+    let rgb = this.getHexColors(color);
+    let precomputePosition = this.hierarchicalPositionMap != null ? this.hierarchicalPositionMap[pgNode.id] : undefined;
+    if(precomputePosition) {
+      x = precomputePosition.x;
+      y = precomputePosition.y;
+    }
+
     let attrs = {
       id: pgNode.id,
-      color: color,
+      color: rgb,
+      opacity,
       label: createLabelText(pgNode, props),
       shape: 'dot',
-      _size: size || 25,
+      _size: size || 5,
       degree: degree,
       _title: tooltip != null ? tooltip : this.createTitle(pgNode),
       fixed: {
@@ -829,10 +830,7 @@ module.exports = class Blitzboard {
 
     color = color || this.edgeColorMap[edgeLabel];
 
-    if(opacity < 1) {
-      let rgb = this.getHexColors(color);
-      color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-    }
+    let rgb = this.getHexColors(color);
     let smooth = this.config.layout === 'map' || this.config.layout === 'hierarchical-scc' ? false : { roundness: 1 };
 
     let dashes = false;
@@ -844,7 +842,7 @@ module.exports = class Blitzboard {
       id: id,
       from: pgEdge.from,
       to: pgEdge.to,
-      color: color,
+      color: rgb,
       label: createLabelText(pgEdge, props),
       _title: tooltip != null ? tooltip : this.createTitle(pgEdge),
       remoteId: id,
@@ -1108,22 +1106,6 @@ module.exports = class Blitzboard {
     }
   }
   
-  doLayoutStep(step = 1) {
-    for(let i = 0; i < step; ++i) {
-      this.nodeLayout.step();
-    }
-    let listToUpdate = [];
-    this.nodeLayout.graph.forEachNode(node => {
-      let position = this.nodeLayout.getNodePosition(node.id);
-      listToUpdate.push({
-        id: node.id,
-        x: position.x * 20,
-        y: position.y * 20
-      });
-    })
-    this.nodeDataSet.update(listToUpdate);
-  }
-  
   /// Return a set of upstream nodes from node specified by srcNodeId
   getUpstreamNodes(srcNodeId) {
     const edges = this.graph.edges;
@@ -1225,6 +1207,7 @@ module.exports = class Blitzboard {
   }
   
   update(applyDiff = true) {
+    this.staticLayoutMode = true;
     let blitzboard = this;
     this.warnings = [];
 
@@ -1279,13 +1262,13 @@ module.exports = class Blitzboard {
         let existingNode = this.nodeMap[node.id];
         if(existingNode) {
           if(!nodeEquals(node, existingNode)) {
-            this.nodeDataSet.remove(existingNode);
+            delete this.nodeDataSet[node.id];
             let visNode = this.toVisNode(node, this.config.node.caption);
-            this.nodeDataSet.update(visNode);
+            this.nodeDataSet[node.id] = visNode;
           }
         } else {
           let visNode = this.toVisNode(node, this.config.node.caption);
-          this.nodeDataSet.add(visNode);
+          this.nodeDataSet[visNode.id] = visNode;
           this.addedNodes.add(node.id);
         }
         this.nodeMap[node.id] = node;
@@ -1384,7 +1367,7 @@ module.exports = class Blitzboard {
         dimensions: 2,
         // gravity: -1.2,
         // theta: 1.8,
-        // springLength: 300,
+        springLength: 50,
         springCoefficient: 0.7,
         // dragCoefficient: 0.9,
       };
@@ -1444,13 +1427,24 @@ module.exports = class Blitzboard {
     let defaultNodeProps = this.config.node.caption;
     let defaultEdgeProps = this.config.edge.caption;
 
-    this.nodeDataSet = new visData.DataSet();
-    this.nodeDataSet.add(this.graph.nodes.map((node) => {
-      return this.toVisNode(node, defaultNodeProps);
-    }));
+    this.nodeDataSet = {};
+    this.minX = 0;
+    this.maxX = 0;
+    this.minY = 0;
+    this.maxY = 0;
+    this.graph.nodes.forEach((node) => {
+      let visNode = this.toVisNode(node, defaultNodeProps);
+      this.nodeDataSet[node.id] = visNode;
+      let tmpPosition = blitzboard.nodeLayout.getNodePosition(node.id);
+      this.minY = Math.min(this.minY, tmpPosition.y);
+      this.maxY = Math.max(this.maxY, tmpPosition.y);
+      this.minX = Math.min(this.minX, tmpPosition.x);
+      this.maxX = Math.max(this.maxX, tmpPosition.x);
+      return visNode;
+    });
     
     this.edgeMap = {};
-    this.edgeDataSet = new visData.DataSet(this.graph.edges.map((edge) => {
+    this.edgeDataSet = this.graph.edges.map((edge) => {
       let id = this.toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
@@ -1464,15 +1458,8 @@ module.exports = class Blitzboard {
       }
 
       return visEdge;
-    }));
+    });
 
-
-
-    // create a network
-    let data = {
-      nodes: this.nodeDataSet,
-      edges: this.edgeDataSet
-    };
 
     let layout = {
       randomSeed: 1
@@ -1526,7 +1513,106 @@ module.exports = class Blitzboard {
     };
 
     this.options = Object.assign(this.options, this.config.extraOptions);
-    this.network = new visNetwork.Network(this.networkContainer, data, this.options);
+
+    const scatterplotLayer = new DeckGLLayers.ScatterplotLayer({
+      id: 'scatterplot-layer',
+      data: Object.values(this.nodeDataSet),
+      pickable: true,
+      opacity: 1, // TODO
+      stroked: false,
+      filled: true,
+      coordinateSystem: DeckGL.COORDINATE_SYSTEM.CARTESIAN,
+      getPosition: (n) => [n.x, n.y, 0],
+      getRadius: (n) => n.size, // TODO
+      radiusMinPixels: 1,
+      getFillColor: (n) => n.color,
+      radiusUnits: 'common',
+    });
+
+    const lineLayer = new DeckGLLayers.LineLayer({
+      id: "line-layer",
+      coordinateSystem: DeckGL.COORDINATE_SYSTEM.CARTESIAN,
+      data: this.edgeDataSet,
+      getWidth: d => d.width,
+      getSourcePosition: (d) => {
+        let {x, y} = blitzboard.nodeDataSet[d.from];
+        return [x, y, 0];
+      },
+      getTargetPosition: (d) => {
+        let {x, y} = blitzboard.nodeDataSet[d.to];
+        return [x, y, 0];
+      },
+      getColor: (d) => d.color,
+      widthUnits: 'common',
+      widthScale: 0.2
+    });
+
+    const fontSize = 3;
+
+    const nodeTextLayer = new DeckGLLayers.TextLayer({
+      id: 'node-text-layer',
+      data: Object.values(this.nodeDataSet),
+      pickable: true,
+      getPosition: (d) => {
+        let {x, y} = blitzboard.nodeLayout.getNodePosition(d.id);
+        return [x, y + d.size, 0];
+      },
+      getText: d => d.label,
+      getSize: fontSize,
+      sizeMaxPixels: 60,
+      getAngle: 0,
+      getTextAnchor: 'middle',
+      getAlignmentBaseline: 'top',
+      sizeUnits: 'common',
+      outlineWidth: 0.2,
+      outlineColor: [255,255, 255, 255],
+      fontSettings: {
+        sdf: true
+      }
+    });
+
+
+    const edgeTextLayer = new DeckGLLayers.TextLayer({
+      id: 'edge-text-layer',
+      data: this.edgeDataSet,
+      pickable: true,
+      getPosition: (d) => {
+        let {x: fromX, y: fromY} = blitzboard.nodeDataSet[d.from];
+        let {x: toX, y: toY} = blitzboard.nodeDataSet[d.to];
+        return [(fromX + toX) / 2, (fromY + toY) / 2, 0];
+      },
+      getText: d => d.label,
+      getSize: fontSize,
+      getAngle: 0,
+      getTextAnchor: 'middle',
+      getAlignmentBaseline: 'top',
+      sizeUnits: 'common',
+      outlineWidth: 0.2,
+      outlineColor: [255,255, 255, 255],
+      fontSettings: {
+        sdf: true
+      }
+    });
+
+    const view = new DeckGL.OrthographicView({});
+
+    let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
+
+    const INITIAL_VIEW_STATE = {
+      target: [(this.minX + this.maxX) / 2, (this.minY + this.maxY) / 2],
+      zoom: Math.log(rate) / Math.log(2)
+    };
+
+    this.network.setProps({
+      initialViewState: INITIAL_VIEW_STATE,
+      views: [view],
+      layers: [
+        lineLayer,
+        scatterplotLayer,
+        nodeTextLayer,
+        edgeTextLayer,
+      ]
+    });
 
     this.clusterSCC();
 
@@ -1558,7 +1644,7 @@ module.exports = class Blitzboard {
       }
       this.updateNodeLocationOnMap();
       setTimeout(() => blitzboard.map.fitBounds(L.latLngBounds([statistics.latMin, statistics.lngMax], [statistics.latMax, statistics.lngMin] )));
-      blitzboard.network.moveTo({scale: 1.0});
+      // blitzboard.network.moveTo({scale: 1.0});
     } else {
       this.mapContainer.style.display = 'none';
       if(this.map) {
@@ -1567,39 +1653,39 @@ module.exports = class Blitzboard {
       this.map = null;
     }
 
-    this.network.canvas.body.container.addEventListener('keydown', (e) => {
-      // Key 0
-      if(e.keyCode === 48)
-        blitzboard.fit();
-    });
-
-
-    this.network.on('zoom', (e) => {
-      blitzboard.updateTooltipLocation();
-    });
-
-    this.network.on('stabilizationIterationsDone', (e) => {
-      blitzboard.options.physics.enabled = false;
-      blitzboard.network.setOptions(blitzboard.options);
-    });
-
-    this.network.on('resize', (e) => {
-      if(blitzboard.config.layout === 'map') {
-        // Fix scale to 1.0 (delay is needed to override scale set by vis-network)  
-        blitzboard.map.invalidateSize();
-      }
-    });
-    
-
-    this.network.on('dragStart', (e) => {
-      const node = this.nodeDataSet.get(e.nodes[0]);
-      if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
-        this.nodeDataSet.update({
-          id: e.nodes[0],
-          fixed: node?.fixedByTime ? {x: true, y: true } : false
-        });
-      }
-    });
+    // this.network.canvas.body.container.addEventListener('keydown', (e) => {
+    //   // Key 0
+    //   if(e.keyCode === 48)
+    //     blitzboard.fit();
+    // });
+    //
+    //
+    // this.network.on('zoom', (e) => {
+    //   blitzboard.updateTooltipLocation();
+    // });
+    //
+    // this.network.on('stabilizationIterationsDone', (e) => {
+    //   blitzboard.options.physics.enabled = false;
+    //   blitzboard.network.setOptions(blitzboard.options);
+    // });
+    //
+    // this.network.on('resize', (e) => {
+    //   if(blitzboard.config.layout === 'map') {
+    //     // Fix scale to 1.0 (delay is needed to override scale set by vis-network)
+    //     blitzboard.map.invalidateSize();
+    //   }
+    // });
+    //
+    //
+    // this.network.on('dragStart', (e) => {
+    //   const node = this.nodeDataSet.get(e.nodes[0]);
+    //   if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
+    //     this.nodeDataSet.update({
+    //       id: e.nodes[0],
+    //       fixed: node?.fixedByTime ? {x: true, y: true } : false
+    //     });
+    //   }
+    // });
 
     function statisticsOfMap() {
       let lngKey =  blitzboard.config.layoutSettings.lng;
@@ -1630,94 +1716,94 @@ module.exports = class Blitzboard {
         lngMax
       };
     }
-
-    
-    this.network.on("zoom", function(){
-      let pos = blitzboard.network.getViewPosition();
-      if(blitzboard.config.zoom?.min && blitzboard.network.getScale() < blitzboard.config.zoom.min)
-      {
-        blitzboard.network.moveTo({
-          position: blitzboard.prevZoomPosition,
-          scale: blitzboard.config.zoom?.min
-        });
-      }
-      else if(blitzboard.config.zoom?.max && blitzboard.network.getScale() > blitzboard.config.zoom.max){
-        blitzboard.network.moveTo({
-          position: blitzboard.prevZoomPosition,
-          scale: blitzboard.config.zoom.max,
-        });
-      } else {
-        blitzboard.prevZoomPosition = pos;
-      }
-    });
-
-
-    this.network.on("hoverNode", (e) => {
-      this.network.canvas.body.container.style.cursor = 'default';
-      const node = this.nodeDataSet.get(e.node);
-      if(node) {
-        if (node.url) {
-          this.network.canvas.body.container.style.cursor = 'pointer';
-          this.nodeDataSet.update({
-            id: e.node,
-            color: '#8888ff',
-          });
-        }
-        
-        if (this.config.node.onHover) {
-          this.config.node.onHover(this.getNode(e.node));
-        }
-        
-        this.elementWithTooltip = {
-          node: node
-        };
-        this.showTooltip();
-      }
-    });
-
-    this.network.on("hoverEdge", (e) => {
-      const edge = this.edgeDataSet.get(e.edge);
-      if (edge) {
-        this.elementWithTooltip = {
-          edge: edge,
-          position: {
-            x: e.event.offsetX,
-            y: e.event.offsetY,
-          }
-        };
-        this.showTooltip();
-      }
-    });
-
-    this.network.on("selectNode", (e) => {
-      // TODO: Should we show fixed tooltip on selection?
-      // if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
-      //   const node = this.nodeDataSet.get(e.nodes[0]);
-      //   if (node) {
-      //     this.elementWithTooltip = {
-      //       node: node
-      //     };
-      //     this.showTooltip();
-      //   }
-      // }
-    });
-
-    this.network.on("selectEdge", (e) => {
-      // TODO: Should we show fixed tooltip on selection?
-      // if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
-      //   const edge = this.edgeDataSet.get(e.edges[0]);
-      //   if (edge) {
-      //     this.elementWithTooltip = {
-      //       edge: edge,
-      //       position: {
-      //         x: e.x,
-      //         y: e.y,
-      //       }
-      //     };
-      //     this.showTooltip();
-      //   }
-      // }
-    });
+    //
+    //
+    // this.network.on("zoom", function(){
+    //   let pos = blitzboard.network.getViewPosition();
+    //   if(blitzboard.config.zoom?.min && blitzboard.network.getScale() < blitzboard.config.zoom.min)
+    //   {
+    //     blitzboard.network.moveTo({
+    //       position: blitzboard.prevZoomPosition,
+    //       scale: blitzboard.config.zoom?.min
+    //     });
+    //   }
+    //   else if(blitzboard.config.zoom?.max && blitzboard.network.getScale() > blitzboard.config.zoom.max){
+    //     blitzboard.network.moveTo({
+    //       position: blitzboard.prevZoomPosition,
+    //       scale: blitzboard.config.zoom.max,
+    //     });
+    //   } else {
+    //     blitzboard.prevZoomPosition = pos;
+    //   }
+    // });
+    //
+    //
+    // this.network.on("hoverNode", (e) => {
+    //   this.network.canvas.body.container.style.cursor = 'default';
+    //   const node = this.nodeDataSet.get(e.node);
+    //   if(node) {
+    //     if (node.url) {
+    //       this.network.canvas.body.container.style.cursor = 'pointer';
+    //       this.nodeDataSet.update({
+    //         id: e.node,
+    //         color: '#8888ff',
+    //       });
+    //     }
+    //
+    //     if (this.config.node.onHover) {
+    //       this.config.node.onHover(this.getNode(e.node));
+    //     }
+    //
+    //     this.elementWithTooltip = {
+    //       node: node
+    //     };
+    //     this.showTooltip();
+    //   }
+    // });
+    //
+    // this.network.on("hoverEdge", (e) => {
+    //   const edge = this.edgeDataSet.get(e.edge);
+    //   if (edge) {
+    //     this.elementWithTooltip = {
+    //       edge: edge,
+    //       position: {
+    //         x: e.event.offsetX,
+    //         y: e.event.offsetY,
+    //       }
+    //     };
+    //     this.showTooltip();
+    //   }
+    // });
+    //
+    // this.network.on("selectNode", (e) => {
+    //   // TODO: Should we show fixed tooltip on selection?
+    //   // if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+    //   //   const node = this.nodeDataSet.get(e.nodes[0]);
+    //   //   if (node) {
+    //   //     this.elementWithTooltip = {
+    //   //       node: node
+    //   //     };
+    //   //     this.showTooltip();
+    //   //   }
+    //   // }
+    // });
+    //
+    // this.network.on("selectEdge", (e) => {
+    //   // TODO: Should we show fixed tooltip on selection?
+    //   // if(!this.network.getSelectedNodes().length && !this.network.getSelectedEdges().length) {
+    //   //   const edge = this.edgeDataSet.get(e.edges[0]);
+    //   //   if (edge) {
+    //   //     this.elementWithTooltip = {
+    //   //       edge: edge,
+    //   //       position: {
+    //   //         x: e.x,
+    //   //         y: e.y,
+    //   //       }
+    //   //     };
+    //   //     this.showTooltip();
+    //   //   }
+    //   // }
+    // });
     
 
     function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
@@ -1761,104 +1847,104 @@ module.exports = class Blitzboard {
         }
       }
     }
-    
-    this.network.on("afterDrawing", (ctx) => {
-      this.updateTooltipLocation();
-      for(let node of this.graph.nodes) {
-        node = this.nodeDataSet.get(node.id);
-        let nodeSize = this.config.layout === 'map' && this.nodeSizeOnMap ? this.nodeSizeOnMap : node._size;
-        if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon || this.config.node.autoIcon)) {
-          let position = this.network.getPosition(node.id);
-          let pgNode = this.nodeMap[node.id];
-          if(node.customIcon) {
-            if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
-              ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
-                position.x - nodeSize * Blitzboard.iconSizeCoef / 2, position.y - nodeSize * Blitzboard.iconSizeCoef / 2,
-                nodeSize * Blitzboard.iconSizeCoef,
-                nodeSize * Blitzboard.iconSizeCoef);
-            } else { // Ionicons
-              ctx.font = `${node.customIcon.size}px Ionicons`;
-              ctx.fillStyle = "white";
-              ctx.textAlign = "center";
-              ctx.textBaseline = "middle";
-              ctx.fillText(node.customIcon.code, position.x, position.y);
-            }
-          } else {
-            if(!pgNode) {
-              continue;
-            }
-            for (let label of pgNode.labels) {
-              let lowerLabel = label.toLowerCase();
-              if (Blitzboard.loadedIcons[lowerLabel]) {
-                if(Blitzboard.loadedIcons[lowerLabel] != 'retrieving...')
-                  ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - nodeSize * Blitzboard.iconSizeCoef / 2,
-                    position.y - nodeSize * Blitzboard.iconSizeCoef / 2,
-                    nodeSize * Blitzboard.iconSizeCoef,
-                    nodeSize * Blitzboard.iconSizeCoef);
-                break;
-              }
-            }
-          }
-        }
-      }
 
-     if(this.config.layout === 'timeline'){
-        const context = this.network.canvas.getContext("2d");
-        const view = this.network.canvas.body.view;
-        const offsetY = (view.translation.y - 20) / view.scale;
-        const offsetX = view.translation.x / view.scale;
-        const timeForOnePixel = (this.maxTime - this.minTime) / this.timeScale;
-        const timeOnLeftEdge = new Date(((this.maxTime.getTime() + this.minTime.getTime()) / 2) - timeForOnePixel * offsetX);
-        const clientWidth = this.network.canvas.body.container.clientWidth;
-        const rightMost = -offsetX + clientWidth / view.scale;
-        const oneMonth = 31 * 24 * 60 * 60 * 1000;
-        const oneDay = 24 * 60 * 60 * 1000;
-        const twoMonth = oneMonth * 2;
-        const fourMonth = twoMonth * 2;
-        const oneYear = 365 * oneDay;
-        const minDistance = 200;
-        context.font = (20 / view.scale).toString() + "px Arial";
-        context.fillStyle = "blue";
-        const minimumInterval = timeForOnePixel * minDistance / view.scale;
-        if(minimumInterval > oneYear ) {
-          plotTimes(timeOnLeftEdge, minimumInterval / oneYear, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-        else if(minimumInterval > fourMonth ) {
-          plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-        else if(minimumInterval > twoMonth) {
-          plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-        else if(minimumInterval > oneMonth) {
-          plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 16) {
-          plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 8) {
-          plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 4) {
-          plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else if(minimumInterval > oneDay * 2) {
-          plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        } else {
-          plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-        }
-      }
-    });
-    this.network.on("blurNode", (params) => {
-      this.network.canvas.body.container.style.cursor = 'default';
-      let node = this.nodeDataSet.get(params.node);
-      if(node && node.url) {
-        this.nodeDataSet.update({
-          id: params.node,
-          color: null,
-        });
-      }
-      this.hideTooltip();
-    });
-
-    this.network.on("blurEdge", (params) => {
-      this.hideTooltip();
-    });
+    // this.network.on("afterDrawing", (ctx) => {
+    //   this.updateTooltipLocation();
+    //   for(let node of this.graph.nodes) {
+    //     node = this.nodeDataSet.get(node.id);
+    //     let nodeSize = this.config.layout === 'map' && this.nodeSizeOnMap ? this.nodeSizeOnMap : node._size;
+    //     if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon || this.config.node.autoIcon)) {
+    //       let position = this.network.getPosition(node.id);
+    //       let pgNode = this.nodeMap[node.id];
+    //       if(node.customIcon) {
+    //         if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
+    //           ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
+    //             position.x - nodeSize * Blitzboard.iconSizeCoef / 2, position.y - nodeSize * Blitzboard.iconSizeCoef / 2,
+    //             nodeSize * Blitzboard.iconSizeCoef,
+    //             nodeSize * Blitzboard.iconSizeCoef);
+    //         } else { // Ionicons
+    //           ctx.font = `${node.customIcon.size}px Ionicons`;
+    //           ctx.fillStyle = "white";
+    //           ctx.textAlign = "center";
+    //           ctx.textBaseline = "middle";
+    //           ctx.fillText(node.customIcon.code, position.x, position.y);
+    //         }
+    //       } else {
+    //         if(!pgNode) {
+    //           continue;
+    //         }
+    //         for (let label of pgNode.labels) {
+    //           let lowerLabel = label.toLowerCase();
+    //           if (Blitzboard.loadedIcons[lowerLabel]) {
+    //             if(Blitzboard.loadedIcons[lowerLabel] != 'retrieving...')
+    //               ctx.drawImage(Blitzboard.loadedIcons[lowerLabel], position.x - nodeSize * Blitzboard.iconSizeCoef / 2,
+    //                 position.y - nodeSize * Blitzboard.iconSizeCoef / 2,
+    //                 nodeSize * Blitzboard.iconSizeCoef,
+    //                 nodeSize * Blitzboard.iconSizeCoef);
+    //             break;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    //
+    //  if(this.config.layout === 'timeline'){
+    //     const context = this.network.canvas.getContext("2d");
+    //     const view = this.network.canvas.body.view;
+    //     const offsetY = (view.translation.y - 20) / view.scale;
+    //     const offsetX = view.translation.x / view.scale;
+    //     const timeForOnePixel = (this.maxTime - this.minTime) / this.timeScale;
+    //     const timeOnLeftEdge = new Date(((this.maxTime.getTime() + this.minTime.getTime()) / 2) - timeForOnePixel * offsetX);
+    //     const clientWidth = this.network.canvas.body.container.clientWidth;
+    //     const rightMost = -offsetX + clientWidth / view.scale;
+    //     const oneMonth = 31 * 24 * 60 * 60 * 1000;
+    //     const oneDay = 24 * 60 * 60 * 1000;
+    //     const twoMonth = oneMonth * 2;
+    //     const fourMonth = twoMonth * 2;
+    //     const oneYear = 365 * oneDay;
+    //     const minDistance = 200;
+    //     context.font = (20 / view.scale).toString() + "px Arial";
+    //     context.fillStyle = "blue";
+    //     const minimumInterval = timeForOnePixel * minDistance / view.scale;
+    //     if(minimumInterval > oneYear ) {
+    //       plotTimes(timeOnLeftEdge, minimumInterval / oneYear, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     }
+    //     else if(minimumInterval > fourMonth ) {
+    //       plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     }
+    //     else if(minimumInterval > twoMonth) {
+    //       plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     }
+    //     else if(minimumInterval > oneMonth) {
+    //       plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     } else if(minimumInterval > oneDay * 16) {
+    //       plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     } else if(minimumInterval > oneDay * 8) {
+    //       plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     } else if(minimumInterval > oneDay * 4) {
+    //       plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     } else if(minimumInterval > oneDay * 2) {
+    //       plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     } else {
+    //       plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
+    //     }
+    //   }
+    // });
+    // this.network.on("blurNode", (params) => {
+    //   this.network.canvas.body.container.style.cursor = 'default';
+    //   let node = this.nodeDataSet.get(params.node);
+    //   if(node && node.url) {
+    //     this.nodeDataSet.update({
+    //       id: params.node,
+    //       color: null,
+    //     });
+    //   }
+    //   this.hideTooltip();
+    // });
+    //
+    // this.network.on("blurEdge", (params) => {
+    //   this.hideTooltip();
+    // });
 
     if (!Blitzboard.fontLoaded && document.fonts) {
       Blitzboard.fontLoaded = true;
@@ -1891,45 +1977,45 @@ module.exports = class Blitzboard {
       }
     }
 
-    this.network.on("click", (e) => {
-      if(!this.doubleClickTimer) {
-        if (this.config.doubleClickWait <= 0) {
-          clickHandler(e);
-        } else {
-          this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
-        }
-      }
-
-      if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])){
-        let node = e.nodes[0]
-        this.upstreamNodes = this.getUpstreamNodes(node);
-        this.downstreamNodes = this.getDownstreamNodes(node);
-        this.network.setSelection({nodes: [], edges: []}); // reset
-        this.highlightedNodes = Array.from(this.upstreamNodes).concat(Array.from(this.downstreamNodes));
-        this.network.selectNodes( this.highlightedNodes, true);
-      }
-    });
-
-    this.network.on("animationFinished", (e) => {
-      blitzboard.network.renderer.dragging = false;
-    });
-
-    
-    this.network.on("doubleClick", (e) => {
-      clearTimeout(this.doubleClickTimer);
-      this.doubleClickTimer = null;
-      if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
-        if(this.config.node.onDoubleClick) {
-          this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
-        }
-      } else if(e.edges.length > 0) {
-        if(this.config.edge.onDoubleClick) {
-          this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
-        }
-      } else {
-        this.fit();
-      }
-    });
+    // this.network.on("click", (e) => {
+    //   if(!this.doubleClickTimer) {
+    //     if (this.config.doubleClickWait <= 0) {
+    //       clickHandler(e);
+    //     } else {
+    //       this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
+    //     }
+    //   }
+    //
+    //   if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])){
+    //     let node = e.nodes[0]
+    //     this.upstreamNodes = this.getUpstreamNodes(node);
+    //     this.downstreamNodes = this.getDownstreamNodes(node);
+    //     this.network.setSelection({nodes: [], edges: []}); // reset
+    //     this.highlightedNodes = Array.from(this.upstreamNodes).concat(Array.from(this.downstreamNodes));
+    //     this.network.selectNodes( this.highlightedNodes, true);
+    //   }
+    // });
+    //
+    // this.network.on("animationFinished", (e) => {
+    //   blitzboard.network.renderer.dragging = false;
+    // });
+    //
+    //
+    // this.network.on("doubleClick", (e) => {
+    //   clearTimeout(this.doubleClickTimer);
+    //   this.doubleClickTimer = null;
+    //   if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
+    //     if(this.config.node.onDoubleClick) {
+    //       this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
+    //     }
+    //   } else if(e.edges.length > 0) {
+    //     if(this.config.edge.onDoubleClick) {
+    //       this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
+    //     }
+    //   } else {
+    //     this.fit();
+    //   }
+    // });
 
     this.updateSCCStatus();
 
