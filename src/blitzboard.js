@@ -710,7 +710,7 @@ module.exports = class Blitzboard {
             }
           }
           icon = icon || icons[0];
-          let size = attrs._size * Blitzboard.iconSizeCoef;
+          let size = 1000;
           let svg = Iconify.renderSVG(`${icon.prefix}:${icon.name}`, {
             width: size,
             height: size
@@ -722,15 +722,7 @@ module.exports = class Blitzboard {
             path.style.stroke = "white";
           });
           img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.outerHTML);
-          Blitzboard.loadedIcons[name] = img;
-          if(blitzboard) {
-            if (blitzboard.redrawTimer) {
-              clearTimeout(blitzboard.redrawTimer);
-            }
-            blitzboard.redrawTimer = setTimeout(() => {  // Add delay to avoid redraw too ofen
-              blitzboard.network.redraw();
-            }, 1000);
-          }
+          Blitzboard.loadedIcons[name] = img.src;
         }
       };
     }
@@ -1533,13 +1525,13 @@ module.exports = class Blitzboard {
       id: "line-layer",
       coordinateSystem: DeckGL.COORDINATE_SYSTEM.CARTESIAN,
       data: this.edgeDataSet,
-      getWidth: d => d.width,
-      getSourcePosition: (d) => {
-        let {x, y} = blitzboard.nodeDataSet[d.from];
+      getWidth: edge => edge.width,
+      getSourcePosition: (edge) => {
+        let {x, y} = blitzboard.nodeDataSet[edge.from];
         return [x, y, 0];
       },
-      getTargetPosition: (d) => {
-        let {x, y} = blitzboard.nodeDataSet[d.to];
+      getTargetPosition: (edge) => {
+        let {x, y} = blitzboard.nodeDataSet[edge.to];
         return [x, y, 0];
       },
       getColor: (d) => d.color,
@@ -1553,11 +1545,11 @@ module.exports = class Blitzboard {
       id: 'node-text-layer',
       data: Object.values(this.nodeDataSet),
       pickable: true,
-      getPosition: (d) => {
-        let {x, y} = blitzboard.nodeLayout.getNodePosition(d.id);
-        return [x, y + d.size, 0];
+      getPosition: (node) => {
+        let {x, y} = blitzboard.nodeLayout.getNodePosition(node.id);
+        return [x, y + node.size, 0];
       },
-      getText: d => d.label,
+      getText: node => node.label,
       getSize: fontSize,
       sizeMaxPixels: 60,
       getAngle: 0,
@@ -1576,12 +1568,12 @@ module.exports = class Blitzboard {
       id: 'edge-text-layer',
       data: this.edgeDataSet,
       pickable: true,
-      getPosition: (d) => {
-        let {x: fromX, y: fromY} = blitzboard.nodeDataSet[d.from];
-        let {x: toX, y: toY} = blitzboard.nodeDataSet[d.to];
+      getPosition: (edge) => {
+        let {x: fromX, y: fromY} = blitzboard.nodeDataSet[edge.from];
+        let {x: toX, y: toY} = blitzboard.nodeDataSet[edge.to];
         return [(fromX + toX) / 2, (fromY + toY) / 2, 0];
       },
-      getText: d => d.label,
+      getText: edge => edge.label,
       getSize: fontSize,
       getAngle: 0,
       getTextAnchor: 'middle',
@@ -1593,6 +1585,38 @@ module.exports = class Blitzboard {
         sdf: true
       }
     });
+
+    this.iconLayer = new DeckGLLayers.IconLayer({
+      id: 'icon-layer',
+      data: Object.values(this.nodeDataSet),
+      pickable: true,
+      // iconAtlas and iconMapping are required
+      // getIcon: return a string
+
+      // iconAtlas: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png',
+      // iconMapping: ICON_MAPPING,
+      getIcon: (n) => {
+        for(let label of blitzboard.nodeMap[n.id].labels) {
+          let lowerLabel = label.toLowerCase();
+          if (Blitzboard.loadedIcons[lowerLabel]) {
+            return {
+              url: Blitzboard.loadedIcons[lowerLabel],
+              width: 24,
+              height: 24
+            }
+          }
+        }
+      },
+      sizeScale: 1,
+      getPosition: (n) => [n.x, n.y, 0],
+      getSize: n => 4,
+      sizeUnits: 'common',
+      getColor: n => [255, 0, 0],
+      updateTriggers: {
+        getIcon: [Blitzboard.loadedIcons]
+      }
+    });
+
 
     const view = new DeckGL.OrthographicView({});
 
@@ -1611,6 +1635,7 @@ module.exports = class Blitzboard {
         scatterplotLayer,
         nodeTextLayer,
         edgeTextLayer,
+        this.iconLayer,
       ]
     });
 
