@@ -1,10 +1,11 @@
-require("leaflet/dist/leaflet.css");
 require('@iconify/iconify');
-require('leaflet');
 require('./pg_parser_browserified.js');
 require('./scc.js');
+require('mapbox-gl');
 const DeckGL = require('@deck.gl/core');
 const DeckGLLayers = require('@deck.gl/layers');
+const DeckGLGeoLayers = require('@deck.gl/geo-layers');
+
 
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
@@ -198,7 +199,7 @@ module.exports = class Blitzboard {
 
     container.appendChild(this.screen);
     // container.appendChild(this.networkContainer);
-    container.appendChild(this.mapContainer);
+    // container.appendChild(this.mapContainer);
     container.appendChild(this.configChoiceDiv);
     this.configChoiceDiv.appendChild(this.configChoiceLabel);
     this.configChoiceDiv.appendChild(this.configChoiceDropdown);
@@ -216,19 +217,19 @@ module.exports = class Blitzboard {
     });
 
     this.container.addEventListener('wheel', (e) => {
-      if(blitzboard.config.layout === 'map')
-      {
-        if((e.deltaY < 0 && blitzboard.map._zoom < blitzboard.map.getMaxZoom()) ||
-          (e.deltaY > 0 && blitzboard.map._zoom > blitzboard.map.getMinZoom()) ) {
-          if(!blitzboard.currentLatLng) {
-            blitzboard.currentLatLng = blitzboard.map.mouseEventToLatLng(e);
-          }
-          blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
-        }
-        blitzboard.map.invalidateSize();
-        e.preventDefault();
-        e.stopPropagation(); // Inhibit zoom on vis-network
-      }
+      // if(blitzboard.config.layout === 'map')
+      // {
+      //   if((e.deltaY < 0 && blitzboard.map._zoom < blitzboard.map.getMaxZoom()) ||
+      //     (e.deltaY > 0 && blitzboard.map._zoom > blitzboard.map.getMinZoom()) ) {
+      //     if(!blitzboard.currentLatLng) {
+      //       blitzboard.currentLatLng = blitzboard.map.mouseEventToLatLng(e);
+      //     }
+      //     blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
+      //   }
+      //   blitzboard.map.invalidateSize();
+      //   e.preventDefault();
+      //   e.stopPropagation(); // Inhibit zoom on vis-network
+      // }
     }, true);
 
     this.container.addEventListener('mouseout', (e) => {
@@ -240,9 +241,9 @@ module.exports = class Blitzboard {
     }, true);
 
     this.container.addEventListener('mousemove', (e) => {
-      if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMouseEvent) {
-        blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
-      }
+      // if(blitzboard.dragging && blitzboard.config.layout === 'map' && blitzboard.prevMouseEvent) {
+      //   blitzboard.map.panBy([blitzboard.prevMouseEvent.x - e.x, blitzboard.prevMouseEvent.y - e.y], {animate: false});
+      // }
       if(blitzboard.elementWithTooltip?.edge) {
         this.updateTooltipLocation();
       }
@@ -250,11 +251,11 @@ module.exports = class Blitzboard {
       blitzboard.currentLatLng = null;
     }, true);
 
-    this.container.addEventListener('dblclick', (e) => {
-      if(blitzboard.config.layout === 'map') {
-        blitzboard.map.panTo(blitzboard.map.mouseEventToLatLng(e));
-      }
-    }, true);
+    // this.container.addEventListener('dblclick', (e) => {
+    //   if(blitzboard.config.layout === 'map') {
+    //     blitzboard.map.panTo(blitzboard.map.mouseEventToLatLng(e));
+    //   }
+    // }, true);
 
     this.container.addEventListener('mousedown', (e) => {
       blitzboard.dragging = true;
@@ -262,7 +263,6 @@ module.exports = class Blitzboard {
     }, true);
     
     const balloonHandleSize = 12;
-
 
     this.network = new DeckGL.Deck({
       parent: this.container,
@@ -274,8 +274,62 @@ module.exports = class Blitzboard {
           html: elem.object._title
         }
       },
+      initialViewState: {
+        target: [0, 0],
+        zoom: 1
+      },
+      views: [new DeckGL.OrthographicView()],
+      layers: [],
     });
-    
+    //
+    // this.network = new DeckGL.Deck({
+    //   parent: this.container,
+    //   container: this.container,
+    //   mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    //   initialViewState: {
+    //     longitude: -122.402,
+    //     latitude: 37.79,
+    //     zoom: 12
+    //   },
+    //   controller: true,
+    //   layers: [
+    //     new DeckGLLayers.ScatterplotLayer({
+    //       data: [
+    //         {position: [-122.402, 37.79], color: [255, 0, 0], radius: 1000}
+    //       ],
+    //       getPosition: d => d.position,
+    //       getRadius: d => d.radius,
+    //       getFillColor: d => d.color,
+    //       opacity: 0.3
+    //     }),
+    //     new DeckGLLayers.TextLayer({
+    //       data: [
+    //         {position: [-122.402, 37.79], text: 'Hello World'}
+    //       ],
+    //       getPosition: d => d.position,
+    //       getText: d => d.text
+    //     })
+    //   ]
+    // });
+
+
+
+    // new DeckGL.Deck({
+    //   parent: this.container,
+    //   initialViewState: {
+    //     longitude: -122.4,
+    //     latitude: 37.74,
+    //     zoom: 11,
+    //     maxZoom: 20,
+    //     pitch: 30,
+    //     bearing: 0
+    //   },
+    //   controller: true,
+    //   getTooltip: ({tile}) => tile && `x:${tile.x}, y:${tile.y}, z:${tile.z}`,
+    //   layers: [layer]
+    // });
+
+
     this.applyDynamicStyle(`
       .blitzboard-tooltip {
         position: absolute;
@@ -763,7 +817,7 @@ module.exports = class Blitzboard {
         break;
       }
     }
-    
+
     if(!iconIsDefined && this.config.node.icon?.['_default']) {
       registerIcon(this.config.node.icon['_default']);
     }
@@ -1317,9 +1371,9 @@ module.exports = class Blitzboard {
       }
       this.edgeDataSet.remove(this.deletedEdges);
       this.edgeMap = newEdgeMap;
-      if(this.map) {
-        blitzboard.updateNodeLocationOnMap();
-      }
+      // if(this.map) {
+      //   blitzboard.updateNodeLocationOnMap();
+      // }
       if(this.config.layout === 'timeline') {
         blitzboard.updateNodeLocationOnTimeLine();
       }
@@ -1348,14 +1402,42 @@ module.exports = class Blitzboard {
       this.timeInterval = this.maxTime - this.minTime;
     }
 
-    if(this.config.layout === 'map' && this.map) {
-      let originalZoom = this.map.getZoom();
-      this.map.setZoom(Blitzboard.maxZoomForMap);
-      this.updateNodeLocationOnMap();
-      this.map.setZoom(originalZoom);
-    }
+    // if(this.config.layout === 'map' && this.map) {
+    //   let originalZoom = this.map.getZoom();
+    //   this.map.setZoom(Blitzboard.maxZoomForMap);
+    //   // this.updateNodeLocationOnMap();
+    //   this.map.setZoom(originalZoom);
+    // }
 
-    if(this.staticLayoutMode && this.config.layout !== 'map') {
+
+    if(this.config.layout == 'map') {
+
+      let ngraph = createGraph();
+      this.graph.nodes.forEach(node => {
+        ngraph.addNode(node.id);
+      });
+      this.graph.edges.forEach(edge => {
+        ngraph.addLink(edge.from, edge.to);
+      });
+      let lngKey =  this.config.layoutSettings.lng;
+      let latKey =  this.config.layoutSettings.lat;
+      this.nodeLayout = createLayout(ngraph);
+
+      this.graph.nodes.forEach(node => {
+        if(node.properties[latKey] && node.properties[lngKey]) {
+          let lat = node.properties[latKey][0],
+            lng = node.properties[lngKey][0];
+          if(typeof(lat) === 'string') {
+            lat = parseFloat(lat);
+          }
+          if(typeof(lng) === 'string') {
+            lng = parseFloat(lng);
+          }
+          this.nodeLayout.setNodePosition(node.id, lng, lat);
+        }
+      });
+    }
+    else if(this.staticLayoutMode) {
       let ngraph = createGraph();
       this.graph.nodes.forEach(node => {
         ngraph.addNode(node.id);
@@ -1369,7 +1451,7 @@ module.exports = class Blitzboard {
         dimensions: this.config.dimensions,
         // gravity: -1.2,
         // theta: 1.8,
-        springLength: 200,
+        springLength: 50,
         springCoefficient: 0.7,
         // dragCoefficient: 0.9,
       };
@@ -1430,10 +1512,10 @@ module.exports = class Blitzboard {
     let defaultEdgeProps = this.config.edge.caption;
 
     this.nodeDataSet = {};
-    this.minX = 0;
-    this.maxX = 0;
-    this.minY = 0;
-    this.maxY = 0;
+    this.minX = Number.MAX_VALUE;
+    this.maxX = -Number.MAX_VALUE;
+    this.minY = Number.MAX_VALUE;
+    this.maxY = -Number.MAX_VALUE;
     this.graph.nodes.forEach((node) => {
       let visNode = this.toVisNode(node, defaultNodeProps);
       this.nodeDataSet[node.id] = visNode;
@@ -1516,6 +1598,9 @@ module.exports = class Blitzboard {
 
     this.options = Object.assign(this.options, this.config.extraOptions);
 
+    const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
+    const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
+
     const scatterplotLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
       data: Object.values(this.nodeDataSet),
@@ -1524,17 +1609,17 @@ module.exports = class Blitzboard {
       stroked: false,
       filled: true,
       billboard: true,
-      coordinateSystem: DeckGL.COORDINATE_SYSTEM.CARTESIAN,
+      coordinateSystem,
       getPosition: (n) => [n.x, n.y, n.z],
-      getRadius: (n) => n.size, // TODO
+      getRadius: (n) => n._size * (this.config.layout === 'map' ? 100 : 1), // TODO
       radiusMinPixels: 1,
       getFillColor: (n) => n.color,
-      radiusUnits: 'common',
+      radiusUnits: sizeUnits,
     });
 
     const lineLayer = new DeckGLLayers.LineLayer({
       id: "line-layer",
-      coordinateSystem: DeckGL.COORDINATE_SYSTEM.CARTESIAN,
+      coordinateSystem,
       data: this.edgeDataSet,
       getWidth: edge => edge.width,
       getSourcePosition: (edge) => {
@@ -1546,8 +1631,8 @@ module.exports = class Blitzboard {
         return [x, y, z];
       },
       getColor: (d) => d.color,
-      widthUnits: 'common',
-      widthScale: 0.2
+      widthUnits: ('common'),
+      widthScale: 0.2 * (this.config.layout === 'map' ? 0.01 : 1)
     });
 
     const fontSize = 3;
@@ -1566,8 +1651,9 @@ module.exports = class Blitzboard {
       getAngle: 0,
       getTextAnchor: 'middle',
       getAlignmentBaseline: 'top',
-      sizeUnits: 'common',
-      outlineWidth: 0.2,
+      coordinateSystem,
+      sizeUnits: sizeUnits,
+      outlineWidth: 1,
       outlineColor: [255,255, 255, 255],
       fontSettings: {
         sdf: true
@@ -1589,8 +1675,9 @@ module.exports = class Blitzboard {
       getAngle: 0,
       getTextAnchor: 'middle',
       getAlignmentBaseline: 'top',
-      sizeUnits: 'common',
-      outlineWidth: 0.2,
+      coordinateSystem,
+      sizeUnits: sizeUnits,
+      outlineWidth: 1,
       outlineColor: [255,255, 255, 255],
       fontSettings: {
         sdf: true
@@ -1601,59 +1688,139 @@ module.exports = class Blitzboard {
       id: 'icon-layer',
       data: Object.values(this.nodeDataSet),
       pickable: true,
-      // iconAtlas and iconMapping are required
-      // getIcon: return a string
-
-      // iconAtlas: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png',
-      // iconMapping: ICON_MAPPING,
+      coordinateSystem,
       getIcon: (n) => {
+        if(n.customIcon && Blitzboard.loadedIcons[n.customIcon.name]) {
+          return {
+            url: Blitzboard.loadedIcons[n.customIcon.name],
+            width: 240,
+            height: 240
+          }
+        }
         for(let label of blitzboard.nodeMap[n.id].labels) {
           let lowerLabel = label.toLowerCase();
           if (Blitzboard.loadedIcons[lowerLabel]) {
+            console.log(Blitzboard.loadedIcons[lowerLabel]);
             return {
               url: Blitzboard.loadedIcons[lowerLabel],
-              width: 24,
-              height: 24
+              width: 240,
+              height: 240
             }
           }
+        }
+        return {
+          url: 'data:image/svg+xml;charset=utf-8,dummy', // dummy icon to avoid exception
+          width: 24,
+          height: 24
         }
       },
       sizeScale: 1,
       getPosition: (n) => [n.x, n.y, n.z],
-      getSize: n => 4,
-      sizeUnits: 'common',
+      getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
+      sizeUnits: sizeUnits,
       getColor: n => [255, 0, 0],
       updateTriggers: {
         getIcon: [Blitzboard.loadedIcons]
       }
     });
 
-
     const view = this.config.dimensions == 2 ? new DeckGL.OrthographicView({}) : new DeckGL.OrbitView({});
 
-    let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
+    if(this.config.layout === 'map') {
+      const INITIAL_VIEW_STATE = {
+        latitude: (this.minY + this.maxY) / 2,
+        longitude: (this.minX + this.maxX) / 2,
+        // latitude: 50,
+        // longitude: 50,
+        zoom: 3
+      };
 
-    const INITIAL_VIEW_STATE = {
-      target: [(this.minX + this.maxX) / 2, (this.minY + this.maxY) / 2],
-      zoom: Math.log(rate) / Math.log(2)
-    };
+      const tileLayer = new DeckGLGeoLayers.TileLayer({
+        id: 'TileLayer',
+        data: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
 
-    this.network.setProps({
-      initialViewState: INITIAL_VIEW_STATE,
-      views: [view],
-      layers: [
-        lineLayer,
-        scatterplotLayer,
-        nodeTextLayer,
-        edgeTextLayer,
-        this.iconLayer,
-      ]
-    });
+        /* props from TileLayer class */
+
+        // TilesetClass: null,
+        // extent: null,
+        // getTileData: null,
+        // maxCacheByteSize: null,
+        // maxCacheSize: null,
+        // maxRequests: 6,
+        maxZoom: 19,
+        minZoom: 0,
+        // onTileError: null,
+        // onTileLoad: null,
+        // onTileUnload: null,
+        // onViewportLoad: null,
+        // refinementStrategy: 'best-available',
+        renderSubLayers: props => {
+          const {
+            bbox: {west, south, east, north}
+          } = props.tile;
+
+          return new DeckGLLayers.BitmapLayer(props, {
+            data: null,
+            image: props.data,
+            bounds: [west, south, east, north]
+          });
+        },
+        // tileSize: 512,
+        // zRange: null,
+        // zoomOffset: 0,
+
+        /* props inherited from Layer class */
+
+        // autoHighlight: false,
+        // coordinateOrigin: [0, 0, 0],
+        // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+        // highlightColor: [0, 0, 128, 128],
+        // modelMatrix: null,
+        // opacity: 1,
+        pickable: true,
+        // visible: true,
+        // wrapLongitude: false,
+      });
+
+      this.network.setProps({
+        initialViewState: INITIAL_VIEW_STATE,
+        views: [new DeckGL.MapView()],
+        controller: true,
+        layers: [
+            tileLayer,
+            lineLayer,
+            scatterplotLayer,
+            nodeTextLayer,
+            edgeTextLayer,
+            this.iconLayer,
+        ]
+      })
+    } else {
+      let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
+
+      const INITIAL_VIEW_STATE = {
+        target: [(this.minX + this.maxX) / 2, (this.minY + this.maxY) / 2],
+        zoom: Math.log(rate) / Math.log(2)
+      };
+
+      this.network.setProps({
+        initialViewState: INITIAL_VIEW_STATE,
+        views: [view],
+        layers: [
+          lineLayer,
+          scatterplotLayer,
+          nodeTextLayer,
+          edgeTextLayer,
+          this.iconLayer,
+        ]
+      });
+    }
+
 
     this.clusterSCC();
 
 
-    if(this.config.layout === 'map') {
+    if(this.config.layout === 'map' && false) {
       this.mapContainer.style.display = 'block';
       this.networkContainer.style.background = 'transparent';
       let statistics = statisticsOfMap();
@@ -1678,8 +1845,8 @@ module.exports = class Blitzboard {
         this.map.on('move', () => blitzboard.updateViewForMap());
         this.map.on('zoom', () => blitzboard.updateViewForMap());
       }
-      this.updateNodeLocationOnMap();
-      setTimeout(() => blitzboard.map.fitBounds(L.latLngBounds([statistics.latMin, statistics.lngMax], [statistics.latMax, statistics.lngMin] )));
+      // this.updateNodeLocationOnMap();
+      // setTimeout(() => blitzboard.map.fitBounds(L.latLngBounds([statistics.latMin, statistics.lngMax], [statistics.latMax, statistics.lngMin] )));
       // blitzboard.network.moveTo({scale: 1.0});
     } else {
       this.mapContainer.style.display = 'none';
@@ -2248,7 +2415,7 @@ module.exports = class Blitzboard {
         x, y
       });
     });
-    this.nodeDataSet.update(nodePositions);
+    // this.nodeDataSet.update(nodePositions);
   }
   
   scrollMapToNode(node) {
