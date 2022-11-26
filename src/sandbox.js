@@ -208,23 +208,6 @@ $(() => {
           scrollToLine(edge.location);
         }
       });
-      blitzboard.network.on("doubleClick", (e) => {
-        if (!blitzboard.config?.node?.onDoubleClick) {
-          if (e.nodes.length > 0) {
-            const node = e.nodes[0];
-            srcNode = node;
-          } else if (blitzboard.map) {
-            let xKey = blitzboard.config.layoutSettings.x;
-            let yKey = blitzboard.config.layoutSettings.y;
-            let oldPg = editor.getValue();
-            let lineNum = numberOfLines(oldPg) + 1;
-            let latLng = blitzboard.map.containerPointToLatLng([e.pointer.DOM.x, e.pointer.DOM.y]);
-            editor.setValue(oldPg + `\n${newNodeName()} ${xKey}:${latLng.lng} ${yKey}:${latLng.lat}`);
-            updateGraph(editor.getValue());
-            scrollToLine({start: {line: lineNum, ch: 0}, end: {line: lineNum, ch: 0}});
-          }
-        }
-      });
       let canvas = q(".vis-network canvas");
       canvas.addEventListener('mousemove', event => {
         if (srcNode) {
