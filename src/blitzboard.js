@@ -1601,9 +1601,11 @@ module.exports = class Blitzboard {
     const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
     const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
 
+    const nodeData = Object.values(this.nodeDataSet);
+
     const scatterplotLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
-      data: Object.values(this.nodeDataSet),
+      data: nodeData,
       pickable: true,
       opacity: 1, // TODO
       stroked: false,
@@ -1637,9 +1639,11 @@ module.exports = class Blitzboard {
 
     const fontSize = 3;
 
+    const characterSet = nodeData.map(n => Array.from(n.label)).flat();
+
     const nodeTextLayer = new DeckGLLayers.TextLayer({
       id: 'node-text-layer',
-      data: Object.values(this.nodeDataSet),
+      data: nodeData,
       pickable: true,
       getPosition: (node) => {
         let {x, y, z} = blitzboard.nodeLayout.getNodePosition(node.id);
@@ -1657,7 +1661,8 @@ module.exports = class Blitzboard {
       outlineColor: [255,255, 255, 255],
       fontSettings: {
         sdf: true
-      }
+      },
+      characterSet
     });
 
 
@@ -1686,7 +1691,7 @@ module.exports = class Blitzboard {
 
     this.iconLayer = new DeckGLLayers.IconLayer({
       id: 'icon-layer',
-      data: Object.values(this.nodeDataSet),
+      data: nodeData,
       pickable: true,
       coordinateSystem,
       getIcon: (n) => {
