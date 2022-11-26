@@ -41,7 +41,7 @@ module.exports = class Blitzboard {
       lng: 'lng',
       lat: 'lat'
     },
-    style: "border: solid 1px silver; background: radial-gradient(white, silver);",
+    style: "border: solid 1px #E6E6E6; background: radial-gradient(white, #E6E6E6);",
     extraOptions: {
     },
   };
