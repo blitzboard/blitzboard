@@ -93,8 +93,7 @@ module.exports = class Blitzboard {
     this.configChoice = null;
     
     this.staticLayoutMode = true;
-    this.mapAdjustTimer = null;
-    
+
     this.container.style.position = 'absolute';
     
     this.networkContainer = document.createElement('div');
@@ -107,16 +106,6 @@ module.exports = class Blitzboard {
       z-index: 2;
     `;
     
-    this.mapContainer = document.createElement('div');
-    this.mapContainer.style = `
-      height: 100%;
-      width: 100%;
-      top: 0;
-      left: 0;
-      position: absolute;
-      z-index: 1;
-    `;
-    this.map = null;
     this.tooltipDummy = document.createElement('div');
     this.tooltipDummy.style.position = 'absolute';
     this.tooltipDummy.classList.add('blitzboard-tooltip');
@@ -199,7 +188,6 @@ module.exports = class Blitzboard {
 
     container.appendChild(this.screen);
     // container.appendChild(this.networkContainer);
-    // container.appendChild(this.mapContainer);
     container.appendChild(this.configChoiceDiv);
     this.configChoiceDiv.appendChild(this.configChoiceLabel);
     this.configChoiceDiv.appendChild(this.configChoiceDropdown);
@@ -281,54 +269,6 @@ module.exports = class Blitzboard {
       views: [new DeckGL.OrthographicView()],
       layers: [],
     });
-    //
-    // this.network = new DeckGL.Deck({
-    //   parent: this.container,
-    //   container: this.container,
-    //   mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-    //   initialViewState: {
-    //     longitude: -122.402,
-    //     latitude: 37.79,
-    //     zoom: 12
-    //   },
-    //   controller: true,
-    //   layers: [
-    //     new DeckGLLayers.ScatterplotLayer({
-    //       data: [
-    //         {position: [-122.402, 37.79], color: [255, 0, 0], radius: 1000}
-    //       ],
-    //       getPosition: d => d.position,
-    //       getRadius: d => d.radius,
-    //       getFillColor: d => d.color,
-    //       opacity: 0.3
-    //     }),
-    //     new DeckGLLayers.TextLayer({
-    //       data: [
-    //         {position: [-122.402, 37.79], text: 'Hello World'}
-    //       ],
-    //       getPosition: d => d.position,
-    //       getText: d => d.text
-    //     })
-    //   ]
-    // });
-
-
-
-    // new DeckGL.Deck({
-    //   parent: this.container,
-    //   initialViewState: {
-    //     longitude: -122.4,
-    //     latitude: 37.74,
-    //     zoom: 11,
-    //     maxZoom: 20,
-    //     pitch: 30,
-    //     bearing: 0
-    //   },
-    //   controller: true,
-    //   getTooltip: ({tile}) => tile && `x:${tile.x}, y:${tile.y}, z:${tile.z}`,
-    //   layers: [layer]
-    // });
-
 
     this.applyDynamicStyle(`
       .blitzboard-tooltip {
@@ -666,6 +606,10 @@ module.exports = class Blitzboard {
     }
   }
 
+  svgToURL(svg) {
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
   toVisNode(pgNode, props, extraOptions = null) {
     const group = [...pgNode.labels].sort().join('_');
     if(!this.nodeColorMap[group]) {
@@ -785,7 +729,7 @@ module.exports = class Blitzboard {
             path.style.fill = "white";
             path.style.stroke = "white";
           });
-          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.outerHTML);
+          img.src = blitzboard.svgToURL(svg.outerHTML);
           Blitzboard.loadedIcons[name] = img.src;
         }
       };
@@ -1371,9 +1315,6 @@ module.exports = class Blitzboard {
       }
       this.edgeDataSet.remove(this.deletedEdges);
       this.edgeMap = newEdgeMap;
-      // if(this.map) {
-      //   blitzboard.updateNodeLocationOnMap();
-      // }
       if(this.config.layout === 'timeline') {
         blitzboard.updateNodeLocationOnTimeLine();
       }
@@ -1402,16 +1343,7 @@ module.exports = class Blitzboard {
       this.timeInterval = this.maxTime - this.minTime;
     }
 
-    // if(this.config.layout === 'map' && this.map) {
-    //   let originalZoom = this.map.getZoom();
-    //   this.map.setZoom(Blitzboard.maxZoomForMap);
-    //   // this.updateNodeLocationOnMap();
-    //   this.map.setZoom(originalZoom);
-    // }
-
-
-    if(this.config.layout == 'map') {
-
+    if(this.config.layout === 'map') {
       let ngraph = createGraph();
       this.graph.nodes.forEach(node => {
         ngraph.addNode(node.id);
@@ -1449,10 +1381,10 @@ module.exports = class Blitzboard {
       const physicsSettings = {
         // timeStep: 0.1,
         dimensions: this.config.dimensions,
-        // gravity: -1.2,
+        gravity: -12,
         // theta: 1.8,
         springLength: 50,
-        springCoefficient: 0.7,
+        springCoefficient: 2,
         // dragCoefficient: 0.9,
       };
       // if(!this.nodeLayout) {
@@ -1467,7 +1399,7 @@ module.exports = class Blitzboard {
       //   this.nodeLayout = ngraphLayout;
       // }
       for (let i = 0; i < 1000; ++i) {
-        if(this.nodeLayout.step() && i >= 100) {
+        if(this.nodeLayout.step() && i >= 200) {
           console.log(`layout is stable at step #${i}`);
           break;
         }
@@ -1603,7 +1535,7 @@ module.exports = class Blitzboard {
 
     const nodeData = Object.values(this.nodeDataSet);
 
-    const scatterplotLayer = new DeckGLLayers.ScatterplotLayer({
+    const nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
       data: nodeData,
       pickable: true,
@@ -1689,6 +1621,31 @@ module.exports = class Blitzboard {
       }
     });
 
+
+    const edgeArrowLayer = new DeckGLLayers.IconLayer({
+      id: 'icon-layer',
+      data: this.edgeDataSet,
+      coordinateSystem,
+      getIcon: n => ({
+        url: this.svgToURL('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15"><path fill="currentColor" d="M7.932 1.248a.5.5 0 0 0-.864 0l-7 12A.5.5 0 0 0 .5 14h14a.5.5 0 0 0 .432-.752l-7-12Z"/></svg>'),
+        width: 240,
+        height: 240
+      }),
+      sizeScale: 1,
+      getPosition: (edge) => {
+        let {x: fromX, y: fromY, z: fromZ} = blitzboard.nodeDataSet[edge.from];
+        let {x: toX, y: toY, z: toZ} = blitzboard.nodeDataSet[edge.to];
+        return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
+      },
+      getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
+      sizeUnits: sizeUnits,
+      getColor: n => [255, 0, 0],
+      updateTriggers: {
+        getIcon: [Blitzboard.loadedIcons]
+      }
+    });
+
+
     this.iconLayer = new DeckGLLayers.IconLayer({
       id: 'icon-layer',
       data: nodeData,
@@ -1729,6 +1686,8 @@ module.exports = class Blitzboard {
       }
     });
 
+
+
     const view = this.config.dimensions == 2 ? new DeckGL.OrthographicView({}) : new DeckGL.OrbitView({});
 
     if(this.config.layout === 'map') {
@@ -1743,22 +1702,8 @@ module.exports = class Blitzboard {
       const tileLayer = new DeckGLGeoLayers.TileLayer({
         id: 'TileLayer',
         data: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-
-        /* props from TileLayer class */
-
-        // TilesetClass: null,
-        // extent: null,
-        // getTileData: null,
-        // maxCacheByteSize: null,
-        // maxCacheSize: null,
-        // maxRequests: 6,
         maxZoom: 19,
         minZoom: 0,
-        // onTileError: null,
-        // onTileLoad: null,
-        // onTileUnload: null,
-        // onViewportLoad: null,
-        // refinementStrategy: 'best-available',
         renderSubLayers: props => {
           const {
             bbox: {west, south, east, north}
@@ -1770,21 +1715,7 @@ module.exports = class Blitzboard {
             bounds: [west, south, east, north]
           });
         },
-        // tileSize: 512,
-        // zRange: null,
-        // zoomOffset: 0,
-
-        /* props inherited from Layer class */
-
-        // autoHighlight: false,
-        // coordinateOrigin: [0, 0, 0],
-        // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-        // highlightColor: [0, 0, 128, 128],
-        // modelMatrix: null,
-        // opacity: 1,
         pickable: true,
-        // visible: true,
-        // wrapLongitude: false,
       });
 
       this.network.setProps({
@@ -1792,12 +1723,13 @@ module.exports = class Blitzboard {
         views: [new DeckGL.MapView()],
         controller: true,
         layers: [
-            tileLayer,
-            lineLayer,
-            scatterplotLayer,
-            nodeTextLayer,
-            edgeTextLayer,
-            this.iconLayer,
+          tileLayer,
+          lineLayer,
+          edgeTextLayer,
+          nodeLayer,
+          // edgeArrowLayer,
+          nodeTextLayer,
+          this.iconLayer,
         ]
       })
     } else {
@@ -1813,9 +1745,10 @@ module.exports = class Blitzboard {
         views: [view],
         layers: [
           lineLayer,
-          scatterplotLayer,
-          nodeTextLayer,
           edgeTextLayer,
+          nodeLayer,
+          // edgeArrowLayer,
+          nodeTextLayer,
           this.iconLayer,
         ]
       });
@@ -1823,43 +1756,6 @@ module.exports = class Blitzboard {
 
 
     this.clusterSCC();
-
-
-    if(this.config.layout === 'map' && false) {
-      this.mapContainer.style.display = 'block';
-      this.networkContainer.style.background = 'transparent';
-      let statistics = statisticsOfMap();
-      let center = this.config?.layoutSettings?.center || statistics.center;
-      if(this.map) {
-        this.map.panTo(center);
-        this.map.setZoom(Blitzboard.maxZoomForMap);
-      } else {
-        this.map = L.map(this.mapContainer, {
-          center: center,
-          zoom: Blitzboard.maxZoomForMap,
-          minZoom: 3,
-          maxZoom: Blitzboard.maxZoomForMap,
-          zoomSnap: 0.01,
-          zoomControl: false,
-        });
-        var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-        });
-        tileLayer.addTo(this.map);
-
-        this.map.on('move', () => blitzboard.updateViewForMap());
-        this.map.on('zoom', () => blitzboard.updateViewForMap());
-      }
-      // this.updateNodeLocationOnMap();
-      // setTimeout(() => blitzboard.map.fitBounds(L.latLngBounds([statistics.latMin, statistics.lngMax], [statistics.latMax, statistics.lngMin] )));
-      // blitzboard.network.moveTo({scale: 1.0});
-    } else {
-      this.mapContainer.style.display = 'none';
-      if(this.map) {
-        this.map.remove();
-      }
-      this.map = null;
-    }
 
     // this.network.canvas.body.container.addEventListener('keydown', (e) => {
     //   // Key 0
@@ -2306,11 +2202,8 @@ module.exports = class Blitzboard {
     if(!node)
       return;
 
-    if(this.config.layout === 'map') {
-      this.scrollMapToNode(this.nodeMap[node.id]);
-    } else {
-      this.scrollNetworkToPosition(this.network.getPosition(node.id));
-    }
+    this.scrollNetworkToPosition(this.network.getPosition(node.id));
+
     if(select)
       this.network.selectNodes([node.id]);
 
@@ -2340,75 +2233,6 @@ module.exports = class Blitzboard {
     }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
   }
 
-  updateViewForMap() {
-    if(!this.map)
-      return;
-    let zoomDiff = Blitzboard.maxZoomForMap - this.map.getZoom();
-    let offsetFromOrigin = this.map.latLngToContainerPoint(this.mapOrigin);
-    offsetFromOrigin.x -= this.map.getContainer().clientWidth / 2;
-    offsetFromOrigin.y -= this.map.getContainer().clientHeight / 2;
-    let newScale = 1 / Math.pow(2, zoomDiff);
-    let newPosition = {
-      x: -offsetFromOrigin.x / newScale,
-      y: -offsetFromOrigin.y / newScale
-    };
-    this.network.moveTo({
-      scale: newScale,
-      position: newPosition
-    });
-
-    let blitzboard = this;
-    if (this.mapAdjustTimer) {
-      clearTimeout(this.mapAdjustTimer);
-    }
-    this.nodeSizeOnMap = Math.max(5 / newScale, 25);
-    this.mapAdjustTimer = setTimeout(() => {
-      this.network.setOptions({
-        nodes: {
-          size: this.nodeSizeOnMap
-        }
-      });
-      blitzboard.mapAdjustTimer = null;
-    }, 100);
-  }
-
-
-  updateNodeLocationOnMap() {
-    if(!this.map)
-      return;
-    let nodePositions = [];
-    let lngKey =  this.config.layoutSettings.lng;
-    let latKey =  this.config.layoutSettings.lat;
-
-    this.mapOrigin = this.map.getCenter();
-    let containerOffset = {
-      x: this.networkContainer.clientWidth / 2,
-      y: this.networkContainer.clientHeight / 2,
-    }
-
-    this.graph.nodes.forEach(node => {
-      if(node.properties[latKey] && node.properties[lngKey]) {
-        let lat = node.properties[latKey][0],
-          lng = node.properties[lngKey][0];
-        if(typeof(lat) === 'string') {
-          lat = parseFloat(lat);
-        }
-        if(typeof(lng) === 'string') {
-          lng = parseFloat(lng);
-        }
-        let point = this.map.latLngToContainerPoint([lat, lng]);
-
-        nodePositions.push({
-          id: node.id,
-          x: point.x - containerOffset.x, y: point.y - containerOffset.y, fixed: true
-        });
-      }
-    });
-    this.nodeDataSet.update(nodePositions);
-
-    this.updateViewForMap();
-  }
-
 
   updateNodeLocationOnTimeLine() {
     let nodePositions = [];
@@ -2423,24 +2247,15 @@ module.exports = class Blitzboard {
     // this.nodeDataSet.update(nodePositions);
   }
   
-  scrollMapToNode(node) {
-    let lngKey = this.config.layoutSettings.lng;
-    let latKey = this.config.layoutSettings.lat;
-    this.map.panTo([node.properties[latKey][0] ,node.properties[lngKey][0]]);
-  }
-  
+
   scrollEdgeIntoView(edge, select = true) {
     if(typeof(edge) === 'string') {
       edge = this.edgeMap[edge];
     }
 
-    if(this.config.layout === 'map') {
-      this.scrollMapToNode(this.nodeMap[edge.from]);
-    } else {
-      const from = this.network.getPosition(edge.from);
-      const to = this.network.getPosition(edge.to);
-      this.scrollNetworkToPosition({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
-    }
+    const from = this.network.getPosition(edge.from);
+    const to = this.network.getPosition(edge.to);
+    this.scrollNetworkToPosition({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
     if(select) {
       this.network.selectEdges([edge.id]);
     }
