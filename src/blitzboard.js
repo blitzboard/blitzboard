@@ -728,8 +728,6 @@ module.exports = class Blitzboard {
           });
           img.src = blitzboard.svgToURL(svg.outerHTML);
           Blitzboard.loadedIcons[name] = img.src;
-          console.log("retrieved");
-          console.log(name);
           blitzboard.refreshIconLayer();
         }
       };
@@ -739,7 +737,8 @@ module.exports = class Blitzboard {
       let lowerLabel = label.toLowerCase();
       if (!Blitzboard.loadedIcons[lowerLabel]) {
         Blitzboard.loadedIcons[lowerLabel] = 'retrieving'; // Avoid duplication of loading
-        Iconify.loadIcons(icons, iconRegisterer(lowerLabel));
+        setTimeout(() =>
+        Iconify.loadIcons(icons, iconRegisterer(lowerLabel)), 1000);
       }
       attrs['iconLabel'] = lowerLabel;
     }
@@ -1189,13 +1188,21 @@ module.exports = class Blitzboard {
 
 
   refreshIconLayer() {
-    return;
-    let attributes = {...this.iconLayer.props};
-    this.iconLayer = new DeckGLLayers.IconLayer(attributes);
-    this.layers.pop();
-    this.layers.push(this.iconLayer);
+    if(!this.iconLayer)
+      return;
+
+    // Refresh variables to trigger update of icons
     Blitzboard.loadedIcons = {...Blitzboard.loadedIcons};
-    this.network.setProps(this.layers);
+    let oldLayer = this.iconLayer;
+    this.iconLayer = this.createIconLayer(this.nodeData, this.iconLayer.props.sizeScale, this.iconLayer.props.sizeUnits, this.iconLayer.props.coordinateSystem);
+    // replace with new one
+    for(let i = 0; i < this.layers.length; ++i) {
+      if(this.layers[i] === oldLayer) {
+        this.layers[i] = this.iconLayer;
+        break;
+      }
+    }
+    this.network.setProps({layers: [...this.layers]});
   }
   
   update(applyDiff = true) {
@@ -1528,6 +1535,7 @@ module.exports = class Blitzboard {
 
     const nodeData = Object.values(this.nodeDataSet);
     const scale = 0.2;
+    this.nodeData = nodeData;
 
     const nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
@@ -1640,39 +1648,7 @@ module.exports = class Blitzboard {
     });
 
 
-
-    this.iconLayer = new DeckGLLayers.IconLayer({
-      id: 'icon-layer',
-      data: nodeData,
-      pickable: true,
-      coordinateSystem,
-      getIcon: (n) => {
-        console.log("getIcon");
-        console.log({n});
-        if(n.iconLabel && Blitzboard.loadedIcons[n.iconLabel]) {
-          return {
-            url: Blitzboard.loadedIcons[n.iconLabel],
-            width: 240,
-            height: 240
-          }
-        }
-        return {
-          url: 'data:image/svg+xml;charset=utf-8,dummy', // dummy icon to avoid exception
-          width: 24,
-          height: 24
-        }
-      },
-      sizeScale: scale,
-      getPosition: (n) => [n.x, n.y, n.z],
-      getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
-      sizeUnits: sizeUnits,
-      getColor: n => [255, 0, 0],
-      // updateTriggers: {
-      //   getIcon: [Blitzboard.loadedIcons]
-      // }
-    });
-
-
+    this.iconLayer = this.createIconLayer(nodeData, scale, sizeUnits, coordinateSystem);
 
     const view = this.config.dimensions == 2 ? new DeckGL.OrthographicView({}) : new DeckGL.OrbitView({});
 
@@ -2113,6 +2089,36 @@ module.exports = class Blitzboard {
     }
   }
 
+  createIconLayer(nodeData, scale, sizeUnits, coordinateSystem) {
+    return new DeckGLLayers.IconLayer({
+      id: 'icon-layer',
+      data: nodeData,
+      pickable: true,
+      coordinateSystem,
+      getIcon: (n) => {
+        if(n.iconLabel && Blitzboard.loadedIcons[n.iconLabel]) {
+          return {
+            url: Blitzboard.loadedIcons[n.iconLabel],
+            width: 240,
+            height: 240
+          }
+        }
+        return {
+          url: 'data:image/svg+xml;charset=utf-8,dummy', // dummy icon to avoid exception
+          width: 24,
+          height: 24
+        }
+      },
+      sizeScale: scale,
+      getPosition: (n) => [n.x, n.y, n.z],
+      getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
+      sizeUnits: sizeUnits,
+      getColor: n => ([255, 0, 0]),
+      updateTriggers: {
+        getIcon: [Blitzboard.loadedIcons],
+      }
+    });
+  }
 
   updateSCCStatus() {
     if(this.config.layout === 'hierarchical-scc') {
