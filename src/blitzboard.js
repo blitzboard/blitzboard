@@ -1,7 +1,6 @@
 require('@iconify/iconify');
 require('./pg_parser_browserified.js');
 require('./scc.js');
-require('mapbox-gl');
 const DeckGL = require('@deck.gl/core');
 const DeckGLLayers = require('@deck.gl/layers');
 const DeckGLGeoLayers = require('@deck.gl/geo-layers');
@@ -17,7 +16,6 @@ const defaultWidth = 1;
 module.exports = class Blitzboard {
   static fontLoaded = false;
   static SCCColor = '#edc821';
-  static maxZoomForMap = 18;
   static defaultConfig = {
     doubleClickWait: 200,
     node: {
@@ -69,7 +67,7 @@ module.exports = class Blitzboard {
   }
 
   static loadedIcons = {};
-  
+
   static renderedColors = {};
   
   constructor(container) {
@@ -701,22 +699,21 @@ module.exports = class Blitzboard {
     
     function iconRegisterer(name) {
       return (icons) => {
+        if(Blitzboard.loadedIcons[name] !== 'retrieving')
+          return;
         if (icons.length > 0) {
           let icon = null;
-          if(icons.length > 1) {
-            // Find icon with the highest priority 
+          function findIconWithHighestPriority(icons) {
             for (let prefix of Blitzboard.iconPrefixes) {
               for (let i of icons) {
                 if (`${i.prefix}:${i.name}`.startsWith(prefix)) {
-                  icon = i; 
-                  break;
+                  return i;
                 }
               }
-              if (icon) {
-                break;
-              }
             }
+            return icons[0];
           }
+          icon = findIconWithHighestPriority(icons);
           icon = icon || icons[0];
           let size = 1000;
           let svg = Iconify.renderSVG(`${icon.prefix}:${icon.name}`, {
@@ -731,53 +728,37 @@ module.exports = class Blitzboard {
           });
           img.src = blitzboard.svgToURL(svg.outerHTML);
           Blitzboard.loadedIcons[name] = img.src;
+          console.log("retrieved");
+          console.log(name);
+          blitzboard.refreshIconLayer();
         }
       };
     }
 
-    function registerIcon(icon) {
-      if(icon.includes(':')) { // For icons in iconify
-        Iconify.loadIcons([icon], iconRegisterer(icon));
-        attrs['customIcon'] = {
-          name: icon
-        };
-      } else { // For icon codes in Ionicons (to be backward compatible)
-        let code = String.fromCharCode(parseInt(icon, 16));
-        attrs['customIcon'] = {
-          face: 'Ionicons',
-          size: attrs._size * 1.5,
-          code: code,
-          color: 'white'
-        };
+    function registerIcon(icons, label) {
+      let lowerLabel = label.toLowerCase();
+      if (!Blitzboard.loadedIcons[lowerLabel]) {
+        Blitzboard.loadedIcons[lowerLabel] = 'retrieving'; // Avoid duplication of loading
+        Iconify.loadIcons(icons, iconRegisterer(lowerLabel));
       }
+      attrs['iconLabel'] = lowerLabel;
     }
     
-    let iconIsDefined = false;
     for(let label of pgNode.labels) {
       let icon;
       if (icon = this.config.node.icon?.[label]) {
-        registerIcon(icon);
-        iconIsDefined = true;
+        registerIcon([icon], label);
         break;
       }
     }
 
-    if(!iconIsDefined && this.config.node.icon?.['_default']) {
-      registerIcon(this.config.node.icon['_default']);
+    if(!attrs['iconLabel'] && this.config.node.icon?.['_default']) {
+      registerIcon(this.config.node.icon['_default'], pgNode.labels.length > 0 ? pgNode.labels[0] : '_default');
     }
 
-
-    if(!attrs['customIcon'] && (this.config.node.defaultIcon || this.config.node.autoIcon)) {
-      for(let label of pgNode.labels) {
-        let lowerLabel = label.toLowerCase();
-        if (!Blitzboard.loadedIcons[lowerLabel]) {
-          Blitzboard.loadedIcons[lowerLabel] = 'retrieving...'; // Just a placeholder to avoid duplicate fetching
-          Iconify.loadIcons(
-            Blitzboard.iconPrefixes.map((prefix) => prefix + lowerLabel),
-            iconRegisterer(lowerLabel)
-          );
-        }
-      }
+    if(!attrs['iconLabel'] && (this.config.node.defaultIcon || this.config.node.autoIcon) && pgNode.labels.length > 0) {
+      let lowerLabel = pgNode.labels[0].toLowerCase();
+      registerIcon(Blitzboard.iconPrefixes.map((prefix) => prefix + lowerLabel), lowerLabel);
     }
     
     if(thumbnailUrl) {
@@ -1205,6 +1186,17 @@ module.exports = class Blitzboard {
       }
     }
   }
+
+
+  refreshIconLayer() {
+    return;
+    let attributes = {...this.iconLayer.props};
+    this.iconLayer = new DeckGLLayers.IconLayer(attributes);
+    this.layers.pop();
+    this.layers.push(this.iconLayer);
+    Blitzboard.loadedIcons = {...Blitzboard.loadedIcons};
+    this.network.setProps(this.layers);
+  }
   
   update(applyDiff = true) {
     this.staticLayoutMode = true;
@@ -1381,10 +1373,11 @@ module.exports = class Blitzboard {
       const physicsSettings = {
         // timeStep: 0.1,
         dimensions: this.config.dimensions,
-        gravity: -12,
+        // dimensions: 2,
+        // gravity: -12,
         // theta: 1.8,
-        springLength: 50,
-        springCoefficient: 2,
+        // springLength: 50,
+        springCoefficient: 0.7,
         // dragCoefficient: 0.9,
       };
       // if(!this.nodeLayout) {
@@ -1534,6 +1527,7 @@ module.exports = class Blitzboard {
     const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
 
     const nodeData = Object.values(this.nodeDataSet);
+    const scale = 0.2;
 
     const nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
@@ -1547,6 +1541,7 @@ module.exports = class Blitzboard {
       getPosition: (n) => [n.x, n.y, n.z],
       getRadius: (n) => n._size * (this.config.layout === 'map' ? 100 : 1), // TODO
       radiusMinPixels: 1,
+      radiusScale: scale,
       getFillColor: (n) => n.color,
       radiusUnits: sizeUnits,
     });
@@ -1566,7 +1561,7 @@ module.exports = class Blitzboard {
       },
       getColor: (d) => d.color,
       widthUnits: ('common'),
-      widthScale: 0.2 * (this.config.layout === 'map' ? 0.01 : 1)
+      widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1)
     });
 
     const fontSize = 3;
@@ -1579,7 +1574,7 @@ module.exports = class Blitzboard {
       pickable: true,
       getPosition: (node) => {
         let {x, y, z} = blitzboard.nodeLayout.getNodePosition(node.id);
-        return [x, y + node.size, z];
+        return [x, y + node.size * scale, z];
       },
       getText: node => node.label,
       getSize: fontSize,
@@ -1589,6 +1584,7 @@ module.exports = class Blitzboard {
       getAlignmentBaseline: 'top',
       coordinateSystem,
       sizeUnits: sizeUnits,
+      sizeScale: scale,
       outlineWidth: 1,
       outlineColor: [255,255, 255, 255],
       fontSettings: {
@@ -1609,6 +1605,7 @@ module.exports = class Blitzboard {
       },
       getText: edge => edge.label,
       getSize: fontSize,
+      sizeScale: scale,
       getAngle: 0,
       getTextAnchor: 'middle',
       getAlignmentBaseline: 'top',
@@ -1639,11 +1636,9 @@ module.exports = class Blitzboard {
       },
       getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
-      getColor: n => [255, 0, 0],
-      updateTriggers: {
-        getIcon: [Blitzboard.loadedIcons]
-      }
+      getColor: n => [255, 0, 0]
     });
+
 
 
     this.iconLayer = new DeckGLLayers.IconLayer({
@@ -1652,22 +1647,13 @@ module.exports = class Blitzboard {
       pickable: true,
       coordinateSystem,
       getIcon: (n) => {
-        if(n.customIcon && Blitzboard.loadedIcons[n.customIcon.name]) {
+        console.log("getIcon");
+        console.log({n});
+        if(n.iconLabel && Blitzboard.loadedIcons[n.iconLabel]) {
           return {
-            url: Blitzboard.loadedIcons[n.customIcon.name],
+            url: Blitzboard.loadedIcons[n.iconLabel],
             width: 240,
             height: 240
-          }
-        }
-        for(let label of blitzboard.nodeMap[n.id].labels) {
-          let lowerLabel = label.toLowerCase();
-          if (Blitzboard.loadedIcons[lowerLabel]) {
-            console.log(Blitzboard.loadedIcons[lowerLabel]);
-            return {
-              url: Blitzboard.loadedIcons[lowerLabel],
-              width: 240,
-              height: 240
-            }
           }
         }
         return {
@@ -1676,14 +1662,14 @@ module.exports = class Blitzboard {
           height: 24
         }
       },
-      sizeScale: 1,
+      sizeScale: scale,
       getPosition: (n) => [n.x, n.y, n.z],
       getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
       getColor: n => [255, 0, 0],
-      updateTriggers: {
-        getIcon: [Blitzboard.loadedIcons]
-      }
+      // updateTriggers: {
+      //   getIcon: [Blitzboard.loadedIcons]
+      // }
     });
 
 
@@ -1718,20 +1704,22 @@ module.exports = class Blitzboard {
         pickable: true,
       });
 
+      this.layers = [
+        tileLayer,
+        lineLayer,
+        edgeTextLayer,
+        nodeLayer,
+        // edgeArrowLayer,
+        nodeTextLayer,
+        this.iconLayer,
+      ];
+
       this.network.setProps({
         initialViewState: INITIAL_VIEW_STATE,
         views: [new DeckGL.MapView()],
         controller: true,
-        layers: [
-          tileLayer,
-          lineLayer,
-          edgeTextLayer,
-          nodeLayer,
-          // edgeArrowLayer,
-          nodeTextLayer,
-          this.iconLayer,
-        ]
-      })
+        layers: this.layers,
+      });
     } else {
       let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
 
@@ -1740,20 +1728,23 @@ module.exports = class Blitzboard {
         zoom: Math.log(rate) / Math.log(2)
       };
 
+      this.layers = [
+        lineLayer,
+        edgeTextLayer,
+        nodeLayer,
+        // edgeArrowLayer,
+        nodeTextLayer,
+        this.iconLayer,
+      ]
+
       this.network.setProps({
         initialViewState: INITIAL_VIEW_STATE,
         views: [view],
-        layers: [
-          lineLayer,
-          edgeTextLayer,
-          nodeLayer,
-          // edgeArrowLayer,
-          nodeTextLayer,
-          this.iconLayer,
-        ]
+        layers: this.layers
       });
     }
 
+    return;
 
     this.clusterSCC();
 
@@ -1957,21 +1948,15 @@ module.exports = class Blitzboard {
     //   for(let node of this.graph.nodes) {
     //     node = this.nodeDataSet.get(node.id);
     //     let nodeSize = this.config.layout === 'map' && this.nodeSizeOnMap ? this.nodeSizeOnMap : node._size;
-    //     if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon || this.config.node.autoIcon)) {
+    //     if(node && node.shape !== 'image' && (node.iconLabel || this.config.node.defaultIcon || this.config.node.autoIcon)) {
     //       let position = this.network.getPosition(node.id);
     //       let pgNode = this.nodeMap[node.id];
-    //       if(node.customIcon) {
-    //         if(node.customIcon.name && Blitzboard.loadedIcons[node.customIcon.name]) { // Iconiy
-    //           ctx.drawImage(Blitzboard.loadedIcons[node.customIcon.name],
+    //       if(node.iconLabel) {
+    //         if(node.iconLabel && Blitzboard.loadedIcons[node.iconLabel.name]) { // Iconiy
+    //           ctx.drawImage(Blitzboard.loadedIcons[node.iconLabel.name],
     //             position.x - nodeSize * Blitzboard.iconSizeCoef / 2, position.y - nodeSize * Blitzboard.iconSizeCoef / 2,
     //             nodeSize * Blitzboard.iconSizeCoef,
     //             nodeSize * Blitzboard.iconSizeCoef);
-    //         } else { // Ionicons
-    //           ctx.font = `${node.customIcon.size}px Ionicons`;
-    //           ctx.fillStyle = "white";
-    //           ctx.textAlign = "center";
-    //           ctx.textBaseline = "middle";
-    //           ctx.fillText(node.customIcon.code, position.x, position.y);
     //         }
     //       } else {
     //         if(!pgNode) {
