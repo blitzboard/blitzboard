@@ -246,15 +246,90 @@ module.exports = class Blitzboard {
     
     const balloonHandleSize = 12;
 
+
+    class ExtendedController extends DeckGL.Controller {
+      constructor(options = {}) {
+        super(DeckGL.ViewState, options);
+        this.events = ['pointermove'];
+      }
+      handleEvent(event) {
+        if (event.type === 'doubleClick') {
+          console.log({event});
+          clearTimeout(this.doubleClickTimer);
+          this.doubleClickTimer = null;
+          if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
+            if(this.config.node.onDoubleClick) {
+              this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
+            }
+          } else if(e.edges.length > 0) {
+            if(this.config.edge.onDoubleClick) {
+              this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
+            }
+          } else {
+            this.fit();
+          }
+        } else {
+          super.handleEvent(event);
+        }
+      }
+    }
+
+
+    function clickHandler(e) {
+      clearTimeout(blitzboard.doubleClickTimer);
+      blitzboard.doubleClickTimer = null;
+
+      if(e.picked) {
+        let object = e.object;
+        if (object.objectType === 'node' && blitzboard.config.node.onClick) {
+          blitzboard.config.node.onClick(blitzboard.getNode(object.id));
+        } else if (object.objectType === 'edge' && blitzboard.config.edge.onClick) {
+          blitzboard.config.edge.onClick(blitzboard.getEdge(object.id));
+        }
+      }
+    }
+
     this.network = new DeckGL.Deck({
       parent: this.container,
-      controller: true,
+      controller: { doubleClickZoom: false },
       getTooltip: (elem) => {
         if(!elem?.object)
           return null;
         return {
           html: elem.object._title
         }
+      },
+      onClick: (e) => {
+        console.log({e});
+        if(!this.doubleClickTimer) {
+          if (this.config.doubleClickWait <= 0) {
+            clickHandler(e);
+          } else {
+            this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
+          }
+        } else {
+          clearTimeout(this.doubleClickTimer);
+          this.doubleClickTimer = null;
+          if(e.picked) {
+            let object = e.object;
+            if(object.objectType === 'node' && this.config.node.onDoubleClick) {
+              this.config.node.onDoubleClick(this.getNode(object.id));
+            } else if(object.objectType === 'edge' && this.config.edge.onDoubleClick) {
+              this.config.edge.onDoubleClick(this.getEdge(object.id));
+            }
+          } else {
+            this.fit();
+          }
+        }
+
+        // if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])){
+        //   let node = e.nodes[0]
+        //   this.upstreamNodes = this.getUpstreamNodes(node);
+        //   this.downstreamNodes = this.getDownstreamNodes(node);
+        //   this.network.setSelection({nodes: [], edges: []}); // reset
+        //   this.highlightedNodes = Array.from(this.upstreamNodes).concat(Array.from(this.downstreamNodes));
+        //   this.network.selectNodes( this.highlightedNodes, true);
+        // }
       },
       initialViewState: {
         target: [0, 0],
@@ -655,6 +730,7 @@ module.exports = class Blitzboard {
     }
 
     let attrs = {
+      objectType: 'node',
       id: pgNode.id,
       color: rgb,
       opacity,
@@ -815,6 +891,7 @@ module.exports = class Blitzboard {
       dashes = true;
     }
     let attrs = {
+      objectType: 'edge',
       id: id,
       from: pgEdge.from,
       to: pgEdge.to,
@@ -1743,21 +1820,6 @@ module.exports = class Blitzboard {
       }
     });
 
-    //
-    //
-    // this.network.on('dragStart', (e) => {
-    //   const node = this.nodeDataSet.get(e.nodes[0]);
-    //   if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
-    //     this.nodeDataSet.update({
-    //       id: e.nodes[0],
-    //       fixed: node?.fixedByTime ? {x: true, y: true } : false
-    //     });
-    //   }
-    // });
-    //
-    //
-    //
-    //
     // this.network.on("hoverNode", (e) => {
     //   this.network.canvas.body.container.style.cursor = 'default';
     //   const node = this.nodeDataSet.get(e.node);
@@ -1866,41 +1928,8 @@ module.exports = class Blitzboard {
     // });
 
 
-    function clickHandler(e) {
-      blitzboard.doubleClickTimer = null;
-      if (e.nodes.length > 0 ) {
-        if (blitzboard.config.node.onClick) {
-          blitzboard.config.node.onClick(blitzboard.getNode(e.nodes[0]));
-        }
-      } else if (e.edges.length > 0) {
-        if (blitzboard.config.edge.onClick) {
-          blitzboard.config.edge.onClick(blitzboard.getEdge(e.edges[0]));
-        }
-      }
-    }
 
-    // this.network.on("click", (e) => {
-    //   if(!this.doubleClickTimer) {
-    //     if (this.config.doubleClickWait <= 0) {
-    //       clickHandler(e);
-    //     } else {
-    //       this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
-    //     }
-    //   }
     //
-    //   if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])){
-    //     let node = e.nodes[0]
-    //     this.upstreamNodes = this.getUpstreamNodes(node);
-    //     this.downstreamNodes = this.getDownstreamNodes(node);
-    //     this.network.setSelection({nodes: [], edges: []}); // reset
-    //     this.highlightedNodes = Array.from(this.upstreamNodes).concat(Array.from(this.downstreamNodes));
-    //     this.network.selectNodes( this.highlightedNodes, true);
-    //   }
-    // });
-    //
-    // this.network.on("animationFinished", (e) => {
-    //   blitzboard.network.renderer.dragging = false;
-    // });
     //
     //
     // this.network.on("doubleClick", (e) => {
