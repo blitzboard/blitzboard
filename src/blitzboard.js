@@ -1735,12 +1735,14 @@ module.exports = class Blitzboard {
 
     this.clusterSCC();
 
-    // this.network.canvas.body.container.addEventListener('keydown', (e) => {
-    //   // Key 0
-    //   if(e.keyCode === 48)
-    //     blitzboard.fit();
-    // });
-    //
+    this.container.addEventListener('keydown', (e) => {
+      // Key 0
+      if(e.keyCode === 48) {
+        blitzboard.fit();
+        e.preventDefault();
+      }
+    });
+
     //
     //
     // this.network.on('dragStart', (e) => {
