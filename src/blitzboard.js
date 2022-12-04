@@ -1556,6 +1556,7 @@ module.exports = class Blitzboard {
 
     const lineLayer = new DeckGLLayers.LineLayer({
       id: "line-layer",
+      pickable: true,
       coordinateSystem,
       data: this.edgeDataSet,
       getWidth: edge => edge.width,
