@@ -1334,11 +1334,11 @@ module.exports = class Blitzboard {
       data: this.edgeDataSet,
       getWidth: edge => edge.width,
       getSourcePosition: (edge) => {
-        let {x, y, z} = blitzboard.nodeDataSet[edge.from];
+        let {x, y, z} = this.nodeDataSet[edge.from];
         return [x, y, z];
       },
       getTargetPosition: (edge) => {
-        let {x, y, z} = blitzboard.nodeDataSet[edge.to];
+        let {x, y, z} = this.nodeDataSet[edge.to];
         return [x, y, z];
       },
       getColor: (d) => d.color,
@@ -1355,7 +1355,7 @@ module.exports = class Blitzboard {
       data: nodeData,
       pickable: true,
       getPosition: (node) => {
-        let {x, y, z} = blitzboard.nodeLayout.getNodePosition(node.id);
+        let {x, y, z} = this.nodeLayout.getNodePosition(node.id);
         return [x, y + node.size * scale, z];
       },
       getText: node => node.label,
@@ -1381,8 +1381,8 @@ module.exports = class Blitzboard {
       data: this.edgeDataSet,
       pickable: true,
       getPosition: (edge) => {
-        let {x: fromX, y: fromY, z: fromZ} = blitzboard.nodeDataSet[edge.from];
-        let {x: toX, y: toY, z: toZ} = blitzboard.nodeDataSet[edge.to];
+        let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
+        let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
         return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
       },
       getText: edge => edge.label,
@@ -1412,8 +1412,8 @@ module.exports = class Blitzboard {
       }),
       sizeScale: 1,
       getPosition: (edge) => {
-        let {x: fromX, y: fromY, z: fromZ} = blitzboard.nodeDataSet[edge.from];
-        let {x: toX, y: toY, z: toZ} = blitzboard.nodeDataSet[edge.to];
+        let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
+        let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
         return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
       },
       getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
