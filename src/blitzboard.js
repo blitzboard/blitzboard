@@ -1033,7 +1033,7 @@ module.exports = class Blitzboard {
     {
       let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
       flattend_props.splice(0, 0, idText);
-    } else if(elem.labels.length > 0) {
+    } else {
       let idText = `<tr><td><b>${elem.from} - ${elem.to}</b></td><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td></tr>`;
       flattend_props.splice(0, 0, idText);
     }
