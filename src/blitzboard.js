@@ -2058,15 +2058,25 @@ module.exports = class Blitzboard {
 
   scrollNodeIntoView(node, select = true) {
     if(typeof(node) === 'string')
-      node = this.nodeMap[node];
+      node = this.nodeDataSet[node];
+    else
+      node = this.nodeDataSet[node.id];
     if(!node)
       return;
 
-    this.scrollNetworkToPosition(this.network.getPosition(node.id));
 
-    if(select)
-      this.network.selectNodes([node.id]);
-
+    if(this.config.layout === 'map') {
+      this.network.setProps({initialViewState: {
+        latitude: node.y,
+        longitude: node.x,
+        zoom: 15
+      }});
+    } else {
+      this.network.setProps({initialViewState: {
+          target: [node.x, node.y],
+          zoom: 10
+      }});
+    }
     for(let callback of this.onNodeFocused) {
       // TODO: The argument should be proxy instead of plain objects
       callback(node);
