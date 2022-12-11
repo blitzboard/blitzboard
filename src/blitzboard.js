@@ -1357,11 +1357,10 @@ module.exports = class Blitzboard {
       data: nodeData,
       pickable: true,
       getPosition: (node) => {
-        let {x, y, z} = this.nodeLayout.getNodePosition(node.id);
-        return [x, y + node.size * scale, z];
+        return [node.x, node.y + (this.config.layout === 'map' ? -0.001 : node.size * scale), node.z];
       },
       getText: node => node.label,
-      getSize: fontSize,
+      getSize: fontSize * (this.config.layout === 'map' ? 100 : 1), // TODO: somewhy, we have to scale the size for map layout
       sizeMaxPixels: 60,
       getAngle: 0,
       getTextAnchor: 'middle',
@@ -2069,7 +2068,9 @@ module.exports = class Blitzboard {
       this.network.setProps({initialViewState: {
         latitude: node.y,
         longitude: node.x,
-        zoom: 15
+        zoom: 13,
+        transitionDuration: 1000,
+        transitionInterpolator: new DeckGL.FlyToInterpolator()
       }});
     } else {
       this.network.setProps({initialViewState: {
