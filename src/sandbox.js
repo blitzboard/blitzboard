@@ -974,7 +974,11 @@ $(() => {
       if (i < savedGraphNames.length) {
         savedGraphNames[i] = graph;
       }
-      localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
+      try {
+        localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
+      } catch(e) {
+        toastr.warning("Failed to save graph in local storage: " + e.message, {preventDuplicates: true})
+      }
       updateGraphList();
       if(callback)
         callback();
@@ -1597,10 +1601,9 @@ $(() => {
 
   function reflectEditorChange() {
     // localStorage.setItem('pg', editor.getValue());
+    updateGraph(editor.getValue());
     if(!remoteMode)
       saveCurrentGraph();
-
-    updateGraph(editor.getValue());
     blitzboard.hideLoader();
     clearTimeout(pgTimerId);
     pgTimerId = null;
