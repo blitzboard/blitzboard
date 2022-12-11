@@ -15,6 +15,7 @@ const defaultWidth = 1;
 
 module.exports = class Blitzboard {
   static SCCColor = '#edc821';
+  static minNodeSizeInPixels = 3;
   static defaultConfig = {
     doubleClickWait: 200,
     node: {
@@ -1321,7 +1322,7 @@ module.exports = class Blitzboard {
       coordinateSystem,
       getPosition: (n) => [n.x, n.y, n.z],
       getRadius: (n) => n._size * (this.config.layout === 'map' ? 100 : 1), // TODO
-      radiusMinPixels: 1,
+      radiusMinPixels: Blitzboard.minNodeSizeInPixels, // TODO,
       radiusScale: scale,
       getFillColor: (n) => n.color,
       radiusUnits: sizeUnits,
@@ -1343,7 +1344,8 @@ module.exports = class Blitzboard {
       },
       getColor: (d) => d.color,
       widthUnits: ('common'),
-      widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1)
+      widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
+      widthMinPixels: 1,
     });
 
     const fontSize = 3;
@@ -1980,6 +1982,7 @@ module.exports = class Blitzboard {
       getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
       getColor: n => ([255, 0, 0]),
+      sizeMinPixels: Blitzboard.minNodeSizeInPixels,
       updateTriggers: {
         getIcon: [Blitzboard.loadedIcons],
       }
