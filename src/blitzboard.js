@@ -286,7 +286,6 @@ module.exports = class Blitzboard {
         }
       },
       onClick: (e) => {
-        console.log({e});
         if(!this.doubleClickTimer) {
           if(this.config.doubleClickWait <= 0) {
             clickHandler(e);
@@ -1743,6 +1742,12 @@ module.exports = class Blitzboard {
       };
       if(!this.nodeLayout) {
         this.nodeLayout = createLayout(ngraph, physicsSettings);
+        for(let i = 0; i < 1000; ++i) {
+          if(this.nodeLayout.step() && i >= 200) {
+            console.log(`layout is stable at step #${i}`);
+            break;
+          }
+        }
       } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
         // convert into layout of ngraph
         let ngraphLayout = createLayout(ngraph, physicsSettings);
@@ -1751,12 +1756,6 @@ module.exports = class Blitzboard {
             ngraphLayout.setNodePosition(nodeId, position.x, position.y);
         }
         this.nodeLayout = ngraphLayout;
-      }
-      for(let i = 0; i < 1000; ++i) {
-        if(this.nodeLayout.step() && i >= 200) {
-          console.log(`layout is stable at step #${i}`);
-          break;
-        }
       }
     }
 
@@ -1833,7 +1832,7 @@ module.exports = class Blitzboard {
       return visEdge;
     });
 
-    this.edgeDataSet.filter(e => e); // remove null
+    this.edgeDataSet = this.edgeDataSet.filter(e => e); // remove null
 
     let layout = {
       randomSeed: 1
