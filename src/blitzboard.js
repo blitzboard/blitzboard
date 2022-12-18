@@ -1478,10 +1478,11 @@ module.exports = class Blitzboard {
     if(this.config.layout === 'map') {
       const tileLayer = new DeckGLGeoLayers.TileLayer({
         id: 'TileLayer',
-        style: 'mapbox://styles/mapbox/light-v9',
-        data: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        // data: "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
+        data: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         maxZoom: 19,
         minZoom: 0,
+        tileSize: 256,
         renderSubLayers: props => {
           const {
             bbox: {west, south, east, north}
