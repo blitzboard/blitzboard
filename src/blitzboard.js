@@ -1239,10 +1239,26 @@ module.exports = class Blitzboard {
       }
     }
   }
-  
+
+  isFilteredOutNode(node) {
+    if(this.config.node.filter)
+      return !this.config.node.filter(new Proxy(node, Blitzboard.blitzProxy));
+    return false;
+  }
+
+  isFilteredOutEdge(edge) {
+    if(this.config.edge.filter) {
+      return !this.config.edge.filter(new Proxy(edge, Blitzboard.blitzProxy));
+    }
+    return false;
+  }
+
   update(applyDiff = true) {
     let blitzboard = this;
     this.warnings = [];
+
+    this.graph.nodes = this.graph.nodes.filter(n => !this.isFilteredOutNode(n));
+    this.graph.edges = this.graph.edges.filter(e => !this.isFilteredOutEdge(e));
 
     if(this.baseConfig.configChoices?.configs) {
       let chosenConfig;
@@ -1292,6 +1308,7 @@ module.exports = class Blitzboard {
 
       this.maxLine = 0;
       this.graph.nodes.forEach(node => {
+        if(this.isFilteredOutNode(node)) return;
         let existingNode = this.nodeMap[node.id];
         if(existingNode) {
           if(!nodeEquals(node, existingNode)) {
@@ -1316,6 +1333,7 @@ module.exports = class Blitzboard {
       });
 
       this.graph.edges.forEach(edge => {
+        if(this.isFilteredOutEdge(edge)) return;
         let id = this.toNodePairString(edge);
         if(!this.edgeMap[id])
           this.addedEdges.add(id);
@@ -1467,6 +1485,8 @@ module.exports = class Blitzboard {
     
     this.edgeMap = {};
     this.edgeDataSet = new visData.DataSet(this.graph.edges.map((edge) => {
+      if(this.isFilteredOutEdge(edge))
+        return null;
       let id = this.toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
@@ -1478,11 +1498,8 @@ module.exports = class Blitzboard {
           if (i < edge.location.end.line || edge.location.end.column > 1)
             this.edgeLineMap[i] = visEdge;
       }
-
       return visEdge;
-    }));
-
-
+    }).filter(e => e));
 
     // create a network
     let data = {
