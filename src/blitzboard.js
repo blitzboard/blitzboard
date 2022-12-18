@@ -1766,6 +1766,8 @@ module.exports = class Blitzboard {
       this.updateTooltipLocation();
       for(let node of this.graph.nodes) {
         node = this.nodeDataSet.get(node.id);
+        if(!node)
+          continue;
         let nodeSize = this.config.layout === 'map' && this.nodeSizeOnMap ? this.nodeSizeOnMap : node._size;
         if(node && node.shape !== 'image' && (node.customIcon || this.config.node.defaultIcon || this.config.node.autoIcon)) {
           let position = this.network.getPosition(node.id);
