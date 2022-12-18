@@ -1357,7 +1357,7 @@ module.exports = class Blitzboard {
       },
       getColor: (e) => {
         if(this.highlightedNodes.has(e.from) || this.highlightedNodes.has(e.to)) {
-          return [196, e.color, e.color, 255];
+          return [e.color, e.color, e.color, 255];
         }
         let color = [...e.color];
         for(let i = 0; i < 3; ++i)
