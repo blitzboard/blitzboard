@@ -818,8 +818,7 @@ module.exports = class Blitzboard {
     }
 
     if(thumbnailUrl) {
-      attrs['shape'] = 'image';
-      attrs['image'] = thumbnailUrl;
+      attrs.imageURL = thumbnailUrl;
     }
     attrs = Object.assign(attrs, extraOptions);
     return attrs;
@@ -1455,6 +1454,23 @@ module.exports = class Blitzboard {
 
     this.iconLayer = this.createIconLayer(this.nodeData, scale, sizeUnits, coordinateSystem);
 
+
+    // TODO: Create individual layers for each node may lead to performance problem
+    this.thumbnailLayers = this.nodeData.map((n) => {
+      if(n.imageURL) {
+        return new DeckGLLayers.BitmapLayer({
+          id: 'bitmap-layer-' + n.id,
+          bounds: [ n.x + n._size / Blitzboard.defaultNodeSize, n.y + n._size / Blitzboard.defaultNodeSize,
+            n.x - n._size / Blitzboard.defaultNodeSize,
+            n.y - n._size / Blitzboard.defaultNodeSize],
+          image: n.imageURL
+        });
+      }
+      return null;
+    }).filter(n => n);
+
+
+
     if(this.config.layout === 'map') {
       const tileLayer = new DeckGLGeoLayers.TileLayer({
         id: 'TileLayer',
@@ -1484,6 +1500,7 @@ module.exports = class Blitzboard {
         // edgeArrowLayer,
         nodeTextLayer,
         this.iconLayer,
+        ...this.thumbnailLayers
       ];
 
       this.network.setProps({
@@ -1497,6 +1514,7 @@ module.exports = class Blitzboard {
         // edgeArrowLayer,
         nodeTextLayer,
         this.iconLayer,
+        ...this.thumbnailLayers
       ]
       this.network.setProps({
         layers: this.layers
