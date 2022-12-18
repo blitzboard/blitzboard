@@ -1113,6 +1113,7 @@ module.exports = class Blitzboard {
     }
 
     this.baseConfig = deepMerge({}, this.config); // Save config before apply configChoices
+    Blitzboard.loadedIcons = {};
     if(update)
       this.update(false);
   }
