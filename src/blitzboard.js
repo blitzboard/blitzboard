@@ -69,6 +69,8 @@ module.exports = class Blitzboard {
   static loadedIcons = {};
 
   static renderedColors = {};
+
+  static pitch = 0;
   
   constructor(container) {
     this.container = container;
@@ -89,6 +91,7 @@ module.exports = class Blitzboard {
     this.deletedEdges = new Set();
     this.sccMode = 'cluster';
     this.configChoice = null;
+    this.highlightedNodes = new Set();
     
     this.staticLayoutMode = true;
 
@@ -255,7 +258,6 @@ module.exports = class Blitzboard {
       }
       handleEvent(event) {
         if (event.type === 'doubleClick') {
-          console.log({event});
           clearTimeout(this.doubleClickTimer);
           this.doubleClickTimer = null;
           if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
@@ -497,6 +499,7 @@ module.exports = class Blitzboard {
     let a = document.createElement('div');
     a.style.color = colorStr;
     let colors = window.getComputedStyle( document.body.appendChild(a) ).color.match(/\d+/g).map(function(a){ return parseInt(a,10); });
+    colors.push(255);
     document.body.removeChild(a);
     Blitzboard.renderedColors[colorStr] = colors;
     return colors;
@@ -1059,6 +1062,7 @@ module.exports = class Blitzboard {
       return {
         latitude: (this.minY + this.maxY) / 2,
         longitude: (this.minX + this.maxX) / 2,
+        pitch: Blitzboard.pitch,
         zoom: 3
       };
     } else {
@@ -1303,35 +1307,54 @@ module.exports = class Blitzboard {
     this.network.setProps({layers: [...this.layers]});
   }
 
+  onNodeHover(hoverInfo) {
+    this.highlightedNodes = new Set();
+    if(hoverInfo.object) {
+      this.highlightedNodes.add(hoverInfo.object.id);
+    }
+    // this.network.setProps({layers: [...this.layers]});
+    this.updateLayers();
+  }
+
   updateLayers() {
     const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
     const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
 
-    const nodeData = Object.values(this.nodeDataSet);
     const scale = 0.2;
-    this.nodeData = nodeData;
 
-    const nodeLayer = new DeckGLLayers.ScatterplotLayer({
+    this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
-      data: nodeData,
+      data: this.nodeData,
       pickable: true,
       opacity: 1, // TODO
       stroked: false,
       filled: true,
-      billboard: true,
+      billboard: this.config.layout !== 'map',
       coordinateSystem,
-      getPosition: (n) => [n.x, n.y, n.z],
+      getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
       getRadius: (n) => n._size * (this.config.layout === 'map' ? 100 : 1), // TODO
       radiusMinPixels: Blitzboard.minNodeSizeInPixels, // TODO,
       radiusScale: scale,
-      getFillColor: (n) => n.color,
+      getFillColor: (n) => {
+        if(this.highlightedNodes.has(n.id))
+          return n.color;
+        let color = [...n.color];
+        for(let i = 0; i < 3; ++i)
+          color[i] = (128 + color[i]) / 2;
+        return color;
+      },
+      onHover: info => this.onNodeHover(info),
+      updateTriggers: {
+        getFillColor: [this.highlightedNodes],
+      },
       radiusUnits: sizeUnits,
     });
 
-    const lineLayer = new DeckGLLayers.LineLayer({
+    const edgeLayer = new DeckGLLayers.LineLayer({
       id: "line-layer",
       pickable: true,
       coordinateSystem,
+      billboard: this.config.layout !== 'map',
       data: this.edgeDataSet,
       getWidth: edge => edge.width,
       getSourcePosition: (edge) => {
@@ -1342,7 +1365,19 @@ module.exports = class Blitzboard {
         let {x, y, z} = this.nodeDataSet[edge.to];
         return [x, y, z];
       },
-      getColor: (d) => d.color,
+      getColor: (e) => {
+        if(this.highlightedNodes.has(e.from) || this.highlightedNodes.has(e.to)) {
+          return [196, e.color, e.color, 255];
+        }
+        let color = [...e.color];
+        for(let i = 0; i < 3; ++i)
+          color[i] = (128 * 3 + color[i]) / 4;
+        color[3] = 64;
+        return color;
+      },
+      updateTriggers: {
+        getColor: [this.highlightedNodes],
+      },
       widthUnits: ('common'),
       widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
       widthMinPixels: 1,
@@ -1350,11 +1385,11 @@ module.exports = class Blitzboard {
 
     const fontSize = 3;
 
-    const characterSet = nodeData.map(n => Array.from(n.label)).flat();
+    const characterSet = this.nodeData.map(n => Array.from(n.label)).flat();
 
     const nodeTextLayer = new DeckGLLayers.TextLayer({
       id: 'node-text-layer',
-      data: nodeData,
+      data: this.nodeData,
       pickable: true,
       getPosition: (node) => {
         return [node.x, node.y + (this.config.layout === 'map' ? -0.001 : node.size * scale), node.z];
@@ -1362,6 +1397,7 @@ module.exports = class Blitzboard {
       getText: node => node.label,
       getSize: fontSize * (this.config.layout === 'map' ? 100 : 1), // TODO: somewhy, we have to scale the size for map layout
       sizeMaxPixels: 60,
+      billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
       getAlignmentBaseline: 'top',
@@ -1389,6 +1425,7 @@ module.exports = class Blitzboard {
       getText: edge => edge.label,
       getSize: fontSize,
       sizeScale: scale,
+      billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
       getAlignmentBaseline: 'top',
@@ -1423,11 +1460,12 @@ module.exports = class Blitzboard {
     });
 
 
-    this.iconLayer = this.createIconLayer(nodeData, scale, sizeUnits, coordinateSystem);
+    this.iconLayer = this.createIconLayer(this.nodeData, scale, sizeUnits, coordinateSystem);
 
     if(this.config.layout === 'map') {
       const tileLayer = new DeckGLGeoLayers.TileLayer({
         id: 'TileLayer',
+        style: 'mapbox://styles/mapbox/light-v9',
         data: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
         maxZoom: 19,
         minZoom: 0,
@@ -1447,39 +1485,46 @@ module.exports = class Blitzboard {
 
       this.layers = [
         tileLayer,
-        lineLayer,
+        edgeLayer,
         edgeTextLayer,
-        nodeLayer,
+        this.nodeLayer,
         // edgeArrowLayer,
         nodeTextLayer,
         this.iconLayer,
       ];
 
-      this.viewState = this.createInitialViewState();
       this.network.setProps({
-        initialViewState: this.viewState,
-        views: [new DeckGL.MapView()],
         layers: this.layers,
       });
     } else {
-      let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
-
       this.layers = [
-        lineLayer,
+        edgeLayer,
         edgeTextLayer,
-        nodeLayer,
+        this.nodeLayer,
         // edgeArrowLayer,
         nodeTextLayer,
         this.iconLayer,
       ]
+      this.network.setProps({
+        layers: this.layers
+      });
+    }
+  }
 
+  updateViews() {
+    if(this.config.layout === 'map') {
+      this.viewState = this.createInitialViewState();
+      this.network.setProps({
+        initialViewState: this.viewState,
+        views: [new DeckGL.MapView()],
+      });
+    } else {
       const view = this.config.dimensions === 2 ? new DeckGL.OrthographicView({}) : new DeckGL.OrbitView({});
 
       this.viewState = this.createInitialViewState();
       this.network.setProps({
         initialViewState: this.viewState,
         views: [view],
-        layers: this.layers
       });
     }
   }
@@ -1660,7 +1705,7 @@ module.exports = class Blitzboard {
         // timeStep: 0.1,
         dimensions: this.config.dimensions,
         // dimensions: 2,
-        // gravity: -12,
+        // gravity: -120,
         // theta: 1.8,
         // springLength: 50,
         springCoefficient: 0.7,
@@ -1808,8 +1853,10 @@ module.exports = class Blitzboard {
     };
 
     this.options = Object.assign(this.options, this.config.extraOptions);
-    
+
+    this.nodeData = Object.values(this.nodeDataSet);
     this.updateLayers();
+    this.updateViews();
 
     this.clusterSCC();
 
@@ -1960,8 +2007,9 @@ module.exports = class Blitzboard {
     return new DeckGLLayers.IconLayer({
       id: 'icon-layer',
       data: nodeData,
-      pickable: true,
+      pickable: false,
       coordinateSystem,
+      billboard: this.config.layout !== 'map',
       getIcon: (n) => {
         if(n.iconLabel && Blitzboard.loadedIcons[n.iconLabel]) {
           return {
@@ -1977,7 +2025,7 @@ module.exports = class Blitzboard {
         }
       },
       sizeScale: scale,
-      getPosition: (n) => [n.x, n.y, n.z],
+      getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
       getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
       getColor: n => ([255, 0, 0]),
@@ -2069,13 +2117,16 @@ module.exports = class Blitzboard {
         latitude: node.y,
         longitude: node.x,
         zoom: 13,
+        pitch: Blitzboard.pitch,
         transitionDuration: 1000,
         transitionInterpolator: new DeckGL.FlyToInterpolator()
       }});
     } else {
       this.network.setProps({initialViewState: {
           target: [node.x, node.y],
-          zoom: 10
+          zoom: 4,
+          transitionDuration: 500,
+          // transitionInterpolator: new DeckGL.FlyToInterpolator()
       }});
     }
     for(let callback of this.onNodeFocused) {

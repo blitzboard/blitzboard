@@ -549,9 +549,11 @@ $(() => {
                   blitzboard.setConfig(config);
                   });
                   `;
+
+    content = JSON.stringify(blitzboard.graph);
     
     let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + '_' + currentTimeString();
-    saveAs(new Blob([content], {type: 'text/plain'}), name + '.js');
+    saveAs(new Blob([content], {type: 'text/plain'}), name + '.json');
     $('#export-btn').dropdown('toggle');
   });
 
@@ -1457,6 +1459,7 @@ $(() => {
     a.click();
     a.remove();
     $('#export-btn').dropdown('toggle');
+
   });
 
   window.addEventListener("beforeunload",  (e) => {
@@ -1646,7 +1649,7 @@ $(() => {
         } else if (edge) {
           blitzboard.scrollEdgeIntoView(edge)
         }
-      }, blitzboard.staticLayoutMode ? 1000 : 100);
+      }, blitzboard.staticLayoutMode ? 100 : 100);
     }
   });
 
