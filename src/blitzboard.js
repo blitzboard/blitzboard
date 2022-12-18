@@ -33,7 +33,7 @@ module.exports = class Blitzboard {
       limit: 50000,
       width: defaultWidth
     },
-    zoom: { 
+    zoom: {
       max: 3.0,
       min: 0.25,
     },
@@ -44,8 +44,7 @@ module.exports = class Blitzboard {
       lat: 'lat'
     },
     style: "border: solid 1px silver; background: radial-gradient(white, silver);",
-    extraOptions: {
-    },
+    extraOptions: {},
     dimensions: 2,
   };
   static tooltipMaxWidth = 600;
@@ -71,7 +70,7 @@ module.exports = class Blitzboard {
   static renderedColors = {};
 
   static pitch = 0;
-  
+
   constructor(container) {
     this.container = container;
     this.nodeColorMap = {};
@@ -92,11 +91,11 @@ module.exports = class Blitzboard {
     this.sccMode = 'cluster';
     this.configChoice = null;
     this.highlightedNodes = new Set();
-    
+
     this.staticLayoutMode = true;
 
     this.container.style.position = 'absolute';
-    
+
     this.networkContainer = document.createElement('div');
     this.networkContainer.style = this.networkContainerOriginalStyle = `
       height: 100%;
@@ -106,7 +105,7 @@ module.exports = class Blitzboard {
       position: absolute;
       z-index: 2;
     `;
-    
+
     this.tooltipDummy = document.createElement('div');
     this.tooltipDummy.style.position = 'absolute';
     this.tooltipDummy.classList.add('blitzboard-tooltip');
@@ -148,11 +147,10 @@ module.exports = class Blitzboard {
     `;
 
 
-
     this.minTime = new Date(8640000000000000);
     this.maxTime = new Date(-8640000000000000);
-    
-    this.prevMouseEvent= null;
+
+    this.prevMouseEvent = null;
     this.timeScale = 1000;
     this.dragging = false;
     this.currentLatLng = null;
@@ -184,7 +182,7 @@ module.exports = class Blitzboard {
       font-size: 2rem;
     `;
     this.doubleClickTimer = null;
-    
+
     let blitzboard = this;
 
     container.appendChild(this.screen);
@@ -247,7 +245,7 @@ module.exports = class Blitzboard {
       blitzboard.dragging = true;
       blitzboard.prevMouseEvent = e;
     }, true);
-    
+
     const balloonHandleSize = 12;
 
 
@@ -256,8 +254,9 @@ module.exports = class Blitzboard {
         super(DeckGL.ViewState, options);
         this.events = ['pointermove'];
       }
+
       handleEvent(event) {
-        if (event.type === 'doubleClick') {
+        if(event.type === 'doubleClick') {
           clearTimeout(this.doubleClickTimer);
           this.doubleClickTimer = null;
           if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
@@ -284,9 +283,9 @@ module.exports = class Blitzboard {
 
       if(e.picked) {
         let object = e.object;
-        if (object.objectType === 'node' && blitzboard.config.node.onClick) {
+        if(object.objectType === 'node' && blitzboard.config.node.onClick) {
           blitzboard.config.node.onClick(blitzboard.getNode(object.id));
-        } else if (object.objectType === 'edge' && blitzboard.config.edge.onClick) {
+        } else if(object.objectType === 'edge' && blitzboard.config.edge.onClick) {
           blitzboard.config.edge.onClick(blitzboard.getEdge(object.id));
         }
       }
@@ -294,7 +293,7 @@ module.exports = class Blitzboard {
 
     this.network = new DeckGL.Deck({
       parent: this.container,
-      controller: { doubleClickZoom: false },
+      controller: {doubleClickZoom: false},
       getTooltip: (elem) => {
         if(!elem?.object)
           return null;
@@ -305,7 +304,7 @@ module.exports = class Blitzboard {
       onClick: (e) => {
         console.log({e});
         if(!this.doubleClickTimer) {
-          if (this.config.doubleClickWait <= 0) {
+          if(this.config.doubleClickWait <= 0) {
             clickHandler(e);
           } else {
             this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
@@ -473,11 +472,11 @@ module.exports = class Blitzboard {
 
   static blitzProxy = {
     get: function(target, prop, receiver) {
-      if (prop === 'label') {
+      if(prop === 'label') {
         return target.labels[0];
       }
-      if (!(prop in target) && prop in target.properties) {
-        return target.properties[prop][0]; 
+      if(!(prop in target) && prop in target.properties) {
+        return target.properties[prop][0];
       }
       return Reflect.get(target, prop, receiver);
     }
@@ -498,17 +497,19 @@ module.exports = class Blitzboard {
     }
     let a = document.createElement('div');
     a.style.color = colorStr;
-    let colors = window.getComputedStyle( document.body.appendChild(a) ).color.match(/\d+/g).map(function(a){ return parseInt(a,10); });
+    let colors = window.getComputedStyle(document.body.appendChild(a)).color.match(/\d+/g).map(function(a) {
+      return parseInt(a, 10);
+    });
     colors.push(255);
     document.body.removeChild(a);
     Blitzboard.renderedColors[colorStr] = colors;
     return colors;
   }
-  
+
   hasNode(node_id) {
     return !!this.nodeMap[node_id];
   }
-  
+
   hasEdge(from, to, label = null) {
     for(let edge of this.graph.edges) {
       if(edge.from === from && edge.to === to && (!label || edge.labels.includes(label)))
@@ -516,7 +517,7 @@ module.exports = class Blitzboard {
     }
     return false;
   }
-  
+
   getAllNodes(label = null) {
     if(label)
       return this.graph.nodes.filter(node => node.labels.includes(label)).map(node => this.getNode(node.id));
@@ -527,11 +528,11 @@ module.exports = class Blitzboard {
   getNode(node_id) {
     return new Proxy(this.nodeMap[node_id], Blitzboard.blitzProxy);
   }
-  
+
   getEdge(edge_id) {
     return new Proxy(this.edgeMap[edge_id], Blitzboard.blitzProxy);
   }
-  
+
   calcNodePosition(pgNode) {
     let x, y, fixed, width;
     if(this.config.layout === 'timeline' && this.timeInterval > 0) {
@@ -542,13 +543,13 @@ module.exports = class Blitzboard {
       let from = this.maxTime;
       let to = this.minTime;
 
-      for (let prop of Object.keys(pgNode.properties)) {
-        if (prop === fromProp || prop === toProp) {
+      for(let prop of Object.keys(pgNode.properties)) {
+        if(prop === fromProp || prop === toProp) {
           from = new Date(Math.min(from, new Date(pgNode.properties[prop][0])));
           to = new Date(Math.max(to, new Date(pgNode.properties[prop][0])));
         }
       }
-    
+
       if(from <= to) {
         fixed = true;
         let fromPosition = this.timeScale * (from.getTime() - this.minTime.getTime()) * 1.0 / this.timeInterval - this.timeScale * 0.5;
@@ -562,10 +563,9 @@ module.exports = class Blitzboard {
       } else {
         x = 0;
       }
-    }
-    else {
+    } else {
       if(this.config.layout == 'custom') {
-        if (pgNode.properties[this.config.layoutSettings.x] || pgNode.properties[this.config.layoutSettings.y]) {
+        if(pgNode.properties[this.config.layoutSettings.x] || pgNode.properties[this.config.layoutSettings.y]) {
           x = parseInt(pgNode.properties[this.config.layoutSettings.x][0]);
           y = parseInt(pgNode.properties[this.config.layoutSettings.y][0]);
           fixed = true;
@@ -577,7 +577,7 @@ module.exports = class Blitzboard {
         width = null;
       }
     }
-    
+
     return {x, y, fixed, width};
   }
 
@@ -587,7 +587,7 @@ module.exports = class Blitzboard {
     }
     return null;
   }
-  
+
   tooltipPosition() {
     if(!this.prevMouseEvent)
       return null;
@@ -596,7 +596,7 @@ module.exports = class Blitzboard {
     }
     return this.prevMouseEvent.clientX < window.innerWidth / 2 ? 'right' : 'left';
   }
-  
+
   updateTooltipLocation() {
     if(!this.elementWithTooltip)
       return;
@@ -608,8 +608,7 @@ module.exports = class Blitzboard {
       position.x += clientRect.x;
       position.y += clientRect.y;
       offset += this.elementWithTooltip.node._size * this.network.getScale();
-    }
-    else {
+    } else {
       if(!this.prevMouseEvent)
         return;
       position = {
@@ -620,7 +619,7 @@ module.exports = class Blitzboard {
     }
     position.x += window.scrollX;
     position.y += window.scrollY;
-    
+
     switch(this.tooltipPosition()) {
       case 'left':
         this.tooltip.classList.add('blitzboard-tooltiptext-left');
@@ -661,17 +660,17 @@ module.exports = class Blitzboard {
     this.tooltipDummy.style.left = `${position.x}px`;
     this.tooltipDummy.style.top = `${position.y}px`;
   }
-  
+
   showTooltip() {
     this.updateTooltipLocation();
     let title = this.elementWithTooltip.node ? this.elementWithTooltip.node._title : this.elementWithTooltip.edge._title;
     if(!title)
       return;
-    
+
     this.tooltip.innerHTML = title;
     this.tooltip.style.display = 'block';
   }
-  
+
   hideTooltip() {
     if(this.elementWithTooltip) {
       this.tooltip.style.display = 'none';
@@ -688,7 +687,7 @@ module.exports = class Blitzboard {
     if(!this.nodeColorMap[group]) {
       this.nodeColorMap[group] = getRandomColor(group, this.config.node.saturation, this.config.node.brightness);
     }
-    
+
     let x, y, z, fixed, width;
 
     fixed = true;
@@ -705,7 +704,7 @@ module.exports = class Blitzboard {
     let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
     let expanded = this.expandedNodes.includes(pgNode.id);
 
-    let degree =  pgNode.properties['degree'];
+    let degree = pgNode.properties['degree'];
     let blitzboard = this;
     if(degree !== undefined) {
       degree = degree[0];
@@ -715,8 +714,8 @@ module.exports = class Blitzboard {
 
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
-    let size  = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
-    let tooltip  = this.retrieveConfigProp(pgNode, 'node', 'title');
+    let size = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
+    let tooltip = this.retrieveConfigProp(pgNode, 'node', 'title');
     let clusterId = null;
 
     color = color || this.nodeColorMap[group];
@@ -768,27 +767,29 @@ module.exports = class Blitzboard {
 
     let otherProps = this.retrieveConfigPropAll(pgNode,
       'node', ['color', 'size', 'opacity', 'title']);
-    
+
     for(let key of Object.keys(otherProps)) {
       attrs[key] = otherProps[key] || attrs[key];
     }
-    
+
     function iconRegisterer(name) {
       return (icons) => {
         if(Blitzboard.loadedIcons[name] !== 'retrieving')
           return;
-        if (icons.length > 0) {
+        if(icons.length > 0) {
           let icon = null;
+
           function findIconWithHighestPriority(icons) {
-            for (let prefix of Blitzboard.iconPrefixes) {
-              for (let i of icons) {
-                if (`${i.prefix}:${i.name}`.startsWith(prefix)) {
+            for(let prefix of Blitzboard.iconPrefixes) {
+              for(let i of icons) {
+                if(`${i.prefix}:${i.name}`.startsWith(prefix)) {
                   return i;
                 }
               }
             }
             return icons[0];
           }
+
           icon = findIconWithHighestPriority(icons);
           icon = icon || icons[0];
           let size = 1000;
@@ -811,17 +812,17 @@ module.exports = class Blitzboard {
 
     function registerIcon(icons, label) {
       let lowerLabel = label.toLowerCase();
-      if (!Blitzboard.loadedIcons[lowerLabel]) {
+      if(!Blitzboard.loadedIcons[lowerLabel]) {
         Blitzboard.loadedIcons[lowerLabel] = 'retrieving'; // Avoid duplication of loading
         setTimeout(() =>
-        Iconify.loadIcons(icons, iconRegisterer(lowerLabel)), 1000);
+          Iconify.loadIcons(icons, iconRegisterer(lowerLabel)), 1000);
       }
       attrs['iconLabel'] = lowerLabel;
     }
-    
+
     for(let label of pgNode.labels) {
       let icon;
-      if (icon = this.config.node.icon?.[label]) {
+      if(icon = this.config.node.icon?.[label]) {
         registerIcon([icon], label);
         break;
       }
@@ -835,7 +836,7 @@ module.exports = class Blitzboard {
       let lowerLabel = pgNode.labels[0].toLowerCase();
       registerIcon(Blitzboard.iconPrefixes.map((prefix) => prefix + lowerLabel), lowerLabel);
     }
-    
+
     if(thumbnailUrl) {
       attrs['shape'] = 'image';
       attrs['image'] = thumbnailUrl;
@@ -843,7 +844,7 @@ module.exports = class Blitzboard {
     attrs = Object.assign(attrs, extraOptions);
     return attrs;
   }
-  
+
   retrieveProp(pgElem, config, loadFunction = true) {
     if((typeof config) === 'function' && loadFunction) {
       return config(new Proxy(pgElem, Blitzboard.blitzProxy));
@@ -852,11 +853,11 @@ module.exports = class Blitzboard {
     }
     return config; // return as constant
   }
-  
+
   retrieveConfigProp(pgElem, type, propName, loadFunction = true) {
     const labels = pgElem.labels.join('_');
     let propConfig = this.config?.[type][propName];
-    if ((typeof propConfig) === 'object') {
+    if((typeof propConfig) === 'object') {
       return this.retrieveProp(pgElem, propConfig[labels], loadFunction)
     }
     return this.retrieveProp(pgElem, propConfig, loadFunction);
@@ -873,25 +874,25 @@ module.exports = class Blitzboard {
     }
     return props;
   }
-  
+
   toVisEdge(pgEdge, props = this.config.edge.caption, id) {
     const edgeLabel = pgEdge.labels.join('_');
-    if (!this.edgeColorMap[edgeLabel]) {
+    if(!this.edgeColorMap[edgeLabel]) {
       this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
     }
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
-    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge','width'));
-    let tooltip  = this.retrieveConfigProp(pgEdge, 'edge', 'title');
+    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'width'));
+    let tooltip = this.retrieveConfigProp(pgEdge, 'edge', 'title');
 
     color = color || this.edgeColorMap[edgeLabel];
 
     let rgb = this.getHexColors(color);
-    let smooth = this.config.layout === 'map' || this.config.layout === 'hierarchical-scc' ? false : { roundness: 1 };
+    let smooth = this.config.layout === 'map' || this.config.layout === 'hierarchical-scc' ? false : {roundness: 1};
 
     let dashes = false;
     if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.from] === this.sccMap[pgEdge.to]) {
-      smooth = { roundness: 0.5 };
+      smooth = {roundness: 0.5};
       dashes = true;
     }
     let attrs = {
@@ -921,21 +922,21 @@ module.exports = class Blitzboard {
     for(let key of Object.keys(otherProps)) {
       attrs[key] = otherProps[key] || attrs[key];
     }
-    
+
     return attrs;
   }
-  
+
   includesNode(node) {
     return this.graph.nodes.filter(e => e.id === node.id).length > 0;
   }
-  
+
   addNode(node, update = true) {
     this.addNodes([node], update);
   }
-  
+
   addNodes(nodes, update = true) {
     let newNodes;
-    if (typeof nodes === 'string' || nodes instanceof String) {
+    if(typeof nodes === 'string' || nodes instanceof String) {
       let pg = this.tryPgParse(nodes);
       newNodes = pg.nodes;
     } else {
@@ -964,11 +965,11 @@ module.exports = class Blitzboard {
     if(update)
       this.update();
   }
-  
+
   addEdge(edge, update = true) {
     this.addEdges([edge], update);
   }
-  
+
   highlightNodePath(nodes) {
     let nodeIds = nodes;
     if(nodes.length > 0 && typeof nodes[0] !== 'string') {
@@ -983,7 +984,7 @@ module.exports = class Blitzboard {
 
   addEdges(edges, update = true) {
     let newEdges;
-    if (typeof edges === 'string' || edges instanceof String) {
+    if(typeof edges === 'string' || edges instanceof String) {
       let pg = this.tryPgParse(edges);
       newEdges = pg.edges
     } else {
@@ -995,7 +996,7 @@ module.exports = class Blitzboard {
       mapped.location = {
         start: {
           line: this.maxLine,
-          column: 0, 
+          column: 0,
         },
         end: {
           line: this.maxLine + 1,
@@ -1032,7 +1033,7 @@ module.exports = class Blitzboard {
   createTitle(elem) {
     let flattend_props = Object.entries(elem.properties).reduce((acc, prop) =>
       acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
-    if (!elem.from) // for nodes
+    if(!elem.from) // for nodes
     {
       let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
       flattend_props.splice(0, 0, idText);
@@ -1040,7 +1041,7 @@ module.exports = class Blitzboard {
       let idText = `<tr><td><b>${elem.from} - ${elem.to}</b></td><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td></tr>`;
       flattend_props.splice(0, 0, idText);
     }
-    if (flattend_props.length === 0) {
+    if(flattend_props.length === 0) {
       return null;
     }
     return `<table style='fixed'>${flattend_props.join('')}</table>`;
@@ -1049,7 +1050,7 @@ module.exports = class Blitzboard {
   fit() {
     // Set dummy viewState in advance so that the redrawing is triggered
     this.network.setProps({
-      initialViewState: {target:[0, 0], zoom:3},
+      initialViewState: {target: [0, 0], zoom: 3},
     });
 
     this.network.setProps({
@@ -1081,33 +1082,31 @@ module.exports = class Blitzboard {
     this.prevMouseEvent = null;
     this.dragging = false;
     let newPg;
-    if (!input) {
+    if(!input) {
       newPg = this.tryPgParse(''); // Set empty pg
-    }
-    else if (typeof input === 'string' || input instanceof String) {
+    } else if(typeof input === 'string' || input instanceof String) {
       try {
         newPg = JSON.parse(input);
-      } catch (err) {
-        if (err instanceof SyntaxError) {
+      } catch(err) {
+        if(err instanceof SyntaxError) {
           newPg = this.tryPgParse(input);
           newPg = this.tryPgParse(input);
-        }
-        else
+        } else
           throw err;
       }
     } else {
       newPg = input;
     }
-    if (newPg === null || newPg === undefined)
+    if(newPg === null || newPg === undefined)
       return;
     this.graph = newPg;
-    
+
     this.nodeLayout = layout;
 
     if(update)
       this.update();
   }
-  
+
 
   setConfig(config, update = true) {
     this.config = deepMerge(Blitzboard.defaultConfig, config);
@@ -1134,7 +1133,7 @@ module.exports = class Blitzboard {
     if(update)
       this.update(false);
   }
-  
+
   validateGraph() {
     // If duplication of nodes exist, raise error 
     function nonuniqueNodes(nodes) {
@@ -1154,7 +1153,7 @@ module.exports = class Blitzboard {
     if(nonunique.length > 0) {
       throw new DuplicateNodeError(nonunique);
     }
-    
+
     if(this.graph.nodes.length >= this.config.node.limit) {
       throw new Error(`The number of nodes exceeds the current limit: ${this.config.node.limit}. ` +
         `You can change it via node.limit in your config.`);
@@ -1169,7 +1168,7 @@ module.exports = class Blitzboard {
     for(let edge of this.graph.edges) {
       if(!this.nodeMap[edge.from]) {
         this.warnings.push({
-          type: 'UndefinedNode', 
+          type: 'UndefinedNode',
           edge: edge,
           node: edge.from,
           location: edge.location,
@@ -1187,7 +1186,7 @@ module.exports = class Blitzboard {
       }
     }
   }
-  
+
   /// Return a set of upstream nodes from node specified by srcNodeId
   getUpstreamNodes(srcNodeId) {
     const edges = this.graph.edges;
@@ -1247,7 +1246,12 @@ module.exports = class Blitzboard {
       }
     }
     for(let sccId of new Set(Object.values(this.sccMap))) {
-      tmpNodes.push({ id: sccId, labels: [], properties: [], location: { start: { line: 0, column: 0}, end: { line: 0, column: 0} } });
+      tmpNodes.push({
+        id: sccId,
+        labels: [],
+        properties: [],
+        location: {start: {line: 0, column: 0}, end: {line: 0, column: 0}}
+      });
     }
 
     let tmpEdges = JSON.parse(JSON.stringify(this.graph.edges));
@@ -1266,7 +1270,10 @@ module.exports = class Blitzboard {
         hierarchical: this.config.layoutSettings
       }
     }
-    let tmpNetwork = new visNetwork.Network(this.networkContainer, { nodes: tmpNodeDataSet, edges: tmpEdgeDataSet }, tmpOptions);
+    let tmpNetwork = new visNetwork.Network(this.networkContainer, {
+      nodes: tmpNodeDataSet,
+      edges: tmpEdgeDataSet
+    }, tmpOptions);
     for(let node of tmpNodes) {
       let position = tmpNetwork.getPosition(node.id);
       if(sccReverseMap[node.id] !== undefined) {
@@ -1313,6 +1320,7 @@ module.exports = class Blitzboard {
       this.highlightedNodes.add(hoverInfo.object.id);
     }
     // this.network.setProps({layers: [...this.layers]});
+    // TODO: Can we avoid update of whole layers?
     this.updateLayers();
   }
 
@@ -1405,7 +1413,7 @@ module.exports = class Blitzboard {
       sizeUnits: sizeUnits,
       sizeScale: scale,
       outlineWidth: 1,
-      outlineColor: [255,255, 255, 255],
+      outlineColor: [255, 255, 255, 255],
       fontSettings: {
         sdf: true
       },
@@ -1432,7 +1440,7 @@ module.exports = class Blitzboard {
       coordinateSystem,
       sizeUnits: sizeUnits,
       outlineWidth: 1,
-      outlineColor: [255,255, 255, 255],
+      outlineColor: [255, 255, 255, 255],
       fontSettings: {
         sdf: true
       }
@@ -1528,7 +1536,7 @@ module.exports = class Blitzboard {
       });
     }
   }
-  
+
   update(applyDiff = true) {
     this.staticLayoutMode = true;
     let blitzboard = this;
@@ -1547,9 +1555,9 @@ module.exports = class Blitzboard {
     }
 
 
-    if (this.config.layout === 'hierarchical-scc') {
+    if(this.config.layout === 'hierarchical-scc') {
       this.config.layoutSettings = {
-        enabled:true,
+        enabled: true,
         levelSeparation: 150,
         nodeSpacing: 100,
         treeSpacing: 200,
@@ -1563,7 +1571,7 @@ module.exports = class Blitzboard {
     }
 
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !this.staticLayoutMode && this.config.layout !== 'hierarchical-scc';
-    
+
     if(this.config.style && this.config.layout !== 'map') {
       this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
@@ -1573,7 +1581,7 @@ module.exports = class Blitzboard {
 
     this.nodeLineMap = {};
     this.edgeLineMap = {};
-    
+
     if(applyDiff) {
       this.deletedNodes = new Set(Object.keys(this.nodeMap));
       this.addedNodes = new Set();
@@ -1597,8 +1605,8 @@ module.exports = class Blitzboard {
         this.nodeMap[node.id] = node;
         this.deletedNodes.delete(node.id);
         if(node.location) {
-          for (let i = node.location.start.line; i <= node.location.end.line; i++) {
-            if (i < node.location.end.line || node.location.end.column > 1)
+          for(let i = node.location.start.line; i <= node.location.end.line; i++) {
+            if(i < node.location.end.line || node.location.end.column > 1)
               this.nodeLineMap[i] = node;
           }
           this.maxLine = Math.max(this.maxLine, node.location.end.line);
@@ -1617,8 +1625,8 @@ module.exports = class Blitzboard {
         let visEdge = this.toVisEdge(edge, this.config.edge.caption, id);
         this.edgeDataSet.update(visEdge);
         if(edge.location) {
-          for (let i = edge.location.start.line; i <= edge.location.end.line; i++) {
-            if (i < edge.location.end.line || edge.location.end.column > 1)
+          for(let i = edge.location.start.line; i <= edge.location.end.line; i++) {
+            if(i < edge.location.end.line || edge.location.end.column > 1)
               this.edgeLineMap[i] = visEdge;
           }
           this.maxLine = Math.max(this.maxLine, edge.location.end.line);
@@ -1645,19 +1653,19 @@ module.exports = class Blitzboard {
       this.addedNodes = new Set(this.graph.nodes.map((n) => n.id));
       this.addedEdges = new Set(this.graph.edges.map((e) => e.id));
     }
-    
+
     this.prevZoomPosition = null;
-    
+
     this.minTime = new Date(8640000000000000);
     this.maxTime = new Date(-8640000000000000);
-    
+
     if(this.config.layout === 'timeline') {
       let fromProp = this.config.layoutSettings.time_from;
       let toProp = this.config.layoutSettings.time_to;
-      
+
       this.graph.nodes.forEach(node => {
-        for (let prop of Object.keys(node.properties)) {
-          if (prop === fromProp || prop === toProp) {
+        for(let prop of Object.keys(node.properties)) {
+          if(prop === fromProp || prop === toProp) {
             this.minTime = new Date(Math.min(this.minTime, new Date(node.properties[prop][0])));
             this.maxTime = new Date(Math.max(this.maxTime, new Date(node.properties[prop][0])));
           }
@@ -1674,25 +1682,24 @@ module.exports = class Blitzboard {
       this.graph.edges.forEach(edge => {
         ngraph.addLink(edge.from, edge.to);
       });
-      let lngKey =  this.config.layoutSettings.lng;
-      let latKey =  this.config.layoutSettings.lat;
+      let lngKey = this.config.layoutSettings.lng;
+      let latKey = this.config.layoutSettings.lat;
       this.nodeLayout = createLayout(ngraph);
 
       this.graph.nodes.forEach(node => {
         if(node.properties[latKey] && node.properties[lngKey]) {
           let lat = node.properties[latKey][0],
             lng = node.properties[lngKey][0];
-          if(typeof(lat) === 'string') {
+          if(typeof (lat) === 'string') {
             lat = parseFloat(lat);
           }
-          if(typeof(lng) === 'string') {
+          if(typeof (lng) === 'string') {
             lng = parseFloat(lng);
           }
           this.nodeLayout.setNodePosition(node.id, lng, lat);
         }
       });
-    }
-    else if(this.staticLayoutMode) {
+    } else if(this.staticLayoutMode) {
       let ngraph = createGraph();
       this.graph.nodes.forEach(node => {
         ngraph.addNode(node.id);
@@ -1700,7 +1707,7 @@ module.exports = class Blitzboard {
       this.graph.edges.forEach(edge => {
         ngraph.addLink(edge.from, edge.to);
       });
-      
+
       const physicsSettings = {
         // timeStep: 0.1,
         dimensions: this.config.dimensions,
@@ -1722,7 +1729,7 @@ module.exports = class Blitzboard {
       //   }
       //   this.nodeLayout = ngraphLayout;
       // }
-      for (let i = 0; i < 1000; ++i) {
+      for(let i = 0; i < 1000; ++i) {
         if(this.nodeLayout.step() && i >= 200) {
           console.log(`layout is stable at step #${i}`);
           break;
@@ -1745,14 +1752,14 @@ module.exports = class Blitzboard {
       }
       return;
     }
-    
+
     this.nodeProps = new Set(['id', 'label']);
     this.edgeProps = new Set(['label']);
     this.graph.nodes.forEach((node) => {
       this.nodeMap[node.id] = node;
       if(node.location) {
-        for (let i = node.location.start.line; i <= node.location.end.line; i++)
-          if (i < node.location.end.line || node.location.end.column > 1)
+        for(let i = node.location.start.line; i <= node.location.end.line; i++)
+          if(i < node.location.end.line || node.location.end.column > 1)
             this.nodeLineMap[i] = node;
       }
       Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(this.nodeProps.add, this.nodeProps);
@@ -1782,7 +1789,7 @@ module.exports = class Blitzboard {
       this.maxX = Math.max(this.maxX, tmpPosition.x);
       return visNode;
     });
-    
+
     this.edgeMap = {};
     this.edgeDataSet = this.graph.edges.map((edge) => {
       let id = this.toNodePairString(edge);
@@ -1792,8 +1799,8 @@ module.exports = class Blitzboard {
       let visEdge = this.toVisEdge(edge, defaultEdgeProps, id);
       this.edgeMap[visEdge.id] = edge;
       if(edge.location) {
-        for (let i = edge.location.start.line; i <= edge.location.end.line; i++)
-          if (i < edge.location.end.line || edge.location.end.column > 1)
+        for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
+          if(i < edge.location.end.line || edge.location.end.column > 1)
             this.edgeLineMap[i] = visEdge;
       }
 
@@ -1814,14 +1821,14 @@ module.exports = class Blitzboard {
 
     this.options = {
       layout:
-        layout,
+      layout,
       interaction: {
         dragNodes: this.config.layout !== 'map' && this.config.layout !== 'hierarchical-scc',
         dragView: this.config.layout !== 'map',
         zoomView: this.config.layout !== 'map',
         hover: true,
         keyboard: {
-          enabled: true, 
+          enabled: true,
           bindToWindow: false
         },
         hideEdgesOnDrag: this.staticLayoutMode,
@@ -1830,7 +1837,7 @@ module.exports = class Blitzboard {
       physics: {
         enabled: this.config.layout !== 'map' && this.config.layout !== 'hierarchical' && !this.staticLayoutMode,
         barnesHut: {
-          springConstant:  this.config.layout === 'timeline' ? 0.004 : 0.016,
+          springConstant: this.config.layout === 'timeline' ? 0.004 : 0.016,
           gravitationalConstant: -4000,
         },
         stabilization: {
@@ -1892,7 +1899,7 @@ module.exports = class Blitzboard {
       let currentTime = new Date(startTime);
       switch(intervalUnit) {
         case 'year':
-          currentTime = new Date(currentTime.getFullYear()  - currentTime.getFullYear() % interval, 0, 1);
+          currentTime = new Date(currentTime.getFullYear() - currentTime.getFullYear() % interval, 0, 1);
           break;
         case 'month':
           currentTime = new Date(currentTime.getFullYear(), currentTime.getMonth() - currentTime.getMonth() % interval, 1);
@@ -1976,7 +1983,6 @@ module.exports = class Blitzboard {
     // });
 
 
-
     //
     //
     //
@@ -2038,7 +2044,7 @@ module.exports = class Blitzboard {
 
   updateSCCStatus() {
     if(this.config.layout === 'hierarchical-scc') {
-      switch (this.config.sccMode) {
+      switch(this.config.sccMode) {
         case 'expand':
           this.expandSCC();
           break;
@@ -2056,7 +2062,7 @@ module.exports = class Blitzboard {
     for(let clusterId of Object.values(this.sccMap)) {
       let position = this.hierarchicalPositionMap[clusterId];
       let clusterOptions = {
-        joinCondition: function (n) {
+        joinCondition: function(n) {
           return n.clusterId === clusterId;
         },
         clusterNodeProperties: {
@@ -2104,7 +2110,7 @@ module.exports = class Blitzboard {
   }
 
   scrollNodeIntoView(node, select = true) {
-    if(typeof(node) === 'string')
+    if(typeof (node) === 'string')
       node = this.nodeDataSet[node];
     else
       node = this.nodeDataSet[node.id];
@@ -2113,28 +2119,32 @@ module.exports = class Blitzboard {
 
 
     if(this.config.layout === 'map') {
-      this.network.setProps({initialViewState: {
-        latitude: node.y,
-        longitude: node.x,
-        zoom: 13,
-        pitch: Blitzboard.pitch,
-        transitionDuration: 1000,
-        transitionInterpolator: new DeckGL.FlyToInterpolator()
-      }});
+      this.network.setProps({
+        initialViewState: {
+          latitude: node.y,
+          longitude: node.x,
+          zoom: 13,
+          pitch: Blitzboard.pitch,
+          transitionDuration: 1000,
+          transitionInterpolator: new DeckGL.FlyToInterpolator()
+        }
+      });
     } else {
-      this.network.setProps({initialViewState: {
+      this.network.setProps({
+        initialViewState: {
           target: [node.x, node.y],
           zoom: 4,
           transitionDuration: 500,
           // transitionInterpolator: new DeckGL.FlyToInterpolator()
-      }});
+        }
+      });
     }
     for(let callback of this.onNodeFocused) {
       // TODO: The argument should be proxy instead of plain objects
       callback(node);
     }
   }
-  
+
   scrollNetworkToPosition(position) {
     clearTimeout(this.scrollAnimationTimerId);
     this.scrollAnimationTimerId = setTimeout(() => {
@@ -2151,7 +2161,7 @@ module.exports = class Blitzboard {
       if(this.staticLayoutMode) {
         animationOption.animation = false;
       }
-      this.network.moveTo({ ...{position: position}, ...animationOption });
+      this.network.moveTo({...{position: position}, ...animationOption});
     }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
   }
 
@@ -2168,16 +2178,16 @@ module.exports = class Blitzboard {
     });
     // this.nodeDataSet.update(nodePositions);
   }
-  
+
 
   scrollEdgeIntoView(edge, select = true) {
-    if(typeof(edge) === 'string') {
+    if(typeof (edge) === 'string') {
       edge = this.edgeMap[edge];
     }
 
     const from = this.network.getPosition(edge.from);
     const to = this.network.getPosition(edge.to);
-    this.scrollNetworkToPosition({ x: (from.x + to.x) / 2, y: (from.y + to.y) /2 });
+    this.scrollNetworkToPosition({x: (from.x + to.x) / 2, y: (from.y + to.y) / 2});
     if(select) {
       this.network.selectEdges([edge.id]);
     }
@@ -2187,12 +2197,12 @@ module.exports = class Blitzboard {
       callback(edge);
     }
   }
-  
+
   showLoader() {
     this.screen.style.display = 'flex';
     this.screenText.style.display = 'block';
   }
-  
+
   hideLoader() {
     this.screen.style.display = 'none';
   }
@@ -2201,7 +2211,6 @@ module.exports = class Blitzboard {
     return `${pgEdge.from}${Blitzboard.edgeDelimiter}${pgEdge.to}`;
   }
 }
-
 
 
 function arrayEquals(a, b) {
@@ -2242,13 +2251,12 @@ module.exports.DuplicateNodeError = DuplicateNodeError;
 function deepMerge(target, source) {
   const isObject = obj => obj && typeof obj === 'object' && !Array.isArray(obj);
   let result = Object.assign({}, target);
-  if (isObject(target) && isObject(source)) {
-    for (const [sourceKey, sourceValue] of Object.entries(source)) {
+  if(isObject(target) && isObject(source)) {
+    for(const [sourceKey, sourceValue] of Object.entries(source)) {
       const targetValue = target[sourceKey];
-      if (isObject(sourceValue) && target.hasOwnProperty(sourceKey)) {
+      if(isObject(sourceValue) && target.hasOwnProperty(sourceKey)) {
         result[sourceKey] = deepMerge(targetValue, sourceValue);
-      }
-      else {
+      } else {
         Object.assign(result, {[sourceKey]: sourceValue});
       }
     }
@@ -2260,7 +2268,7 @@ function retrieveHttpUrl(node) {
   let candidates = [];
   for(let entry of Object.entries(node.properties)) {
     for(let prop of entry[1]) {
-      if(typeof(prop) === 'string' && (prop.startsWith("https://") || prop.startsWith("http://"))) {
+      if(typeof (prop) === 'string' && (prop.startsWith("https://") || prop.startsWith("http://"))) {
         if(entry[0].toLowerCase() == 'url')
           return prop;
         candidates.push([entry[0], prop]);
@@ -2271,8 +2279,6 @@ function retrieveHttpUrl(node) {
 }
 
 
-
-
 function wrapText(str, asHtml) {
   if(!str)
     return str;
@@ -2280,7 +2286,7 @@ function wrapText(str, asHtml) {
     str = str[0];
   const maxWidth = 40;
   let newLineStr = asHtml ? "<br>" : "\n", res = '';
-  while (str.length > maxWidth) {
+  while(str.length > maxWidth) {
     res += str.slice(0, maxWidth) + newLineStr;
     str = str.slice(maxWidth);
   }
@@ -2288,7 +2294,7 @@ function wrapText(str, asHtml) {
 }
 
 function createLabelText(elem, props = null) {
-  if (props != null) {
+  if(props != null) {
     // Use whitespace instead of empty string if no props are specified because Vis.js cannot update label with empty string)
     return props.length ? props.map((prop) => prop === 'id' ? elem.id : (prop === 'label' ? elem.labels : wrapText(elem.properties[prop]))).filter((val) => val).join('\n') : ' ';
   }
@@ -2299,7 +2305,7 @@ function convertToHyperLinkIfURL(text) {
     return text;
   if(Array.isArray(text))
     text = text[0];
-  if(text.startsWith('http://') || text.startsWith('https://') ) {
+  if(text.startsWith('http://') || text.startsWith('https://')) {
     return `<a target="_blank" href="${text}">${wrapText(text)}</a>`;
   }
   return wrapText(text);
@@ -2308,7 +2314,7 @@ function convertToHyperLinkIfURL(text) {
 // Create random colors, with str as seed, and with fixed saturation and lightness
 function getRandomColor(str, saturation, brightness) {
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
+  for(let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
     hash = hash & hash;
   }
