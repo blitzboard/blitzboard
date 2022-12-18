@@ -48,6 +48,7 @@ module.exports = class Blitzboard {
     dimensions: 2,
   };
   static tooltipMaxWidth = 600;
+  static defaultNodeSize = 5;
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
   static iconSizeCoef = 1.5;
   static mapContainerId = 'map';
@@ -718,7 +719,7 @@ module.exports = class Blitzboard {
       opacity,
       label: createLabelText(pgNode, props),
       shape: 'dot',
-      _size: size || 5,
+      _size: size || Blitzboard.defaultNodeSize,
       degree: degree,
       _title: tooltip != null ? tooltip : this.createTitle(pgNode),
       fixed: {
@@ -1382,10 +1383,12 @@ module.exports = class Blitzboard {
       data: this.nodeData,
       pickable: true,
       getPosition: (node) => {
-        return [node.x, node.y + (this.config.layout === 'map' ? -0.001 : node.size * scale), node.z];
+        return [node.x,
+          node.y + (this.config.layout === 'map' ? -0.001 * node._size / Blitzboard.defaultNodeSize : node._size * scale),
+          node.z];
       },
       getText: node => node.label,
-      getSize: fontSize * (this.config.layout === 'map' ? 100 : 1), // TODO: somewhy, we have to scale the size for map layout
+      getSize: (n) => n._size / Blitzboard.defaultNodeSize * fontSize * (this.config.layout === 'map' ? 100 : 1), // TODO: somewhy, we have to scale the size for map layout
       sizeMaxPixels: 60,
       billboard: this.config.layout !== 'map',
       getAngle: 0,
@@ -1519,6 +1522,19 @@ module.exports = class Blitzboard {
     }
   }
 
+  isFilteredOutNode(node) {
+    if(this.config.node.filter)
+      return !this.config.node.filter(new Proxy(node, Blitzboard.blitzProxy));
+    return false;
+  }
+
+  isFilteredOutEdge(edge) {
+    if(this.config.edge.filter) {
+      return !this.config.edge.filter(new Proxy(edge, Blitzboard.blitzProxy));
+    }
+    return false;
+  }
+
   update(applyDiff = true) {
     this.staticLayoutMode = true;
     let blitzboard = this;
@@ -1572,6 +1588,7 @@ module.exports = class Blitzboard {
 
       this.maxLine = 0;
       this.graph.nodes.forEach(node => {
+        if(this.isFilteredOutNode(node)) return;
         let existingNode = this.nodeMap[node.id];
         if(existingNode) {
           if(!nodeEquals(node, existingNode)) {
@@ -1596,6 +1613,7 @@ module.exports = class Blitzboard {
       });
 
       this.graph.edges.forEach(edge => {
+        if(this.isFilteredOutEdge(edge) || !this.nodeMap[edge.from] || !this.nodeMap[edge.to]) return;
         let id = this.toNodePairString(edge);
         if(!this.edgeMap[id])
           this.addedEdges.add(id);
@@ -1762,6 +1780,7 @@ module.exports = class Blitzboard {
     this.minY = Number.MAX_VALUE;
     this.maxY = -Number.MAX_VALUE;
     this.graph.nodes.forEach((node) => {
+      if(this.isFilteredOutNode(node)) return;
       let visNode = this.toVisNode(node, defaultNodeProps);
       this.nodeDataSet[node.id] = visNode;
       let tmpPosition = blitzboard.nodeLayout.getNodePosition(node.id);
@@ -1774,6 +1793,9 @@ module.exports = class Blitzboard {
 
     this.edgeMap = {};
     this.edgeDataSet = this.graph.edges.map((edge) => {
+      if(this.isFilteredOutEdge(edge) || !this.nodeDataSet[edge.from] || !this.nodeDataSet[edge.to])
+        return null;
+
       let id = this.toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
@@ -1785,10 +1807,10 @@ module.exports = class Blitzboard {
           if(i < edge.location.end.line || edge.location.end.column > 1)
             this.edgeLineMap[i] = visEdge;
       }
-
       return visEdge;
     });
 
+    this.edgeDataSet.filter(e => e); // remove null
 
     let layout = {
       randomSeed: 1
@@ -1990,7 +2012,7 @@ module.exports = class Blitzboard {
       },
       sizeScale: scale,
       getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
-      getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
+      getSize: n => n._size / Blitzboard.defaultNodeSize * 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
       getColor: n => ([255, 0, 0]),
       sizeMinPixels: Blitzboard.minNodeSizeInPixels,
