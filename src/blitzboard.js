@@ -203,22 +203,6 @@ module.exports = class Blitzboard {
       this.update(false);
     });
 
-    this.container.addEventListener('wheel', (e) => {
-      // if(blitzboard.config.layout === 'map')
-      // {
-      //   if((e.deltaY < 0 && blitzboard.map._zoom < blitzboard.map.getMaxZoom()) ||
-      //     (e.deltaY > 0 && blitzboard.map._zoom > blitzboard.map.getMinZoom()) ) {
-      //     if(!blitzboard.currentLatLng) {
-      //       blitzboard.currentLatLng = blitzboard.map.mouseEventToLatLng(e);
-      //     }
-      //     blitzboard.map.setZoomAround(blitzboard.currentLatLng, blitzboard.map._zoom - e.deltaY * 0.03, {animate: false});
-      //   }
-      //   blitzboard.map.invalidateSize();
-      //   e.preventDefault();
-      //   e.stopPropagation(); // Inhibit zoom on vis-network
-      // }
-    }, true);
-
     this.container.addEventListener('mouseout', (e) => {
       blitzboard.dragging = false;
     }, true);
@@ -235,11 +219,6 @@ module.exports = class Blitzboard {
       blitzboard.currentLatLng = null;
     }, true);
 
-    // this.container.addEventListener('dblclick', (e) => {
-    //   if(blitzboard.config.layout === 'map') {
-    //     blitzboard.map.panTo(blitzboard.map.mouseEventToLatLng(e));
-    //   }
-    // }, true);
 
     this.container.addEventListener('mousedown', (e) => {
       blitzboard.dragging = true;
@@ -1322,6 +1301,9 @@ module.exports = class Blitzboard {
     // this.network.setProps({layers: [...this.layers]});
     // TODO: Can we avoid update of whole layers?
     this.updateLayers();
+    if (this.config.node.onHover) {
+      this.config.node.onHover(this.getNode(hoverInfo.object.id));
+    }
   }
 
   updateLayers() {
@@ -1875,26 +1857,6 @@ module.exports = class Blitzboard {
       }
     });
 
-    // this.network.on("hoverNode", (e) => {
-    //   this.network.canvas.body.container.style.cursor = 'default';
-    //   const node = this.nodeDataSet.get(e.node);
-    //   if(node) {
-    //     if (node.url) {
-    //       this.network.canvas.body.container.style.cursor = 'pointer';
-    //       this.nodeDataSet.update({
-    //         id: e.node,
-    //         color: '#8888ff',
-    //       });
-    //     }
-    //
-    //     if (this.config.node.onHover) {
-    //       this.config.node.onHover(this.getNode(e.node));
-    //     }
-    //   }
-    // });
-    //
-
-
     function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
       let currentTime = new Date(startTime);
       switch(intervalUnit) {
@@ -1982,10 +1944,6 @@ module.exports = class Blitzboard {
     //   }
     // });
 
-
-    //
-    //
-    //
     // this.network.on("doubleClick", (e) => {
     //   clearTimeout(this.doubleClickTimer);
     //   this.doubleClickTimer = null;
