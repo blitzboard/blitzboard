@@ -201,7 +201,11 @@ module.exports = class Blitzboard {
 
     this.configChoiceDropdown.addEventListener('change', (e) => {
       this.configChoice = e.target.value;
-      this.update(false);
+      this.showLoader();
+      setTimeout(() => {
+        this.update(false);
+        this.hideLoader();
+      }, 100); // Add short delay to show loader
     });
 
     this.container.addEventListener('mouseout', (e) => {
@@ -1736,17 +1740,17 @@ module.exports = class Blitzboard {
         springCoefficient: 0.7,
         // dragCoefficient: 0.9,
       };
-      // if(!this.nodeLayout) {
-      this.nodeLayout = createLayout(ngraph, physicsSettings);
-      // } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
-      //   // convert into layout of ngraph
-      //   let ngraphLayout = createLayout(ngraph, physicsSettings);
-      //   for(const [nodeId, position] of Object.entries(this.nodeLayout)) {
-      //     if(ngraphLayout.graph.hasNode(nodeId))
-      //       ngraphLayout.setNodePosition(nodeId, position.x, position.y);
-      //   }
-      //   this.nodeLayout = ngraphLayout;
-      // }
+      if(!this.nodeLayout) {
+        this.nodeLayout = createLayout(ngraph, physicsSettings);
+      } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
+        // convert into layout of ngraph
+        let ngraphLayout = createLayout(ngraph, physicsSettings);
+        for(const [nodeId, position] of Object.entries(this.nodeLayout)) {
+          if(ngraphLayout.graph.hasNode(nodeId))
+            ngraphLayout.setNodePosition(nodeId, position.x, position.y);
+        }
+        this.nodeLayout = ngraphLayout;
+      }
       for(let i = 0; i < 1000; ++i) {
         if(this.nodeLayout.step() && i >= 200) {
           console.log(`layout is stable at step #${i}`);
