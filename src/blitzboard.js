@@ -153,6 +153,46 @@ module.exports = class Blitzboard {
     `;
 
 
+    this.searchBarDiv = document.createElement('div');
+    this.searchBarDiv.id = "blitzboard-search-bar-div";
+    this.searchBarDiv.style =
+      `
+      width: 280px;
+      top: 60px;
+      right: 80px;
+      height: 30px;
+      position: absolute;
+      z-index: 2000;
+      display: block;
+    `;
+
+    this.searchInput = document.createElement('input');
+    this.searchInput.type = "text";
+    this.searchInput.id = "blitzboard-search-input";
+    this.searchInput.style =
+      `
+      width: 250px;
+      height: 100%;
+      position: absolute;
+    `;
+
+    this.searchButton = document.createElement('button');
+    this.searchButton.id = "blitzboard-search-button";
+    this.searchButton.style =
+      `
+      width: 30px;
+      height: 30px;
+      right: 2px;
+      position: absolute;
+    `;
+    let searchIcon = document.createElement('span');
+    searchIcon.classList = ["iconify"];
+    searchIcon.setAttribute('data-icon', 'material-symbols:search');
+
+    this.searchButton.appendChild(searchIcon);
+
+
+
 
     this.minTime = new Date(8640000000000000);
     this.maxTime = new Date(-8640000000000000);
@@ -167,6 +207,7 @@ module.exports = class Blitzboard {
     this.onNodeFocused = [];
     this.onEdgeFocused = [];
     this.onUpdated = [];
+    this.onClear = [];
     this.beforeParse = [];
     this.onParseError = [];
     this.maxLine = 0;
@@ -195,9 +236,12 @@ module.exports = class Blitzboard {
     container.appendChild(this.screen);
     container.appendChild(this.networkContainer);
     container.appendChild(this.mapContainer);
+    container.appendChild(this.searchBarDiv);
     container.appendChild(this.configChoiceDiv);
     this.configChoiceDiv.appendChild(this.configChoiceLabel);
     this.configChoiceDiv.appendChild(this.configChoiceDropdown);
+    this.searchBarDiv.appendChild(this.searchInput);
+    this.searchBarDiv.appendChild(this.searchButton);
     document.body.appendChild(this.tooltipDummy);
     this.tooltipDummy.appendChild(this.tooltip);
     this.tooltip.addEventListener('mouseleave', (e) => {
@@ -226,7 +270,17 @@ module.exports = class Blitzboard {
         e.stopPropagation(); // Inhibit zoom on vis-network
       }
     }, true);
-    
+
+    this.searchButton.addEventListener('click', (e) => {
+      blitzboard.config.onSearchInput(blitzboard.searchInput.value);
+    })
+
+    this.searchInput.addEventListener('keydown', (e) => {
+      // Enter
+      if(e.keyCode === 13 && blitzboard.config.onSearchInput)
+        blitzboard.config.onSearchInput(blitzboard.searchInput.value);
+    });
+
     this.container.addEventListener('mouseout', (e) => {
       blitzboard.dragging = false;
     }, true);
@@ -871,7 +925,7 @@ module.exports = class Blitzboard {
   }
   
   includesNode(node) {
-    return this.graph.nodes.filter(e => e.id === node.id).length > 0;
+    return this.graph.nodes?.filter(e => e.id === node.id).length > 0;
   }
   
   addNode(node, update = true) {
@@ -995,6 +1049,15 @@ module.exports = class Blitzboard {
     this.network.fit({animation: !this.staticLayoutMode });
   }
 
+  clearGraph(update = true) {
+    this.graph = this.tryPgParse(''); // Set empty pg
+    for(let callback of this.onClear) {
+      callback();
+    }
+    if(update)
+      this.update();
+  }
+
   setGraph(input, update = true, layout = null) {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
@@ -1044,6 +1107,8 @@ module.exports = class Blitzboard {
     } else {
       this.configChoiceDiv.style.display = 'none';
     }
+
+    this.searchBarDiv.style.display = this.config.onSearchInput ? 'block' : 'none';
 
     if(config.layout === 'hierarchical') {
       // Remove redundant settings when layout is hierarchical
@@ -1572,7 +1637,6 @@ module.exports = class Blitzboard {
       if(e.keyCode === 48)
         blitzboard.fit();
     });
-
 
     this.network.on('zoom', (e) => {
       blitzboard.updateTooltipLocation();

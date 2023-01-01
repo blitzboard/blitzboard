@@ -170,8 +170,13 @@ $(() => {
     byProgram = false;
   });
 
+  blitzboard.onClear.push(() => {
+    byProgram = true;
+    editor.setValue('');
+    byProgram = false;
+  });
 
-  blitzboard.onUpdated.push((nodes) => {
+  blitzboard.onUpdated.push(() => {
     if (bufferedContent) {
       byProgram = true;
       editor.setValue(bufferedContent);
