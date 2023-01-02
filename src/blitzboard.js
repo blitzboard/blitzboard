@@ -3,6 +3,7 @@ require('@iconify/iconify');
 require('leaflet');
 require('./pg_parser_browserified.js');
 require('./scc.js');
+require('../css/blitzboard.css')
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
 const createGraph = require("ngraph.graph");
@@ -163,36 +164,15 @@ module.exports = class Blitzboard {
       height: 30px;
       position: absolute;
       z-index: 2000;
-      display: block;
     `;
 
     this.searchInput = document.createElement('input');
     this.searchInput.type = "text";
     this.searchInput.id = "blitzboard-search-input";
-    this.searchInput.style =
-      `
-      width: 250px;
-      height: 100%;
-      position: absolute;
-    `;
-
-    this.searchButton = document.createElement('button');
+    this.searchInput.type = 'search';
+    this.searchButton = document.createElement('label');
     this.searchButton.id = "blitzboard-search-button";
-    this.searchButton.style =
-      `
-      width: 30px;
-      height: 30px;
-      right: 2px;
-      position: absolute;
-    `;
-    let searchIcon = document.createElement('span');
-    searchIcon.classList = ["iconify"];
-    searchIcon.setAttribute('data-icon', 'material-symbols:search');
-
-    this.searchButton.appendChild(searchIcon);
-
-
-
+    this.searchButton.setAttribute('for', 'blitzboard-search-input');
 
     this.minTime = new Date(8640000000000000);
     this.maxTime = new Date(-8640000000000000);
@@ -240,8 +220,8 @@ module.exports = class Blitzboard {
     container.appendChild(this.configChoiceDiv);
     this.configChoiceDiv.appendChild(this.configChoiceLabel);
     this.configChoiceDiv.appendChild(this.configChoiceDropdown);
-    this.searchBarDiv.appendChild(this.searchInput);
     this.searchBarDiv.appendChild(this.searchButton);
+    this.searchBarDiv.appendChild(this.searchInput);
     document.body.appendChild(this.tooltipDummy);
     this.tooltipDummy.appendChild(this.tooltip);
     this.tooltip.addEventListener('mouseleave', (e) => {
@@ -272,13 +252,27 @@ module.exports = class Blitzboard {
     }, true);
 
     this.searchButton.addEventListener('click', (e) => {
-      blitzboard.config.onSearchInput(blitzboard.searchInput.value);
+      if(blitzboard.searchInput.clientWidth > 0) {
+        blitzboard.config.onSearchInput(blitzboard.searchInput.value);
+      } else {
+        blitzboard.searchInput.style.width = '250px';
+        blitzboard.searchInput.style["padding-right"] = '30px';
+        blitzboard.searchButton.style.right = '250px';
+      }
     })
 
     this.searchInput.addEventListener('keydown', (e) => {
       // Enter
       if(e.keyCode === 13 && blitzboard.config.onSearchInput)
         blitzboard.config.onSearchInput(blitzboard.searchInput.value);
+    });
+
+    this.searchInput.addEventListener('blur', (e) => {
+      if(e.target.value === '') {
+        blitzboard.searchInput.style.width = '0px';
+        blitzboard.searchInput.style["padding-right"] = '0px';
+        blitzboard.searchButton.style.right = '0px';
+      }
     });
 
     this.container.addEventListener('mouseout', (e) => {
@@ -396,49 +390,6 @@ module.exports = class Blitzboard {
       .blitzboard-tooltip a {
         color: #88BBFF;
       }
-      
-      .blitzboard-loader,
-      .blitzboard-loader:after {
-        border-radius: 50%;
-        width: 10em;
-        height: 10em;
-      }
-      .blitzboard-loader {
-        margin: 60px auto;
-        font-size: 10px;
-        position: relative;
-        text-indent: -9999em;
-        border-top: 1.1em solid rgba(255, 255, 255, 0.2);
-        border-right: 1.1em solid rgba(255, 255, 255, 0.2);
-        border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
-        border-left: 1.1em solid #ffffff;
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        transform: translateZ(0);
-        -webkit-animation: load8 1.1s infinite linear;
-        animation: load8 1.1s infinite linear;
-      }
-      @-webkit-keyframes load8 {
-        0% {
-          -webkit-transform: rotate(0deg);
-          transform: rotate(0deg);
-        }
-        100% {
-          -webkit-transform: rotate(360deg);
-          transform: rotate(360deg);
-        }
-      }
-      @keyframes load8 {
-        0% {
-          -webkit-transform: rotate(0deg);
-          transform: rotate(0deg);
-        }
-        100% {
-          -webkit-transform: rotate(360deg);
-          transform: rotate(360deg);
-        }
-      }
-
     `);
   }
 
