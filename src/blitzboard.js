@@ -1434,21 +1434,29 @@ module.exports = class Blitzboard {
       }
     });
 
-
     const edgeArrowLayer = new DeckGLLayers.IconLayer({
-      id: 'icon-layer',
-      data: this.edgeDataSet,
+      id: 'edge-arrow-layer',
+      data: this.edgeDataSet.filter(e => !e.undirected || e.direction === '->'),
       coordinateSystem,
       getIcon: n => ({
         url: this.svgToURL('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15"><path fill="currentColor" d="M7.932 1.248a.5.5 0 0 0-.864 0l-7 12A.5.5 0 0 0 .5 14h14a.5.5 0 0 0 .432-.752l-7-12Z"/></svg>'),
         width: 240,
         height: 240
       }),
-      sizeScale: 1,
+      sizeScale: 0.1,
       getPosition: (edge) => {
         let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
         let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
-        return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
+
+        let angle = Math.atan2(fromY - toY, fromX - toX);
+        let nodeSize = this.nodeDataSet[edge.to]._size;
+        return [toX + Math.cos(angle) * (nodeSize * scale + 0.1),
+          toY + Math.sin(angle) * (nodeSize * scale + 0.1), (fromZ + toZ) / 2];
+      },
+      getAngle: (edge) => {
+        let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
+        let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
+        return Math.atan2(-(fromY - toY), fromX - toX) * 180 / Math.PI + 90;
       },
       getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
@@ -1502,7 +1510,7 @@ module.exports = class Blitzboard {
         edgeLayer,
         edgeTextLayer,
         this.nodeLayer,
-        // edgeArrowLayer,
+        edgeArrowLayer,
         nodeTextLayer,
         this.iconLayer,
         ...this.thumbnailLayers
@@ -1722,7 +1730,7 @@ module.exports = class Blitzboard {
             id: n.id
           };
         });
-        const d3Edges = this.graph.edges.map((e) => {
+        const d3Edges = this.graph.edges.filter(e => this.nodeMap[e.from] && this.nodeMap[e.to]).map(e => {
           return {
             source: e.from,
             target: e.to,

@@ -1577,7 +1577,7 @@ $(() => {
 
 
   function reflectEditorChange() {
-    // localStorage.setItem('pg', editor.getValue());
+    localStorage.setItem('pg', editor.getValue());
     updateGraph(editor.getValue());
     if(!remoteMode)
       saveCurrentGraph();
