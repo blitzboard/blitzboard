@@ -14,6 +14,7 @@ const defaultWidth = 1;
 
 module.exports = class Blitzboard {
   static SCCColor = '#edc821';
+  static selectedNodeColor = [0x21, 0x56, 0xee];
   static minNodeSizeInPixels = 3;
   static defaultConfig = {
     doubleClickWait: 200,
@@ -91,7 +92,9 @@ module.exports = class Blitzboard {
     this.deletedEdges = new Set();
     this.sccMode = 'cluster';
     this.configChoice = null;
-    this.highlightedNodes = new Set();
+    this.hoveredNodes = new Set();
+    this.selectedNodes = new Set();
+    this.selectedEdges = new Set();
 
     this.staticLayoutMode = true;
 
@@ -174,8 +177,6 @@ module.exports = class Blitzboard {
     this.prevMouseEvent = null;
     this.timeScale = 1000;
     this.dragging = false;
-    this.currentLatLng = null;
-    this.redrawTimer = null;
     this.onNodeAdded = [];
     this.onEdgeAdded = [];
     this.onNodeFocused = [];
@@ -268,7 +269,6 @@ module.exports = class Blitzboard {
         this.updateTooltipLocation();
       }
       blitzboard.prevMouseEvent = e;
-      blitzboard.currentLatLng = null;
     }, true);
 
 
@@ -311,15 +311,26 @@ module.exports = class Blitzboard {
     function clickHandler(e) {
       clearTimeout(blitzboard.doubleClickTimer);
       blitzboard.doubleClickTimer = null;
+      let needUpdate = blitzboard.selectedNodes.size > 0 || blitzboard.selectedEdges.size > 0;
+
+      blitzboard.selectedNodes.clear();
+      blitzboard.selectedEdges.clear();
 
       if(e.picked) {
         let object = e.object;
-        if(object.objectType === 'node' && blitzboard.config.node.onClick) {
-          blitzboard.config.node.onClick(blitzboard.getNode(object.id));
-        } else if(object.objectType === 'edge' && blitzboard.config.edge.onClick) {
+        if(object?.objectType === 'node') {
+          if(blitzboard.config.node.onClick)
+            blitzboard.config.node.onClick(blitzboard.getNode(object.id));
+          blitzboard.selectedNodes.add(object.id);
+          needUpdate = true;
+        } else if(object?.objectType === 'edge' && blitzboard.config.edge.onClick) {
           blitzboard.config.edge.onClick(blitzboard.getEdge(object.id));
+          blitzboard.selectedEdges.add(object.id);
+          needUpdate = true;
         }
       }
+      if(needUpdate)
+        blitzboard.updateLayers();
     }
 
     this.network = new DeckGL.Deck({
@@ -1313,9 +1324,9 @@ module.exports = class Blitzboard {
   }
 
   onNodeHover(hoverInfo) {
-    this.highlightedNodes = new Set();
+    this.hoveredNodes = new Set();
     if(hoverInfo.object) {
-      this.highlightedNodes.add(hoverInfo.object.id);
+      this.hoveredNodes.add(hoverInfo.object.id);
     }
     // this.network.setProps({layers: [...this.layers]});
     // TODO: Can we avoid update of whole layers?
@@ -1331,6 +1342,8 @@ module.exports = class Blitzboard {
 
     const scale = 0.2;
 
+    let highlightedNodes = new Set([...this.hoveredNodes, ...this.selectedNodes]);
+
     this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
       data: this.nodeData,
@@ -1345,7 +1358,9 @@ module.exports = class Blitzboard {
       radiusMinPixels: Blitzboard.minNodeSizeInPixels, // TODO,
       radiusScale: scale,
       getFillColor: (n) => {
-        if(this.highlightedNodes.has(n.id))
+        if(this.selectedNodes.has(n.id))
+          return Blitzboard.selectedNodeColor;
+        else if(highlightedNodes.has(n.id))
           return n.color;
         let color = [...n.color];
         for(let i = 0; i < 3; ++i)
@@ -1354,7 +1369,7 @@ module.exports = class Blitzboard {
       },
       onHover: info => this.onNodeHover(info),
       updateTriggers: {
-        getFillColor: [this.highlightedNodes],
+        getFillColor: [highlightedNodes],
       },
       radiusUnits: sizeUnits,
     });
@@ -1375,7 +1390,7 @@ module.exports = class Blitzboard {
         return [x, y, z];
       },
       getColor: (e) => {
-        if(this.highlightedNodes.has(e.from) || this.highlightedNodes.has(e.to)) {
+        if(highlightedNodes.has(e.from) || highlightedNodes.has(e.to) || this.selectedEdges.has(e.id)) {
           return [e.color, e.color, e.color, 255];
         }
         let color = [...e.color];
@@ -1385,7 +1400,7 @@ module.exports = class Blitzboard {
         return color;
       },
       updateTriggers: {
-        getColor: [this.highlightedNodes],
+        getColor: [highlightedNodes, this.selectedEdges],
       },
       widthUnits: ('common'),
       widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
@@ -1396,9 +1411,8 @@ module.exports = class Blitzboard {
 
     const characterSet = this.nodeData.map(n => Array.from(n.label)).flat();
 
-    const nodeTextLayer = new DeckGLLayers.TextLayer({
+    let textLayerAttributes = {
       id: 'node-text-layer',
-      data: this.nodeData,
       pickable: true,
       getPosition: (node) => {
         return [node.x,
@@ -1421,8 +1435,16 @@ module.exports = class Blitzboard {
         sdf: true
       },
       characterSet
-    });
+    };
 
+    textLayerAttributes.data = this.nodeData;
+
+    const nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
+
+    textLayerAttributes.data = Array.from(highlightedNodes).map(id => this.nodeDataSet[id]);
+    textLayerAttributes.fontWeight = 900; // bolder than bold
+    textLayerAttributes.id = 'hilighted-node-text-layer';
+    const highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
 
     const edgeTextLayer = new DeckGLLayers.TextLayer({
       id: 'edge-text-layer',
@@ -1496,8 +1518,6 @@ module.exports = class Blitzboard {
       return null;
     }).filter(n => n);
 
-
-
     if(this.config.layout === 'map') {
       const tileLayer = new DeckGLGeoLayers.TileLayer({
         id: 'TileLayer',
@@ -1527,6 +1547,7 @@ module.exports = class Blitzboard {
         this.nodeLayer,
         edgeArrowLayer,
         nodeTextLayer,
+        highlightedNodeTextLayer,
         this.iconLayer,
         ...this.thumbnailLayers
       ];
@@ -1541,6 +1562,7 @@ module.exports = class Blitzboard {
         this.nodeLayer,
         // edgeArrowLayer,
         nodeTextLayer,
+        highlightedNodeTextLayer,
         this.iconLayer,
         ...this.thumbnailLayers
       ]
@@ -1720,6 +1742,40 @@ module.exports = class Blitzboard {
       this.timeInterval = this.maxTime - this.minTime;
     }
 
+    if(this.config.layout === 'hierarchical-scc') {
+      this.computeHierarchicalSCCPositions();
+    } else {
+      this.hierarchicalPositionMap = null;
+      this.sccMap = {};
+    }
+
+    if(applyDiff) {
+      this.validateGraph();
+
+      for(let callback of this.onUpdated) {
+        callback();
+      }
+      return;
+    }
+
+    this.nodeProps = new Set(['id', 'label']);
+    this.edgeProps = new Set(['label']);
+    this.graph.nodes.forEach((node) => {
+      this.nodeMap[node.id] = node;
+      if(node.location) {
+        for(let i = node.location.start.line; i <= node.location.end.line; i++)
+          if(i < node.location.end.line || node.location.end.column > 1)
+            this.nodeLineMap[i] = node;
+      }
+      Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(this.nodeProps.add, this.nodeProps);
+    });
+    this.graph.edges.forEach((edge) => {
+      Object.keys(edge.properties).forEach(this.edgeProps.add, this.edgeProps);
+    });
+
+    this.validateGraph();
+
+
     if(this.config.layout === 'map') {
       let lngKey = this.config.layoutSettings.lng;
       let latKey = this.config.layoutSettings.lat;
@@ -1754,52 +1810,20 @@ module.exports = class Blitzboard {
 
         const SPRING_DISTANCE = 15;
 
-        const d3Simulation = d3Force.forceSimulation(d3Nodes)
+        let d3Simulation = d3Force.forceSimulation(d3Nodes)
           .force("charge", d3Force.forceManyBody())
           .force("link", d3Force.forceLink(d3Edges).id((n) => n.id).distance(SPRING_DISTANCE))
           .force("centralGravityX", d3Force.forceX().strength(0.5))
           .force("centralGravityY", d3Force.forceY().strength(0.5));
 
         d3Simulation.tick(1000);
+
         this.nodeLayout = {};
         for(const node of d3Nodes) {
           this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
         }
       }
     }
-
-    if(this.config.layout === 'hierarchical-scc') {
-      this.computeHierarchicalSCCPositions();
-    } else {
-      this.hierarchicalPositionMap = null;
-      this.sccMap = {};
-    }
-
-    if(applyDiff) {
-      this.validateGraph();
-
-      for(let callback of this.onUpdated) {
-        callback();
-      }
-      return;
-    }
-
-    this.nodeProps = new Set(['id', 'label']);
-    this.edgeProps = new Set(['label']);
-    this.graph.nodes.forEach((node) => {
-      this.nodeMap[node.id] = node;
-      if(node.location) {
-        for(let i = node.location.start.line; i <= node.location.end.line; i++)
-          if(i < node.location.end.line || node.location.end.column > 1)
-            this.nodeLineMap[i] = node;
-      }
-      Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(this.nodeProps.add, this.nodeProps);
-    });
-    this.graph.edges.forEach((edge) => {
-      Object.keys(edge.properties).forEach(this.edgeProps.add, this.edgeProps);
-    });
-
-    this.validateGraph();
 
 
     let defaultNodeProps = this.config.node.caption;
@@ -2128,6 +2152,12 @@ module.exports = class Blitzboard {
     if(!node)
       return;
 
+    if(select) {
+      this.selectedNodes.clear();
+      this.selectedEdges.clear();
+      this.selectedNodes.add(node.id);
+      this.updateLayers();
+    }
 
     this.scrollNetworkToPosition(node);
     for(let callback of this.onNodeFocused) {
@@ -2183,10 +2213,12 @@ module.exports = class Blitzboard {
     const from = this.nodeLayout[edge.from];
     const to = this.nodeLayout[edge.to];
     this.scrollNetworkToPosition({x: (from.x + to.x) / 2, y: (from.y + to.y) / 2});
-    // TODO:
-    // if(select) {
-    //   this.network.selectEdges([edge.id]);
-    // }
+    if(select) {
+      this.selectedNodes.clear();
+      this.selectedEdges.clear();
+      this.selectedEdges.add(edge.id);
+      this.updateLayers();
+    }
 
     for(let callback of this.onEdgeFocused) {
       // TODO: The argument should be proxy instead of plain objects

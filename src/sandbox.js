@@ -1607,9 +1607,9 @@ $(() => {
         const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
 
         if (node) {
-          blitzboard.scrollNodeIntoView(node)
+          blitzboard.scrollNodeIntoView(node, true)
         } else if (edge) {
-          blitzboard.scrollEdgeIntoView(edge)
+          blitzboard.scrollEdgeIntoView(edge, true)
         }
       }, blitzboard.staticLayoutMode ? 100 : 100);
     }
