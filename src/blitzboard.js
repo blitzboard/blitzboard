@@ -2114,11 +2114,20 @@ module.exports = class Blitzboard {
       return;
 
 
+    this.scrollNetworkToPosition(node);
+    for(let callback of this.onNodeFocused) {
+      // TODO: The argument should be proxy instead of plain objects
+      callback(node);
+    }
+  }
+
+  scrollNetworkToPosition(position) {
+
     if(this.config.layout === 'map') {
       this.network.setProps({
         initialViewState: {
-          latitude: node.y,
-          longitude: node.x,
+          latitude: position.y,
+          longitude: position.x,
           zoom: 13,
           pitch: Blitzboard.pitch,
           transitionDuration: 1000,
@@ -2128,37 +2137,12 @@ module.exports = class Blitzboard {
     } else {
       this.network.setProps({
         initialViewState: {
-          target: [node.x, node.y],
+          target: [position.x, position.y],
           zoom: 4,
           transitionDuration: 500,
-          // transitionInterpolator: new DeckGL.FlyToInterpolator()
         }
       });
     }
-    for(let callback of this.onNodeFocused) {
-      // TODO: The argument should be proxy instead of plain objects
-      callback(node);
-    }
-  }
-
-  scrollNetworkToPosition(position) {
-    clearTimeout(this.scrollAnimationTimerId);
-    this.scrollAnimationTimerId = setTimeout(() => {
-      if(this.staticLayoutMode)
-        this.network.renderer.dragging = true;
-      const animationOption = {
-        scale: 1.0,
-        animation:
-          {
-            duration: 500,
-            easingFunction: "easeInOutQuad"
-          }
-      };
-      if(this.staticLayoutMode) {
-        animationOption.animation = false;
-      }
-      this.network.moveTo({...{position: position}, ...animationOption});
-    }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
   }
 
 
@@ -2181,12 +2165,13 @@ module.exports = class Blitzboard {
       edge = this.edgeMap[edge];
     }
 
-    const from = this.network.getPosition(edge.from);
-    const to = this.network.getPosition(edge.to);
+    const from = this.nodeLayout[edge.from];
+    const to = this.nodeLayout[edge.to];
     this.scrollNetworkToPosition({x: (from.x + to.x) / 2, y: (from.y + to.y) / 2});
-    if(select) {
-      this.network.selectEdges([edge.id]);
-    }
+    // TODO:
+    // if(select) {
+    //   this.network.selectEdges([edge.id]);
+    // }
 
     for(let callback of this.onEdgeFocused) {
       // TODO: The argument should be proxy instead of plain objects
