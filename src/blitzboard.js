@@ -8,8 +8,8 @@ const DeckGLGeoLayers = require('@deck.gl/geo-layers');
 
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
-const createGraph = require("ngraph.graph");
-const createLayout = require("ngraph.forcelayout");
+
+const d3Force = require("d3-force");
 
 const defaultWidth = 1;
 
@@ -675,10 +675,10 @@ module.exports = class Blitzboard {
 
     fixed = true;
     try {
-      ({x, y, z = 0} = this.nodeLayout.getNodePosition(pgNode.id));
+      ({x, y, z = 0} = this.nodeLayout[pgNode.id]);
     } catch {
-      this.nodeLayout.graph.addNode(pgNode.id);
-      ({x, y, z = 0} = this.nodeLayout.getNodePosition(pgNode.id));
+      // this.nodeLayout[pgNode.id] = {x: 0, y: 0, z: 0};
+      ({x, y, z = 0} = this.nodeLayout[pgNode.id]);
     }
     width = null;
 
@@ -1698,16 +1698,9 @@ module.exports = class Blitzboard {
     }
 
     if(this.config.layout === 'map') {
-      let ngraph = createGraph();
-      this.graph.nodes.forEach(node => {
-        ngraph.addNode(node.id);
-      });
-      this.graph.edges.forEach(edge => {
-        ngraph.addLink(edge.from, edge.to);
-      });
       let lngKey = this.config.layoutSettings.lng;
       let latKey = this.config.layoutSettings.lat;
-      this.nodeLayout = createLayout(ngraph);
+      this.nodeLayout = {};
 
       this.graph.nodes.forEach(node => {
         if(node.properties[latKey] && node.properties[lngKey]) {
@@ -1719,44 +1712,36 @@ module.exports = class Blitzboard {
           if(typeof (lng) === 'string') {
             lng = parseFloat(lng);
           }
-          this.nodeLayout.setNodePosition(node.id, lng, lat);
+          this.nodeLayout[node.id] = {x: lng, y: lat, z: 0};
         }
       });
     } else if(this.staticLayoutMode) {
-      let ngraph = createGraph();
-      this.graph.nodes.forEach(node => {
-        ngraph.addNode(node.id);
-      });
-      this.graph.edges.forEach(edge => {
-        ngraph.addLink(edge.from, edge.to);
-      });
+      if(!this.nodeLayout || typeof this.nodeLayout !== 'object' || Object.keys(this.nodeLayout).length === 0) {
+        const d3Nodes = this.graph.nodes.map((n) => {
+          return {
+            id: n.id
+          };
+        });
+        const d3Edges = this.graph.edges.map((e) => {
+          return {
+            source: e.from,
+            target: e.to,
+          };
+        });
 
-      const physicsSettings = {
-        // timeStep: 0.1,
-        dimensions: this.config.dimensions,
-        // dimensions: 2,
-        // gravity: -120,
-        // theta: 1.8,
-        // springLength: 50,
-        springCoefficient: 0.7,
-        // dragCoefficient: 0.9,
-      };
-      if(!this.nodeLayout) {
-        this.nodeLayout = createLayout(ngraph, physicsSettings);
-        for(let i = 0; i < 1000; ++i) {
-          if(this.nodeLayout.step() && i >= 200) {
-            console.log(`layout is stable at step #${i}`);
-            break;
-          }
+        const SPRING_DISTANCE = 15;
+
+        const d3Simulation = d3Force.forceSimulation(d3Nodes)
+          .force("charge", d3Force.forceManyBody())
+          .force("link", d3Force.forceLink(d3Edges).id((n) => n.id).distance(SPRING_DISTANCE))
+          .force("centralGravityX", d3Force.forceX().strength(0.5))
+          .force("centralGravityY", d3Force.forceY().strength(0.5));
+
+        d3Simulation.tick(1000);
+        this.nodeLayout = {};
+        for(const node of d3Nodes) {
+          this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
         }
-      } else if(!this.nodeLayout.getNodePosition && typeof(this.nodeLayout) === 'object') {
-        // convert into layout of ngraph
-        let ngraphLayout = createLayout(ngraph, physicsSettings);
-        for(const [nodeId, position] of Object.entries(this.nodeLayout)) {
-          if(ngraphLayout.graph.hasNode(nodeId))
-            ngraphLayout.setNodePosition(nodeId, position.x, position.y);
-        }
-        this.nodeLayout = ngraphLayout;
       }
     }
 
@@ -1806,7 +1791,7 @@ module.exports = class Blitzboard {
       if(this.isFilteredOutNode(node)) return;
       let visNode = this.toVisNode(node, defaultNodeProps);
       this.nodeDataSet[node.id] = visNode;
-      let tmpPosition = blitzboard.nodeLayout.getNodePosition(node.id);
+      let tmpPosition = blitzboard.nodeLayout[node.id];
       this.minY = Math.min(this.minY, tmpPosition.y);
       this.maxY = Math.max(this.maxY, tmpPosition.y);
       this.minX = Math.min(this.minX, tmpPosition.x);

@@ -5,7 +5,6 @@ let configOnModal = null;
 let targetNodeIdOnModal = null;
 let markers = [];
 let editor, configEditor;
-let nodeLayout = null;
 let savedGraphNames = [];
 let unsavedChangeExists = false;
 
@@ -403,10 +402,10 @@ $(() => {
       }
 
       if (newConfig) {
-        blitzboard.setGraph(input, false, nodeLayout);
+        blitzboard.setGraph(input, false);
         blitzboard.setConfig(newConfig);
       } else {
-        blitzboard.setGraph(input, true, nodeLayout);
+        blitzboard.setGraph(input, true);
       }
       if(config.layout === 'hierarchical-scc') {
         $('#switch-scc-dropdown').show();
@@ -414,18 +413,6 @@ $(() => {
         $('#switch-scc-dropdown').hide();
       }
 
-      nodeLayout = blitzboard.nodeLayout;
-      let layoutMap = {};
-      if (nodeLayout?.graph) {
-        nodeLayout.graph.forEachNode(node => {
-          let position = nodeLayout.getNodePosition(node.id);
-          layoutMap[node.id] = {
-            x: Math.round(position.x),
-            y: Math.round(position.y),
-          }
-        });
-      }
-      localStorage.setItem('nodeLayout', JSON.stringify(layoutMap));
       if (blitzboard.warnings.length > 0) {
         for (let marker of markers)
           marker.clear();
@@ -888,7 +875,6 @@ $(() => {
     editor.getDoc().clearHistory();
     configEditor.getDoc().clearHistory();
     currentGraphName = graph.name;
-    nodeLayout = graph.layout;
     $('.dropdown-item.history-item').removeClass('active');
     $('.dropdown-item.history-item').removeClass('text-white');
     let i = savedGraphNames.indexOf(graph.name);
@@ -952,18 +938,6 @@ $(() => {
     }
     let i = -1;
     let layoutMap = {};
-    if (nodeLayout?.graph) {
-      nodeLayout.graph.forEachNode(node => {
-        let position = nodeLayout.getNodePosition(node.id);
-        layoutMap[node.id] = {
-          x: Math.round(position.x),
-          y: Math.round(position.y),
-        }
-      });
-    } else {
-      layoutMap = nodeLayout;
-    }
-    localStorage.setItem('nodeLayout', JSON.stringify(layoutMap));
     if (!remoteMode) {
       let graph = {
         pg: editor.getValue(),
@@ -1742,12 +1716,6 @@ $(() => {
 
 
   setTimeout(() => {
-    try {
-      nodeLayout = JSON.parse(localStorage.getItem('nodeLayout'));
-    } catch {
-      nodeLayout = null;
-    }
-
     blitzboard.showLoader();
 
     function onConfigChanged(delta) {
