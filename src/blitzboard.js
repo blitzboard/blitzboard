@@ -692,7 +692,7 @@ module.exports = class Blitzboard {
     try {
       ({x, y, z = 0} = this.nodeLayout[pgNode.id]);
     } catch {
-      // this.nodeLayout[pgNode.id] = {x: 0, y: 0, z: 0};
+      this.nodeLayout[pgNode.id] = {x: 0, y: 0, z: 0};
       ({x, y, z = 0} = this.nodeLayout[pgNode.id]);
     }
     width = null;
@@ -1232,6 +1232,26 @@ module.exports = class Blitzboard {
     return downStreamNodes;
   }
 
+  computeHierarchicalPositions() {
+    this.hierarchicalPositionMap = {};
+    let tmpNodeDataSet = new visData.DataSet(this.graph.nodes);
+    let tmpEdgeDataSet = new visData.DataSet(this.graph.edges);
+    let tmpOptions = {
+      layout: {
+        hierarchical: this.config.layoutSettings
+      }
+    }
+    let tmpNetwork = new visNetwork.Network(this.networkContainer, {
+      nodes: tmpNodeDataSet,
+      edges: tmpEdgeDataSet
+    }, tmpOptions);
+    for(let node of this.graph.nodes) {
+      let position = tmpNetwork.getPosition(node.id);
+      this.hierarchicalPositionMap[node.id] = position;
+    }
+  }
+
+
   computeHierarchicalSCCPositions() {
     this.hierarchicalPositionMap = {};
     let sccList = stronglyConnectedComponents(this.graph.edges);
@@ -1742,7 +1762,11 @@ module.exports = class Blitzboard {
       this.timeInterval = this.maxTime - this.minTime;
     }
 
-    if(this.config.layout === 'hierarchical-scc') {
+    if(this.config.layout === 'hierarchical') {
+      this.computeHierarchicalPositions();
+      this.sccMap = {};
+    }
+    else if(this.config.layout === 'hierarchical-scc') {
       this.computeHierarchicalSCCPositions();
     } else {
       this.hierarchicalPositionMap = null;
@@ -1774,7 +1798,6 @@ module.exports = class Blitzboard {
     });
 
     this.validateGraph();
-
 
     if(this.config.layout === 'map') {
       let lngKey = this.config.layoutSettings.lng;
