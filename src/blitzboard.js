@@ -4,8 +4,7 @@ require('./scc.js');
 const DeckGL = require('@deck.gl/core');
 const DeckGLLayers = require('@deck.gl/layers');
 const DeckGLGeoLayers = require('@deck.gl/geo-layers');
-
-
+require('../css/blitzboard.css')
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
 
@@ -43,9 +42,10 @@ module.exports = class Blitzboard {
       lng: 'lng',
       lat: 'lat'
     },
-    style: "border: solid 1px silver; background: radial-gradient(white, silver);",
-    extraOptions: {},
     dimensions: 2,
+    style: "border: solid 1px #E6E6E6; background: radial-gradient(white, #E6E6E6);",
+    extraOptions: {
+    },
   };
   static tooltipMaxWidth = 600;
   static defaultNodeSize = 5;
@@ -148,6 +148,26 @@ module.exports = class Blitzboard {
     `;
 
 
+    this.searchBarDiv = document.createElement('div');
+    this.searchBarDiv.id = "blitzboard-search-bar-div";
+    this.searchBarDiv.style =
+      `
+      width: 280px;
+      top: 60px;
+      right: 80px;
+      height: 30px;
+      position: absolute;
+      z-index: 2000;
+    `;
+
+    this.searchInput = document.createElement('input');
+    this.searchInput.type = "text";
+    this.searchInput.id = "blitzboard-search-input";
+    this.searchInput.type = 'search';
+    this.searchButton = document.createElement('label');
+    this.searchButton.id = "blitzboard-search-button";
+    this.searchButton.setAttribute('for', 'blitzboard-search-input');
+
     this.minTime = new Date(8640000000000000);
     this.maxTime = new Date(-8640000000000000);
 
@@ -161,6 +181,7 @@ module.exports = class Blitzboard {
     this.onNodeFocused = [];
     this.onEdgeFocused = [];
     this.onUpdated = [];
+    this.onClear = [];
     this.beforeParse = [];
     this.onParseError = [];
     this.maxLine = 0;
@@ -187,10 +208,12 @@ module.exports = class Blitzboard {
     let blitzboard = this;
 
     container.appendChild(this.screen);
-    // container.appendChild(this.networkContainer);
+    container.appendChild(this.searchBarDiv);
     container.appendChild(this.configChoiceDiv);
     this.configChoiceDiv.appendChild(this.configChoiceLabel);
     this.configChoiceDiv.appendChild(this.configChoiceDropdown);
+    this.searchBarDiv.appendChild(this.searchButton);
+    this.searchBarDiv.appendChild(this.searchInput);
     document.body.appendChild(this.tooltipDummy);
     this.tooltipDummy.appendChild(this.tooltip);
     this.tooltip.addEventListener('mouseleave', (e) => {
@@ -206,6 +229,30 @@ module.exports = class Blitzboard {
         this.update(false);
         this.hideLoader();
       }, 100); // Add short delay to show loader
+    });
+
+    this.searchButton.addEventListener('click', (e) => {
+      if(blitzboard.searchInput.clientWidth > 0) {
+        blitzboard.config.onSearchInput(blitzboard.searchInput.value);
+      } else {
+        blitzboard.searchInput.style.width = '250px';
+        blitzboard.searchInput.style["padding-right"] = '30px';
+        blitzboard.searchButton.style.right = '250px';
+      }
+    })
+
+    this.searchInput.addEventListener('keydown', (e) => {
+      // Enter
+      if(e.keyCode === 13 && blitzboard.config.onSearchInput)
+        blitzboard.config.onSearchInput(blitzboard.searchInput.value);
+    });
+
+    this.searchInput.addEventListener('blur', (e) => {
+      if(e.target.value === '') {
+        blitzboard.searchInput.style.width = '0px';
+        blitzboard.searchInput.style["padding-right"] = '0px';
+        blitzboard.searchButton.style.right = '0px';
+      }
     });
 
     this.container.addEventListener('mouseout', (e) => {
@@ -407,49 +454,6 @@ module.exports = class Blitzboard {
       .blitzboard-tooltip a {
         color: #88BBFF;
       }
-      
-      .blitzboard-loader,
-      .blitzboard-loader:after {
-        border-radius: 50%;
-        width: 10em;
-        height: 10em;
-      }
-      .blitzboard-loader {
-        margin: 60px auto;
-        font-size: 10px;
-        position: relative;
-        text-indent: -9999em;
-        border-top: 1.1em solid rgba(255, 255, 255, 0.2);
-        border-right: 1.1em solid rgba(255, 255, 255, 0.2);
-        border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
-        border-left: 1.1em solid #ffffff;
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        transform: translateZ(0);
-        -webkit-animation: load8 1.1s infinite linear;
-        animation: load8 1.1s infinite linear;
-      }
-      @-webkit-keyframes load8 {
-        0% {
-          -webkit-transform: rotate(0deg);
-          transform: rotate(0deg);
-        }
-        100% {
-          -webkit-transform: rotate(360deg);
-          transform: rotate(360deg);
-        }
-      }
-      @keyframes load8 {
-        0% {
-          -webkit-transform: rotate(0deg);
-          transform: rotate(0deg);
-        }
-        100% {
-          -webkit-transform: rotate(360deg);
-          transform: rotate(360deg);
-        }
-      }
-
     `);
   }
 
@@ -909,7 +913,7 @@ module.exports = class Blitzboard {
   }
 
   includesNode(node) {
-    return this.graph.nodes.filter(e => e.id === node.id).length > 0;
+    return this.graph.nodes?.filter(e => e.id === node.id).length > 0;
   }
 
   addNode(node, update = true) {
@@ -1058,6 +1062,15 @@ module.exports = class Blitzboard {
     }
   }
 
+  clearGraph(update = true) {
+    this.graph = this.tryPgParse(''); // Set empty pg
+    for(let callback of this.onClear) {
+      callback();
+    }
+    if(update)
+      this.update();
+  }
+
   setGraph(input, update = true, layout = null) {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
@@ -1105,6 +1118,8 @@ module.exports = class Blitzboard {
     } else {
       this.configChoiceDiv.style.display = 'none';
     }
+
+    this.searchBarDiv.style.display = this.config.onSearchInput ? 'block' : 'none';
 
     if(config.layout === 'hierarchical') {
       // Remove redundant settings when layout is hierarchical
@@ -1602,7 +1617,7 @@ module.exports = class Blitzboard {
     applyDiff = applyDiff && this.nodeDataSet && this.edgeDataSet && !this.staticLayoutMode && this.config.layout !== 'hierarchical-scc';
 
     if(this.config.style && this.config.layout !== 'map') {
-      this.networkContainer.style = this.networkContainerOriginalStyle + ' ' + this.config.style;
+      document.getElementById('deckgl-overlay').style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
 
 
