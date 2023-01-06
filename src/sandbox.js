@@ -1834,6 +1834,7 @@ $(() => {
       editor.focus();
     });
 
+    $('#options-cross-impact').click(computeCrossImpactFactor);
     $('#options-search').click(() => editor.execCommand("findPersistent"));
     $('#options-replace').click(() => editor.execCommand("replace"));
     $('#options-sort').click(showSortModal);
