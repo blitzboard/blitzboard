@@ -1061,6 +1061,13 @@ module.exports = class Blitzboard {
 
     this.searchBarDiv.style.display = this.config.onSearchInput ? 'block' : 'none';
 
+    if($(this.searchInput).autocomplete("instance")){
+      $(this.searchInput).autocomplete( "destroy" );
+    }
+    if(this.config.searchCandidates) {
+      $(this.searchInput).autocomplete({source: this.config.searchCandidates});
+    }
+
     if(config.layout === 'hierarchical') {
       // Remove redundant settings when layout is hierarchical
       this.config.layoutSettings = config.layoutSettings;
