@@ -93,6 +93,7 @@ module.exports = class Blitzboard {
     this.sccMode = 'cluster';
     this.configChoice = null;
     this.hoveredNodes = new Set();
+    this.hoveredEdges = new Set();
     this.selectedNodes = new Set();
     this.selectedEdges = new Set();
 
@@ -1355,11 +1356,22 @@ module.exports = class Blitzboard {
     if(hoverInfo.object) {
       this.hoveredNodes.add(hoverInfo.object.id);
     }
-    // this.network.setProps({layers: [...this.layers]});
     // TODO: Can we avoid update of whole layers?
     this.updateLayers();
     if (this.config.node.onHover) {
       this.config.node.onHover(this.getNode(hoverInfo.object.id));
+    }
+  }
+
+  onEdgeHover(hoverInfo) {
+    this.hoveredEdges = new Set();
+    if(hoverInfo.object) {
+      this.hoveredEdges.add(hoverInfo.object.id);
+    }
+    // TODO: Can we avoid update of whole layers?
+    this.updateLayers();
+    if (this.config.edge.onHover) {
+      this.config.edge.onHover(this.getEdge(hoverInfo.object.id));
     }
   }
 
@@ -1417,7 +1429,7 @@ module.exports = class Blitzboard {
         return [x, y, z];
       },
       getColor: (e) => {
-        if(highlightedNodes.has(e.from) || highlightedNodes.has(e.to) || this.selectedEdges.has(e.id)) {
+        if(highlightedNodes.has(e.from) || highlightedNodes.has(e.to) || this.selectedEdges.has(e.id) || this.hoveredEdges.has(e.id)) {
           return [e.color, e.color, e.color, 255];
         }
         let color = [...e.color];
@@ -1427,8 +1439,9 @@ module.exports = class Blitzboard {
         return color;
       },
       updateTriggers: {
-        getColor: [highlightedNodes, this.selectedEdges],
+        getColor: [highlightedNodes, this.selectedEdges, this.hoveredEdges],
       },
+      onHover: info => this.onEdgeHover(info),
       widthUnits: ('common'),
       widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
       widthMinPixels: 1,
@@ -1458,6 +1471,7 @@ module.exports = class Blitzboard {
       sizeScale: scale,
       outlineWidth: 1,
       outlineColor: [255, 255, 255, 255],
+      onHover: info => this.onNodeHover(info),
       fontSettings: {
         sdf: true
       },
@@ -1493,6 +1507,7 @@ module.exports = class Blitzboard {
       sizeUnits: sizeUnits,
       outlineWidth: 1,
       outlineColor: [255, 255, 255, 255],
+      onHover: info => this.onEdgeHover(info),
       fontSettings: {
         sdf: true
       }
