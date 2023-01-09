@@ -1133,13 +1133,6 @@ module.exports = class Blitzboard {
 
     this.searchBarDiv.style.display = this.config.onSearchInput ? 'block' : 'none';
 
-    if($(this.searchInput).autocomplete("instance")){
-      $(this.searchInput).autocomplete( "destroy" );
-    }
-    if(this.config.searchCandidates) {
-      $(this.searchInput).autocomplete({source: this.config.searchCandidates});
-    }
-
     if(config.layout === 'hierarchical') {
       // Remove redundant settings when layout is hierarchical
       this.config.layoutSettings = config.layoutSettings;
@@ -1782,6 +1775,30 @@ module.exports = class Blitzboard {
         }
       });
       this.timeInterval = this.maxTime - this.minTime;
+    }
+
+
+    if($(this.searchInput).autocomplete("instance")){
+      $(this.searchInput).autocomplete( "destroy" );
+    }
+    if(this.config.searchCandidates) {
+      if(typeof this.config.searchCandidates === 'object') {
+        let candidateSource = new Set();
+        if(this.config.searchCandidates.node) {
+          [this.config.searchCandidates.node].flat(2).forEach(prop => {
+            this.graph.nodes.map(e => e[prop] || e.properties[prop]).flat().forEach(p => candidateSource.add(p));
+          });
+        }
+        if(this.config.searchCandidates.edge) {
+          [this.config.searchCandidates.edge].flat(2).forEach(prop => {
+            this.graph.edges.map(e => e[prop] || e.properties[prop]).flat().forEach(p => candidateSource.add(p));
+          });
+        }
+        console.log(candidateSource);
+        $(this.searchInput).autocomplete({source: Array.from(candidateSource)});
+      } else {
+        $(this.searchInput).autocomplete({source: this.config.searchCandidates});
+      }
     }
 
     if(this.config.layout === 'hierarchical') {
