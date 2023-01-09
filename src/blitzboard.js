@@ -243,6 +243,14 @@ module.exports = class Blitzboard {
       }
     })
 
+
+    this.searchInput.addEventListener('transitionend', (e) => {
+      if(this.searchInput.clientWidth > 0) {
+        $(this.searchInput).autocomplete("search", this.searchInput.value);
+      }
+    });
+
+
     this.searchInput.addEventListener('keydown', (e) => {
       // Enter
       if(e.keyCode === 13 && blitzboard.config.onSearchInput)
@@ -281,34 +289,6 @@ module.exports = class Blitzboard {
     const balloonHandleSize = 12;
 
 
-    class ExtendedController extends DeckGL.Controller {
-      constructor(options = {}) {
-        super(DeckGL.ViewState, options);
-        this.events = ['pointermove'];
-      }
-
-      handleEvent(event) {
-        if(event.type === 'doubleClick') {
-          clearTimeout(this.doubleClickTimer);
-          this.doubleClickTimer = null;
-          if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
-            if(this.config.node.onDoubleClick) {
-              this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
-            }
-          } else if(e.edges.length > 0) {
-            if(this.config.edge.onDoubleClick) {
-              this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
-            }
-          } else {
-            this.fit();
-          }
-        } else {
-          super.handleEvent(event);
-        }
-      }
-    }
-
-
     function clickHandler(e) {
       clearTimeout(blitzboard.doubleClickTimer);
       blitzboard.doubleClickTimer = null;
@@ -344,25 +324,26 @@ module.exports = class Blitzboard {
           html: elem.object._title
         }
       },
-      onClick: (e) => {
+      onClick: (info, event) => {
         if(!this.doubleClickTimer) {
           if(this.config.doubleClickWait <= 0) {
-            clickHandler(e);
+            clickHandler(info);
           } else {
-            this.doubleClickTimer = setTimeout(() => clickHandler(e), this.config.doubleClickWait);
+            this.doubleClickTimer = setTimeout(() => clickHandler(info), this.config.doubleClickWait);
           }
         } else {
           clearTimeout(this.doubleClickTimer);
           this.doubleClickTimer = null;
-          if(e.picked) {
-            let object = e.object;
+          if(info.picked) {
+            let object = info.object;
             if(object.objectType === 'node' && this.config.node.onDoubleClick) {
               this.config.node.onDoubleClick(this.getNode(object.id));
             } else if(object.objectType === 'edge' && this.config.edge.onDoubleClick) {
               this.config.edge.onDoubleClick(this.getEdge(object.id));
             }
           } else {
-            this.fit();
+            if(event.target === this.network.canvas)
+              this.fit();
           }
         }
 
@@ -1781,23 +1762,45 @@ module.exports = class Blitzboard {
     if($(this.searchInput).autocomplete("instance")){
       $(this.searchInput).autocomplete( "destroy" );
     }
+
     if(this.config.searchCandidates) {
-      if(typeof this.config.searchCandidates === 'object') {
+      if(!Array.isArray(this.config.searchCandidates) && typeof this.config.searchCandidates === 'object') {
         let candidateSource = new Set();
         if(this.config.searchCandidates.node) {
           [this.config.searchCandidates.node].flat(2).forEach(prop => {
-            this.graph.nodes.map(e => e[prop] || e.properties[prop]).flat().forEach(p => candidateSource.add(p));
+            this.graph.nodes.map(e => e[prop] || e.properties[prop]).flat().filter(p => p).forEach(p => candidateSource.add(p));
           });
         }
         if(this.config.searchCandidates.edge) {
           [this.config.searchCandidates.edge].flat(2).forEach(prop => {
-            this.graph.edges.map(e => e[prop] || e.properties[prop]).flat().forEach(p => candidateSource.add(p));
+            this.graph.edges.map(e => e[prop] || e.properties[prop]).flat().filter(p => p).forEach(p => candidateSource.add(p));
           });
         }
-        console.log(candidateSource);
-        $(this.searchInput).autocomplete({source: Array.from(candidateSource)});
+        candidateSource = Array.from(candidateSource);
+        const autocompleteMax = 20;
+        $(this.searchInput).autocomplete({
+          select: (event, ui) => {
+            blitzboard.config.onSearchInput(ui.item.value);
+          },
+          source: (request, response) => {
+            let filtered;
+            if(request.term)
+              filtered = candidateSource.filter(c => c.startsWith(request.term));
+            else
+              filtered = candidateSource;
+            filtered = filtered.slice(0, autocompleteMax);
+            response(filtered);
+          },
+          minLength: 0
+        });
       } else {
-        $(this.searchInput).autocomplete({source: this.config.searchCandidates});
+        $(this.searchInput).autocomplete({
+          select: (event, ui) => {
+            blitzboard.config.onSearchInput(ui.item.value);
+          },
+          source: this.config.searchCandidates,
+          minLength: 0
+        });
       }
     }
 
