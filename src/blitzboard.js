@@ -1785,7 +1785,7 @@ module.exports = class Blitzboard {
           source: (request, response) => {
             let filtered;
             if(request.term)
-              filtered = candidateSource.filter(c => c.startsWith(request.term));
+              filtered = candidateSource.filter(c => c.toLowerCase().startsWith(request.term.toLowerCase()));
             else
               filtered = candidateSource;
             filtered = filtered.slice(0, autocompleteMax);
