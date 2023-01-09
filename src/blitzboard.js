@@ -107,7 +107,7 @@ module.exports = class Blitzboard {
       top: 0;
       left: 0;
       position: absolute;
-      z-index: 2;
+      z-index: 0;
     `;
 
     this.tooltipDummy = document.createElement('div');
