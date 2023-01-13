@@ -341,7 +341,10 @@ module.exports = class Blitzboard {
           };
         }
         this.viewState = viewState.viewState;
-        this.updateLayers();
+        this.updateThumbnailLayer();
+        this.network.setProps({
+          layers: this.layers
+        });
       },
       onClick: (info, event) => {
         if(event.rightButton) {
@@ -1438,7 +1441,7 @@ module.exports = class Blitzboard {
       radiusUnits: sizeUnits,
     });
 
-    const edgeLayer = new DeckGLLayers.LineLayer({
+    this.edgeLayer = new DeckGLLayers.LineLayer({
       id: "line-layer",
       pickable: true,
       coordinateSystem,
@@ -1505,14 +1508,14 @@ module.exports = class Blitzboard {
 
     textLayerAttributes.data = this.nodeData;
 
-    const nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
+    this.nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
 
     textLayerAttributes.data = Array.from(highlightedNodes).map(id => this.nodeDataSet[id]);
     textLayerAttributes.fontWeight = 900; // bolder than bold
     textLayerAttributes.id = 'hilighted-node-text-layer';
-    const highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
+    this.highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
 
-    const edgeTextLayer = new DeckGLLayers.TextLayer({
+    this.edgeTextLayer = new DeckGLLayers.TextLayer({
       id: 'edge-text-layer',
       data: this.edgeDataSet,
       pickable: true,
@@ -1538,7 +1541,7 @@ module.exports = class Blitzboard {
       }
     });
 
-    const edgeArrowLayer = new DeckGLLayers.IconLayer({
+    this.edgeArrowLayer = new DeckGLLayers.IconLayer({
       id: 'edge-arrow-layer',
       data: this.edgeDataSet.filter(e => !e.undirected || e.direction === '->'),
       coordinateSystem,
@@ -1570,29 +1573,10 @@ module.exports = class Blitzboard {
 
     this.iconLayer = this.createIconLayer(this.nodeData, scale, sizeUnits, coordinateSystem);
 
-
-    // TODO: Create individual layers for each node may lead to performance problem
-    this.thumbnailLayers = this.nodeData.map((n) => {
-      if(n.imageURL && blitzboard.visibleBounds) {
-        let bounds =  [ n.x + n._size / Blitzboard.defaultNodeSize, n.y + n._size / Blitzboard.defaultNodeSize,
-          n.x - n._size / Blitzboard.defaultNodeSize,
-          n.y - n._size / Blitzboard.defaultNodeSize];
-        return new DeckGLLayers.BitmapLayer({
-          id: 'bitmap-layer-' + n.id,
-          bounds,
-          image: n.imageURL,
-          visible:  blitzboard.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage &&
-            blitzboard.visibleBounds.left <= n.x &&
-            blitzboard.visibleBounds.top <= n.y &&
-            n.x <= blitzboard.visibleBounds.right &&
-            n.y <= blitzboard.visibleBounds.bottom
-        });
-      }
-      return null;
-    }).filter(n => n !== null);
+    this.updateThumbnailLayer();
 
     if(this.config.layout === 'map') {
-      const tileLayer = new DeckGLGeoLayers.TileLayer({
+      this.tileLayer = new DeckGLGeoLayers.TileLayer({
         id: 'TileLayer',
         // data: "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
         data: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -1614,13 +1598,13 @@ module.exports = class Blitzboard {
       });
 
       this.layers = [
-        tileLayer,
-        edgeLayer,
-        edgeTextLayer,
+        this.tileLayer,
+        this.edgeLayer,
+        this.edgeTextLayer,
         this.nodeLayer,
-        edgeArrowLayer,
-        nodeTextLayer,
-        highlightedNodeTextLayer,
+        // this.edgeArrowLayer,
+        this.nodeTextLayer,
+        this.highlightedNodeTextLayer,
         this.iconLayer,
         ...this.thumbnailLayers
       ];
@@ -1630,12 +1614,12 @@ module.exports = class Blitzboard {
       });
     } else {
       this.layers = [
-        edgeLayer,
-        edgeTextLayer,
+        this.edgeLayer,
+        this.edgeTextLayer,
         this.nodeLayer,
         // edgeArrowLayer,
-        nodeTextLayer,
-        highlightedNodeTextLayer,
+        this.nodeTextLayer,
+        this.highlightedNodeTextLayer,
         this.iconLayer,
         ...this.thumbnailLayers
       ]
@@ -1643,6 +1627,34 @@ module.exports = class Blitzboard {
         layers: this.layers
       });
     }
+  }
+
+  updateThumbnailLayer() {
+    // TODO: Create individual layers for each node may lead to performance problem
+    this.thumbnailLayers = this.nodeData.map((n) => {
+      if(n.imageURL && blitzboard.visibleBounds) {
+        let bounds =  [ n.x + n._size / Blitzboard.defaultNodeSize, n.y + n._size / Blitzboard.defaultNodeSize,
+          n.x - n._size / Blitzboard.defaultNodeSize,
+          n.y - n._size / Blitzboard.defaultNodeSize];
+        return new DeckGLLayers.BitmapLayer({
+          id: 'bitmap-layer-' + n.id,
+          bounds,
+          image: n.imageURL,
+          visible:  blitzboard.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage &&
+            blitzboard.visibleBounds.left <= n.x &&
+            blitzboard.visibleBounds.top <= n.y &&
+            n.x <= blitzboard.visibleBounds.right &&
+            n.y <= blitzboard.visibleBounds.bottom,
+          loadOptions: {
+            credentials: 'same-origin',
+            headers: {
+              'x-custom-header': 'will this header be added to the image request? '
+            }
+          }
+        });
+      }
+      return null;
+    }).filter(n => n !== null);
   }
 
   updateViews() {
