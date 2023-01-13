@@ -17,6 +17,7 @@ const defaultWidth = 1;
 module.exports = class Blitzboard {
   static SCCColor = '#edc821';
   static selectedNodeColor = [0x21, 0x56, 0xee];
+  static zoomLevelToLoadImage = 4.0;
   static minNodeSizeInPixels = 3;
   static defaultConfig = {
     doubleClickWait: 200,
@@ -320,7 +321,6 @@ module.exports = class Blitzboard {
         blitzboard.updateLayers();
     }
 
-
     this.network = new DeckGL.Deck({
       parent: this.container,
       controller: {doubleClickZoom: false},
@@ -330,6 +330,18 @@ module.exports = class Blitzboard {
         return {
           html: elem.object._title
         }
+      },
+      onViewStateChange: (viewState) => {
+        const viewport = blitzboard.network.getViewports()[0];
+        if(viewport) {
+          const [left, top] = viewport.unproject([0, 0]);
+          const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
+          this.visibleBounds = {
+            left, top, bottom, right
+          };
+        }
+        this.viewState = viewState.viewState;
+        this.updateLayers();
       },
       onClick: (info, event) => {
         if(event.rightButton) {
@@ -1561,17 +1573,23 @@ module.exports = class Blitzboard {
 
     // TODO: Create individual layers for each node may lead to performance problem
     this.thumbnailLayers = this.nodeData.map((n) => {
-      if(n.imageURL) {
+      if(n.imageURL && blitzboard.visibleBounds) {
+        let bounds =  [ n.x + n._size / Blitzboard.defaultNodeSize, n.y + n._size / Blitzboard.defaultNodeSize,
+          n.x - n._size / Blitzboard.defaultNodeSize,
+          n.y - n._size / Blitzboard.defaultNodeSize];
         return new DeckGLLayers.BitmapLayer({
           id: 'bitmap-layer-' + n.id,
-          bounds: [ n.x + n._size / Blitzboard.defaultNodeSize, n.y + n._size / Blitzboard.defaultNodeSize,
-            n.x - n._size / Blitzboard.defaultNodeSize,
-            n.y - n._size / Blitzboard.defaultNodeSize],
-          image: n.imageURL
+          bounds,
+          image: n.imageURL,
+          visible:  blitzboard.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage &&
+            blitzboard.visibleBounds.left <= n.x &&
+            blitzboard.visibleBounds.top <= n.y &&
+            n.x <= blitzboard.visibleBounds.right &&
+            n.y <= blitzboard.visibleBounds.bottom
         });
       }
       return null;
-    }).filter(n => n);
+    }).filter(n => n !== null);
 
     if(this.config.layout === 'map') {
       const tileLayer = new DeckGLGeoLayers.TileLayer({
