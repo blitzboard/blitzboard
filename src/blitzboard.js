@@ -1,10 +1,12 @@
 require('@iconify/iconify');
 require('./pg_parser_browserified.js');
 require('./scc.js');
+const ContextMenu = require('./ContextMenu.js');
 const DeckGL = require('@deck.gl/core');
 const DeckGLLayers = require('@deck.gl/layers');
 const DeckGLGeoLayers = require('@deck.gl/geo-layers');
 require('../css/blitzboard.css')
+require('../css/ContextMenu.css')
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
 
@@ -289,7 +291,7 @@ module.exports = class Blitzboard {
     const balloonHandleSize = 12;
 
 
-    function clickHandler(e) {
+    function clickHandler(info, event) {
       clearTimeout(blitzboard.doubleClickTimer);
       blitzboard.doubleClickTimer = null;
       let needUpdate = blitzboard.selectedNodes.size > 0 || blitzboard.selectedEdges.size > 0;
@@ -297,8 +299,11 @@ module.exports = class Blitzboard {
       blitzboard.selectedNodes.clear();
       blitzboard.selectedEdges.clear();
 
-      if(e.picked) {
-        let object = e.object;
+      if(event.rightButton) {
+        blitzboard.contextMenu.openMenu(event.srcEvent);
+      }
+      if(info.picked) {
+        let object = info.object;
         if(object?.objectType === 'node') {
           if(blitzboard.config.node.onClick)
             blitzboard.config.node.onClick(blitzboard.getNode(object.id));
@@ -314,36 +319,62 @@ module.exports = class Blitzboard {
         blitzboard.updateLayers();
     }
 
+
     this.network = new DeckGL.Deck({
       parent: this.container,
       controller: {doubleClickZoom: false},
       getTooltip: (elem) => {
-        if(!elem?.object)
+        if(blitzboard.contextMenu.isOpened || !elem?.object)
           return null;
         return {
           html: elem.object._title
         }
       },
       onClick: (info, event) => {
-        if(!this.doubleClickTimer) {
-          if(this.config.doubleClickWait <= 0) {
-            clickHandler(info);
-          } else {
-            this.doubleClickTimer = setTimeout(() => clickHandler(info), this.config.doubleClickWait);
-          }
-        } else {
-          clearTimeout(this.doubleClickTimer);
-          this.doubleClickTimer = null;
+        if(event.rightButton) {
+          let menuItems = [];
+          if(blitzboard.config.contextMenuItems)
+            menuItems = menuItems.concat(blitzboard.config.contextMenuItems.map(c => ({
+              label: (typeof c.label) === 'function' ? c.label(object) : c.label,
+              events: {click: () => c.onClick(blitzboard)}
+            })));
           if(info.picked) {
             let object = info.object;
-            if(object.objectType === 'node' && this.config.node.onDoubleClick) {
-              this.config.node.onDoubleClick(this.getNode(object.id));
-            } else if(object.objectType === 'edge' && this.config.edge.onDoubleClick) {
-              this.config.edge.onDoubleClick(this.getEdge(object.id));
+            if(object?.objectType === 'node' && blitzboard.config.node.contextMenuItems) {
+              menuItems = menuItems.concat(blitzboard.config.node.contextMenuItems.map(c => ({
+                label: (typeof c.label) === 'function' ? c.label(object) : c.label,
+                events: {click: () => c.onClick(object, blitzboard)},
+              })));
+            } else if(object?.objectType === 'edge' && blitzboard.config.edge.contextMenuItems) {
+              menuItems = menuItems.concat(blitzboard.config.edge.contextMenuItems.map(c => ({
+                label: (typeof c.label) === 'function' ? c.label(object) : c.label,
+                events: {click: () => c.onClick(object, blitzboard)}
+              })));
+            }
+          }
+          blitzboard.contextMenu.setMenuItems(menuItems);
+          blitzboard.contextMenu.openMenu(event.srcEvent);
+        } else {
+          if(!this.doubleClickTimer) {
+            if(this.config.doubleClickWait <= 0) {
+              clickHandler(info, event);
+            } else {
+              this.doubleClickTimer = setTimeout(() => clickHandler(info, event), this.config.doubleClickWait);
             }
           } else {
-            if(event.target === this.network.canvas)
-              this.fit();
+            clearTimeout(this.doubleClickTimer);
+            this.doubleClickTimer = null;
+            if(info.picked) {
+              let object = info.object;
+              if(object.objectType === 'node' && this.config.node.onDoubleClick) {
+                this.config.node.onDoubleClick(this.getNode(object.id));
+              } else if(object.objectType === 'edge' && this.config.edge.onDoubleClick) {
+                this.config.edge.onDoubleClick(this.getEdge(object.id));
+              }
+            } else {
+              if(event.target === this.network.canvas)
+                this.fit();
+            }
           }
         }
 
@@ -363,6 +394,13 @@ module.exports = class Blitzboard {
       views: [new DeckGL.OrthographicView()],
       layers: [],
     });
+
+    this.contextMenu = new ContextMenu({
+      target: this.network.canvas,
+      mode: 'dark'
+    });
+
+    this.contextMenu.init();
 
     this.applyDynamicStyle(`
       .blitzboard-tooltip {
@@ -2209,6 +2247,20 @@ module.exports = class Blitzboard {
     this.nodeDataSet.update(toBeUpdated);
   }
 
+  selectNode(node) {
+    this.selectedNodes.clear();
+    this.selectedEdges.clear();
+    this.selectedNodes.add(node.id);
+    this.updateLayers();
+  }
+
+  selectEdge(edge) {
+    this.selectedNodes.clear();
+    this.selectedEdges.clear();
+    this.selectedEdges.add(edge.id);
+    this.updateLayers();
+  }
+
   scrollNodeIntoView(node, select = true) {
     if(typeof (node) === 'string')
       node = this.nodeDataSet[node];
@@ -2220,7 +2272,7 @@ module.exports = class Blitzboard {
     if(select) {
       this.selectedNodes.clear();
       this.selectedEdges.clear();
-      this.selectedNodes.add(node.id);
+      this.selectedEdges.add(edge.id);
       this.updateLayers();
     }
 
@@ -2279,10 +2331,7 @@ module.exports = class Blitzboard {
     const to = this.nodeLayout[edge.to];
     this.scrollNetworkToPosition({x: (from.x + to.x) / 2, y: (from.y + to.y) / 2});
     if(select) {
-      this.selectedNodes.clear();
-      this.selectedEdges.clear();
-      this.selectedEdges.add(edge.id);
-      this.updateLayers();
+      this.selectedEdges(edge);
     }
 
     for(let callback of this.onEdgeFocused) {
