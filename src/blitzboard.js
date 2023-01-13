@@ -1118,7 +1118,7 @@ module.exports = class Blitzboard {
       this.update();
   }
 
-  setGraph(input, update = true, layout = null) {
+  setGraph(input, update = true, layout = null, callback = null) {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
     this.prevMouseEvent = null;
@@ -1146,11 +1146,11 @@ module.exports = class Blitzboard {
     this.nodeLayout = layout;
 
     if(update)
-      this.update();
+      this.update(true, callback);
   }
 
 
-  setConfig(config, update = true) {
+  setConfig(config, update = true, callback = null) {
     this.config = deepMerge(Blitzboard.defaultConfig, config);
 
     if(this.config.configChoices?.configs) {
@@ -1176,7 +1176,7 @@ module.exports = class Blitzboard {
     this.baseConfig = deepMerge({}, this.config); // Save config before apply configChoices
     Blitzboard.loadedIcons = {};
     if(update)
-      this.update(false);
+      this.update(false, callback);
   }
 
   validateGraph() {
@@ -1688,7 +1688,8 @@ module.exports = class Blitzboard {
     return false;
   }
 
-  update(applyDiff = true) {
+  update(applyDiff = true, afterUpdate = null) {
+    this.shouldAbortLayout = true;
     this.staticLayoutMode = true;
     let blitzboard = this;
     this.warnings = [];
@@ -1928,6 +1929,7 @@ module.exports = class Blitzboard {
           this.nodeLayout[node.id] = {x: lng, y: lat, z: 0};
         }
       });
+      this.resetView(afterUpdate);
     } else if(this.staticLayoutMode) {
       if(!this.nodeLayout || typeof this.nodeLayout !== 'object' || Object.keys(this.nodeLayout).length === 0) {
         let count = {};
@@ -1947,22 +1949,42 @@ module.exports = class Blitzboard {
 
         const SPRING_DISTANCE = 15;
 
-        let d3Simulation = d3Force.forceSimulation(d3Nodes)
+        this.d3Simulation = d3Force.forceSimulation(d3Nodes)
           .force("charge", d3Force.forceManyBody().strength(n => -30 * Math.sqrt(count[n.id] || 1)))
           .force("link", d3Force.forceLink(d3Edges).id((n) => n.id).distance(link => { return SPRING_DISTANCE * Math.min(count[link.source.id], count[link.target.id])}))
           .force("centralGravityX", d3Force.forceX().strength(0.5))
           .force("centralGravityY", d3Force.forceY().strength(0.5));
 
-        d3Simulation.tick(1000);
-
-        this.nodeLayout = {};
-        for(const node of d3Nodes) {
-          this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
-        }
+        this.layoutNodes(() => {
+          this.nodeLayout = {};
+          for(const node of d3Nodes) {
+            this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
+          }
+          this.resetView(afterUpdate);
+        }, 1000);
       }
     }
+  }
 
+  layoutNodes(callback, maxStep) {
+    this.shouldAbortLayout = false;
+    this.layoutNodesRecursive(callback, maxStep, 0);
+  }
 
+  layoutNodesRecursive(callback, maxStep, current) {
+    const LAYOUT_STEP = 10;
+    if(this.shouldAbortLayout) {
+      return;
+    }
+    if(current + LAYOUT_STEP >= maxStep) {
+      callback();
+    } else {
+      this.d3Simulation.tick(LAYOUT_STEP);
+      setTimeout(() => this.layoutNodesRecursive(callback, maxStep, current + LAYOUT_STEP));
+    }
+  }
+
+  resetView(afterUpdate = null) {
     let defaultNodeProps = this.config.node.caption;
     let defaultEdgeProps = this.config.edge.caption;
 
@@ -2181,6 +2203,10 @@ module.exports = class Blitzboard {
 
     this.updateSCCStatus();
 
+    if(afterUpdate) {
+      afterUpdate();
+    }
+
     for(let callback of this.onUpdated) {
       callback();
     }
@@ -2301,6 +2327,8 @@ module.exports = class Blitzboard {
   }
 
   scrollNodeIntoView(node, select = true) {
+    if(!this.nodeDataSet)
+      return;
     if(typeof (node) === 'string')
       node = this.nodeDataSet[node];
     else

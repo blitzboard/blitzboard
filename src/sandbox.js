@@ -182,6 +182,7 @@ $(() => {
       bufferedContent = null;
       byProgram = false;
     }
+    blitzboard.hideLoader();
     if (blitzboard.network !== prevNetwork) {
       // blitzboard.network.on("click", (e) => {
       //   if (srcNode) {
@@ -391,7 +392,7 @@ $(() => {
 
       if (newConfig) {
         blitzboard.setGraph(input, false);
-        blitzboard.setConfig(newConfig);
+        blitzboard.setConfig(newConfig, true, );
       } else {
         blitzboard.setGraph(input, true);
       }
@@ -1564,12 +1565,11 @@ $(() => {
   }
 
 
-  function reflectEditorChange() {
-    localStorage.setItem('pg', editor.getValue());
-    updateGraph(editor.getValue());
+  function reflectEditorChange(callback = null) {
+    // localStorage.setItem('pg', editor.getValue());
+    updateGraph(editor.getValue(), null, () => blitzboard.hideLoader());
     if(!remoteMode)
       saveCurrentGraph();
-    blitzboard.hideLoader();
     clearTimeout(pgTimerId);
     pgTimerId = null;
   }
@@ -1617,17 +1617,17 @@ $(() => {
 
   function triggerGraphUpdate(pgValue, config) {
     blitzboard.showLoader();
-    setTimeout(() => { updateGraph(pgValue, config); blitzboard.hideLoader(); } );
+    setTimeout(() => { updateGraph(pgValue, config, () => blitzboard.hideLoader())} );
   }
 
-  function loadValues(pgValue, configValue) {
+  function loadValues(pgValue, configValue, callback = null) {
     byProgram = true;
     editor.setValue(pgValue);
     editor.getDoc().clearHistory();
     configEditor.setValue(configValue);
     config = parseConfig(configValue);
     byProgram = false;
-    triggerGraphUpdate(pgValue, config);
+    triggerGraphUpdate(pgValue, config, callback);
   }
   
   function loadCurrentGraph() {
