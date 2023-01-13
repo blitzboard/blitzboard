@@ -2270,10 +2270,7 @@ module.exports = class Blitzboard {
       return;
 
     if(select) {
-      this.selectedNodes.clear();
-      this.selectedEdges.clear();
-      this.selectedEdges.add(edge.id);
-      this.updateLayers();
+      this.selectNode(node);
     }
 
     this.scrollNetworkToPosition(node);
@@ -2318,7 +2315,6 @@ module.exports = class Blitzboard {
         x, y
       });
     });
-    // this.nodeDataSet.update(nodePositions);
   }
 
 
@@ -2331,7 +2327,7 @@ module.exports = class Blitzboard {
     const to = this.nodeLayout[edge.to];
     this.scrollNetworkToPosition({x: (from.x + to.x) / 2, y: (from.y + to.y) / 2});
     if(select) {
-      this.selectedEdges(edge);
+      this.selectedEdge(edge);
     }
 
     for(let callback of this.onEdgeFocused) {
