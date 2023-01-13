@@ -1900,12 +1900,15 @@ module.exports = class Blitzboard {
       });
     } else if(this.staticLayoutMode) {
       if(!this.nodeLayout || typeof this.nodeLayout !== 'object' || Object.keys(this.nodeLayout).length === 0) {
+        let count = {};
         const d3Nodes = this.graph.nodes.map((n) => {
           return {
             id: n.id
           };
         });
         const d3Edges = this.graph.edges.filter(e => this.nodeMap[e.from] && this.nodeMap[e.to]).map(e => {
+          count[e.from] = (count[e.from] || 0) + 1;
+          count[e.to] = (count[e.to] || 0) + 1;
           return {
             source: e.from,
             target: e.to,
@@ -1915,8 +1918,8 @@ module.exports = class Blitzboard {
         const SPRING_DISTANCE = 15;
 
         let d3Simulation = d3Force.forceSimulation(d3Nodes)
-          .force("charge", d3Force.forceManyBody())
-          .force("link", d3Force.forceLink(d3Edges).id((n) => n.id).distance(SPRING_DISTANCE))
+          .force("charge", d3Force.forceManyBody().strength(n => -30 * Math.sqrt(count[n.id] || 1)))
+          .force("link", d3Force.forceLink(d3Edges).id((n) => n.id).distance(link => { return SPRING_DISTANCE * Math.min(count[link.source.id], count[link.target.id])}))
           .force("centralGravityX", d3Force.forceX().strength(0.5))
           .force("centralGravityY", d3Force.forceY().strength(0.5));
 
@@ -2038,6 +2041,8 @@ module.exports = class Blitzboard {
       else if((e.ctrlKey && !this.clientIsMacLike || e.metaKey && this.clientIsMacLike) && e.code === "KeyF") {
         e.preventDefault();
         this.searchButton.click();
+        this.searchInput.focus()
+        this.searchInput.setSelectionRange(0, this.searchInput.value.length)
       }
     });
 
