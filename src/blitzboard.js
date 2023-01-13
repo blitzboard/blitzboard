@@ -98,6 +98,7 @@ module.exports = class Blitzboard {
     this.hoveredEdges = new Set();
     this.selectedNodes = new Set();
     this.selectedEdges = new Set();
+    this.clientIsMacLike = /(Mac|iPhone|iPod|iPad)/i.test( navigator.userAgentData.platform);
 
     this.staticLayoutMode = true;
 
@@ -255,7 +256,7 @@ module.exports = class Blitzboard {
 
     this.searchInput.addEventListener('keydown', (e) => {
       // Enter
-      if(e.keyCode === 13 && blitzboard.config.onSearchInput)
+      if(e.code === "Enter" && blitzboard.config.onSearchInput)
         blitzboard.config.onSearchInput(blitzboard.searchInput.value);
     });
 
@@ -2030,10 +2031,13 @@ module.exports = class Blitzboard {
     this.clusterSCC();
 
     this.container.addEventListener('keydown', (e) => {
-      // Key 0
-      if(e.keyCode === 48) {
+      if(e.code === "Digit0") {
         blitzboard.fit();
         e.preventDefault();
+      }
+      else if((e.ctrlKey && !this.clientIsMacLike || e.metaKey && this.clientIsMacLike) && e.code === "KeyF") {
+        e.preventDefault();
+        this.searchButton.click();
       }
     });
 
