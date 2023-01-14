@@ -7,6 +7,9 @@ const DeckGLLayers = require('@deck.gl/layers');
 const DeckGLGeoLayers = require('@deck.gl/geo-layers');
 require('../css/blitzboard.css')
 require('../css/ContextMenu.css')
+const $ = require('jquery');
+require('jquery-ui-bundle');
+require('jquery-ui-bundle/jquery-ui.css');
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
 
@@ -249,7 +252,7 @@ module.exports = class Blitzboard {
 
 
     this.searchInput.addEventListener('transitionend', (e) => {
-      if(this.searchInput.clientWidth > 0) {
+      if(this.searchInput.clientWidth > 0 && $(this.searchInput).autocomplete("instance")) {
         $(this.searchInput).autocomplete("search", this.searchInput.value);
       }
     });
