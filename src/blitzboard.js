@@ -2015,6 +2015,16 @@ module.exports = class Blitzboard {
       return visNode;
     });
 
+    const MINIMUM_AREA = 10;
+    if(this.maxX - this.minX < MINIMUM_AREA) {
+      this.maxX = this.minX + MINIMUM_AREA / 2;
+      this.minX -= MINIMUM_AREA / 2;
+    }
+    if(this.maxY - this.minY < MINIMUM_AREA) {
+      this.maxY = this.minY + MINIMUM_AREA / 2;
+      this.minX -= MINIMUM_AREA / 2;
+    }
+
     this.edgeMap = {};
     this.edgeDataSet = this.graph.edges.map((edge) => {
       if(this.isFilteredOutEdge(edge) || !this.nodeDataSet[edge.from] || !this.nodeDataSet[edge.to])
