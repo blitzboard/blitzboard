@@ -20,7 +20,7 @@ const defaultWidth = 1;
 module.exports = class Blitzboard {
   static SCCColor = '#edc821';
   static selectedNodeColor = [0x21, 0x56, 0xee];
-  static zoomLevelToLoadImage = 4.0;
+  static zoomLevelToLoadImage = 2.0;
   static minNodeSizeInPixels = 3;
   static defaultConfig = {
     doubleClickWait: 200,
@@ -1931,6 +1931,7 @@ module.exports = class Blitzboard {
       this.resetView(afterUpdate);
     } else if(this.staticLayoutMode) {
       if(!this.nodeLayout || typeof this.nodeLayout !== 'object' || Object.keys(this.nodeLayout).length === 0) {
+
         let count = {};
         const d3Nodes = this.graph.nodes.map((n) => {
           return {
