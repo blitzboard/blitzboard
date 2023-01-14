@@ -624,6 +624,14 @@ $(() => {
     $('#export-btn').dropdown('toggle');
   });
 
+  q('#export-json-btn').addEventListener('click', () => {
+    let json = JSON.stringify(blitzboard.tryPgParse(editor.getValue()));
+    let name = (currentGraphName.startsWith('Untitled') ? 'graph' : currentGraphName) + currentTimeString();
+    saveAs(new Blob([json], {type: 'text/plain'}), name + '.json');
+    // $('#export-btn').dropdown('toggle');
+  });
+
+
   function newGraphName(baseName = 'Untitled') {
     // Check whether the name is suffixed by number like example-1
     let suffixMatched = baseName.match(/-(\d+$)/);
