@@ -1632,26 +1632,22 @@ module.exports = class Blitzboard {
   updateThumbnailLayer() {
     // TODO: Create individual layers for each node may lead to performance problem
     this.thumbnailLayers = this.nodeData.map((n) => {
-      if(n.imageURL && blitzboard.visibleBounds) {
+      if(n.imageURL && blitzboard.visibleBounds && blitzboard.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage) {
         let bounds =  [ n.x + n._size / Blitzboard.defaultNodeSize, n.y + n._size / Blitzboard.defaultNodeSize,
           n.x - n._size / Blitzboard.defaultNodeSize,
           n.y - n._size / Blitzboard.defaultNodeSize];
-        return new DeckGLLayers.BitmapLayer({
-          id: 'bitmap-layer-' + n.id,
-          bounds,
-          image: n.imageURL,
-          visible:  blitzboard.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage &&
-            blitzboard.visibleBounds.left <= n.x &&
-            blitzboard.visibleBounds.top <= n.y &&
-            n.x <= blitzboard.visibleBounds.right &&
-            n.y <= blitzboard.visibleBounds.bottom,
-          loadOptions: {
-            credentials: 'same-origin',
-            headers: {
-              'x-custom-header': 'will this header be added to the image request? '
-            }
-          }
-        });
+        let visible = 
+          blitzboard.visibleBounds.left <= n.x &&
+          blitzboard.visibleBounds.top <= n.y &&
+          n.x <= blitzboard.visibleBounds.right &&
+          n.y <= blitzboard.visibleBounds.bottom;
+        if(visible) {
+          return new DeckGLLayers.BitmapLayer({
+            id: 'bitmap-layer-' + n.id,
+            bounds,
+            image: n.imageURL
+          });
+        }
       }
       return null;
     }).filter(n => n !== null);
@@ -1980,7 +1976,7 @@ module.exports = class Blitzboard {
       callback();
     } else {
       this.d3Simulation.tick(LAYOUT_STEP);
-      setTimeout(() => this.layoutNodesRecursive(callback, maxStep, current + LAYOUT_STEP));
+      setTimeout(() => this.layoutNodesRecursive(callback, maxStep, current + LAYOUT_STEP), 0);
     }
   }
 
