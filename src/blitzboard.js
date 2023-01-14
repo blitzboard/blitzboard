@@ -1510,7 +1510,7 @@ module.exports = class Blitzboard {
 
     this.nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
 
-    textLayerAttributes.data = Array.from(highlightedNodes).map(id => this.nodeDataSet[id]);
+    textLayerAttributes.data = Array.from(highlightedNodes).map(id => this.nodeDataSet[id]).filter(n => n);
     textLayerAttributes.fontWeight = 900; // bolder than bold
     textLayerAttributes.id = 'hilighted-node-text-layer';
     this.highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
@@ -2074,6 +2074,9 @@ module.exports = class Blitzboard {
     };
 
     this.options = Object.assign(this.options, this.config.extraOptions);
+
+
+    this.network.setProps({layers: []});
 
     this.nodeData = Object.values(this.nodeDataSet);
     this.updateLayers();
