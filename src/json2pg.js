@@ -1,6 +1,6 @@
 String.prototype.quoteIfNeeded = function() {
   if(this.includes('"') || this.includes('\t') || this.includes(' ') || this.includes(':')) {
-    return `"${this.replace('"', '""')}"`;
+    return `"${this}"`;
   }
   return this;
 }

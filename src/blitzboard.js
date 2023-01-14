@@ -2523,6 +2523,8 @@ function convertToHyperLinkIfURL(text) {
     return text;
   if(Array.isArray(text))
     text = text[0];
+  if(typeof text !== 'string')
+    return "";
   if(text.startsWith('http://') || text.startsWith('https://')) {
     return `<a target="_blank" href="${text}">${wrapText(text)}</a>`;
   }

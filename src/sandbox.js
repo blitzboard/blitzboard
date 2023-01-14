@@ -48,7 +48,7 @@ $(() => {
   });
 
 
-  String.prototype.quoteIfNeeded = function () {
+  String.prototype.quoteIfNeededForPG = function () {
     if (this.includes('"') || this.includes('#') || this.includes('\t') || this.includes(':') || this.includes(' ')) {
       return `"${this.replace(/\"/g, '""')}"`;
     }
@@ -158,12 +158,12 @@ $(() => {
     byProgram = true;
     let content = bufferedContent || editor.getValue();
     for (let node of nodes) {
-      content += `\n${node.id.quoteIfNeeded()}`;
+      content += `\n${node.id.quoteIfNeededForPG()}`;
       for (let label of node.labels)
-        content += ` :${label.quoteIfNeeded()}`;
+        content += ` :${label.quoteIfNeededForPG()}`;
       for (let key in node.properties)
         for (let value of node.properties[key])
-          content += ` ${key.quoteIfNeeded()}:${value.quoteIfNeeded()}`;
+          content += ` ${key.quoteIfNeededForPG()}:${value.quoteIfNeededForPG()}`;
     }
     bufferedContent = content;
     byProgram = false;
@@ -191,7 +191,7 @@ $(() => {
       //       if (srcNode !== node.id) {
       //         let oldPg = editor.getValue();
       //         let lineNum = numberOfLines(oldPg) + 1;
-      //         editor.setValue(oldPg + `\n${srcNode.quoteIfNeeded()} -> ${node.id.quoteIfNeeded()}`);
+      //         editor.setValue(oldPg + `\n${srcNode.quoteIfNeededForPG()} -> ${node.id.quoteIfNeededForPG()}`);
       //         updateGraph(editor.getValue());
       //         scrollToLine({start: {line: lineNum, column: 1}, end: {line: lineNum + 1, column: 1}});
       //       }
@@ -264,12 +264,12 @@ $(() => {
     byProgram = true;
     let content = bufferedContent || editor.getValue();
     for (let edge of edges) {
-      content += `\n${edge.from.quoteIfNeeded()} ${edge.direction} ${edge.to.quoteIfNeeded()}`;
+      content += `\n${edge.from.quoteIfNeededForPG()} ${edge.direction} ${edge.to.quoteIfNeededForPG()}`;
       for (let label of edge.labels)
-        content += ` :${label.quoteIfNeeded()}`;
+        content += ` :${label.quoteIfNeededForPG()}`;
       for (let key in edge.properties)
         for (let value of edge.properties[key])
-          content += ` ${key.quoteIfNeeded()}:${value.quoteIfNeeded()}`;
+          content += ` ${key.quoteIfNeededForPG()}:${value.quoteIfNeededForPG()}`;
     }
     bufferedContent = content;
     byProgram = false;
@@ -1164,24 +1164,24 @@ $(() => {
               currentGraphName = name;
 
               let nodeContent = nodes.map((n) => {
-                let line = n.id.quoteIfNeeded();
+                let line = n.id.quoteIfNeededForPG();
                 if(n.label)
-                  line += " :" + n.label.quoteIfNeeded();
+                  line += " :" + n.label.quoteIfNeededForPG();
                 for(let key of Object.keys(n)) {
                   if(key !== 'id' && key !== 'label' && n[key]?.length > 0) {
-                    line += ` ${key.quoteIfNeeded()}:${n[key].quoteIfNeeded()}`;
+                    line += ` ${key.quoteIfNeededForPG()}:${n[key].quoteIfNeededForPG()}`;
                   }
                 }
                 return line;
               }).join("\n");
 
               let edgeContent = edges.map((e) => {
-                let line = `${e.from.quoteIfNeeded()} -> ${e.to.quoteIfNeeded()}`;
+                let line = `${e.from.quoteIfNeededForPG()} -> ${e.to.quoteIfNeededForPG()}`;
                 if(e.label)
-                  line += " :" + e.label.quoteIfNeeded();
+                  line += " :" + e.label.quoteIfNeededForPG();
                 for(let key of Object.keys(e)) {
                   if(key !== 'from' && key !== 'to' && key !== 'label' && e[key]?.length > 0) {
-                    line += ` ${key.quoteIfNeeded()}:${e[key].quoteIfNeeded()}`;
+                    line += ` ${key.quoteIfNeededForPG()}:${e[key].quoteIfNeededForPG()}`;
                   }
                 }
                 return line;
