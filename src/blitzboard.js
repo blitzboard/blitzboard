@@ -47,7 +47,9 @@ module.exports = class Blitzboard {
       time_from: 'from',
       time_to: 'to',
       lng: 'lng',
-      lat: 'lat'
+      lat: 'lat',
+      x: 'x',
+      y: 'y'
     },
     dimensions: 2,
     style: "border: solid 1px #E6E6E6; background: radial-gradient(white, #E6E6E6);",
@@ -601,18 +603,10 @@ module.exports = class Blitzboard {
         x = 0;
       }
     } else {
-      if(this.config.layout == 'custom') {
-        if(pgNode.properties[this.config.layoutSettings.x] || pgNode.properties[this.config.layoutSettings.y]) {
-          x = parseInt(pgNode.properties[this.config.layoutSettings.x][0]);
-          y = parseInt(pgNode.properties[this.config.layoutSettings.y][0]);
-          fixed = true;
-        }
-      } else {
-        x = null;
-        y = null;
-        fixed = this.config.layout === 'hierarchical';
-        width = null;
-      }
+      x = null;
+      y = null;
+      fixed = this.config.layout === 'hierarchical';
+      width = null;
     }
 
     return {x, y, fixed, width};
@@ -1931,37 +1925,53 @@ module.exports = class Blitzboard {
       this.resetView(afterUpdate);
     } else if(this.staticLayoutMode) {
       if(!this.nodeLayout || typeof this.nodeLayout !== 'object' || Object.keys(this.nodeLayout).length === 0) {
-
-        let count = {};
-        const d3Nodes = this.graph.nodes.map((n) => {
-          return {
-            id: n.id
-          };
-        });
-        const d3Edges = this.graph.edges.filter(e => this.nodeMap[e.from] && this.nodeMap[e.to]).map(e => {
-          count[e.from] = (count[e.from] || 0) + 1;
-          count[e.to] = (count[e.to] || 0) + 1;
-          return {
-            source: e.from,
-            target: e.to,
-          };
-        });
-
-        const SPRING_DISTANCE = 15;
-
-        this.d3Simulation = d3Force.forceSimulation(d3Nodes)
-          .force("charge", d3Force.forceManyBody().strength(n => -30 * Math.sqrt(count[n.id] || 1)))
-          .force("link", d3Force.forceLink(d3Edges).id((n) => n.id).distance(link => { return SPRING_DISTANCE * Math.min(count[link.source.id], count[link.target.id])}))
-          .force("centralGravityX", d3Force.forceX().strength(0.5))
-          .force("centralGravityY", d3Force.forceY().strength(0.5));
-
-        this.layoutNodes(() => {
+        if(this.config.layout === 'custom') {
           this.nodeLayout = {};
-          for(const node of d3Nodes) {
-            this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
+          for(const node of this.graph.nodes) {
+            let x, y;
+            if(node.properties[this.config.layoutSettings.x] || node.properties[this.config.layoutSettings.y]) {
+              x = parseFloat(node.properties[this.config.layoutSettings.x][0]);
+              y = parseFloat(node.properties[this.config.layoutSettings.y][0]);
+            } else {
+              x = y = 0;
+            }
+            this.nodeLayout[node.id] = {x, y, z: 0};
           }
           this.resetView(afterUpdate);
-        }, 1000);
+        } else {
+          let count = {};
+          const d3Nodes = this.graph.nodes.map((n) => {
+            return {
+              id: n.id
+            };
+          });
+          const d3Edges = this.graph.edges.filter(e => this.nodeMap[e.from] && this.nodeMap[e.to]).map(e => {
+            count[e.from] = (count[e.from] || 0) + 1;
+            count[e.to] = (count[e.to] || 0) + 1;
+            return {
+              source: e.from,
+              target: e.to,
+            };
+          });
+
+          const SPRING_DISTANCE = 15;
+
+          this.d3Simulation = d3Force.forceSimulation(d3Nodes)
+            .force("charge", d3Force.forceManyBody().strength(n => -30 * Math.sqrt(count[n.id] || 1)))
+            .force("link", d3Force.forceLink(d3Edges).id((n) => n.id).distance(link => {
+              return SPRING_DISTANCE * Math.min(count[link.source.id], count[link.target.id])
+            }))
+            .force("centralGravityX", d3Force.forceX().strength(0.5))
+            .force("centralGravityY", d3Force.forceY().strength(0.5));
+
+          this.layoutNodes(() => {
+            this.nodeLayout = {};
+            for(const node of d3Nodes) {
+              this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
+            }
+            this.resetView(afterUpdate);
+          }, 1000);
+        }
       }
     }
   }
