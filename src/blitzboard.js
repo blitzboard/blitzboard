@@ -865,6 +865,11 @@ module.exports = class Blitzboard {
       }
     };
 
+    if(this.config.layout === "hierarchical-scc" && this.config.sccMode === 'longest-only' &&
+      !this.edgeMapInLongestPath?.[pgEdge.from]?.[pgEdge.to]) {
+      attrs.hidden = true;
+    }
+
     let otherProps = this.retrieveConfigPropAll(pgEdge,
       'edge', ['color', 'opacity', 'width', 'title']);
 
@@ -1207,6 +1212,28 @@ module.exports = class Blitzboard {
     for(let edge of tmpEdges) {
       edge.from = this.sccMap[edge.from] || edge.from;
       edge.to = this.sccMap[edge.to] || edge.to;
+    }
+
+    if(this.config.sccMode === 'longest-only') {
+      let edgeCosts = {};
+      let inLongestPath = {};
+
+      for(let edge of tmpEdges) {
+        inLongestPath[edge.from] = inLongestPath[edge.from] || {};
+        edgeCosts[edge.from] = edgeCosts[edge.from] || {};
+        if(edge.from !== edge.to)
+          edgeCosts[edge.from][edge.to] = -1;
+      }
+      for(let node of tmpNodes) {
+        let predList = getLongest(node, tmpNodes, edgeCosts);
+        for(let [to, from] of Object.entries(predList)) {
+          if(from && to) {
+            inLongestPath[from][to] = true;
+          }
+        }
+      }
+      tmpEdges = tmpEdges.filter(e => inLongestPath[e.from][e.to]);
+      this.edgeMapInLongestPath = inLongestPath;
     }
 
     let tmpNodeDataSet = new visData.DataSet();
@@ -1980,6 +2007,7 @@ module.exports = class Blitzboard {
           this.expandSCC();
           break;
         case 'cluster':
+        case 'longest-only':
           this.clusterSCC();
           break;
         case 'only-scc':

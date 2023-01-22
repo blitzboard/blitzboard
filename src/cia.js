@@ -22,3 +22,40 @@ function computeCrossImpactFactor() {
   editor.setValue(json2pg.translate(JSON.stringify(newPG)));
   byProgram = false;
 }
+
+
+function getLongest(from, vertices, edgeCosts) {
+  let dist = {};
+  let pred = {};
+  for(let vertex of vertices) {
+    dist[vertex.id] = Number.POSITIVE_INFINITY;
+    pred[vertex.id] = null;
+  }
+  dist[from.id] = 0;
+  let n = vertices.length;
+  let failOnUpdate = false;
+  let leaveEarly = true;
+  for(let i = 1; i <= n; i++) {
+    failOnUpdate = (i === n);
+    leaveEarly = true;
+    for(let vertex of vertices) {
+      if(!edgeCosts[vertex.id])
+        continue;
+      for(let [toId, cost] of Object.entries(edgeCosts[vertex.id])) {
+        let newLen = dist[vertex.id] + cost;
+        if(newLen < dist[toId]) {
+          if(failOnUpdate) {
+            throw new Error('Graph has negative cycle');
+          }
+          dist[toId] = newLen;
+          pred[toId] = vertex.id;
+          leaveEarly = false;
+        }
+      }
+    }
+    if(leaveEarly) {
+      break;
+    }
+  }
+  return pred;
+}
