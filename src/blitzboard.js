@@ -1183,8 +1183,11 @@ module.exports = class Blitzboard {
 
   computeHierarchicalSCCPositions() {
     this.hierarchicalPositionMap = {};
-    let sccList = stronglyConnectedComponents(this.graph.edges);
+    let tmpEdges = JSON.parse(JSON.stringify(this.graph.edges.filter(e => !this.isFilteredOutEdge(e))));
+    let sccList = stronglyConnectedComponents(tmpEdges);
     let tmpNodes = this.graph.nodes.filter(n => {
+      if(this.isFilteredOutNode(n))
+        return false;
       for(let scc of sccList) {
         if(scc.has(n.id))
           return false;
@@ -1207,8 +1210,6 @@ module.exports = class Blitzboard {
       tmpNodes.push({ id: sccId, labels: [], properties: [], location: { start: { line: 0, column: 0}, end: { line: 0, column: 0} } });
     }
 
-    let tmpEdges = JSON.parse(JSON.stringify(this.graph.edges));
-
     for(let edge of tmpEdges) {
       edge.from = this.sccMap[edge.from] || edge.from;
       edge.to = this.sccMap[edge.to] || edge.to;
@@ -1229,6 +1230,16 @@ module.exports = class Blitzboard {
         for(let [to, from] of Object.entries(predList)) {
           if(from && to) {
             inLongestPath[from][to] = true;
+            let srcNodesInScc = sccReverseMap[from] || [];
+            for(let nodeId of srcNodesInScc) {
+              inLongestPath[nodeId] = inLongestPath[nodeId] || {};
+              inLongestPath[nodeId][to] = true;
+            }
+
+            let dstNodesInScc = sccReverseMap[to] || [];
+            for(let nodeId of dstNodesInScc) {
+              inLongestPath[from][nodeId] = true;
+            }
           }
         }
       }
@@ -1284,8 +1295,6 @@ module.exports = class Blitzboard {
     let blitzboard = this;
     this.warnings = [];
 
-    this.graph.nodes = this.graph.nodes.filter(n => !this.isFilteredOutNode(n));
-    this.graph.edges = this.graph.edges.filter(e => !this.isFilteredOutEdge(e));
 
     if(this.baseConfig.configChoices?.configs) {
       let chosenConfig;
