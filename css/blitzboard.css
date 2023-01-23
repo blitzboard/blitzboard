@@ -73,3 +73,9 @@
     position: absolute;
     right: 10px;
 }
+
+#blitzboard-config-choice-dropdown{
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
