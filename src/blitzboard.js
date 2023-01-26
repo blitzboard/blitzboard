@@ -1147,7 +1147,7 @@ module.exports = class Blitzboard {
   
   /// Return a set of upstream nodes from node specified by srcNodeId
   getUpstreamNodes(srcNodeId) {
-    const edges = this.graph.edges;
+    const edges = Object.values(this.edgeMap);
     const upstreamNodes = new Set();
     const stack = [srcNodeId];
     while(stack.length > 0) {
@@ -1165,7 +1165,7 @@ module.exports = class Blitzboard {
 
   /// Return a set of downstream nodes from node specified by srcNodeId
   getDownstreamNodes(srcNodeId) {
-    const edges = this.graph.edges;
+    const edges = Object.values(this.edgeMap);
     const downStreamNodes = new Set();
     const stack = [srcNodeId];
     while(stack.length > 0) {
@@ -1316,7 +1316,7 @@ module.exports = class Blitzboard {
         nodeSpacing: 100,
         treeSpacing: 200,
         blockShifting: true,
-        edgeMinimization: true,
+        edgeMinimization: false,
         parentCentralization: true,
         direction: 'LR',
         sortMethod: 'directed',
