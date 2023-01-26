@@ -1516,8 +1516,10 @@ module.exports = class Blitzboard {
 
     this.nodeDataSet = new visData.DataSet();
     this.nodeDataSet.add(this.graph.nodes.map((node) => {
+      if(this.isFilteredOutNode(node))
+        return null;
       return this.toVisNode(node, defaultNodeProps);
-    }));
+    }).filter(n => n));
     
     this.edgeMap = {};
     this.edgeDataSet = new visData.DataSet(this.graph.edges.map((edge) => {
