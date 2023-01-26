@@ -588,7 +588,7 @@ $(() => {
       metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
     metaGraphModal.show();
     metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)), false);
-    configOnModal = JSON.parse(JSON.stringify(config)); // deepcopy
+    configOnModal = parseConfig(configEditor.getValue());
     $('#all-graphs-checkbox').prop('checked', false);
     $('#hierarchical-checkbox').prop('checked', false);
     if(config.layout === 'hierarchical-scc') {
@@ -1820,7 +1820,7 @@ $(() => {
 
     $('#hierarchical-checkbox').click((e) => {
       if($(e.target).prop('checked')) {
-        let tmpConfig = JSON.parse(JSON.stringify(configOnModal)); // deepcopy
+        let tmpConfig = parseConfig(configEditor.getValue()); // deepcopy
         tmpConfig.layout = 'hierarchical-scc';
         addHighlightOptionOnModal(tmpConfig);
         metaBlitzboard.setConfig(tmpConfig);
