@@ -1991,7 +1991,7 @@ $(() => {
 
     if(clientIsMac) {
       q('#search-shortcut-text').innerText = 'Cmd-F';
-      q('#replace-shortcut-text').innerText = 'Option-Cmd-S';
+      q('#replace-shortcut-text').innerText = 'Option-Cmd-F';
       q('#sort-shortcut-text').innerText = 'Cmd-S';
     }
     
