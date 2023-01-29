@@ -2058,6 +2058,8 @@ module.exports = class Blitzboard {
         animationOption.animation = false;
       }
       this.network.moveTo({ ...{position: position}, ...animationOption });
+      if(this.staticLayoutMode)
+        this.network.renderer.dragging = false;
     }, 200); // Set delay to avoid calling moveTo() too much (seem to cause some bug on animation)
   }
 
