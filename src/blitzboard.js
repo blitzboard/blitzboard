@@ -989,10 +989,10 @@ module.exports = class Blitzboard {
       acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
     if (!elem.from) // for nodes
     {
-      let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
+      let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.join(', '), true)}</b></td></tr>`;
       flattend_props.splice(0, 0, idText);
-    } else if(elem.labels.length > 0) {
-      let idText = `<tr><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td><td></td></tr>`;
+    } else {
+      let idText = `<tr><td><b>${elem.from} - ${elem.to}</b></td><td><b>${wrapText(elem.labels.join(', '), true)} </b></td></tr>`;
       flattend_props.splice(0, 0, idText);
     }
     if (flattend_props.length === 0) {
