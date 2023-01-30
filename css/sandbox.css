@@ -355,4 +355,20 @@ span .syntax-warning-line {
   color: #000;
 }
 
+#node-filter-div {
+  z-index: 994;
+  background-color: transparent;
+  position: absolute;
+  top: 8.4rem;
+  right: 1rem;
+}
+
+#edge-filter-div {
+  z-index: 994;
+  background-color: transparent;
+  position: absolute;
+  top: 11.4rem;
+  right: 1rem;
+}
+
 /*# sourceMappingURL=sandbox.css.map */

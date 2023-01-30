@@ -252,6 +252,38 @@
                     fit_screen
                 </span>
             </div>
+
+            <div id="node-filter-div">
+                <label>
+                    ノードフィルタ：
+                </label>
+                <select id='node-filter-prop' class="node-filter-ui" style='height: 30px; width: 150px;' type='text'>
+                </select>
+                <select id='node-filter-operator' class="node-filter-ui" style='height: 30px; width: 40px; text-align-last:center;'>
+                    <option> < </option>
+                    <option> <= </option>
+                    <option> = </option>
+                    <option> >= </option>
+                    <option> > </option>
+                </select>
+                <input id='node-filter-value' class="node-filter-ui" style='height: 30px; width: 50px;' type='number'>
+            </div>
+
+            <div id="edge-filter-div">
+                <label>
+                    エッジフィルタ：
+                </label>
+                <select id='edge-filter-prop' class="edge-filter-ui" style='height: 30px; width: 150px;' type='text'>
+                </select>
+                <select id='edge-filter-operator' class="edge-filter-ui" style='height: 30px; width: 40px; text-align-last:center; '>
+                    <option> < </option>
+                    <option> <= </option>
+                    <option> = </option>
+                    <option> >= </option>
+                    <option> > </option>
+                </select>
+                <input id='edge-filter-value' class="edge-filter-ui" style='height: 30px; width: 50px;' type='number'>
+            </div>
         </div>
     </div>
     <div class='modal' id='sort-modal' tabindex='-1'>
