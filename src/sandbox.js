@@ -12,6 +12,9 @@ let unsavedChangeExists = false;
 let backendUrl = localStorage.getItem('backendUrl');
 let remoteMode = !!backendUrl;
 
+let edgeFilterProp = null;
+let nodeFilterProp = null;
+
 let clientIsMac = navigator.platform.startsWith('Mac');
 
 
@@ -87,6 +90,55 @@ $(() => {
     configTimerId = null;
   }
 
+  function updateConfigByUI(config) {
+    let filterFromUI = getFilterFromUI();
+    if(filterFromUI.node) {
+      // TODO: Should we override filter in configChoices?
+      config.node.filter = filterFromUI.node;
+    }
+    if(filterFromUI.edge) {
+      // TODO: Should we override filter in configChoices?
+      config.edge.filter = filterFromUI.edge;
+    }
+  }
+
+  function getFilterFromUI() {
+    let filter = {};
+    let nodeProp = q('#node-filter-prop').value;
+    let nodeValue = q('#node-filter-value').value;
+    if(nodeProp && nodeValue) {
+      filter.node = (e) => compareByOperator(e[nodeProp],  q('#node-filter-operator').value, nodeValue);
+    }
+    let edgeProp = q('#edge-filter-prop').value;
+    let edgeValue = q('#edge-filter-value').value;
+    if(edgeProp && edgeValue) {
+      filter.edge = (e) => compareByOperator(e[edgeProp],  q('#edge-filter-operator').value, edgeValue);
+    }
+    return filter;
+  }
+
+  function compareByOperator(lhs, operatorText, rhs) {
+    switch(operatorText) {
+      case '<':
+        return lhs < rhs;
+      case '<=':
+        return lhs <= rhs;
+      case '=':
+        return lhs == rhs;
+      case '>=':
+        return lhs >= rhs;
+      case '>':
+        return lhs > rhs;
+    }
+  }
+
+  function sortedNodeProperties() {
+    return Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => p[0]);
+  }
+
+  function sortedEdgeProperties() {
+    return Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => p[0]);
+  }
 
   function showSortModal() {
     if (/^\s*#/m.test(editor.getValue())) {
@@ -109,12 +161,12 @@ $(() => {
     let nodeOptions = [['', 'None'], [':id', 'id'], [':label', 'label']];
     let edgeOptions = [['', 'None'], [':from-to', 'from&to'], [':label', 'label']];
 
-    nodeOptions = nodeOptions.concat(Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+    nodeOptions = nodeOptions.concat(sortedNodeProperties().map(p => [p, p]));
     q('#sort-node-lines-select').innerHTML = nodeOptions.map((o) =>
       `<option value="${o[0]}" ${o[0] === oldNodeKey ? 'selected' : ''}>${o[1]}</option>`
     );
 
-    edgeOptions = edgeOptions.concat(Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => [p[0], p[0]]));
+    edgeOptions = edgeOptions.concat(sortedEdgeProperties().map(p => [p, p]));
     q('#sort-edge-lines-select').innerHTML = edgeOptions.map((o) =>
       `<option value="${o[0]}" ${o[0] === oldEdgeKey ? 'selected' : ''}>${o[1]}</option>`
     );
@@ -378,6 +430,15 @@ $(() => {
     }
   }
 
+  function updateFilterUI() {
+    q('#edge-filter-prop').innerHTML = sortedEdgeProperties().map((o) =>
+      `<option ${edgeFilterProp === o ? "selected" : ""}>${o}</option>`
+    );
+    q('#node-filter-prop').innerHTML = sortedNodeProperties().map((o) =>
+      `<option ${nodeFilterProp === o ? "selected" : ""}>${o}</option>`
+    );
+  }
+
   function updateGraph(input, newConfig = null) {
     try {
       toastr.clear();
@@ -481,6 +542,10 @@ $(() => {
     }
     if (blitzboard.graph) {
       updateAutoCompletion();
+      updateFilterUI();
+    }
+    if(config) {
+      propHints = config.editor?.autocomplete;
     }
   }
 
@@ -929,6 +994,19 @@ $(() => {
     confirmToSaveGraph(() => {
       loadGraphByName(graph);
     });
+  });
+
+
+  $(document).on('change', '.edge-filter-ui', (e) => {
+    updateConfigByUI(config);
+    edgeFilterProp = q('#edge-filter-prop').value;
+    triggerGraphUpdate(editor.getValue(), config);
+  });
+
+  $(document).on('change', '.node-filter-ui', (e) => {
+    updateConfigByUI(config);
+    nodeFilterProp = q('#node-filter-prop').value;
+    triggerGraphUpdate(editor.getValue(), config);
   });
 
   function saveCurrentGraph(callback = null) {
@@ -1506,15 +1584,36 @@ $(() => {
 
   CodeMirror.hint.pgMode = function (editor) {
     let word = /[^\s]+/;
-    let range = 200;
     let cur = editor.getCursor(), curLine = editor.getLine(cur.line);
     let end = cur.ch, start = end;
     while (start && word.test(curLine.charAt(start - 1))) --start;
     let curWord = start !== end && curLine.slice(start, end);
 
     let list = [];
-
-    
+    if(propHints && curWord.includes(":")) {
+      let idx = curWord.lastIndexOf(":");
+      let currentProp = curWord.substring(0, idx).trim();
+      if(currentProp.startsWith('"') && currentProp.endsWith('"') ||
+        currentProp.startsWith("'") && currentProp.endsWith("'")
+      )
+        currentProp = currentProp.substring(1, currentProp.length - 1);
+      for(let prop of Object.keys(propHints)) {
+        if(currentProp === prop) {
+          let hints = propHints[prop];
+          let typedValue = curWord.substring(idx + 1).trim();
+          for(let hint of hints) {
+            if(hint.label.startsWith(typedValue) || hint.value.startsWith(typedValue)) {
+              list.push({ displayText: hint.label, text: hint.value });
+            }
+          }
+          return {
+            list: list,
+            from: CodeMirror.Pos(cur.line, start + idx + 1),
+            to: CodeMirror.Pos(cur.line, end)
+          };
+        }
+      }
+    }
     for (let candidateList of [candidateIds, candidatePropNames, candidateLabels, additionalAutocompleteTargets]) {
       for (let candidate of candidateList) {
         if (candidate.includes(curWord) && !list.includes(candidate) && candidate !== curWord)
@@ -1523,7 +1622,6 @@ $(() => {
       }
       if(list.length >= 20) break;
     }
-
     return {list: list, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
   };
 
