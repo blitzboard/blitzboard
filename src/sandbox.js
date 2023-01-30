@@ -17,6 +17,21 @@ let nodeFilterProp = null;
 
 let clientIsMac = navigator.platform.startsWith('Mac');
 
+function insertContentsToEditor(contents) {
+  let oldCursor = editor.getCursor();
+  /// Insert line after the current line
+  let line = editor.getLine(oldCursor.line);
+  let pos = {
+    line: oldCursor.line,
+    ch: line.length // set the character position to the end of the line
+  }
+  editor.replaceRange('\n' + contents, pos);
+}
+
+function getCurrentCharacter() {
+  let cursor = editor.getCursor();
+  return editor.getLine(cursor.line).charAt(cursor.ch - 1);
+}
 
 $(() => {
   let defaultConfig = pageTemplates[0].config;
@@ -440,6 +455,9 @@ $(() => {
   }
 
   function updateGraph(input, newConfig = null) {
+    if(newConfig) {
+      propHints = newConfig.editor?.autocomplete;
+    }
     try {
       toastr.clear();
 
@@ -488,13 +506,7 @@ $(() => {
           if (warning.type === 'UndefinedNode' && blitzboard.addedEdges.has(warning.edge.id)) {
             if (addedNode.has(warning.node))
               continue;
-            let line = editor.getLine(oldCursor.line);
-            let pos = {
-              line: oldCursor.line,
-              ch: line.length // set the character position to the end of the line
-            }
-            editor.replaceRange('\n' + warning.node, pos); // adds a new line
-            // editor.setValue(editor.getValue() + "\n" + warning.node);
+            insertContentsToEditor(warning.node);
             if (infoMessage !== '')
               infoMessage += ', ';
             infoMessage += `Missing node '${warning.node}' is created`;
@@ -543,9 +555,6 @@ $(() => {
     if (blitzboard.graph) {
       updateAutoCompletion();
       updateFilterUI();
-    }
-    if(config) {
-      propHints = config.editor?.autocomplete;
     }
   }
 
@@ -1590,7 +1599,7 @@ $(() => {
     let curWord = start !== end && curLine.slice(start, end);
 
     let list = [];
-    if(propHints && curWord.includes(":")) {
+    if(propHints && typeof curWord === "string" && curWord.includes(":")) {
       let idx = curWord.lastIndexOf(":");
       let currentProp = curWord.substring(0, idx).trim();
       if(currentProp.startsWith('"') && currentProp.endsWith('"') ||
@@ -1730,6 +1739,8 @@ $(() => {
           blitzboard.scrollEdgeIntoView(edge)
         }
       }, blitzboard.staticLayoutMode ? 1000 : 100);
+      if(getCurrentCharacter() === ':')
+        editor.showHint();
     }
   });
 
@@ -1933,6 +1944,7 @@ $(() => {
     });
 
     $('#options-cross-impact').click(computeCrossImpactFactor);
+    $('#options-insert-edges').click(insertEdges);
     $('#options-search').click(() => editor.execCommand("findPersistent"));
     $('#options-replace').click(() => editor.execCommand("replace"));
     $('#options-sort').click(showSortModal);

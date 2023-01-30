@@ -4,7 +4,6 @@ function computeCrossImpactFactor() {
   newPG.nodes.forEach((n) => {
     nodePropMap[n.id] = Number(n.properties["初期確率"][0]);
   });
-  console.log({nodePropMap});
 
   newPG.edges.forEach((e) => {
     let pi = nodePropMap[e.from];
@@ -58,4 +57,48 @@ function getLongest(from, vertices, edgeCosts) {
     }
   }
   return pred;
+}
+
+
+function insertEdges() {
+  let targetNode = blitzboard.nodeLineMap[editor.getCursor().line + 1];
+  let pg = blitzboard.tryPgParse(editor.getValue());
+  let newPG = {
+    nodes: [],
+    edges: [],
+  }
+  let edgeMap = {};
+  pg.edges.forEach((e) => {
+    edgeMap[e.from] = edgeMap[e.from] || {};
+    edgeMap[e.from] = e.to
+  });
+
+  pg.nodes.forEach((n) => {
+    if(n.id !== targetNode.id) {
+      if(!edgeMap[n.id]?.[targetNode.id])
+        newPG.edges.push({
+          from: n.id,
+          to: targetNode.id,
+          undirected: false,
+          labels: [],
+          properties: {
+            確率: ['']
+          }
+        });
+      if(!edgeMap[targetNode.id]?.[n.id])
+        newPG.edges.push({
+          from: targetNode.id,
+          to: n.id,
+          undirected: false,
+          labels: [],
+          properties: {
+            確率: ['']
+          }
+        });
+    }
+  });
+
+  byProgram = true;
+  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG)))
+  byProgram = false;
 }
