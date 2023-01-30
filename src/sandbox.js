@@ -19,6 +19,10 @@ let clientIsMac = navigator.platform.startsWith('Mac');
 let nodeLineMap = {};
 let edgeLineMap = {};
 
+function getCurrentCharacter() {
+  let cursor = editor.getCursor();
+  return editor.getLine(cursor.line).charAt(cursor.ch - 1);
+}
 
 $(() => {
   let defaultConfig = pageTemplates[0].config;
@@ -443,6 +447,9 @@ $(() => {
   }
 
   function updateGraph(input, newConfig = null) {
+    if(newConfig) {
+      propHints = newConfig.editor?.autocomplete;
+    }
     try {
       toastr.clear();
 
@@ -479,13 +486,7 @@ $(() => {
           if (warning.type === 'UndefinedNode' && blitzboard.addedEdges.has(warning.edge.id)) {
             if (addedNode.has(warning.node))
               continue;
-            let line = editor.getLine(oldCursor.line);
-            let pos = {
-              line: oldCursor.line,
-              ch: line.length // set the character position to the end of the line
-            }
-            editor.replaceRange('\n' + warning.node, pos); // adds a new line
-            // editor.setValue(editor.getValue() + "\n" + warning.node);
+            insertContentsToEditor(warning.node);
             if (infoMessage !== '')
               infoMessage += ', ';
             infoMessage += `Missing node '${warning.node}' is created`;
@@ -552,9 +553,6 @@ $(() => {
 
       updateAutoCompletion();
       updateFilterUI();
-    }
-    if(config) {
-      propHints = config.editor?.autocomplete;
     }
   }
 
@@ -1603,7 +1601,7 @@ $(() => {
     let curWord = start !== end && curLine.slice(start, end);
 
     let list = [];
-    if(propHints && curWord.includes(":")) {
+    if(propHints && typeof curWord === "string" && curWord.includes(":")) {
       let idx = curWord.lastIndexOf(":");
       let currentProp = curWord.substring(0, idx).trim();
       if(currentProp.startsWith('"') && currentProp.endsWith('"') ||
@@ -1740,7 +1738,9 @@ $(() => {
         } else if (edge) {
           blitzboard.scrollEdgeIntoView(edge, true)
         }
-      }, blitzboard.staticLayoutMode ? 100 : 100);
+      }, 100);
+      if(getCurrentCharacter() === ':')
+        editor.showHint();
     }
   });
 
@@ -1937,6 +1937,8 @@ $(() => {
       editor.focus();
     });
 
+    // $('#options-cross-impact').click(computeCrossImpactFactor);
+    $('#options-insert-edges').click(insertEdges);
     $('#options-search').click(() => editor.execCommand("findPersistent"));
     $('#options-replace').click(() => editor.execCommand("replace"));
     $('#options-sort').click(showSortModal);
@@ -2099,3 +2101,62 @@ $(() => {
     }
   }, 0);
 });
+
+function insertContentsToEditor(contents) {
+  let oldCursor = editor.getCursor();
+  /// Insert line after the current line
+  let line = editor.getLine(oldCursor.line);
+  let pos = {
+    line: oldCursor.line,
+    ch: line.length // set the character position to the end of the line
+  }
+  editor.replaceRange('\n' + contents, pos);
+}
+
+function getCurrentCharacter() {
+  let cursor = editor.getCursor();
+  return editor.getLine(cursor.line).charAt(cursor.ch - 1);
+}
+function insertEdges() {
+  let targetNode = blitzboard.nodeLineMap[editor.getCursor().line + 1];
+  let pg = blitzboard.tryPgParse(editor.getValue());
+  let newPG = {
+    nodes: [],
+    edges: [],
+  }
+  let edgeMap = {};
+  pg.edges.forEach((e) => {
+    edgeMap[e.from] = edgeMap[e.from] || {};
+    edgeMap[e.from] = e.to
+  });
+
+  pg.nodes.forEach((n) => {
+    if(n.id !== targetNode.id) {
+      if(!edgeMap[n.id]?.[targetNode.id])
+        newPG.edges.push({
+          from: n.id,
+          to: targetNode.id,
+          undirected: false,
+          labels: [],
+          properties: {
+            確率: ['']
+          }
+        });
+      if(!edgeMap[targetNode.id]?.[n.id])
+        newPG.edges.push({
+          from: targetNode.id,
+          to: n.id,
+          undirected: false,
+          labels: [],
+          properties: {
+            確率: ['']
+          }
+        });
+    }
+  });
+
+  byProgram = true;
+  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG)))
+  byProgram = false;
+}
+
