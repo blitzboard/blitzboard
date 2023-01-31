@@ -1611,14 +1611,25 @@ $(() => {
           let hints = propHints[prop];
           let typedValue = curWord.substring(idx + 1).trim();
           for(let hint of hints) {
-            if(hint.label.startsWith(typedValue) || hint.value.startsWith(typedValue)) {
+            if(hint.label.startsWith(typedValue) && hint.label !== typedValue ||
+              hint.value.startsWith(typedValue) && hint.value !== typedValue ) {
               list.push({ displayText: hint.label, text: hint.value });
             }
           }
+          let from = CodeMirror.Pos(cur.line, start + idx + 1);
+          let to = CodeMirror.Pos(cur.line, end);
+          if(list.length === 1) {
+            setTimeout(() => {
+              byProgram = true;
+              editor.replaceRange(list[0].text, from, to);
+              byProgram = false;
+              editor.closeHint();
+            }, 0);
+            return {list: [], from, to};
+          }
           return {
             list: list,
-            from: CodeMirror.Pos(cur.line, start + idx + 1),
-            to: CodeMirror.Pos(cur.line, end)
+            from, to
           };
         }
       }
