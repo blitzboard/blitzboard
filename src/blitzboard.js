@@ -1343,6 +1343,7 @@ module.exports = class Blitzboard {
       let newEdgeMap = {};
 
       this.maxLine = 0;
+      let newVisNodes = [];
       this.graph.nodes.forEach(node => {
         if(this.isFilteredOutNode(node)) return;
         let existingNode = this.nodeMap[node.id];
@@ -1350,11 +1351,11 @@ module.exports = class Blitzboard {
           if(!nodeEquals(node, existingNode)) {
             this.nodeDataSet.remove(existingNode);
             let visNode = this.toVisNode(node, this.config.node.caption);
-            this.nodeDataSet.update(visNode);
+            newVisNodes.push(visNode);
           }
         } else {
           let visNode = this.toVisNode(node, this.config.node.caption);
-          this.nodeDataSet.add(visNode);
+          newVisNodes.push(visNode);
           this.addedNodes.add(node.id);
         }
         this.nodeMap[node.id] = node;
@@ -1368,6 +1369,10 @@ module.exports = class Blitzboard {
         }
       });
 
+      this.nodeDataSet.update(newVisNodes);
+
+      let newVisEdges = [];
+
       this.graph.edges.forEach(edge => {
         if(this.isFilteredOutEdge(edge)) return;
         let id = this.toNodePairString(edge);
@@ -1379,7 +1384,7 @@ module.exports = class Blitzboard {
         edge.id = id;
         newEdgeMap[id] = edge;
         let visEdge = this.toVisEdge(edge, this.config.edge.caption, id);
-        this.edgeDataSet.update(visEdge);
+        newVisEdges.push(visEdge);
         if(edge.location) {
           for (let i = edge.location.start.line; i <= edge.location.end.line; i++) {
             if (i < edge.location.end.line || edge.location.end.column > 1)
@@ -1388,6 +1393,7 @@ module.exports = class Blitzboard {
           this.maxLine = Math.max(this.maxLine, edge.location.end.line);
         }
       });
+      this.edgeDataSet.update(newVisEdges);
 
       this.deletedNodes.forEach((nodeId) => {
         delete this.nodeMap[nodeId];
