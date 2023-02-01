@@ -446,12 +446,19 @@ $(() => {
   }
 
   function updateFilterUI() {
-    q('#edge-filter-prop').innerHTML = sortedEdgeProperties().map((o) =>
-      `<option ${edgeFilterProp === o ? "selected" : ""}>${o}</option>`
-    );
-    q('#node-filter-prop').innerHTML = sortedNodeProperties().map((o) =>
-      `<option ${nodeFilterProp === o ? "selected" : ""}>${o}</option>`
-    );
+    if(config.editor?.showFilterUI) {
+      q('#node-filter-div').style.display = 'block';
+      q('#edge-filter-div').style.display = 'block';
+      q('#edge-filter-prop').innerHTML = sortedEdgeProperties().map((o) =>
+        `<option ${edgeFilterProp === o ? "selected" : ""}>${o}</option>`
+      );
+      q('#node-filter-prop').innerHTML = sortedNodeProperties().map((o) =>
+        `<option ${nodeFilterProp === o ? "selected" : ""}>${o}</option>`
+      );
+    } else {
+      q('#edge-filter-div').style.display = 'none';
+      q('#node-filter-div').style.display = 'none';
+    }
   }
 
   function updateGraph(input, newConfig = null) {
