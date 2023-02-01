@@ -99,6 +99,6 @@ function insertEdges() {
   });
 
   byProgram = true;
-  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG)))
+  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG), true));
   byProgram = false;
 }
