@@ -120,31 +120,30 @@ $(() => {
   function getFilterFromUI() {
     let filter = {};
     let nodeProp = q('#node-filter-prop').value;
-    let nodeValue = q('#node-filter-value').value;
-    if(nodeProp && nodeValue) {
-      filter.node = (e) => compareByOperator(e[nodeProp],  q('#node-filter-operator').value, nodeValue);
+    let nodeMin = parseFloat(q('#node-filter-min').value);
+    let nodeMax = parseFloat(q('#node-filter-max').value);
+    if(nodeProp) {
+      if(!isNaN(nodeMin))
+        if(!isNaN(nodeMax))
+          filter.node = n => nodeMin <= n[nodeProp]  && n[nodeProp] <= nodeMax;
+        else
+          filter.node = n => nodeMin <= n[nodeProp];
+      else if(!isNaN(nodeMax))
+        filter.node = n => n[nodeProp] <= nodeMax;
     }
     let edgeProp = q('#edge-filter-prop').value;
-    let edgeValue = q('#edge-filter-value').value;
-    if(edgeProp && edgeValue) {
-      filter.edge = (e) => compareByOperator(e[edgeProp],  q('#edge-filter-operator').value, edgeValue);
+    let edgeMin = parseFloat(q('#edge-filter-min').value);
+    let edgeMax = parseFloat(q('#edge-filter-max').value);
+    if(edgeProp) {
+      if(!isNaN(edgeMin))
+        if(!isNaN(edgeMax))
+          filter.edge = e => edgeMin <= e[edgeProp]  && e[edgeProp] <= edgeMax;
+        else
+          filter.edge = e => edgeMin <= e[edgeProp];
+      else if(!isNaN(edgeMax))
+        filter.edge = e => e[edgeProp] <= edgeMax;
     }
     return filter;
-  }
-
-  function compareByOperator(lhs, operatorText, rhs) {
-    switch(operatorText) {
-      case '<':
-        return lhs < rhs;
-      case '<=':
-        return lhs <= rhs;
-      case '=':
-        return lhs == rhs;
-      case '>=':
-        return lhs >= rhs;
-      case '>':
-        return lhs > rhs;
-    }
   }
 
   function sortedNodeProperties() {
