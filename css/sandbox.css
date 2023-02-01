@@ -306,10 +306,19 @@ span .syntax-warning-line {
   z-index: 999 !important;
 }
 
-.CodeMirror {
-  font-family: 'Courier', monospace;
-  font-size: 16px;
+@font-face {
+  font-family: 'Noto Sans Mono CJK JP';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./NotoSansMonoCJKjp-VF.ttf) format('truetype');
 }
+
+
+.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
+  font-family: 'Noto Sans Mono CJK JP', monospace;
+}
+
 
 .CodeMirror-scroll {
   padding: 0;
@@ -374,7 +383,7 @@ span .syntax-warning-line {
   z-index: 994;
   background-color: transparent;
   position: absolute;
-  top: 8.4rem;
+  top: 10.4rem;
   right: 1rem;
 }
 
@@ -382,6 +391,6 @@ span .syntax-warning-line {
   z-index: 994;
   background-color: transparent;
   position: absolute;
-  top: 11.4rem;
+  top: 13.4rem;
   right: 1rem;
 }
