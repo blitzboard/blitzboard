@@ -73,22 +73,28 @@ function insertEdges() {
     edgeMap[e.from] = e.to
   });
 
+
+  // Create edges from targetNode
   pg.nodes.forEach((n) => {
-    if(n.id !== targetNode.id) {
+    if(n.id !== targetNode.id && !edgeMap[targetNode.id]?.[n.id])
+      newPG.edges.push({
+        from: targetNode.id,
+        to: n.id,
+        undirected: false,
+        labels: [],
+        properties: {
+          確率: ['']
+        }
+      });
+  });
+
+  // Create edges to targetNode
+  pg.nodes.forEach((n) => {
+    if(n.id !== targetNode.id && !edgeMap[n.id]?.[targetNode.id]) {
       if(!edgeMap[n.id]?.[targetNode.id])
         newPG.edges.push({
           from: n.id,
           to: targetNode.id,
-          undirected: false,
-          labels: [],
-          properties: {
-            確率: ['']
-          }
-        });
-      if(!edgeMap[targetNode.id]?.[n.id])
-        newPG.edges.push({
-          from: targetNode.id,
-          to: n.id,
           undirected: false,
           labels: [],
           properties: {

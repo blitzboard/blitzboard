@@ -48,7 +48,11 @@ exports.translate = (json, alignEdgeColumn = false) => {
   }
 
   for(let edge of pgObject.edges) {
-    let edgeContents = [edge.from.quoteIfNeeded().padEnd(maxFromLength), edge.undirected ? '--' : '->', edge.to.quoteIfNeeded().padEnd(maxToLength)];
+    let from = edge.from.quoteIfNeeded();
+    from = from.padEnd(maxFromLength * 2 - from.length);
+    let to = edge.to.quoteIfNeeded();
+    to = to.padEnd(maxToLength * 2 - to.length);
+    let edgeContents = [from, edge.undirected ? '--' : '->', to];
     let labelPart = '';
     for(let label of edge.labels) {
       labelPart += ':' + label.quoteIfNeeded();
