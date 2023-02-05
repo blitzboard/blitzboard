@@ -1629,15 +1629,15 @@ module.exports = class Blitzboard {
   updateThumbnailLayer() {
     // TODO: Create individual layers for each node may lead to performance problem
     this.thumbnailLayers = this.nodeData.map((n) => {
-      if(n.imageURL && blitzboard.visibleBounds && blitzboard.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage) {
+      if(n.imageURL && this.visibleBounds && this.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage) {
         let bounds =  [ n.x + n._size / Blitzboard.defaultNodeSize, n.y + n._size / Blitzboard.defaultNodeSize,
           n.x - n._size / Blitzboard.defaultNodeSize,
           n.y - n._size / Blitzboard.defaultNodeSize];
         let visible = 
-          blitzboard.visibleBounds.left <= n.x &&
-          blitzboard.visibleBounds.top <= n.y &&
-          n.x <= blitzboard.visibleBounds.right &&
-          n.y <= blitzboard.visibleBounds.bottom;
+          this.visibleBounds.left <= n.x &&
+          this.visibleBounds.top <= n.y &&
+          n.x <= this.visibleBounds.right &&
+          n.y <= this.visibleBounds.bottom;
         if(visible) {
           return new DeckGLLayers.BitmapLayer({
             id: 'bitmap-layer-' + n.id,
@@ -1922,7 +1922,7 @@ module.exports = class Blitzboard {
           this.nodeLayout[node.id] = {x: lng, y: lat, z: 0};
         }
       });
-      this.resetView(afterUpdate);
+      blitzboard.resetView(afterUpdate);
     } else if(this.staticLayoutMode) {
       if(!this.nodeLayout || typeof this.nodeLayout !== 'object' || Object.keys(this.nodeLayout).length === 0) {
         if(this.config.layout === 'custom') {
@@ -2007,7 +2007,7 @@ module.exports = class Blitzboard {
       if(this.isFilteredOutNode(node)) return;
       let visNode = this.toVisNode(node, defaultNodeProps);
       this.nodeDataSet[node.id] = visNode;
-      let tmpPosition = blitzboard.nodeLayout[node.id];
+      let tmpPosition = this.nodeLayout[node.id];
       this.minY = Math.min(this.minY, tmpPosition.y);
       this.maxY = Math.max(this.maxY, tmpPosition.y);
       this.minX = Math.min(this.minX, tmpPosition.x);
