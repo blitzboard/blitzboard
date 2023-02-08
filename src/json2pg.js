@@ -56,6 +56,7 @@ function createNodeContents(pgObject, alignColumns) {
           }
         }
       }
+      propPart = propPart.trimEnd();
       nodeContents.push(propPart);
     } else {
       for(let property in node.properties) {
@@ -103,6 +104,7 @@ function createEdgeContents(pgObject, alignColumns) {
           }
         }
       }
+      propPart = propPart.trimEnd();
       edgeContents.push(propPart);
     } else {
       for(let property in edge.properties) {
