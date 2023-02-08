@@ -18,7 +18,7 @@ function computeCrossImpactFactor() {
   });
 
   byProgram = true;
-  editor.setValue(json2pg.translate(JSON.stringify(newPG)));
+  editor.setValue(json2pg.translate(JSON.stringify(newPG), true));
   byProgram = false;
 }
 
