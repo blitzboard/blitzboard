@@ -105,7 +105,8 @@ $(() => {
     configTimerId = null;
   }
 
-  function updateConfigByUI(config) {
+  function updateConfigByUI() {
+    config = parseConfig(configEditor.getValue());
     let filterFromUI = getFilterFromUI();
     if(filterFromUI.node) {
       // TODO: Should we override filter in configChoices?
@@ -1013,13 +1014,13 @@ $(() => {
 
 
   $(document).on('change', '.edge-filter-ui', (e) => {
-    updateConfigByUI(config);
+    updateConfigByUI();
     edgeFilterProp = q('#edge-filter-prop').value;
     triggerGraphUpdate(editor.getValue(), config);
   });
 
   $(document).on('change', '.node-filter-ui', (e) => {
-    updateConfigByUI(config);
+    updateConfigByUI();
     nodeFilterProp = q('#node-filter-prop').value;
     triggerGraphUpdate(editor.getValue(), config);
   });

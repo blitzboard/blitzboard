@@ -311,14 +311,12 @@ span .syntax-warning-line {
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url(./NotoSansMonoCJKjp-VF.ttf) format('truetype');
+  src: url(./NotoSansMonoCJKjp-VF.ttf) format("truetype");
 }
-
 
 .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
   font-family: 'Noto Sans Mono CJK JP', monospace;
 }
-
 
 .CodeMirror-scroll {
   padding: 0;
@@ -393,4 +391,10 @@ span .syntax-warning-line {
   position: absolute;
   top: 13.4rem;
   right: 1rem;
+}
+
+.filter-div input, .filter-div select {
+  border: none;
+  padding: 5px 5px;
+  border-radius: 5px;
 }
