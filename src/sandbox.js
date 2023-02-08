@@ -1975,6 +1975,7 @@ $(() => {
       let nodeKey = q('#sort-node-lines-select').value;
       let edgeKey = q('#sort-edge-lines-select').value;
       let order = parseInt(document.querySelector('input[name="sort-order"]:checked').value);
+      let alignColumn = q(`#sort-aligh-column-checkbox`).checked;
 
       /// Order should be -1 (descending) or 1 (ascending)
       function generateComparator(mapFunction) {
@@ -2028,12 +2029,16 @@ $(() => {
         let end = edge.location.end.line === edge.location.start.line ? edge.location.end.line : edge.location.end.line - 1;
         newPG += oldPGlines.slice(edge.location.start.line - 1, end).map((l) => l + "\n");
       }
+      if(alignColumn) {
+        newPG = json2pg.translate(JSON.stringify(pgParser.parse(newPG)), true);
+      }
       byProgram = true;
       editor.setValue(newPG);
       byProgram = false;
       toastr.success(`Sorted!`, '', {preventDuplicates: true, timeOut: 3000});
 
       localStorage.setItem('sortOrder', order.toString());
+      localStorage.setItem('alignColumn', alignColumn);
       localStorage.setItem('nodeSortKey', nodeKey);
       localStorage.setItem('edgeSortKey', edgeKey);
 
@@ -2121,6 +2126,11 @@ $(() => {
     let oldOrder = localStorage.getItem('sortOrder');
     if (oldOrder) {
       q(`input[name="sort-order"][value="${oldOrder}"]`).checked = true;
+    }
+
+    let oldAlignColumn = localStorage.getItem('alignColumn') === 'true';
+    if (oldAlignColumn) {
+      q(`#sort-aligh-column-checkbox`).checked = true;
     }
   }, 0);
 });
