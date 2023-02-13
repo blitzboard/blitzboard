@@ -294,9 +294,15 @@ span .syntax-warning-line {
   z-index: 999 !important;
 }
 
-.CodeMirror {
-  font-family: "Courier", monospace;
-  font-size: 16px;
+@font-face {
+  font-family: "Noto Sans Mono CJK JP";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./NotoSansMonoCJKjp-VF.ttf) format("truetype");
+}
+.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
+  font-family: "Noto Sans Mono CJK JP", monospace;
 }
 
 .CodeMirror-scroll {
@@ -355,20 +361,39 @@ span .syntax-warning-line {
   color: #000;
 }
 
-#node-filter-div {
+#filter-div {
   z-index: 994;
   background-color: transparent;
   position: absolute;
-  top: 8.4rem;
+  top: 10.4rem;
   right: 1rem;
+  width: 340px;
+}
+#filter-div .node-filter-row, #filter-div .edge-filter-row {
+  margin-top: 10px;
+}
+#filter-div input, #filter-div select {
+  border: none;
+  padding: 5px 5px;
+  border-radius: 5px;
+}
+#filter-div .filter-min, #filter-div .filter-max {
+  height: 30px;
+  width: 60px;
+}
+#filter-div .filter-prop {
+  height: 30px;
+  width: 150px;
 }
 
-#edge-filter-div {
-  z-index: 994;
-  background-color: transparent;
-  position: absolute;
-  top: 11.4rem;
-  right: 1rem;
+.filter-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.add-node-filter-btn {
+  margin-left: 30px;
 }
 
 /*# sourceMappingURL=sandbox.css.map */

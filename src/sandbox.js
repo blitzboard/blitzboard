@@ -11,8 +11,8 @@ let unsavedChangeExists = false;
 let backendUrl = localStorage.getItem('backendUrl');
 let remoteMode = !!backendUrl;
 
-let edgeFilterProp = null;
-let nodeFilterProp = null;
+let edgeFilterConditions = null;
+let nodeFilterConditions = null;
 
 let clientIsMac = navigator.platform.startsWith('Mac');
 
@@ -99,49 +99,58 @@ $(() => {
   function updateConfigByUI(config) {
     let filterFromUI = getFilterFromUI();
     if(filterFromUI.node) {
-      // TODO: Should we override filter in configChoices?
       config.node.filter = filterFromUI.node;
     }
     if(filterFromUI.edge) {
-      // TODO: Should we override filter in configChoices?
       config.edge.filter = filterFromUI.edge;
     }
   }
 
   function getFilterFromUI() {
     let filter = {};
-    let nodeProp = q('#node-filter-prop').value;
-    let nodeMin = parseFloat(q('#node-filter-min').value);
-    let nodeMax = parseFloat(q('#node-filter-max').value);
-    if(nodeProp) {
-      if(!isNaN(nodeMin))
-        if(!isNaN(nodeMax))
-          filter.node = n => nodeMin <= n[nodeProp]  && n[nodeProp] <= nodeMax;
-        else
-          filter.node = n => nodeMin <= n[nodeProp];
-      else if(!isNaN(nodeMax))
-        filter.node = n => n[nodeProp] <= nodeMax;
+    let nodeFilterRows = qa(".node-filter-row");
+    let nodeFilterList = retrieveFilterConditions(nodeFilterRows, 'node').filter(cond => cond.prop && (cond.min !== undefined || cond.max !== undefined));
+    if(nodeFilterList.length > 0) {
+      filter.node = n => {
+        for(let filter of nodeFilterList) {
+          if(filter.min !== undefined && n[filter.prop] < filter.min) {
+            return false;
+          }
+          if(filter.max !== undefined && filter.max < n[filter.prop]) {
+            return false;
+          }
+        }
+        return true;
+      }
     }
-    let edgeProp = q('#edge-filter-prop').value;
-    let edgeMin = parseFloat(q('#edge-filter-min').value);
-    let edgeMax = parseFloat(q('#edge-filter-max').value);
-    if(edgeProp) {
-      if(!isNaN(edgeMin))
-        if(!isNaN(edgeMax))
-          filter.edge = e => edgeMin <= e[edgeProp]  && e[edgeProp] <= edgeMax;
-        else
-          filter.edge = e => edgeMin <= e[edgeProp];
-      else if(!isNaN(edgeMax))
-        filter.edge = e => e[edgeProp] <= edgeMax;
+
+    let edgeFilterRows = qa(".edge-filter-row");
+    let edgeFilterList = retrieveFilterConditions(edgeFilterRows, 'edge').filter(cond => cond.prop && (cond.min !== undefined || cond.max !== undefined));
+    if(edgeFilterList.length > 0) {
+      filter.edge = e => {
+        for(let filter of edgeFilterList) {
+          if(filter.min !== undefined && e[filter.prop] < filter.min) {
+            return false;
+          }
+          if(filter.max !== undefined && filter.max < e[filter.prop]) {
+            return false;
+          }
+        }
+        return true;
+      }
     }
     return filter;
   }
 
   function sortedNodeProperties() {
+    if(!blitzboard?.graph)
+      return [];
     return Object.entries(blitzboard.graph.nodeProperties).sort((a, b) => b[1] - a[1]).map(p => p[0]);
   }
 
   function sortedEdgeProperties() {
+    if(!blitzboard?.graph)
+      return [];
     return Object.entries(blitzboard.graph.edgeProperties).sort((a, b) => b[1] - a[1]).map(p => p[0]);
   }
 
@@ -436,19 +445,45 @@ $(() => {
     }
   }
 
+  function htmlToElement(html) {
+    let template = document.createElement('template');
+    template.innerHTML = html.trim();
+    return template.content.firstChild;
+  }
+
+  function addFilterRow(parentDiv, target) {
+    parentDiv.appendChild(htmlToElement(`
+                        <div class="${target}-filter-row filter-row" style="display: block;">                        
+                            <label class='btn text-white bg-black remove-filter-btn filter-btn' data-bs-toggle='tooltip' data-placement='bottom' href='#'
+                                   title='Remove filter'>
+                                <span class="material-symbols-outlined">
+                                    Remove
+                                </span>
+                            </label>
+                            <select class="filter-prop ${target}-filter-prop ${target}-filter-ui" type='text'>
+                            </select>
+                            <input class="filter-min ${target}-filter-min ${target}-filter-ui" type='number' placeholder="min">
+                            〜
+                            <input class="filter-max ${target}-filter-max ${target}-filter-ui" type='number' placeholder="max">
+                        </div>
+    `));
+  }
+
   function updateFilterUI() {
     if(config.editor?.showFilterUI) {
-      q('#node-filter-div').style.display = 'block';
-      q('#edge-filter-div').style.display = 'block';
-      q('#edge-filter-prop').innerHTML = sortedEdgeProperties().map((o) =>
-        `<option ${edgeFilterProp === o ? "selected" : ""}>${o}</option>`
-      );
-      q('#node-filter-prop').innerHTML = sortedNodeProperties().map((o) =>
-        `<option ${nodeFilterProp === o ? "selected" : ""}>${o}</option>`
-      );
+      q('#filter-div').style.display = 'block';
+      let edgeProps = sortedEdgeProperties() || [];
+      qa('.edge-filter-prop').forEach((propUI, i) => {
+        propUI.innerHTML = edgeProps.map((o) =>
+          `<option ${edgeFilterConditions?.[i]?.prop === o ? "selected" : ""} value="${o}">${o}</option>`
+        )});
+      let nodeProps = sortedNodeProperties() || [];
+      qa('.node-filter-prop').forEach((propUI, i) => {
+        propUI.innerHTML = nodeProps.map((o) =>
+        `<option ${nodeFilterConditions?.[i]?.prop === o ? "selected" : ""} value="${o}">${o}</option>`
+        )});
     } else {
-      q('#edge-filter-div').style.display = 'none';
-      q('#node-filter-div').style.display = 'none';
+      q('#filter-div').style.display = 'none';
     }
   }
 
@@ -650,6 +685,24 @@ $(() => {
       }
     };
   }
+
+
+  $(document).on('click', '.add-node-filter-btn', (e) => {
+    addFilterRow(q("#node-filter-rows"), 'node');
+    updateFilterUI();
+  });
+
+  $(document).on('click', '.add-edge-filter-btn', (e) => {
+    addFilterRow(q("#edge-filter-rows"), 'edge');
+    updateFilterUI();
+  });
+
+  $(document).on('click', '.remove-filter-btn', (e) => {
+    e.target.closest(".filter-row").remove();
+    updateFilterByUI();
+  });
+
+
 
   $(document).on('click', '.show-all-path-link', (e) => {
     targetNodeIdOnModal = $(e.target).attr('data-node-id');
@@ -1021,14 +1074,58 @@ $(() => {
 
   $(document).on('change', '.edge-filter-ui', (e) => {
     updateConfigByUI(config);
-    edgeFilterProp = q('#edge-filter-prop').value;
+    edgeFilterConditions = retrieveFilterConditions(qa('.edge-filter-row'), 'edge');
+    localStorage.setItem('edgeFilterConditions', JSON.stringify(edgeFilterConditions));
     triggerGraphUpdate(editor.getValue(), config);
   });
 
-  $(document).on('change', '.node-filter-ui', (e) => {
+  function retrieveFilterConditions(filterRows, prefix = 'node') {
+    let filterConditions = [];
+    for(let filterRow of filterRows) {
+      let propName = filterRow.querySelector(`.${prefix}-filter-prop`).value;
+      let propMin = parseFloat(filterRow.querySelector(`.${prefix}-filter-min`).value);
+      let propMax = parseFloat(filterRow.querySelector(`.${prefix}-filter-max`).value);
+      if(!isNaN(propMin))
+        if(!isNaN(propMax))
+          filterConditions.push({
+            prop: propName,
+            min: propMin,
+            max: propMax
+          });
+        else
+          filterConditions.push({
+            prop: propName,
+            min: propMin,
+          });
+      else if(!isNaN(propMax))
+        filterConditions.push({
+          prop: propName,
+          max: propMax,
+        });
+      else {
+        filterConditions.push({
+          prop: propName
+        });
+      }
+    }
+    return filterConditions;
+  }
+
+  function updateFilterByUI() {
     updateConfigByUI(config);
-    nodeFilterProp = q('#node-filter-prop').value;
+    nodeFilterConditions = retrieveFilterConditions(qa('.node-filter-row'), 'node');
+    localStorage.setItem('nodeFilterConditions', JSON.stringify(nodeFilterConditions));
+    edgeFilterConditions = retrieveFilterConditions(qa('.edge-filter-row'), 'edge');
+    localStorage.setItem('edgeFilterConditions', JSON.stringify(edgeFilterConditions));
     triggerGraphUpdate(editor.getValue(), config);
+  }
+
+  $(document).on('change', '.node-filter-ui', (e) => {
+    updateFilterByUI();
+  });
+
+  $(document).on('change', '.edge-filter-ui', (e) => {
+    updateFilterByUI();
   });
 
   function saveCurrentGraph(callback = null) {
@@ -2040,7 +2137,6 @@ $(() => {
       blitzboard.update(false);
     });
 
-
     switch (viewMode) {
       case 'view-only':
         $('#edit-panel-btn').prop('checked', false);
@@ -2109,7 +2205,37 @@ $(() => {
         }
         showGraphName();
       }
+
+
+      function initializeByFilterConditions(filterConditions, type) {
+        if(filterConditions.length > 0) {
+          for(let condition of filterConditions) {
+            let rowsDiv = q(`#${type}-filter-rows`);
+            addFilterRow(rowsDiv, type);
+            let filterRow = rowsDiv.querySelector(`.${type}-filter-row:last-of-type`);
+            filterRow.querySelector(`.${type}-filter-prop`).innerHTML = `<option selected>${condition.prop}</option>`;
+            filterRow.querySelector(`.${type}-filter-min`).value = condition.min;
+            filterRow.querySelector(`.${type}-filter-max`).value = condition.max;
+          }
+          updateConfigByUI(config);
+          triggerGraphUpdate(editor.getValue(), config);
+        } else {
+          // Insert one row by default
+          addFilterRow(q(`#${type}-filter-rows`), type);
+        }
+      }
+
+      nodeFilterConditions = localStorage.getItem('nodeFilterConditions');
+      nodeFilterConditions = nodeFilterConditions ? JSON.parse(nodeFilterConditions) : [];
+      initializeByFilterConditions(nodeFilterConditions, 'node');
+
+      edgeFilterConditions = localStorage.getItem('edgeFilterConditions');
+      edgeFilterConditions = edgeFilterConditions ? JSON.parse(edgeFilterConditions) : [];
+      initializeByFilterConditions(edgeFilterConditions, 'edge');
     });
+
+
+
 
     if(clientIsMac) {
       q('#search-shortcut-text').innerText = 'Cmd-F';
@@ -2126,6 +2252,7 @@ $(() => {
     if (oldAlignColumn) {
       q(`#sort-aligh-column-checkbox`).checked = true;
     }
+
   }, 0);
 });
 

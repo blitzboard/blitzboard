@@ -58,8 +58,6 @@
     <script src='https://cdn.jsdelivr.net/npm/jszip@3.2.1/dist/jszip.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.4/FileSaver.min.js'></script>
     <script src='./dist/blitzboard.bundle.js'></script>
-    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
-
     <link href='https://fonts.googleapis.com/css?family=Arvo' rel='stylesheet' type='text/css'>
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -263,26 +261,34 @@
                 </span>
             </div>
 
-            <div id="node-filter-div" style="display: none;">
-                <label>
-                    ノードフィルタ：
-                </label>
-                <select id='node-filter-prop' class="node-filter-ui" style='height: 30px; width: 150px;' type='text'>
-                </select>
-                <input id='node-filter-min' class="node-filter-ui" style='height: 30px; width: 60px;' type='number' placeholder="min">
-                〜
-                <input id='node-filter-max' class="node-filter-ui" style='height: 30px; width: 60px;' type='number' placeholder="max">
-            </div>
+            <div id="filter-div" style="display: none;">
+                <div id="node-filter-div">
+                    <label>
+                        ノードフィルタ
+                    </label>
+                    <label class='btn text-white bg-black add-node-filter-btn filter-btn' data-bs-toggle='tooltip' data-placement='bottom' href='#'
+                           title='Add filter' style="margin-left: 30px; width: 30px; height: 30px; padding: 0">
+                        <span class="material-symbols-outlined">
+                            Add
+                        </span>
+                    </label>
+                    <div id="node-filter-rows" style="display: block;">
+                    </div>
+                </div>
 
-            <div id="edge-filter-div" style="display: none;">
-                <label>
-                    エッジフィルタ：
-                </label>
-                <select id='edge-filter-prop' class="edge-filter-ui" style='height: 30px; width: 150px;' type='text'>
-                </select>
-                <input id='edge-filter-min' class="edge-filter-ui" style='height: 30px; width: 60px;' type='number' placeholder="min">
-                〜
-                <input id='edge-filter-max' class="edge-filter-ui" style='height: 30px; width: 60px;' type='number' placeholder="max">
+                <div id="edge-filter-div" style="margin-top: 30px;">
+                    <label>
+                        エッジフィルタ
+                    </label>
+                    <label class='btn text-white bg-black add-edge-filter-btn' data-bs-toggle='tooltip' data-placement='bottom' href='#'
+                           title='Add filter' style="margin-left: 30px; width: 30px; height: 30px; padding: 0">
+                        <span class="material-symbols-outlined">
+                            Add
+                        </span>
+                    </label>
+                    <div id="edge-filter-rows" style="display: block;">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
