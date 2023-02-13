@@ -1703,13 +1703,14 @@ $(() => {
     let curWord = start !== end && curLine.slice(start, end);
 
     let list = [];
+
     if(propHints && typeof curWord === "string" && curWord.includes(":")) {
       let idx = curWord.lastIndexOf(":");
       let currentProp = curWord.substring(0, idx).trim();
       if(currentProp.startsWith('"') && currentProp.endsWith('"') ||
         currentProp.startsWith("'") && currentProp.endsWith("'")
       )
-        currentProp = currentProp.substring(1, currentProp.length - 1);
+      currentProp = currentProp.substring(1, currentProp.length - 1);
       for(let prop of Object.keys(propHints)) {
         if(currentProp === prop) {
           let hints = propHints[prop];
@@ -1721,7 +1722,9 @@ $(() => {
             }
           }
           let from = CodeMirror.Pos(cur.line, start + idx + 1);
-          let to = CodeMirror.Pos(cur.line, end);
+          // Move forward until reach to whitespace
+          while (end && word.test(curLine.charAt(end - 1))) ++end;
+          let to = CodeMirror.Pos(cur.line, end - 1);
           if(list.length === 1) {
             setTimeout(() => {
               byProgram = true;
