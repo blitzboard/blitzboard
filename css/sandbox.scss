@@ -394,28 +394,37 @@ span .syntax-warning-line {
 }
 
 
-#node-filter-div {
+#filter-div {
   z-index: 994;
   background-color: transparent;
   position: absolute;
   top: 10.4rem;
   right: 1rem;
-}
-
-
-#edge-filter-div {
-  z-index: 994;
-  background-color: transparent;
-  position: absolute;
-  top: 13.4rem;
-  right: 1rem;
-}
-
-
-.filter-div {
+  width: 340px;
+  .node-filter-row, .edge-filter-row {
+    margin-top: 10px;
+  }
   input, select {
     border: none;
     padding: 5px 5px;
     border-radius: 5px;
   }
+  .filter-min, .filter-max {
+    height: 30px;
+    width: 60px;
+  }
+  .filter-prop {
+    height: 30px;
+    width: 150px;
+  }
+}
+
+.filter-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.add-node-filter-btn {
+  margin-left: 30px;
 }
