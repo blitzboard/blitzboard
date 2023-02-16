@@ -12,6 +12,8 @@ let unsavedChangeExists = false;
 let backendUrl = localStorage.getItem('backendUrl');
 let remoteMode = !!backendUrl;
 
+let config = null;
+
 let edgeFilterConditions = null;
 let nodeFilterConditions = null;
 
@@ -28,9 +30,21 @@ function insertContentsToEditor(contents) {
   editor.replaceRange('\n' + contents, pos);
 }
 
-function getCurrentCharacter() {
-  let cursor = editor.getCursor();
-  return editor.getLine(cursor.line).charAt(cursor.ch - 1);
+function getCurrentProp() {
+  let word = /[^\s]+/;
+  let cur = editor.getCursor(), curLine = editor.getLine(cur.line);
+  let end = cur.ch, start = end;
+  while (start && word.test(curLine.charAt(start - 1))) --start;
+  while (end && word.test(curLine.charAt(end))) ++end;
+  let curWord = curLine.slice(start, end);
+  if(curWord.includes(':')) {
+    let [name, value] = curWord.split(':', 2);
+    return {
+      name,
+      value
+    }
+  }
+  return null;
 }
 
 $(() => {
@@ -42,11 +56,11 @@ $(() => {
   let pgTimerId = null, configTimerId = null;
   let localMode = true;
   blitzboard = new Blitzboard(container);
+  config = defaultConfig;
   let byProgram = false;
   let currentGraphName;
   let noGraphLoaded = false;
   let prevInputWidth = null;
-  let config = defaultConfig;
   let autocompletion = true;
   let showConfig = false;
   let srcNode, lineEnd;
@@ -123,10 +137,13 @@ $(() => {
     if(nodeFilterList.length > 0) {
       filter.node = n => {
         for(let filter of nodeFilterList) {
-          if(filter.min !== undefined && n[filter.prop] < filter.min) {
+          let val = Number.parseFloat(n[filter.prop]);
+          if(isNaN(val))
+            return false;
+          if(filter.min !== undefined && val < filter.min) {
             return false;
           }
-          if(filter.max !== undefined && filter.max < n[filter.prop]) {
+          if(filter.max !== undefined && filter.max < val) {
             return false;
           }
         }
@@ -139,10 +156,13 @@ $(() => {
     if(edgeFilterList.length > 0) {
       filter.edge = e => {
         for(let filter of edgeFilterList) {
-          if(filter.min !== undefined && e[filter.prop] < filter.min) {
+          let val = Number.parseFloat(e[filter.prop]);
+          if(isNaN(val))
+            return false;
+          if(filter.min !== undefined && val < filter.min) {
             return false;
           }
-          if(filter.max !== undefined && filter.max < e[filter.prop]) {
+          if(filter.max !== undefined && filter.max < val) {
             return false;
           }
         }
@@ -496,6 +516,60 @@ $(() => {
     }
   }
 
+  function tryReplaceByShortcut(shortcutKeyCharacter) {
+    let word = /[^\s]+/;
+    let cur = editor.getCursor(), curLine = editor.getLine(cur.line);
+    let end = cur.ch, start = end;
+    while (start && word.test(curLine.charAt(start - 1))) --start;
+    while (end && word.test(curLine.charAt(end - 1))) ++end;
+    let curWord = start !== end && curLine.slice(start, end);
+
+    if(propHints && typeof curWord === "string" && curWord.includes(":")) {
+      let idx = curWord.lastIndexOf(":");
+      let currentProp = curWord.substring(0, idx).trim();
+      if(currentProp.startsWith('"') && currentProp.endsWith('"') ||
+        currentProp.startsWith("'") && currentProp.endsWith("'")
+      )
+        currentProp = currentProp.substring(1, currentProp.length - 1);
+      for(let prop of Object.keys(propHints)) {
+        if(currentProp === prop) {
+          for(let hint of propHints[prop]) {
+            if(hint.shortcut === shortcutKeyCharacter) {
+              let from = CodeMirror.Pos(cur.line, start + idx + 1);
+              let to = CodeMirror.Pos(cur.line, end - 1);
+              byProgram = true;
+              editor.replaceRange(hint.value, from, to);
+              byProgram = false;
+              editor.closeHint();
+              return true;
+            }
+          }
+          break;
+        }
+      }
+    }
+    return false;
+  }
+
+  function updateHintOptions() {
+    extraKeys = {};
+    if (typeof propHints === 'object') {
+      let shortcutKeyTexts = Object.values(propHints).map(hints => hints.map(h => h.shortcut)).flat();
+      for(let text of shortcutKeyTexts) {
+        extraKeys[text] = (cm) => {
+          let replaced = tryReplaceByShortcut(text);
+          if(!replaced)
+            doc.replaceRange(text, editor.getCursor());
+        }
+      }
+    }
+
+    editor.setOption("hintOptions", {
+      completeSingle: false,
+      extraKeys
+    });
+  }
+
   function updateGraph(input, newConfig = null) {
     if(newConfig) {
       propHints = newConfig.editor?.autocomplete;
@@ -598,6 +672,7 @@ $(() => {
       updateAutoCompletion();
       updateFilterUI();
     }
+    updateHintOptions();
   }
 
   window.onresize = onResize;
@@ -1700,6 +1775,7 @@ $(() => {
     let cur = editor.getCursor(), curLine = editor.getLine(cur.line);
     let end = cur.ch, start = end;
     while (start && word.test(curLine.charAt(start - 1))) --start;
+    while (end && word.test(curLine.charAt(end - 1))) ++end;
     let curWord = start !== end && curLine.slice(start, end);
 
     let list = [];
@@ -1714,30 +1790,31 @@ $(() => {
       for(let prop of Object.keys(propHints)) {
         if(currentProp === prop) {
           let hints = propHints[prop];
-          let typedValue = curWord.substring(idx + 1).trim();
-          for(let hint of hints) {
-            if(hint.label.startsWith(typedValue) && hint.label !== typedValue ||
-              hint.value.startsWith(typedValue) && hint.value !== typedValue ) {
-              list.push({ displayText: hint.label, text: hint.value });
-            }
-          }
           let from = CodeMirror.Pos(cur.line, start + idx + 1);
-          // Move forward until reach to whitespace
-          while (end && word.test(curLine.charAt(end - 1))) ++end;
           let to = CodeMirror.Pos(cur.line, end - 1);
-          if(list.length === 1) {
-            setTimeout(() => {
-              byProgram = true;
-              editor.replaceRange(list[0].text, from, to);
-              byProgram = false;
-              editor.closeHint();
-            }, 0);
-            return {list: [], from, to};
+
+          let val = curWord.substring(idx + 1).trim();
+          if(config?.editor?.defaultEdgeProperties[prop]?.[0] === val) {
+            return {
+              list: hints.map(hint => ({ displayText: hint.label, text: hint.value })),
+              from,
+              to
+            };
+          } else {
+            let typedValue = curWord.substring(idx + 1).trim();
+
+            for(let hint of hints) {
+              if(hint.label.startsWith(typedValue) && hint.label !== typedValue ||
+                hint.value.startsWith(typedValue) && hint.value !== typedValue ) {
+                list.push({ displayText: hint.label, text: hint.value });
+              }
+            }
+
+            return {
+              list: list,
+              from, to
+            };
           }
-          return {
-            list: list,
-            from, to
-          };
         }
       }
     }
@@ -1857,8 +1934,15 @@ $(() => {
           blitzboard.scrollEdgeIntoView(edge)
         }
       }, blitzboard.staticLayoutMode ? 1000 : 100);
-      if(getCurrentCharacter() === ':')
-        editor.showHint();
+      let defaultProperties = config?.editor?.defaultEdgeProperties;
+      if(defaultProperties) {
+        let prop = getCurrentProp();
+        let name = prop?.name;
+
+        if(name in defaultProperties && prop?.value === defaultProperties[name]?.[0]) {
+          editor.showHint();
+        }
+      }
     }
   });
 

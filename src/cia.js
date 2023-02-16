@@ -73,7 +73,6 @@ function insertEdges() {
     edgeMap[e.from][e.to] = true;
   });
 
-
   // Create edges from targetNode
   pg.nodes.forEach((sourceNode) => {
     pg.nodes.forEach((destNode) => {
@@ -83,10 +82,7 @@ function insertEdges() {
           to: destNode.id,
           undirected: false,
           labels: [],
-          properties: {
-            /// TODO: specify default properties by config
-            確率: ['']
-          }
+          properties: config?.editor?.defaultEdgeProperties || [],
         });
     });
   });
