@@ -2349,3 +2349,11 @@ $(() => {
 
   }, 0);
 });
+
+
+document.fonts.ready.then(() => {
+  if(editor)
+    editor.refresh();
+  if(configEditor)
+    configEditor.refresh();
+});
