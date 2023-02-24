@@ -74,20 +74,63 @@ function insertEdges() {
   });
 
   // Create edges from targetNode
-  pg.nodes.forEach((sourceNode) => {
-    pg.nodes.forEach((destNode) => {
-      if(sourceNode.id !== destNode.id && !edgeMap[sourceNode.id]?.[destNode.id])
-        newPG.edges.push({
-          from: sourceNode.id,
-          to: destNode.id,
-          undirected: false,
-          labels: [],
-          properties: config?.editor?.defaultEdgeProperties || [],
-        });
-    });
-  });
 
-  byProgram = true;
-  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG), true));
-  byProgram = false;
+
+
+  if(remoteMode) {
+    let nodeCandidates = pg.nodes.map(n => "'" + n.id.replace("'", "\'") + "'").join(',');
+    let query = `SELECT n1.id AS n1_id, n2.id AS n2_id, 
+       MAX(JSON_VALUE(e.props, '$.\"確率\"[0]'))
+           AS prob FROM MATCH (n1)-[e]->(n2)
+            WHERE n1.id IN (${nodeCandidates}) AND n2.id IN (${nodeCandidates}) GROUP BY n1_id, n2_id`;
+
+    axios.get(`${backendUrl}/query_table/?query=${query}`).then((response) => {
+      console.log({response});
+      let edgePropMap = {};
+      for(let record of response.data.table.records) {
+        edgePropMap[record.N1_ID] ||= {};
+        edgePropMap[record.N1_ID][record.N2_ID] = record.PROB;
+      }
+
+      let defaultProps = config?.editor?.defaultEdgeProperties;
+
+      pg.nodes.forEach((sourceNode) => {
+        pg.nodes.forEach((destNode) => {
+          if(sourceNode.id !== destNode.id && !edgeMap[sourceNode.id]?.[destNode.id]) {
+            let props = defaultProps ? { ...defaultProps } : {};
+            if(edgePropMap?.[sourceNode.id]?.[destNode.id]) {
+              props["確率"] = [edgePropMap?.[sourceNode.id]?.[destNode.id]];
+            }
+            console.log({props});
+            newPG.edges.push({
+              from: sourceNode.id,
+              to: destNode.id,
+              undirected: false,
+              labels: [],
+              properties: props,
+            });
+          }
+        });
+      });
+      byProgram = true;
+      insertContentsToEditor(json2pg.translate(JSON.stringify(newPG), true));
+      byProgram = false;
+    });
+  } else {
+    pg.nodes.forEach((sourceNode) => {
+      pg.nodes.forEach((destNode) => {
+        if(sourceNode.id !== destNode.id && !edgeMap[sourceNode.id]?.[destNode.id])
+          newPG.edges.push({
+            from: sourceNode.id,
+            to: destNode.id,
+            undirected: false,
+            labels: [],
+            properties: config?.editor?.defaultEdgeProperties || [],
+          });
+      });
+    });
+    byProgram = true;
+    insertContentsToEditor(json2pg.translate(JSON.stringify(newPG), true));
+    byProgram = false;
+  }
 }
