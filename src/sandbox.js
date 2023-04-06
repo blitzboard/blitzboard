@@ -2221,7 +2221,7 @@ $(() => {
           triggerGraphUpdate(editor.getValue(), config);
         } else {
           // Insert one row by default
-          addFilterRow(q(`#${type}-filter-rows`), type);
+          // addFilterRow(q(`#${type}-filter-rows`), type);
         }
       }
 
