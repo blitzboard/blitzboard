@@ -5,7 +5,6 @@ body {
 .nav-item {
   display: block;
 }
-
 .nav-item::marker {
   display: list-item;
   list-style: none;
@@ -15,7 +14,6 @@ body {
   margin-right: 1rem;
   width: 40px;
 }
-
 #export-btn::after {
   display: none;
 }
@@ -232,32 +230,26 @@ span .syntax-warning-line {
   border-radius: 0.5rem;
   background-color: #161717;
 }
-
 .dropdown-menu .dropdown-item {
   padding-bottom: 0.3rem;
   color: #fff;
 }
-
 .dropdown-menu .dropdown-item input {
   padding: 0.3rem 0.6rem;
   border: 1px solid #cfcfcf;
   border-radius: 0.2rem;
   margin: 0.3rem 0;
 }
-
 .dropdown-menu .dropdown-menu[data-bs-popper] {
   margin-top: 1rem;
 }
-
 .dropdown-menu .dropdown-item.active {
   background: #50a1ff;
   color: black;
 }
-
 .dropdown-menu .dropdown-item.active:hover {
   background: #3c7fcb;
 }
-
 .dropdown-menu .dropdown-item:focus, .dropdown-menu .dropdown-item:hover {
   background-color: #252b31;
 }
@@ -266,28 +258,24 @@ span .syntax-warning-line {
   background-color: #fff;
   border-color: #fff;
 }
-
 .btn-secondary span {
   color: #161717;
 }
-
 .btn-secondary:hover {
   background-color: #ccd2dc;
   border-color: #ccd2dc;
 }
 
 .delete-history-btn {
-  background-color: #4c4a5e;
-  border-color: #4c4a5e;
+  background-color: rgb(76, 74, 94);
+  border-color: rgb(76, 74, 94);
 }
-
 .delete-history-btn span {
   color: #fff;
 }
-
 .delete-history-btn:hover {
-  background-color: #2e2d3a;
-  border-color: #2e2d3a;
+  background-color: rgb(46, 45, 58);
+  border-color: rgb(46, 45, 58);
 }
 
 #history-dropdown.dropdown-toggle::after {
@@ -307,7 +295,7 @@ span .syntax-warning-line {
 }
 
 .CodeMirror {
-  font-family: 'Courier', monospace;
+  font-family: "Courier", monospace;
   font-size: 16px;
 }
 
@@ -327,7 +315,6 @@ span .syntax-warning-line {
 .btn-check + .btn-outline-secondary .edit-off, .btn-check + .btn-outline-secondary .edit-off, .btn-outline-secondary .edit-off, .btn-outline-secondary.dropdown-toggle.show .edit-off, .btn-outline-secondary .edit-off {
   display: block;
 }
-
 .btn-check + .btn-outline-secondary .edit, .btn-check + .btn-outline-secondary .edit, .btn-outline-secondary .edit, .btn-outline-secondary.dropdown-toggle.show .edit, .btn-outline-secondary .edit {
   display: none;
 }
@@ -335,11 +322,9 @@ span .syntax-warning-line {
 .btn-check:active + .btn-outline-secondary, .btn-check:checked + .btn-outline-secondary, .btn-outline-secondary.active, .btn-outline-secondary.dropdown-toggle.show, .btn-outline-secondary:active {
   background-color: #353d44;
 }
-
 .btn-check:active + .btn-outline-secondary .edit-off, .btn-check:checked + .btn-outline-secondary .edit-off, .btn-outline-secondary.active .edit-off, .btn-outline-secondary.dropdown-toggle.show .edit-off, .btn-outline-secondary:active .edit-off {
   display: none;
 }
-
 .btn-check:active + .btn-outline-secondary .edit, .btn-check:checked + .btn-outline-secondary .edit, .btn-outline-secondary.active .edit, .btn-outline-secondary.dropdown-toggle.show .edit, .btn-outline-secondary:active .edit {
   display: block;
 }
@@ -349,7 +334,7 @@ span .syntax-warning-line {
 }
 
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
 }
 
 .material-symbols-outlined {
@@ -369,3 +354,5 @@ span .syntax-warning-line {
 .fit-screen {
   color: #000;
 }
+
+/*# sourceMappingURL=sandbox.css.map */
