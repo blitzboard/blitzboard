@@ -12,9 +12,7 @@ require('jquery-ui-bundle');
 require('jquery-ui-bundle/jquery-ui.css');
 let visData = require('vis-data');
 let visNetwork = require('vis-network');
-
 const d3Force = require("d3-force");
-
 const defaultWidth = 1;
 
 module.exports = class Blitzboard {
@@ -56,10 +54,8 @@ module.exports = class Blitzboard {
     extraOptions: {
     },
   };
-  static tooltipMaxWidth = 600;
   static defaultNodeSize = 5;
   static iconPrefixes = ['fa-solid:', 'ion:', 'bx:bx-', 'gridicons:', 'akar-icons:'];
-  static iconSizeCoef = 1.5;
   static mapContainerId = 'map';
   static edgeDelimiter = '-';
   static nodeTemplate = {
@@ -90,9 +86,7 @@ module.exports = class Blitzboard {
     this.nodeLineMap = {};
     this.edgeMap = {};
     this.edgeLineMap = {};
-    this.prevZoomPosition = null;
     this.warnings = [];
-    this.elementWithTooltip = null;
     this.addedNodes = new Set();
     this.addedEdges = new Set();
     this.deletedNodes = new Set();
@@ -118,18 +112,6 @@ module.exports = class Blitzboard {
       position: absolute;
       z-index: 0;
     `;
-
-    this.tooltipDummy = document.createElement('div');
-    this.tooltipDummy.style.position = 'absolute';
-    this.tooltipDummy.classList.add('blitzboard-tooltip');
-    this.tooltipDummy.style['background-color'] = 'rgba(0, 0, 0, 0)';
-    this.tooltipDummy.style['z-index'] = '2000';
-
-    this.tooltip = document.createElement('span');
-    this.tooltip.style.display = 'none';
-    this.tooltip.classList.add('blitzboard-tooltiptext');
-    this.tooltip.classList.add('blitzboard-tooltiptext-top');
-    this.tooltip.style['z-index'] = '2001';
 
     this.configChoiceDiv = document.createElement('div');
     this.configChoiceDiv.id = "blitzboard-config-choice-div";
@@ -224,13 +206,6 @@ module.exports = class Blitzboard {
     this.configChoiceDiv.appendChild(this.configChoiceDropdown);
     this.searchBarDiv.appendChild(this.searchButton);
     this.searchBarDiv.appendChild(this.searchInput);
-    document.body.appendChild(this.tooltipDummy);
-    this.tooltipDummy.appendChild(this.tooltip);
-    this.tooltip.addEventListener('mouseleave', (e) => {
-      if(e.relatedTarget !== blitzboard.network.canvas.getContext().canvas)
-        blitzboard.hideTooltip();
-    });
-
 
     this.configChoiceDropdown.addEventListener('change', (e) => {
       this.configChoice = e.target.value;
@@ -258,7 +233,6 @@ module.exports = class Blitzboard {
       }
     });
 
-
     this.searchInput.addEventListener('keydown', (e) => {
       // Enter
       if(e.code === "Enter" && blitzboard.config.onSearchInput)
@@ -282,9 +256,6 @@ module.exports = class Blitzboard {
     }, true);
 
     this.container.addEventListener('mousemove', (e) => {
-      if(blitzboard.elementWithTooltip?.edge) {
-        this.updateTooltipLocation();
-      }
       blitzboard.prevMouseEvent = e;
     }, true);
 
@@ -421,91 +392,6 @@ module.exports = class Blitzboard {
     });
 
     this.contextMenu.init();
-
-    this.applyDynamicStyle(`
-      .blitzboard-tooltip {
-        position: absolute;
-        display: inline-block;
-        border-bottom: 1px dotted black;
-      }
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext {
-        max-width: ${Blitzboard.tooltipMaxWidth}px;
-        min-width: 200px;
-        background: rgba(0, 0, 0, 0.7);
-        color: #fff;
-        text-align: center;
-        border-radius: 6px;
-        padding: 5px;
-        position: absolute;
-        z-index: 1;
-        opacity: 1;
-        transition: opacity 0.3s;
-      }
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext-top {
-        bottom: 125%;
-        left: 50%;
-      }
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext-bottom {
-        bottom: 100%;
-        left: 50%;
-      }
-      
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext-left {
-        top: calc(50% - ${balloonHandleSize / 2}px);
-        left: 0%;
-      }
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext-right {
-        top: calc(-50% + ${balloonHandleSize / 2}px);
-        left: 100%;
-      }
-      
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext::after {
-        content: "";
-        position: absolute;
-        top: -${balloonHandleSize / 2}px;
-        border-width: ${balloonHandleSize}px;
-        border-style: solid;
-      }
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext-bottom::after {
-        top: -${balloonHandleSize * 2}px;
-        left: calc(50% - ${balloonHandleSize / 2}px);
-        border-color: transparent transparent #555 transparent;
-      }
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext-left::after {
-        top: calc(50% - ${balloonHandleSize}px);
-        left: 100%;
-        border-color: transparent transparent transparent #555;
-      }
-      
-      .blitzboard-tooltip .blitzboard-tooltiptext-top::after {
-        top: 100%;
-        left: calc(50% - ${balloonHandleSize / 2}px);
-        border-color: #555 transparent transparent transparent;
-      }
-
-      .blitzboard-tooltip .blitzboard-tooltiptext-right::after {
-        top: calc(50% - ${balloonHandleSize / 2}px);
-        left: -${balloonHandleSize * 2}px;
-        border-color: transparent #555 transparent transparent;
-      }
-      
-      .blitzboard-tooltiptext th, .blitzboard-tooltiptext td {
-        text-align: left;
-        padding-left: 10px;
-      }
-      
-      .blitzboard-tooltip a {
-        color: #88BBFF;
-      }
-    `);
   }
 
   static blitzProxy = {
@@ -519,14 +405,6 @@ module.exports = class Blitzboard {
       return Reflect.get(target, prop, receiver);
     }
   }
-
-  applyDynamicStyle(css) {
-    var styleTag = document.createElement('style');
-    var dynamicStyleCss = document.createTextNode(css);
-    styleTag.appendChild(dynamicStyleCss);
-    var header = document.getElementsByTagName('head')[0];
-    header.appendChild(styleTag);
-  };
 
   getHexColors(colorStr) {
     let computed = Blitzboard.renderedColors[colorStr];
@@ -625,87 +503,6 @@ module.exports = class Blitzboard {
       return this.prevMouseEvent.clientY < window.innerHeight / 2 ? 'bottom' : 'top';
     }
     return this.prevMouseEvent.clientX < window.innerWidth / 2 ? 'right' : 'left';
-  }
-
-  updateTooltipLocation() {
-    if(!this.elementWithTooltip)
-      return;
-    let position, offset = 20;
-    const edgeOffset = 10;
-    if(this.elementWithTooltip.node) {
-      position = this.network.canvasToDOM(this.network.getPosition(this.elementWithTooltip.node.id));
-      let clientRect = this.container.getClientRects()[0];
-      position.x += clientRect.x;
-      position.y += clientRect.y;
-      offset += this.elementWithTooltip.node._size * this.network.getScale();
-    } else {
-      if(!this.prevMouseEvent)
-        return;
-      position = {
-        x: this.prevMouseEvent.clientX,
-        y: this.prevMouseEvent.clientY
-      };
-      offset += edgeOffset;
-    }
-    position.x += window.scrollX;
-    position.y += window.scrollY;
-
-    switch(this.tooltipPosition()) {
-      case 'left':
-        this.tooltip.classList.add('blitzboard-tooltiptext-left');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-top');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-right');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-bottom');
-        position.x -= offset;
-        position.x -= this.tooltip.clientWidth;
-        position.y -= this.tooltip.clientHeight / 2;
-        break;
-      case 'top':
-        this.tooltip.classList.remove('blitzboard-tooltiptext-left');
-        this.tooltip.classList.add('blitzboard-tooltiptext-top');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-right');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-bottom');
-        position.x -= this.tooltip.clientWidth / 2;
-        position.y -= offset;
-        break;
-      case 'right':
-        this.tooltip.classList.remove('blitzboard-tooltiptext-left');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-top');
-        this.tooltip.classList.add('blitzboard-tooltiptext-right');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-bottom');
-        position.x += offset;
-        position.y -= this.tooltip.clientHeight / 2;
-        break;
-      case 'bottom':
-        this.tooltip.classList.remove('blitzboard-tooltiptext-left');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-top');
-        this.tooltip.classList.remove('blitzboard-tooltiptext-right');
-        this.tooltip.classList.add('blitzboard-tooltiptext-bottom');
-        position.x -= this.tooltip.clientWidth / 2;
-        position.y += this.tooltip.clientHeight;
-        position.y += offset;
-        break;
-    }
-
-    this.tooltipDummy.style.left = `${position.x}px`;
-    this.tooltipDummy.style.top = `${position.y}px`;
-  }
-
-  showTooltip() {
-    this.updateTooltipLocation();
-    let title = this.elementWithTooltip.node ? this.elementWithTooltip.node._title : this.elementWithTooltip.edge._title;
-    if(!title)
-      return;
-
-    this.tooltip.innerHTML = title;
-    this.tooltip.style.display = 'block';
-  }
-
-  hideTooltip() {
-    if(this.elementWithTooltip) {
-      this.tooltip.style.display = 'none';
-      this.elementWithTooltip = null;
-    }
   }
 
   svgToURL(svg) {
@@ -1760,9 +1557,6 @@ module.exports = class Blitzboard {
       document.getElementById('deckgl-overlay').style = this.networkContainerOriginalStyle + ' ' + this.config.style;
     }
 
-
-    this.hideTooltip();
-
     this.nodeLineMap = {};
     this.edgeLineMap = {};
 
@@ -1777,11 +1571,9 @@ module.exports = class Blitzboard {
         if(this.isFilteredOutNode(node)) return;
         let existingNode = this.nodeMap[node.id];
         if(existingNode) {
-          if(!nodeEquals(node, existingNode)) {
-            delete this.nodeDataSet[node.id];
-            let visNode = this.toVisNode(node, this.config.node.caption);
-            this.nodeDataSet[node.id] = visNode;
-          }
+          delete this.nodeDataSet[node.id];
+          let visNode = this.toVisNode(node, this.config.node.caption);
+          this.nodeDataSet[node.id] = visNode;
         } else {
           let visNode = this.toVisNode(node, this.config.node.caption);
           this.nodeDataSet[visNode.id] = visNode;
@@ -1839,8 +1631,6 @@ module.exports = class Blitzboard {
       this.addedNodes = new Set(this.graph.nodes.map((n) => n.id));
       this.addedEdges = new Set(this.graph.edges.map((e) => e.id));
     }
-
-    this.prevZoomPosition = null;
 
     this.minTime = new Date(8640000000000000);
     this.maxTime = new Date(-8640000000000000);
@@ -2401,7 +2191,6 @@ module.exports = class Blitzboard {
   }
 
   scrollNetworkToPosition(position) {
-
     if(this.config.layout === 'map') {
       this.network.setProps({
         initialViewState: {
@@ -2423,7 +2212,6 @@ module.exports = class Blitzboard {
       });
     }
   }
-
 
   updateNodeLocationOnTimeLine() {
     let nodePositions = [];
@@ -2471,29 +2259,6 @@ module.exports = class Blitzboard {
 }
 
 
-function arrayEquals(a, b) {
-  return Array.isArray(a) &&
-    Array.isArray(b) &&
-    a.length === b.length &&
-    a.every((val, index) => val === b[index]);
-}
-
-function nodeEquals(node1, node2) {
-  if(node1.id != node2.id || !arrayEquals(node1.labels, node2.labels)) {
-    return false;
-  }
-  let node1Keys = Object.keys(node1.properties);
-  let node2Keys = Object.keys(node2.properties);
-  if(node1Keys.length != node2Keys.length) {
-    return false;
-  }
-  for(let key of node1Keys) {
-    if(!arrayEquals(node1.properties[key], node2.properties[key]))
-      return false;
-  }
-  return true;
-}
-
 
 class DuplicateNodeError extends Error {
   constructor(nodes) {
@@ -2504,7 +2269,6 @@ class DuplicateNodeError extends Error {
 }
 
 module.exports.DuplicateNodeError = DuplicateNodeError;
-
 
 function deepMerge(target, source) {
   const isObject = obj => obj && typeof obj === 'object' && !Array.isArray(obj);
@@ -2580,8 +2344,4 @@ function getRandomColor(str, saturation, brightness) {
   }
   let hue = hash % 360;
   return 'hsl(' + hue + `, ${saturation}, ${brightness})`;
-}
-
-function isDateString(str) {
-  return isNaN(str) && !isNaN(Date.parse(str))
 }
