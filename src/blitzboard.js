@@ -84,7 +84,6 @@ module.exports = class Blitzboard {
   constructor(container) {
     this.container = container;
     this.nodeColorMap = {};
-    this.expandedNodes = [];
     this.nodeMap = {};
     this.config = Blitzboard.defaultConfig;
     this.baseConfig = this.config;
@@ -713,6 +712,34 @@ module.exports = class Blitzboard {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
+  toClusterNode(pgNodeIds, props, extraOptions = null) {
+    let nodes = pgNodeIds.map(id => this.nodeMap[id]);
+    let color = Blitzboard.SCCColor;
+
+    let rgb = this.getHexColors(color);
+    let precomputePosition = this.hierarchicalPositionMap != null ? this.hierarchicalPositionMap[nodes[0].id] : undefined;
+    let x = 0, y = 0, z = 0;
+    if(precomputePosition) {
+      x = precomputePosition.x;
+      y = precomputePosition.y;
+    }
+
+    let attrs = {
+      objectType: 'node',
+      id: nodes[0].id,
+      color: rgb,
+      label: nodes.map(node => createLabelText(node, props)).join("\n"),
+      shape: 'dot',
+      _size: nodes[0].size,
+      _title: nodes.map(node => this.createTitle(node)).join("\n"),
+      borderWidth: 1,
+      x: x,
+      y: y,
+      z: z,
+    };
+    return attrs;
+  }
+
   toVisNode(pgNode, props, extraOptions = null) {
     const group = [...pgNode.labels].sort().join('_');
     if(!this.nodeColorMap[group]) {
@@ -733,15 +760,6 @@ module.exports = class Blitzboard {
 
     let url = retrieveHttpUrl(pgNode);
     let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
-    let expanded = this.expandedNodes.includes(pgNode.id);
-
-    let degree = pgNode.properties['degree'];
-    let blitzboard = this;
-    if(degree !== undefined) {
-      degree = degree[0];
-    } else {
-      degree = 2; // assume degree to be two (default)
-    }
 
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
@@ -771,7 +789,6 @@ module.exports = class Blitzboard {
       label: createLabelText(pgNode, props),
       shape: 'dot',
       _size: size || Blitzboard.defaultNodeSize,
-      degree: degree,
       _title: tooltip != null ? tooltip : this.createTitle(pgNode),
       fixed: {
         x: precomputePosition ? true : fixed,
@@ -1284,7 +1301,6 @@ module.exports = class Blitzboard {
     }
   }
 
-
   computeHierarchicalSCCPositions() {
     this.hierarchicalPositionMap = {};
     let sccList = stronglyConnectedComponents(this.graph.edges);
@@ -1355,6 +1371,7 @@ module.exports = class Blitzboard {
         this.hierarchicalPositionMap[node.id] = position;
       }
     }
+    this.sccReverseMap = sccReverseMap;
   }
 
 
@@ -1408,9 +1425,31 @@ module.exports = class Blitzboard {
 
     let highlightedNodes = new Set([...this.hoveredNodes, ...this.selectedNodes]);
 
+
+    let tmpNodeData = this.nodeDataSet;
+    if(this.config.sccMode === 'cluster') {
+      for(let scc of Object.keys(this.sccReverseMap)) {
+        tmpNodeData[scc] = this.toClusterNode(scc.split("\n"), this.config.node.caption);
+        for(let nodeId of scc) {
+          delete tmpNodeData[nodeId];
+        }
+      }
+    }
+
+    tmpNodeData = Object.values(tmpNodeData);
+
+
+    let tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
+
+    for(let edge of tmpEdgeData) {
+      edge.from = this.sccMap[edge.from] || edge.from;
+      edge.to = this.sccMap[edge.to] || edge.to;
+    }
+
+
     this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
-      data: this.nodeData,
+      data: tmpNodeData,
       pickable: true,
       opacity: 1, // TODO
       stroked: false,
@@ -1443,7 +1482,7 @@ module.exports = class Blitzboard {
       pickable: true,
       coordinateSystem,
       billboard: this.config.layout !== 'map',
-      data: this.edgeDataSet,
+      data: tmpEdgeData,
       getWidth: edge => edge.width,
       getSourcePosition: (edge) => {
         let {x, y, z} = this.nodeDataSet[edge.from];
@@ -1474,7 +1513,7 @@ module.exports = class Blitzboard {
 
     const fontSize = 3;
 
-    const characterSet = this.nodeData.map(n => Array.from(n.label)).flat();
+    const characterSet = tmpNodeData.map(n => Array.from(n.label)).flat();
 
     let textLayerAttributes = {
       id: 'node-text-layer',
@@ -1503,7 +1542,7 @@ module.exports = class Blitzboard {
       characterSet
     };
 
-    textLayerAttributes.data = this.nodeData;
+    textLayerAttributes.data = tmpNodeData;
 
     this.nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
 
@@ -1514,7 +1553,7 @@ module.exports = class Blitzboard {
 
     this.edgeTextLayer = new DeckGLLayers.TextLayer({
       id: 'edge-text-layer',
-      data: this.edgeDataSet,
+      data: tmpEdgeData,
       pickable: true,
       getPosition: (edge) => {
         let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
@@ -1540,7 +1579,7 @@ module.exports = class Blitzboard {
 
     this.edgeArrowLayer = new DeckGLLayers.IconLayer({
       id: 'edge-arrow-layer',
-      data: this.edgeDataSet.filter(e => !e.undirected || e.direction === '->'),
+      data: tmpEdgeData.filter(e => !e.undirected || e.direction === '->'),
       coordinateSystem,
       getIcon: n => ({
         url: this.svgToURL('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15"><path fill="currentColor" d="M7.932 1.248a.5.5 0 0 0-.864 0l-7 12A.5.5 0 0 0 .5 14h14a.5.5 0 0 0 .432-.752l-7-12Z"/></svg>'),
@@ -1568,7 +1607,7 @@ module.exports = class Blitzboard {
     });
 
 
-    this.iconLayer = this.createIconLayer(this.nodeData, scale, sizeUnits, coordinateSystem);
+    this.iconLayer = this.createIconLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
 
     this.updateThumbnailLayer();
 
@@ -1896,7 +1935,7 @@ module.exports = class Blitzboard {
           if(i < node.location.end.line || node.location.end.column > 1)
             this.nodeLineMap[i] = node;
       }
-      Object.keys(node.properties).filter((prop) => prop != 'degree').forEach(this.nodeProps.add, this.nodeProps);
+      Object.keys(node.properties).forEach(this.nodeProps.add, this.nodeProps);
     });
     this.graph.edges.forEach((edge) => {
       Object.keys(edge.properties).forEach(this.edgeProps.add, this.edgeProps);
@@ -2285,24 +2324,24 @@ module.exports = class Blitzboard {
   }
 
   clusterSCC() {
-    for(let clusterId of Object.values(this.sccMap)) {
-      let position = this.hierarchicalPositionMap[clusterId];
-      let clusterOptions = {
-        joinCondition: function(n) {
-          return n.clusterId === clusterId;
-        },
-        clusterNodeProperties: {
-          id: clusterId,
-          color: Blitzboard.SCCColor,
-          x: position.x,
-          y: position.y,
-          fixed: true,
-          shape: 'dot',
-          label: clusterId
-        }
-      };
-      this.network.cluster(clusterOptions);
-    }
+    // for(let clusterId of Object.values(this.sccMap)) {
+    //   let position = this.hierarchicalPositionMap[clusterId];
+    //   let clusterOptions = {
+    //     joinCondition: function(n) {
+    //       return n.clusterId === clusterId;
+    //     },
+    //     clusterNodeProperties: {
+    //       id: clusterId,
+    //       color: Blitzboard.SCCColor,
+    //       x: position.x,
+    //       y: position.y,
+    //       fixed: true,
+    //       shape: 'dot',
+    //       label: clusterId
+    //     }
+    //   };
+    //   this.network.cluster(clusterOptions);
+    // }
   }
 
   expandSCC() {
@@ -2314,15 +2353,6 @@ module.exports = class Blitzboard {
       this.network.openCluster(clusterId);
     }
     this.network.stabilize(100);
-  }
-
-  showHiddenNodes() {
-    let toBeUpdated = [];
-    for(let node of this.nodeDataSet._data.values()) {
-      if(node.hidden)
-        toBeUpdated.push({id: node.id, hidden: false});
-    }
-    this.nodeDataSet.update(toBeUpdated);
   }
 
   hideExceptSCC() {
