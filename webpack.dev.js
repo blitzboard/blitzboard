@@ -9,6 +9,6 @@ module.exports = merge(common, {
     filename: "blitzboard.bundle.js",
   },
   devServer: {
-    static: './dist',
+    static: './',
   },
 });
