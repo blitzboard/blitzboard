@@ -13,6 +13,9 @@ let remoteMode = !!backendUrl;
 
 let clientIsMac = navigator.platform.startsWith('Mac');
 
+let nodeLineMap = {};
+let edgeLineMap = {};
+
 
 $(() => {
   let defaultConfig = pageTemplates[0].config;
@@ -468,6 +471,24 @@ $(() => {
       return null;
     }
     if (blitzboard.graph) {
+      nodeLineMap = {};
+      blitzboard.graph.nodes.forEach((node) => {
+        if(node.location) {
+          for(let i = node.location.start.line; i <= node.location.end.line; i++)
+            if(i < node.location.end.line || node.location.end.column > 1)
+              nodeLineMap[i] = node;
+        }
+      });
+
+      edgeLineMap = {};
+      blitzboard.graph.edges.forEach((edge) => {
+        if(edge.location) {
+          for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
+            if(i < edge.location.end.line || edge.location.end.column > 1)
+              edgeLineMap[i] = edge;
+        }
+      });
+
       updateAutoCompletion();
     }
   }
@@ -1611,8 +1632,10 @@ $(() => {
       if (focusTimerId)
         clearTimeout(focusTimerId);
       focusTimerId = setTimeout(() => {
-        const node = blitzboard.nodeLineMap[doc.getCursor().line + 1];
-        const edge = blitzboard.edgeLineMap[doc.getCursor().line + 1];
+        const node = nodeLineMap[doc.getCursor().line + 1];
+        const edge = edgeLineMap[doc.getCursor().line + 1];
+
+        console.log({node, edge})
 
         if (node) {
           blitzboard.scrollNodeIntoView(node, true)
