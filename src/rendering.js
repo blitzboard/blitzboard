@@ -721,7 +721,6 @@ module.exports = {
       return {
         latitude: (this.minY + this.maxY) / 2,
         longitude: (this.minX + this.maxX) / 2,
-        pitch: Blitzboard.pitch,
         zoom: 3
       };
     } else {

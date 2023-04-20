@@ -4,7 +4,7 @@ require('./scc.js');
 const DeckGL = require('@deck.gl/core');
 require('../css/blitzboard.css')
 require('../css/ContextMenu.css')
-const { deepMerge, getRandomColor, getHexColors, createTitle, createLabelText, retrieveHttpUrl, validateGraph } = require('./util.js')
+const utilModule = require('./util.js')
 const renderingModule = require('./rendering.js');
 const layoutModule = require('./layout.js');
 const apiModule = require('./api.js');
@@ -58,8 +58,6 @@ class Blitzboard {
 
   static loadedIcons = {};
 
-  static pitch = 0;
-
   constructor(container) {
     this.container = container;
     this.nodeColorMap = {};
@@ -70,6 +68,7 @@ class Blitzboard {
     this.warnings = [];
     this.sccMode = 'cluster';
     this.configChoice = null;
+    this.nodeLayout = {};
     this.hoveredNodes = new Set();
     this.hoveredEdges = new Set();
     this.selectedNodes = new Set();
@@ -98,7 +97,6 @@ class Blitzboard {
     this.beforeParse = [];
     this.onParseError = [];
     this.maxLine = 0;
-    this.nodeLayout = null;
     this.doubleClickTimer = null;
 
     let blitzboard = this;
@@ -169,18 +167,12 @@ class Blitzboard {
       }
     }
 
-    this.filteredGraph = {};
-    this.filteredGraph.nodes = this.graph.nodes.map((node) => {
-      if(this.isFilteredOutNode(node))
-        return null;
-      return this.toVisNode(node);
-    }).filter((node) => node !== null);
+    let blitzboard = this;
 
-    this.filteredGraph.edges = this.graph.edges.map((edge) => {
-      if(this.isFilteredOutEdge(edge) || !this.nodeDataSet[edge.from] || !this.nodeDataSet[edge.to])
-        return null;
-      return edge;
-    }).filter((edge) => edge !== null);
+    this.filteredGraph = {};
+    this.filteredGraph.nodes = this.graph.nodes.filter((node) => !blitzboard.isFilteredOutNode(node));
+
+    this.filteredGraph.edges = this.graph.edges.filter((edge) => !blitzboard.isFilteredOutEdge(edge) || !blitzboard.nodeDataSet[edge.from] || !blitzboard.nodeDataSet[edge.to]);
 
     this.updateSearchInput();
 
@@ -278,14 +270,13 @@ class DuplicateNodeError extends Error {
   }
 }
 
-module.exports.DuplicateNodeError = DuplicateNodeError;
 
-Blitzboard.prototype.validateGraph = validateGraph;
 
-for(let module of [renderingModule, layoutModule, apiModule, UIModule]) {
+for(let module of [utilModule, renderingModule, layoutModule, apiModule, UIModule]) {
   for(let [key, value] of Object.entries(module)) {
     Blitzboard.prototype[key] = value;
   }
 }
 
 module.exports = Blitzboard;
+module.exports.DuplicateNodeError = DuplicateNodeError;

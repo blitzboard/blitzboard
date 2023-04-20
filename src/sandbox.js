@@ -1635,8 +1635,6 @@ $(() => {
         const node = nodeLineMap[doc.getCursor().line + 1];
         const edge = edgeLineMap[doc.getCursor().line + 1];
 
-        console.log({node, edge})
-
         if (node) {
           blitzboard.scrollNodeIntoView(node, true)
         } else if (edge) {

@@ -1,3 +1,5 @@
+const DeckGL = require("@deck.gl/core");
+
 const nodeTemplate = {
   id: null,
   labels: [],
@@ -52,7 +54,7 @@ module.exports = {
       newNodes = nodes;
     }
     newNodes = newNodes.filter(node => !this.includesNode(node)).map((node) => {
-      let mapped = deepMerge(nodeTemplate, node);
+      let mapped = this.deepMerge(nodeTemplate, node);
       ++this.maxLine;
       mapped.location = {
         start: {
@@ -97,7 +99,7 @@ module.exports = {
       newEdges = edges
     }
     newEdges = newEdges.map((edge) => {
-      let mapped = deepMerge(edgeTemplate, edge);
+      let mapped = this.deepMerge(edgeTemplate, edge);
       ++this.maxLine;
       mapped.location = {
         start: {
@@ -181,7 +183,7 @@ module.exports = {
       this.update(true, callback);
   },
   setConfig: function (config, update = true, callback = null) {
-    this.config = deepMerge(Blitzboard.defaultConfig, config);
+    this.config = this.deepMerge(Blitzboard.defaultConfig, config);
 
     if(this.config.configChoices?.configs) {
       this.configChoice = this.config.configChoices?.default;
@@ -203,7 +205,7 @@ module.exports = {
       this.config.layoutSettings = config.layoutSettings;
     }
 
-    this.baseConfig = deepMerge({}, this.config); // Save config before apply configChoices
+    this.baseConfig = this.deepMerge({}, this.config); // Save config before apply configChoices
     Blitzboard.loadedIcons = {};
     if(update)
       this.update(false, callback);
@@ -277,6 +279,7 @@ module.exports = {
       callback(node);
     }
   },
+
   scrollNetworkToPosition: function(position) {
     if(this.config.layout === 'map') {
       this.network.setProps({
@@ -284,7 +287,6 @@ module.exports = {
           latitude: position.y,
           longitude: position.x,
           zoom: 13,
-          pitch: Blitzboard.pitch,
           transitionDuration: 1000,
           transitionInterpolator: new DeckGL.FlyToInterpolator()
         }
