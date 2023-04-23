@@ -196,8 +196,10 @@ module.exports = {
       } else {
         this.groupedGraph = this.filteredGraph;
         if(this.config.sccMode === 'only-scc') {
-          this.groupedGraph.nodes = this.groupedGraph.nodes.filter(n => this.sccMap[n.id] !== undefined);
-          this.groupedGraph.edges = this.groupedGraph.edges.filter(e => this.sccMap[e.from] !== undefined && this.sccMap[e.to] !== undefined);
+          this.groupedGraph = {
+            nodes: this.groupedGraph.nodes.filter(n => this.sccMap[n.id]),
+            edges: this.groupedGraph.edges.filter(e => this.sccMap[e.from] && this.sccMap[e.to])
+          };
         }
         for(let node of this.groupedGraph.nodes) {
           if(this.sccMap[node.id] === undefined) {
