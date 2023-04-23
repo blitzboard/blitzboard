@@ -163,7 +163,7 @@ class Blitzboard {
         chosenConfig = Object.values(this.baseConfig.configChoices.configs)[0];
       }
       if(chosenConfig) {
-        this.config = deepMerge(this.baseConfig, chosenConfig);
+        this.config = this.deepMerge(this.baseConfig, chosenConfig);
       }
     }
 
@@ -172,7 +172,7 @@ class Blitzboard {
     this.filteredGraph = {};
     this.filteredGraph.nodes = this.graph.nodes.filter((node) => !blitzboard.isFilteredOutNode(node));
 
-    this.filteredGraph.edges = this.graph.edges.filter((edge) => !blitzboard.isFilteredOutEdge(edge) || !blitzboard.nodeDataSet[edge.from] || !blitzboard.nodeDataSet[edge.to]);
+    this.filteredGraph.edges = this.graph.edges.filter((edge) => !blitzboard.isFilteredOutEdge(edge) && !blitzboard.isFilteredOutNode(edge.from) && !blitzboard.isFilteredOutNode(edge.to));
 
     this.updateSearchInput();
 
@@ -269,8 +269,6 @@ class DuplicateNodeError extends Error {
     this.nodes = nodes;
   }
 }
-
-
 
 for(let module of [utilModule, renderingModule, layoutModule, apiModule, UIModule]) {
   for(let [key, value] of Object.entries(module)) {
