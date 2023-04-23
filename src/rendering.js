@@ -745,7 +745,7 @@ module.exports = {
         this.network.setProps({
           views: [view],
         });
-      }, 200);
+      }, 200); // TODO: This is a hack to make sure the map is rendered correctly
     } else {
       if(this.config.style) {
         document.getElementById('deckgl-overlay').style = this.networkOriginalStyle + ' ' + this.config.style;
