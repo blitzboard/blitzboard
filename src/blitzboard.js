@@ -248,8 +248,8 @@ class Blitzboard {
 
     this.nodeData = Object.values(this.nodeDataSet);
     this.updateLayers();
-    this.updateViews();
     this.clusterSCC();
+    this.updateViews();
     this.updateSCCStatus();
 
     if(afterUpdate) {

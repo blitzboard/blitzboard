@@ -736,10 +736,16 @@ module.exports = {
   updateViews() {
     if(this.config.layout === 'map') {
       this.viewState = this.createInitialViewState();
+      let view = new DeckGL.MapView({});
       this.network.setProps({
         initialViewState: this.viewState,
-        views: [new DeckGL.MapView()],
       });
+
+      setTimeout(() => {
+        this.network.setProps({
+          views: [view],
+        });
+      }, 200);
     } else {
       if(this.config.style) {
         document.getElementById('deckgl-overlay').style = this.networkOriginalStyle + ' ' + this.config.style;
