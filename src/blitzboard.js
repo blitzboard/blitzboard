@@ -190,7 +190,7 @@ class Blitzboard {
     this.maxX = -Number.MAX_VALUE;
     this.minY = Number.MAX_VALUE;
     this.maxY = -Number.MAX_VALUE;
-    this.filteredGraph.nodes.forEach((node) => {
+    this.groupedGraph.nodes.forEach((node) => {
       let visNode = this.toVisNode(node);
       this.nodeDataSet[node.id] = visNode;
       let tmpPosition = this.nodeLayout[node.id];
@@ -212,7 +212,7 @@ class Blitzboard {
     }
 
     this.edgeMap = {};
-    this.edgeDataSet = this.filteredGraph.edges.map((edge) => {
+    this.edgeDataSet = this.groupedGraph.edges.map((edge) => {
       // Create edge id from pair of nodes
       let id = `${edge.from}${Blitzboard.edgeDelimiter}${edge.to}`;
       while(this.edgeMap[id]) {
@@ -225,32 +225,11 @@ class Blitzboard {
 
     this.edgeDataSet = this.edgeDataSet.filter(e => e !== null);
 
-    if(this.config.layout === 'hierarchical') {
-      this.computeHierarchicalPositions();
-      this.sccMap = {};
-    }
-    else if(this.config.layout === 'hierarchical-scc') {
-      this.computeHierarchicalSCCPositions();
-    } else {
-      this.hierarchicalPositionMap = null;
-      this.sccMap = {};
-    }
-
-    let layout = {};
-
-    if(this.config.layout === 'hierarchical') {
-      layout.hierarchical = this.config.layoutSettings;
-    } else {
-      layout.hierarchical = false;
-    }
-
     this.network.setProps({layers: []});
 
     this.nodeData = Object.values(this.nodeDataSet);
     this.updateLayers();
-    this.clusterSCC();
     this.updateViews();
-    this.updateSCCStatus();
 
     if(afterUpdate) {
       afterUpdate();

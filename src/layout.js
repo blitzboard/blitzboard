@@ -21,90 +21,6 @@ function computeHierarchicalPositions() {
   }
 }
 
-function computeHierarchicalSCCPositions() {
-  this.hierarchicalPositionMap = {};
-  let sccList = stronglyConnectedComponents(this.edgeDataSet);
-  let tmpNodes = this.graph.nodes.filter(n => {
-    for(let scc of sccList) {
-      if(scc.has(n.id))
-        return false;
-    }
-    return true;
-  });
-
-  // convert set to array
-  let sccArrayList = sccList.map(scc => Array.from(scc));
-  this.sccMap = {};
-  let sccReverseMap = {};
-  for(let scc of sccArrayList) {
-    let sccId = scc.join('\n');
-    for(let node of scc) {
-      this.sccMap[node] = sccId;
-      sccReverseMap[sccId] = scc;
-    }
-  }
-  for(let sccId of new Set(Object.values(this.sccMap))) {
-    tmpNodes.push({
-      id: sccId,
-      labels: [],
-      properties: [],
-      location: {start: {line: 0, column: 0}, end: {line: 0, column: 0}}
-    });
-  }
-
-  let tmpEdges = JSON.parse(JSON.stringify(this.graph.edges));
-
-  for(let edge of tmpEdges) {
-    edge.from = this.sccMap[edge.from] || edge.from;
-    edge.to = this.sccMap[edge.to] || edge.to;
-  }
-
-  let tmpNodeDataSet = new visData.DataSet();
-  tmpNodeDataSet.add(tmpNodes);
-
-  let tmpEdgeDataSet = new visData.DataSet(tmpEdges);
-  let tmpOptions = {
-    layout: {
-      hierarchical: {
-        enabled: true,
-        levelSeparation: 150,
-        nodeSpacing: 100,
-        treeSpacing: 200,
-        blockShifting: true,
-        edgeMinimization: true,
-        parentCentralization: true,
-        direction: 'LR',
-        sortMethod: 'directed',
-        shakeTowards: 'leaves'
-      }
-    }
-  };
-  let tmpNetwork = new visNetwork.Network(document.createElement('div'), {
-    nodes: tmpNodeDataSet,
-    edges: tmpEdgeDataSet
-  }, tmpOptions);
-  for(let node of tmpNodes) {
-    let position = tmpNetwork.getPosition(node.id);
-    if(sccReverseMap[node.id] !== undefined) {
-      // The node is cluster
-      let i = 0;
-
-      this.hierarchicalPositionMap[node.id] = position;
-
-      for(let sccNodeId of sccReverseMap[node.id]) {
-        this.hierarchicalPositionMap[sccNodeId] = {
-          x: position.x,
-          y: position.y + i * 100,
-        };
-        i += 1;
-      }
-    } else {
-      this.hierarchicalPositionMap[node.id] = position;
-    }
-  }
-  this.sccReverseMap = sccReverseMap;
-}
-
 function calcNodePosition(pgNode) {
   let x, y, fixed, width;
   if(this.config.layout === 'timeline' && this.timeInterval > 0) {
@@ -141,7 +57,6 @@ function calcNodePosition(pgNode) {
     fixed = this.config.layout === 'hierarchical';
     width = null;
   }
-
   return {x, y, fixed, width};
 }
 
@@ -150,55 +65,7 @@ function calcNodePosition(pgNode) {
 
 module.exports = {
   computeHierarchicalPositions,
-  computeHierarchicalSCCPositions,
   calcNodePosition,
-  updateSCCStatus() {
-    if(this.config.layout === 'hierarchical-scc') {
-      switch(this.config.sccMode) {
-        case 'expand':
-          this.expandSCC();
-          break;
-        case 'cluster':
-          this.clusterSCC();
-          break;
-        case 'only-scc':
-          this.hideExceptSCC();
-          break;
-      }
-    }
-  },
-
-  clusterSCC() {
-    // for(let clusterId of Object.values(this.sccMap)) {
-    //   let position = this.hierarchicalPositionMap[clusterId];
-    //   let clusterOptions = {
-    //     joinCondition: function(n) {
-    //       return n.clusterId === clusterId;
-    //     },
-    //     clusterNodeProperties: {
-    //       id: clusterId,
-    //       color: Blitzboard.SCCColor,
-    //       x: position.x,
-    //       y: position.y,
-    //       fixed: true,
-    //       shape: 'dot',
-    //       label: clusterId
-    //     }
-    //   };
-    //   this.network.cluster(clusterOptions);
-    // }
-  },
-
-  expandSCC() {
-    let nodeIndices = new Set(this.network.clustering.body.nodeIndices);
-
-    for(let clusterId of Array.from(new Set(Object.values(this.sccMap)))) {
-      if(!nodeIndices.has(clusterId))
-        continue;
-      this.network.openCluster(clusterId);
-    }
-    this.network.stabilize(100);
-  },
 
   hideExceptSCC() {
     this.expandSCC();
@@ -229,42 +96,158 @@ module.exports = {
     //   this.timeInterval = this.maxTime - this.minTime;
     // }
 
-    if(this.config.layout === 'map') {
-      let lngKey = this.config.layoutSettings.lng;
-      let latKey = this.config.layoutSettings.lat;
-      this.nodeLayout = {};
 
-      this.graph.nodes.forEach(node => {
-        if(node.properties[latKey] && node.properties[lngKey]) {
-          let lat = node.properties[latKey][0],
-            lng = node.properties[lngKey][0];
-          if(typeof (lat) === 'string') {
-            lat = parseFloat(lat);
-          }
-          if(typeof (lng) === 'string') {
-            lng = parseFloat(lng);
-          }
-          this.nodeLayout[node.id] = {x: lng, y: lat, z: 0};
-        }
-      });
+    if(this.config.layout === 'hierarchical') {
+      this.computeHierarchicalPositions();
+      this.groupedGraph = this.filteredGraph;
       this.resetView(afterUpdate);
     }
-    else if(this.config.layout === 'custom') {
-      // Use position specified by users
+    else if(this.config.layout === 'hierarchical-scc') {
+      let sccList = stronglyConnectedComponents(this.filteredGraph.edges);
       this.nodeLayout = {};
-      for(const node of this.graph.nodes) {
-        let x, y;
-        if(node.properties[this.config.layoutSettings.x] || node.properties[this.config.layoutSettings.y]) {
-          x = parseFloat(node.properties[this.config.layoutSettings.x][0]);
-          y = parseFloat(node.properties[this.config.layoutSettings.y][0]);
-        } else {
-          x = y = 0;
+      let groupedNodes = this.graph.nodes.filter(n => {
+        for(let scc of sccList) {
+          if(scc.has(n.id))
+            return false;
         }
-        this.nodeLayout[node.id] = {x, y, z: 0};
+        return true;
+      });
+
+      // convert set to array
+      let sccArrayList = sccList.map(scc => Array.from(scc));
+      this.sccMap = {};
+      let sccReverseMap = {};
+      for(let scc of sccArrayList) {
+        let sccId = scc.join('\n');
+        for(let node of scc) {
+          this.sccMap[node] = sccId;
+          sccReverseMap[sccId] = scc;
+        }
       }
+      for(let sccId of new Set(Object.values(this.sccMap))) {
+        groupedNodes.push({
+          id: sccId,
+          labels: [],
+          properties: [],
+          clusterId: sccId,
+          location: {start: {line: 0, column: 0}, end: {line: 0, column: 0}}
+        });
+      }
+
+      // Clone this.filteredGraph.edges
+      let groupedEdges = JSON.parse(JSON.stringify(this.filteredGraph.edges));
+
+      for(let edge of groupedEdges) {
+        edge.from = this.sccMap[edge.from] || edge.from;
+        edge.to = this.sccMap[edge.to] || edge.to;
+      }
+
+      let visNodeDataSet = new visData.DataSet(groupedNodes);
+      let visEdgeDataSet = new visData.DataSet(groupedEdges);
+      let visOptions = {
+        layout: {
+          hierarchical: {
+            enabled: true,
+            levelSeparation: 150,
+            nodeSpacing: 100,
+            treeSpacing: 200,
+            blockShifting: true,
+            edgeMinimization: true,
+            parentCentralization: true,
+            direction: 'LR',
+            sortMethod: 'directed',
+            shakeTowards: 'leaves'
+          }
+        }
+      };
+      let tmpNetwork = new visNetwork.Network(document.createElement('div'), {
+        nodes: visNodeDataSet,
+        edges: visEdgeDataSet
+      }, visOptions);
+      for(let node of groupedNodes) {
+        let position = tmpNetwork.getPosition(node.id);
+        if(sccReverseMap[node.id] !== undefined) {
+          // The node is cluster
+          this.nodeLayout[node.id] = position;
+          let i = 0;
+          for(let sccNodeId of sccReverseMap[node.id]) {
+            this.nodeLayout[sccNodeId] = {
+              x: position.x,
+              y: position.y + i * 100,
+            };
+            i += 1;
+          }
+        } else {
+          this.nodeLayout[node.id] = position;
+        }
+      }
+
+      // Scale down the positions to fit coordinate systems in Deck.gl
+      for(let position of Object.values(this.nodeLayout)) {
+        position.x /= 5;
+        position.y /= 5;
+      }
+
+      if(this.config.sccMode === 'cluster') {
+        this.groupedGraph = {
+          nodes: groupedNodes,
+          edges: groupedEdges
+        };
+      } else {
+        this.groupedGraph = this.filteredGraph;
+        if(this.config.sccMode === 'only-scc') {
+          this.groupedGraph.nodes = this.groupedGraph.nodes.filter(n => this.sccMap[n.id] !== undefined);
+          this.groupedGraph.edges = this.groupedGraph.edges.filter(e => this.sccMap[e.from] !== undefined && this.sccMap[e.to] !== undefined);
+        }
+        for(let node of this.groupedGraph.nodes) {
+          if(this.sccMap[node.id] === undefined) {
+            delete node.clusterId;
+          } else {
+            node.clusterId = this.sccMap[node.id];
+          }
+        }
+      }
+
       this.resetView(afterUpdate);
     } else {
-      this.layoutNodesByD3(afterUpdate);
+      this.hierarchicalPositionMap = null;
+      this.groupedGraph = this.filteredGraph;
+      if(this.config.layout === 'map') {
+        let lngKey = this.config.layoutSettings.lng;
+        let latKey = this.config.layoutSettings.lat;
+        this.nodeLayout = {};
+
+        this.graph.nodes.forEach(node => {
+          if(node.properties[latKey] && node.properties[lngKey]) {
+            let lat = node.properties[latKey][0],
+              lng = node.properties[lngKey][0];
+            if(typeof (lat) === 'string') {
+              lat = parseFloat(lat);
+            }
+            if(typeof (lng) === 'string') {
+              lng = parseFloat(lng);
+            }
+            this.nodeLayout[node.id] = {x: lng, y: lat, z: 0};
+          }
+        });
+        this.resetView(afterUpdate);
+      } else if(this.config.layout === 'custom') {
+        // Use position specified by users
+        this.nodeLayout = {};
+        for(const node of this.graph.nodes) {
+          let x, y;
+          if(node.properties[this.config.layoutSettings.x] || node.properties[this.config.layoutSettings.y]) {
+            x = parseFloat(node.properties[this.config.layoutSettings.x][0]);
+            y = parseFloat(node.properties[this.config.layoutSettings.y][0]);
+          } else {
+            x = y = 0;
+          }
+          this.nodeLayout[node.id] = {x, y, z: 0};
+        }
+        this.resetView(afterUpdate);
+      } else {
+        this.layoutNodesByD3(afterUpdate);
+      }
     }
   },
 

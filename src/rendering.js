@@ -15,24 +15,10 @@ function updateLayers() {
   let highlightedNodes = new Set([...this.hoveredNodes, ...this.selectedNodes]);
 
   let tmpNodeData = this.nodeDataSet;
-  if(this.config.sccMode === 'cluster') {
-    for(let scc of Object.keys(this.sccReverseMap)) {
-      tmpNodeData[scc] = this.toClusterNode(scc.split("\n"), this.config.node.caption);
-      for(let nodeId of scc) {
-        delete tmpNodeData[nodeId];
-      }
-    }
-  }
 
   tmpNodeData = Object.values(tmpNodeData);
 
   let tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
-
-  for(let edge of tmpEdgeData) {
-    edge.from = this.sccMap[edge.from] || edge.from;
-    edge.to = this.sccMap[edge.to] || edge.to;
-  }
-
 
   this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
     id: 'scatterplot-layer',
@@ -466,12 +452,6 @@ module.exports = {
     let color = Blitzboard.SCCColor;
 
     let rgb = getHexColors(color);
-    let precomputePosition = this.hierarchicalPositionMap != null ? this.hierarchicalPositionMap[nodes[0].id] : undefined;
-    let x = 0, y = 0, z = 0;
-    if(precomputePosition) {
-      x = precomputePosition.x;
-      y = precomputePosition.y;
-    }
 
     return {
       objectType: 'node',
@@ -511,24 +491,18 @@ module.exports = {
     let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
 
     let color = this.retrieveConfigProp(pgNode, 'node', 'color');
+
     let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
     let size = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
     let tooltip = this.retrieveConfigProp(pgNode, 'node', 'title');
-    let clusterId = null;
 
     color = color || this.nodeColorMap[group];
-    //
-    // if(this.sccMap[pgNode.id]) {
-    //   color = Blitzboard.SCCColor;
-    //   clusterId = this.sccMap[pgNode.id];
-    // }
+
+    if(pgNode.clusterId) {
+      color = Blitzboard.SCCColor;
+    }
 
     let rgb = getHexColors(color);
-    let precomputePosition = this.hierarchicalPositionMap != null ? this.hierarchicalPositionMap[pgNode.id] : undefined;
-    if(precomputePosition) {
-      x = precomputePosition.x;
-      y = precomputePosition.y;
-    }
 
     let attrs = {
       objectType: 'node',
@@ -539,10 +513,6 @@ module.exports = {
       shape: 'dot',
       _size: size || defaultNodeSize,
       _title: tooltip != null ? tooltip : createTitle(pgNode),
-      fixed: {
-        x: precomputePosition ? true : fixed,
-        y: this.config.layout === 'timeline' ? false : (precomputePosition ? true : fixed),
-      },
 
       borderWidth: url ? 3 : 1,
       url: url,
@@ -554,7 +524,6 @@ module.exports = {
         color: url ? 'blue' : 'black',
         strokeWidth: 2,
       },
-      clusterId,
       fixedByTime: fixed
     };
 
