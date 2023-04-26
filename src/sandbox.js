@@ -472,7 +472,7 @@ $(() => {
     }
     if (blitzboard.graph) {
       nodeLineMap = {};
-      blitzboard.graph.nodes.forEach((node) => {
+      blitzboard.groupedGraph.nodes.forEach((node) => {
         if(node.location) {
           for(let i = node.location.start.line; i <= node.location.end.line; i++)
             if(i < node.location.end.line || node.location.end.column > 1)
@@ -481,7 +481,7 @@ $(() => {
       });
 
       edgeLineMap = {};
-      blitzboard.graph.edges.forEach((edge) => {
+      blitzboard.groupedGraph.edges.forEach((edge) => {
         if(edge.location) {
           for(let i = edge.location.start.line; i <= edge.location.end.line; i++)
             if(i < edge.location.end.line || edge.location.end.column > 1)

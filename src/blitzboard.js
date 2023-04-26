@@ -218,6 +218,7 @@ class Blitzboard {
       while(this.edgeMap[id]) {
         id += '_';
       }
+      edge.id = id;
       let visEdge = this.toVisEdge(edge, id);
       this.edgeMap[visEdge.id] = edge;
       return visEdge;

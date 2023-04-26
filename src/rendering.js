@@ -110,7 +110,8 @@ function updateLayers() {
     outlineColor: [255, 255, 255, 255],
     onHover: info => this.onNodeHover(info),
     fontSettings: {
-      sdf: true
+      sdf: true,
+      smoothing: 0.3
     },
     characterSet
   };
@@ -134,8 +135,14 @@ function updateLayers() {
       return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
     },
     getText: edge => edge.label,
-    getSize: fontSize,
+    getSize: fontSize * defaultNodeSize,
+    sizeMaxPixels: 60,
     sizeScale: scale,
+    getColor: edge => {
+       if(highlightedNodes.has(edge.from) || highlightedNodes.has(edge.to) || this.selectedEdges.has(edge.id) || this.hoveredEdges.has(edge.id))
+         return [0, 0, 255, 255];
+       return [0, 0, 0, 255];
+    },
     billboard: this.config.layout !== 'map',
     getAngle: 0,
     getTextAnchor: 'middle',
@@ -146,8 +153,9 @@ function updateLayers() {
     outlineColor: [255, 255, 255, 255],
     onHover: info => this.onEdgeHover(info),
     fontSettings: {
-      sdf: true
-    }
+      sdf: true,
+      smoothing: 0.3
+    },
   });
 
   this.edgeArrowLayer = new DeckGLLayers.IconLayer({

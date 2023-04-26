@@ -96,7 +96,6 @@ module.exports = {
     //   this.timeInterval = this.maxTime - this.minTime;
     // }
 
-
     if(this.config.layout === 'hierarchical') {
       this.computeHierarchicalPositions();
       this.groupedGraph = this.filteredGraph;
