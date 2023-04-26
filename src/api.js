@@ -153,7 +153,7 @@ module.exports = {
     if(update)
       this.update();
   },
-  setGraph: function (input, update = true, layout = null, callback = null) {
+  setGraph: function (input, update = true, callback = null) {
     this.nodeColorMap = {};
     this.edgeColorMap = {};
     this.dragging = false;
@@ -176,8 +176,6 @@ module.exports = {
     if(newPg === null || newPg === undefined)
       return;
     this.graph = newPg;
-
-    this.nodeLayout = layout;
 
     if(update)
       this.update(true, callback);

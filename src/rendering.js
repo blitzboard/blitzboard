@@ -582,7 +582,7 @@ module.exports = {
 
   retrieveProp(pgElem, config, loadFunction = true) {
     if((typeof config) === 'function' && loadFunction) {
-      return config(new Proxy(pgElem, Blitzboard.blitzProxy));
+      return config(new Proxy(pgElem, this.blitzProxy));
     } else if((typeof config) === 'string' && config.startsWith('@')) {
       return pgElem.properties[config.substr(1)]?.[0];
     }

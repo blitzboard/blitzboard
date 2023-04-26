@@ -2,8 +2,15 @@ const visData = require("vis-data");
 const visNetwork = require("vis-network");
 const d3Force = require("d3-force");
 
+// Shrink scale of layout from vis.js to deck.gl to preserve good appearance
+function shrinkLayoutFromVisToDeck(layout) {
+  for(let position of Object.values(layout)) {
+    position.x /= 8;
+    position.y /= 8;
+  }
+}
+
 function computeHierarchicalPositions() {
-  this.hierarchicalPositionMap = {};
   let tmpNodeDataSet = new visData.DataSet(this.graph.nodes);
   let tmpEdgeDataSet = new visData.DataSet(this.graph.edges);
   let tmpOptions = {
@@ -16,9 +23,9 @@ function computeHierarchicalPositions() {
     edges: tmpEdgeDataSet
   }, tmpOptions);
   for(let node of this.graph.nodes) {
-    let position = tmpNetwork.getPosition(node.id);
-    this.hierarchicalPositionMap[node.id] = position;
+    this.nodeLayout[node.id] = tmpNetwork.getPosition(node.id);
   }
+  shrinkLayoutFromVisToDeck(this.nodeLayout);
 }
 
 function calcNodePosition(pgNode) {
@@ -182,10 +189,7 @@ module.exports = {
       }
 
       // Scale down the positions to fit coordinate systems in Deck.gl
-      for(let position of Object.values(this.nodeLayout)) {
-        position.x /= 5;
-        position.y /= 5;
-      }
+      shrinkLayoutFromVisToDeck(this.nodeLayout);
 
       if(this.config.sccMode === 'cluster') {
         this.groupedGraph = {
@@ -211,7 +215,6 @@ module.exports = {
 
       this.resetView(afterUpdate);
     } else {
-      this.hierarchicalPositionMap = null;
       this.groupedGraph = this.filteredGraph;
       if(this.config.layout === 'map') {
         let lngKey = this.config.layoutSettings.lng;
