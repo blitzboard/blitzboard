@@ -1197,6 +1197,8 @@ $(() => {
               }).join("\n");
 
               let edgeContent = edges.map((e) => {
+                if(!e.from)
+                  return null;
                 let line = `${e.from.quoteIfNeededForPG()} -> ${e.to.quoteIfNeededForPG()}`;
                 if(e.label)
                   line += " :" + e.label.quoteIfNeededForPG();
@@ -1206,7 +1208,7 @@ $(() => {
                   }
                 }
                 return line;
-              }).join("\n");
+              }).filter(e => e).join("\n");
               
               loadValues(nodeContent + "\n" + edgeContent, defaultConfig);
               saveCurrentGraph();
