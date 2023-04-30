@@ -2,6 +2,9 @@ const visData = require("vis-data");
 const visNetwork = require("vis-network");
 const d3Force = require("d3-force");
 
+const createGraph = require("ngraph.graph");
+const createLayout = require("ngraph.forcelayout");
+
 // Shrink scale of layout from vis.js to deck.gl to preserve good appearance
 function shrinkLayoutFromVisToDeck(layout) {
   for(let position of Object.values(layout)) {
@@ -241,8 +244,8 @@ module.exports = {
         for(const node of this.graph.nodes) {
           let x, y;
           if(node.properties[this.config.layoutSettings.x] || node.properties[this.config.layoutSettings.y]) {
-            x = parseFloat(node.properties[this.config.layoutSettings.x][0]);
-            y = parseFloat(node.properties[this.config.layoutSettings.y][0]);
+            x = parseFloat(node.properties[this.config.layoutSettings.x][0]) * 10;
+            y = parseFloat(node.properties[this.config.layoutSettings.y][0]) * 10;
           } else {
             x = y = 0;
           }
@@ -250,10 +253,45 @@ module.exports = {
         }
         this.resetView(afterUpdate);
       } else {
-        this.layoutNodesByD3(afterUpdate);
+        this.layoutNodesByNGraph(afterUpdate);
+        // this.layoutNodesByD3(afterUpdate);
       }
     }
   },
+
+
+  layoutNodesByNGraph(afterUpdate) {
+    let ngraph = createGraph();
+    this.groupedGraph.nodes.forEach(node => {
+      ngraph.addNode(node.id);
+    });
+    this.groupedGraph.edges.forEach(edge => {
+      ngraph.addLink(edge.from, edge.to);
+    });
+
+    const physicsSettings = {
+      // timeStep: 0.1,
+      dimensions: 2,
+      // gravity: -1.2,
+      // theta: 1.8,
+      springLength: 300,
+      springCoefficient: 0.7,
+      // dragCoefficient: 0.9,
+    };
+    let ngraphLayout = createLayout(ngraph, physicsSettings);
+
+    this.layoutNodes(
+      (step) => { for(let i = 0; i < step; i++) ngraphLayout.step() },
+      () => {
+
+        for(let node of this.groupedGraph.nodes) {
+          let pos = ngraphLayout.getNodePosition(node.id);
+          this.nodeLayout[node.id] = {x: pos.x, y: pos.y, z: 0};
+        }
+        this.resetView(afterUpdate);
+      }, 1000);
+  },
+
 
   layoutNodesByD3(afterUpdate) {
     let count = {};
@@ -281,7 +319,9 @@ module.exports = {
       .force("centralGravityX", d3Force.forceX().strength(0.5))
       .force("centralGravityY", d3Force.forceY().strength(0.5));
 
-    this.layoutNodes(() => {
+    this.layoutNodes(
+      (step) => { this.d3Simulation.tick(step); },
+      () => {
       this.nodeLayout = {};
       for(const node of d3Nodes) {
         this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
@@ -290,21 +330,22 @@ module.exports = {
     }, 1000);
   },
 
-  layoutNodes(callback, maxStep) {
+  layoutNodes(stepCallback, endcallback, maxStep) {
     this.shouldAbortLayout = false;
-    this.layoutNodesRecursive(callback, maxStep, 0);
+    this.layoutNodesRecursive(stepCallback, endcallback, maxStep, 0);
   },
 
-  layoutNodesRecursive(callback, maxStep, current) {
+  layoutNodesRecursive(stepCallback, endCallback, maxStep, current) {
     const LAYOUT_STEP = 10;
     if(this.shouldAbortLayout) {
       return;
     }
     if(current + LAYOUT_STEP >= maxStep) {
-      callback();
+      endCallback();
     } else {
-      this.d3Simulation.tick(LAYOUT_STEP);
-      setTimeout(() => this.layoutNodesRecursive(callback, maxStep, current + LAYOUT_STEP), 0);
+      stepCallback(LAYOUT_STEP);
+
+      setTimeout(() => this.layoutNodesRecursive(stepCallback, endCallback, maxStep, current + LAYOUT_STEP), 0);
     }
   }
 }
