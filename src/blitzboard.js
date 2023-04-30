@@ -2,6 +2,8 @@ require('@iconify/iconify');
 require('./pg_parser_browserified.js');
 require('./scc.js');
 const DeckGL = require('@deck.gl/core');
+const DeckGLLayers = require("@deck.gl/layers");
+
 require('../css/blitzboard.css')
 require('../css/ContextMenu.css')
 const utilModule = require('./util.js')
@@ -123,9 +125,8 @@ class Blitzboard {
         }
         this.viewState = viewState.viewState;
         this.updateThumbnailLayer();
-        this.network.setProps({
-          layers: this.layers
-        });
+        this.nodeTextLayer = new DeckGLLayers.TextLayer(this.nodeTextLayer.props); // Recreate text layer to avoid assertion failure in Deck.GL
+        this.determineLayersToShow();
       },
       onClick: (event, info) => blitzboard.onLayerClick(event, info),
       initialViewState: {
