@@ -251,8 +251,10 @@ module.exports = {
           })));
         }
       }
-      this.contextMenu.setMenuItems(menuItems);
-      this.contextMenu.openMenu(event.srcEvent);
+      if(menuItems.length > 0) {
+        this.contextMenu.setMenuItems(menuItems);
+        this.contextMenu.openMenu(event.srcEvent);
+      }
     } else {
       if(!this.doubleClickTimer) {
         if(this.config.doubleClickWait <= 0) {
