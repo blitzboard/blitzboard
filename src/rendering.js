@@ -6,224 +6,6 @@ const {getRandomColor, getHexColors, createLabelText, createTitle, retrieveHttpU
 const defaultNodeSize = 5;
 
 
-function updateLayers() {
-  const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
-  const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
-
-  const scale = 0.2;
-
-
-  let blitzboard = this;
-
-  let tmpNodeData = this.nodeDataSet;
-
-  tmpNodeData = Object.values(tmpNodeData);
-
-  let tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
-
-  this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
-    id: 'scatterplot-layer',
-    data: tmpNodeData,
-    pickable: true,
-    opacity: 1, // TODO
-    stroked: false,
-    filled: true,
-    billboard: this.config.layout !== 'map',
-    coordinateSystem,
-    getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
-    getRadius: (n) =>  {
-      let radius = n._size * (this.config.layout === 'map' ? 100 : 1); // TODO: avoid magic number
-      if(blitzboard.shouldHighlight(n))
-        radius *= 1.5; // TODO: avoid magic number
-      return radius;
-    },
-    radiusMinPixels: Blitzboard.minNodeSizeInPixels,
-    radiusScale: scale,
-    getFillColor: (n) => {
-      if(this.selectedNodes.has(n.id))
-        return Blitzboard.selectedNodeColor;
-      return [...n.color];
-    },
-    onHover: info => this.onNodeHover(info),
-    updateTriggers: {
-      getRadius: [],
-      getFillColor: [],
-    },
-    radiusUnits: sizeUnits,
-  });
-
-  this.edgeLayer = new DeckGLLayers.LineLayer({
-    id: "line-layer",
-    pickable: true,
-    coordinateSystem,
-    billboard: this.config.layout !== 'map',
-    data: tmpEdgeData,
-    getWidth: edge => edge.width,
-    getSourcePosition: (edge) => {
-      let {x, y, z} = this.nodeDataSet[edge.from];
-      return [x, y, z];
-    },
-    getTargetPosition: (edge) => {
-      let {x, y, z} = this.nodeDataSet[edge.to];
-      return [x, y, z];
-    },
-    getColor: (e) => {
-      if(this.shouldHighlight(e)) {
-        return [e.color, e.color, e.color, 255];
-      }
-      let color = [...e.color];
-      for(let i = 0; i < 3; ++i)
-        color[i] = (128 * 3 + color[i]) / 4;
-      color[3] = 64;
-      return color;
-    },
-    updateTriggers: {
-      getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
-    },
-    onHover: info => this.onEdgeHover(info),
-    widthUnits: ('common'),
-    widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
-    widthMinPixels: 1,
-  });
-
-  this.edgeArrowLayer = new DeckGLLayers.IconLayer({
-    id: 'edge-arrow-layer',
-    data: tmpEdgeData.filter(e => !e.undirected || e.direction === '->'),
-    coordinateSystem,
-    getIcon: n => ({
-      url: this.svgToURL('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15"><path fill="currentColor" d="M7.932 1.248a.5.5 0 0 0-.864 0l-7 12A.5.5 0 0 0 .5 14h14a.5.5 0 0 0 .432-.752l-7-12Z"/></svg>'),
-      width: 240,
-      height: 240
-    }),
-    sizeScale: 0.1,
-    getPosition: (edge) => {
-      let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
-      let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
-
-      let angle = Math.atan2(fromY - toY, fromX - toX);
-      let nodeSize = this.nodeDataSet[edge.to]._size;
-      return [toX + Math.cos(angle) * (nodeSize * scale + 0.1),
-        toY + Math.sin(angle) * (nodeSize * scale + 0.1), (fromZ + toZ) / 2];
-    },
-    getAngle: (edge) => {
-      let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
-      let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
-      return Math.atan2(-(fromY - toY), fromX - toX) * 180 / Math.PI + 90;
-    },
-    getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
-    sizeUnits: sizeUnits,
-    getColor: n => [255, 0, 0]
-  });
-
-  this.iconLayer = this.createIconLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
-
-  this.updateThumbnailLayer();
-  this.updateTextLayers();
-
-  if(this.config.layout === 'map') {
-    this.tileLayer = new DeckGLGeoLayers.TileLayer({
-      id: 'TileLayer',
-      // data: "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
-      data: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      maxZoom: 19,
-      minZoom: 0,
-      tileSize: 256,
-      renderSubLayers: props => {
-        const {
-          bbox: {west, south, east, north}
-        } = props.tile;
-
-        return new DeckGLLayers.BitmapLayer(props, {
-          data: null,
-          image: props.data,
-          bounds: [west, south, east, north]
-        });
-      },
-      pickable: true,
-    });
-
-  }
-  this.determineLayersToShow();
-}
-
-
-function updateThumbnailLayer() {
-  // TODO: Create individual layers for each node may lead to performance problem
-  this.thumbnailLayers = this.nodeData.map((n) => {
-    if(n.imageURL && this.visibleBounds && this.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage) {
-      let bounds =  [ n.x + n._size / defaultNodeSize, n.y + n._size / defaultNodeSize,
-        n.x - n._size / defaultNodeSize,
-        n.y - n._size / defaultNodeSize];
-      let visible =
-        this.visibleBounds.left <= n.x &&
-        this.visibleBounds.top <= n.y &&
-        n.x <= this.visibleBounds.right &&
-        n.y <= this.visibleBounds.bottom;
-      if(visible) {
-        return new DeckGLLayers.BitmapLayer({
-          id: 'bitmap-layer-' + n.id,
-          bounds,
-          image: n.imageURL
-        });
-      }
-    }
-    return null;
-  }).filter(n => n !== null);
-}
-
-function iconRegisterer(name) {
-  return (icons) => {
-    if(Blitzboard.loadedIcons[name] !== 'retrieving')
-      return;
-    if(icons.length > 0) {
-      let icon = null;
-
-      function findIconWithHighestPriority(icons) {
-        for(let prefix of Blitzboard.iconPrefixes) {
-          for(let i of icons) {
-            if(`${i.prefix}:${i.name}`.startsWith(prefix)) {
-              return i;
-            }
-          }
-        }
-        return icons[0];
-      }
-
-      icon = findIconWithHighestPriority(icons);
-      icon = icon || icons[0];
-      let size = 1000;
-      let svg = Iconify.renderSVG(`${icon.prefix}:${icon.name}`, {
-        width: size,
-        height: size,
-        color: "rgba(255, 255, 255, 0.8)"
-      });
-      let img = new Image();
-      img.src = blitzboard.svgToURL(svg.outerHTML);
-      Blitzboard.loadedIcons[name] = img.src;
-      blitzboard.refreshIconLayer();
-    }
-  };
-}
-
-function refreshIconLayer() {
-  if(!this.iconLayer)
-    return;
-
-  // Refresh variables to trigger update of icons
-  Blitzboard.loadedIcons = {...Blitzboard.loadedIcons};
-  let oldLayer = this.iconLayer;
-  this.iconLayer = this.createIconLayer(this.nodeData, this.iconLayer.props.sizeScale, this.iconLayer.props.sizeUnits, this.iconLayer.props.coordinateSystem);
-  // replace with new one
-  for(let i = 0; i < this.layers.length; ++i) {
-    if(this.layers[i] === oldLayer) {
-      this.layers[i] = this.iconLayer;
-      break;
-    }
-  }
-  this.network.setProps({layers: [...this.layers]});
-}
-
-
 function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
   let currentTime = new Date(startTime);
   switch(intervalUnit) {
@@ -328,25 +110,236 @@ function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, 
 // });
 
 
-function updateNodeLocationOnTimeLine() {
-  let nodePositions = [];
-  this.graph.nodes.forEach(node => {
-    let x, y, fixed, width;
-    ({x, y, fixed, width} = this.calcNodePosition(node));
-    nodePositions.push({
-      id: node.id,
-      x, y
-    });
-  });
-}
+
 
 
 module.exports = {
-  updateLayers,
-  updateThumbnailLayer,
-  refreshIconLayer,
-  iconRegisterer,
-  updateNodeLocationOnTimeLine,
+  updateLayers() {
+    const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
+    const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
+
+    const scale = 0.2;
+
+    let blitzboard = this;
+
+    let tmpNodeData = this.nodeDataSet;
+
+    tmpNodeData = Object.values(tmpNodeData);
+
+    let tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
+
+    this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
+      id: 'scatterplot-layer',
+      data: tmpNodeData,
+      pickable: true,
+      opacity: 1, // TODO
+      stroked: false,
+      filled: true,
+      billboard: this.config.layout !== 'map',
+      coordinateSystem,
+      getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
+      getRadius: (n) =>  {
+        let radius = n._size * (this.config.layout === 'map' ? 100 : 1); // TODO: avoid magic number
+        if(blitzboard.shouldHighlight(n))
+          radius *= 1.5; // TODO: avoid magic number
+        return radius;
+      },
+      radiusMinPixels: Blitzboard.minNodeSizeInPixels,
+      radiusScale: scale,
+      getFillColor: (n) => {
+        if(this.selectedNodes.has(n.id))
+          return Blitzboard.selectedNodeColor;
+        return [...n.color];
+      },
+      onHover: info => this.onNodeHover(info),
+      updateTriggers: {
+        getRadius: [],
+        getFillColor: [],
+      },
+      radiusUnits: sizeUnits,
+    });
+
+    this.edgeLayer = new DeckGLLayers.LineLayer({
+      id: "line-layer",
+      pickable: true,
+      coordinateSystem,
+      billboard: this.config.layout !== 'map',
+      data: tmpEdgeData,
+      getWidth: edge => edge.width,
+      getSourcePosition: (edge) => {
+        let {x, y, z} = this.nodeDataSet[edge.from];
+        return [x, y, z];
+      },
+      getTargetPosition: (edge) => {
+        let {x, y, z} = this.nodeDataSet[edge.to];
+        return [x, y, z];
+      },
+      getColor: (e) => {
+        if(this.shouldHighlight(e)) {
+          return [e.color, e.color, e.color, 255];
+        }
+        let color = [...e.color];
+        for(let i = 0; i < 3; ++i)
+          color[i] = (128 * 3 + color[i]) / 4;
+        color[3] = 64;
+        return color;
+      },
+      updateTriggers: {
+        getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
+      },
+      onHover: info => this.onEdgeHover(info),
+      widthUnits: ('common'),
+      widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
+      widthMinPixels: 1,
+    });
+
+    this.edgeArrowLayer = new DeckGLLayers.IconLayer({
+      id: 'edge-arrow-layer',
+      data: tmpEdgeData.filter(e => !e.undirected || e.direction === '->'),
+      coordinateSystem,
+      getIcon: n => ({
+        url: this.svgToURL('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15"><path fill="currentColor" d="M7.932 1.248a.5.5 0 0 0-.864 0l-7 12A.5.5 0 0 0 .5 14h14a.5.5 0 0 0 .432-.752l-7-12Z"/></svg>'),
+        width: 240,
+        height: 240
+      }),
+      sizeScale: 0.1,
+      getPosition: (edge) => {
+        let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
+        let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
+
+        let angle = Math.atan2(fromY - toY, fromX - toX);
+        let nodeSize = this.nodeDataSet[edge.to]._size;
+        return [toX + Math.cos(angle) * (nodeSize * scale + 0.1),
+          toY + Math.sin(angle) * (nodeSize * scale + 0.1), (fromZ + toZ) / 2];
+      },
+      getAngle: (edge) => {
+        let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
+        let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
+        return Math.atan2(-(fromY - toY), fromX - toX) * 180 / Math.PI + 90;
+      },
+      getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
+      sizeUnits: sizeUnits,
+      getColor: n => [255, 0, 0]
+    });
+
+    this.iconLayer = this.createIconLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
+
+    this.updateThumbnailLayer();
+    this.updateTextLayers();
+
+    if(this.config.layout === 'map') {
+      this.tileLayer = new DeckGLGeoLayers.TileLayer({
+        id: 'TileLayer',
+        // data: "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
+        data: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        maxZoom: 19,
+        minZoom: 0,
+        tileSize: 256,
+        renderSubLayers: props => {
+          const {
+            bbox: {west, south, east, north}
+          } = props.tile;
+
+          return new DeckGLLayers.BitmapLayer(props, {
+            data: null,
+            image: props.data,
+            bounds: [west, south, east, north]
+          });
+        },
+        pickable: true,
+      });
+
+    }
+    this.determineLayersToShow();
+  },
+
+  updateThumbnailLayer() {
+    // TODO: Create individual layers for each node may lead to performance problem
+    this.thumbnailLayers = this.nodeData.map((n) => {
+      if(n.imageURL && this.visibleBounds && this.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage) {
+        let bounds =  [ n.x + n._size / defaultNodeSize, n.y + n._size / defaultNodeSize,
+          n.x - n._size / defaultNodeSize,
+          n.y - n._size / defaultNodeSize];
+        let visible =
+          this.visibleBounds.left <= n.x &&
+          this.visibleBounds.top <= n.y &&
+          n.x <= this.visibleBounds.right &&
+          n.y <= this.visibleBounds.bottom;
+        if(visible) {
+          return new DeckGLLayers.BitmapLayer({
+            id: 'bitmap-layer-' + n.id,
+            bounds,
+            image: n.imageURL
+          });
+        }
+      }
+      return null;
+    }).filter(n => n !== null);
+  },
+
+  refreshIconLayer() {
+    if(!this.iconLayer)
+      return;
+
+    // Refresh variables to trigger update of icons
+    Blitzboard.loadedIcons = {...Blitzboard.loadedIcons};
+    let oldLayer = this.iconLayer;
+    this.iconLayer = this.createIconLayer(this.nodeData, this.iconLayer.props.sizeScale, this.iconLayer.props.sizeUnits, this.iconLayer.props.coordinateSystem);
+    // replace with new one
+    for(let i = 0; i < this.layers.length; ++i) {
+      if(this.layers[i] === oldLayer) {
+        this.layers[i] = this.iconLayer;
+        break;
+      }
+    }
+    this.network.setProps({layers: [...this.layers]});
+  },
+
+  iconRegisterer(name) {
+    return (icons) => {
+      if(Blitzboard.loadedIcons[name] !== 'retrieving')
+        return;
+      if(icons.length > 0) {
+        let icon = null;
+
+        function findIconWithHighestPriority(icons) {
+          for(let prefix of Blitzboard.iconPrefixes) {
+            for(let i of icons) {
+              if(`${i.prefix}:${i.name}`.startsWith(prefix)) {
+                return i;
+              }
+            }
+          }
+          return icons[0];
+        }
+
+        icon = findIconWithHighestPriority(icons);
+        icon = icon || icons[0];
+        let size = 1000;
+        let svg = Iconify.renderSVG(`${icon.prefix}:${icon.name}`, {
+          width: size,
+          height: size,
+          color: "rgba(255, 255, 255, 0.8)"
+        });
+        let img = new Image();
+        img.src = blitzboard.svgToURL(svg.outerHTML);
+        Blitzboard.loadedIcons[name] = img.src;
+        blitzboard.refreshIconLayer();
+      }
+    };
+  },
+
+  updateNodeLocationOnTimeLine() {
+    let nodePositions = [];
+    this.graph.nodes.forEach(node => {
+      let x, y, fixed, width;
+      ({x, y, fixed, width} = this.calcNodePosition(node));
+      nodePositions.push({
+        id: node.id,
+        x, y
+      });
+    });
+  },
 
   svgToURL(svg) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
@@ -546,12 +539,14 @@ module.exports = {
       attrs[key] = otherProps[key] || attrs[key];
     }
 
+    let blitzboard = this;
+
     function registerIcon(icons, label) {
       let lowerLabel = label.toLowerCase();
       if(!Blitzboard.loadedIcons[lowerLabel]) {
         Blitzboard.loadedIcons[lowerLabel] = 'retrieving'; // Avoid duplication of loading
         setTimeout(() =>
-          Iconify.loadIcons(icons, iconRegisterer(lowerLabel)), 1000);
+          Iconify.loadIcons(icons, blitzboard.iconRegisterer(lowerLabel)), 1000);
       }
       attrs['iconLabel'] = lowerLabel;
     }
@@ -809,5 +804,4 @@ module.exports = {
     }
     return null;
   }
-
 }
