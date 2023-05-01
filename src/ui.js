@@ -1,5 +1,7 @@
 const $ = require("jquery");
 const ContextMenu = require("./ContextMenu");
+const DeckGLLayers = require("@deck.gl/layers");
+
 
 function initializeUI() {
 
@@ -211,7 +213,17 @@ module.exports = {
       this.hoveredNodes.add(hoverInfo.object.id);
     }
     // TODO: Can we avoid update of whole layers?
-    this.updateLayers();
+    // this.updateLayers();
+
+    let newAttributes = {...this.nodeLayer.props};
+    newAttributes.data = this.nodeLayer.props.data;
+    let triggers = {
+      getFillColor: Array.from(this.hoveredNodes)
+    };
+    newAttributes.updateTriggers = triggers;
+
+    this.nodeLayer = new DeckGLLayers.ScatterplotLayer(newAttributes);
+    this.determineLayersToShow();
     if (this.config.node.onHover) {
       this.config.node.onHover(this.getNode(hoverInfo.object.id));
     }
@@ -223,7 +235,19 @@ module.exports = {
       this.hoveredEdges.add(hoverInfo.object.id);
     }
     // TODO: Can we avoid update of whole layers?
-    this.updateLayers();
+    // this.updateLayers();
+
+    let newAttributes = {...this.edgeLayer.props};
+    newAttributes.data = this.edgeLayer.props.data;
+    let triggers = {
+      getColor: Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges))
+    };
+    newAttributes.updateTriggers = triggers;
+
+    this.edgeLayer = new DeckGLLayers.LineLayer(newAttributes);
+    // trigger update of edge layer in Deck.GL
+
+    this.determineLayersToShow();
     if (this.config.edge.onHover) {
       this.config.edge.onHover(this.getEdge(hoverInfo.object.id));
     }

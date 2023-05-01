@@ -192,14 +192,10 @@ function iconRegisterer(name) {
       let size = 1000;
       let svg = Iconify.renderSVG(`${icon.prefix}:${icon.name}`, {
         width: size,
-        height: size
+        height: size,
+        color: "rgba(255, 255, 255, 0.8)"
       });
       let img = new Image();
-      svg.querySelectorAll(
-        "path,circle,ellipse,rect").forEach((path) => {
-        path.style.fill = "white";
-        path.style.stroke = "white";
-      });
       img.src = blitzboard.svgToURL(svg.outerHTML);
       Blitzboard.loadedIcons[name] = img.src;
       blitzboard.refreshIconLayer();
@@ -665,21 +661,23 @@ module.exports = {
           return {
             url: Blitzboard.loadedIcons[n.iconLabel],
             width: 240,
-            height: 240
+            height: 240,
+            mask: true
           }
         }
         return {
           url: 'data:image/svg+xml;charset=utf-8,dummy', // dummy icon to avoid exception
           width: 24,
-          height: 24
+          height: 24,
+          mask: true
         }
       },
       sizeScale: scale,
       getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
       getSize: n => n._size / defaultNodeSize * 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
-      getColor: n => ([255, 0, 0]),
-      sizeMinPixels: Blitzboard.minNodeSizeInPixels,
+      getColor: [255, 255, 255, 216],
+      sizeMinPixels: Blitzboard.minNodeSizeInPixels * 1.2,
       // updateTriggers: {
       //   getIcon: [Blitzboard.loadedIcons],
       // }
@@ -1012,38 +1010,7 @@ module.exports = {
 
     return attrs;
   },
-  createIconLayer(nodeData, scale, sizeUnits, coordinateSystem) {
-    return new DeckGLLayers.IconLayer({
-      id: 'icon-layer',
-      data: nodeData,
-      pickable: false,
-      coordinateSystem,
-      billboard: this.config.layout !== 'map',
-      getIcon: (n) => {
-        if(n.iconLabel && Blitzboard.loadedIcons[n.iconLabel]) {
-          return {
-            url: Blitzboard.loadedIcons[n.iconLabel],
-            width: 240,
-            height: 240
-          }
-        }
-        return {
-          url: 'data:image/svg+xml;charset=utf-8,dummy', // dummy icon to avoid exception
-          width: 24,
-          height: 24
-        }
-      },
-      sizeScale: scale,
-      getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
-      getSize: n => n._size / defaultNodeSize * 6 * (this.config.layout === 'map' ? 100 : 1),
-      sizeUnits: sizeUnits,
-      getColor: n => ([255, 0, 0]),
-      sizeMinPixels: Blitzboard.minNodeSizeInPixels,
-      updateTriggers: {
-        getIcon: [Blitzboard.loadedIcons],
-      }
-    });
-  },
+
   createInitialViewState() {
     if(this.config.layout === 'map') {
       return {
