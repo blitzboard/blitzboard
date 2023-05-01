@@ -372,8 +372,6 @@ module.exports = {
 
     const fontSize = 3;
 
-    this.characterSet = tmpNodeData.map(n => Array.from(n.label)).flat();
-
     let textLayerAttributes = {
       id: 'node-text-layer',
       pickable: true,
@@ -403,7 +401,7 @@ module.exports = {
         sdf: true,
         smoothing: 0.3
       },
-      characterSet: this.characterSet
+      characterSet: 'auto'
     };
 
     textLayerAttributes.data = tmpNodeData;
