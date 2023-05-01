@@ -141,7 +141,7 @@ module.exports = {
       getRadius: (n) =>  {
         let radius = n._size * (this.config.layout === 'map' ? 100 : 1); // TODO: avoid magic number
         if(blitzboard.shouldHighlight(n))
-          radius *= 1.5; // TODO: avoid magic number
+          radius *= 1.2; // TODO: avoid magic number
         return radius;
       },
       radiusMinPixels: Blitzboard.minNodeSizeInPixels,
@@ -200,7 +200,8 @@ module.exports = {
       getIcon: n => ({
         url: this.svgToURL('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15"><path fill="currentColor" d="M7.932 1.248a.5.5 0 0 0-.864 0l-7 12A.5.5 0 0 0 .5 14h14a.5.5 0 0 0 .432-.752l-7-12Z"/></svg>'),
         width: 240,
-        height: 240
+        height: 240,
+        mask: true
       }),
       sizeScale: 0.1,
       getPosition: (edge) => {
@@ -217,9 +218,10 @@ module.exports = {
         let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
         return Math.atan2(-(fromY - toY), fromX - toX) * 180 / Math.PI + 90;
       },
-      getSize: n => 6 * (this.config.layout === 'map' ? 100 : 1),
+      getSize: n =>3 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
-      getColor: n => [255, 0, 0]
+      sizeMinPixels: Blitzboard.minNodeSizeInPixels,
+      getColor: n => [0, 0, 0, 192]
     });
 
     this.iconLayer = this.createIconLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
@@ -684,7 +686,7 @@ module.exports = {
       getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
       getSize: n => n._size / defaultNodeSize * 6 * (this.config.layout === 'map' ? 100 : 1),
       sizeUnits: sizeUnits,
-      getColor: [255, 255, 255, 216],
+      getColor: [255, 255, 255, 232],
       sizeMinPixels: Blitzboard.minNodeSizeInPixels * 1.2,
       // updateTriggers: {
       //   getIcon: [Blitzboard.loadedIcons],

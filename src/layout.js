@@ -13,6 +13,14 @@ function shrinkLayoutFromVisToDeck(layout) {
   }
 }
 
+function expandLayoutFromNgraphToDeck(layout) {
+  for(let position of Object.values(layout)) {
+    position.x *= 3;
+    position.y *= 3;
+  }
+}
+
+
 function computeHierarchicalPositions() {
   let tmpNodeDataSet = new visData.DataSet(this.graph.nodes);
   let tmpEdgeDataSet = new visData.DataSet(this.graph.edges);
@@ -274,7 +282,7 @@ module.exports = {
       dimensions: 2,
       // gravity: -1.2,
       // theta: 1.8,
-      springLength: 300,
+      // springLength: 300,
       springCoefficient: 0.7,
       // dragCoefficient: 0.9,
     };
@@ -288,6 +296,7 @@ module.exports = {
           let pos = ngraphLayout.getNodePosition(node.id);
           this.nodeLayout[node.id] = {x: pos.x, y: pos.y, z: 0};
         }
+        expandLayoutFromNgraphToDeck(this.nodeLayout);
         this.resetView(afterUpdate);
       }, 1000);
   },
@@ -344,7 +353,6 @@ module.exports = {
       endCallback();
     } else {
       stepCallback(LAYOUT_STEP);
-
       setTimeout(() => this.layoutNodesRecursive(stepCallback, endCallback, maxStep, current + LAYOUT_STEP), 0);
     }
   }
