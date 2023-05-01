@@ -256,27 +256,25 @@ module.exports = {
   },
 
   updateThumbnailLayer() {
-    // TODO: Create individual layers for each node may lead to performance problem
     this.thumbnailLayers = this.nodeData.map((n) => {
+      let visible = false;
+      let bounds =  [ n.x + n._size / defaultNodeSize, n.y + n._size / defaultNodeSize,
+        n.x - n._size / defaultNodeSize,
+        n.y - n._size / defaultNodeSize];
       if(n.imageURL && this.visibleBounds && this.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage) {
-        let bounds =  [ n.x + n._size / defaultNodeSize, n.y + n._size / defaultNodeSize,
-          n.x - n._size / defaultNodeSize,
-          n.y - n._size / defaultNodeSize];
-        let visible =
+        visible =
           this.visibleBounds.left <= n.x &&
           this.visibleBounds.top <= n.y &&
           n.x <= this.visibleBounds.right &&
           n.y <= this.visibleBounds.bottom;
-        if(visible) {
-          return new DeckGLLayers.BitmapLayer({
-            id: 'bitmap-layer-' + n.id,
-            bounds,
-            image: n.imageURL
-          });
-        }
       }
-      return null;
-    }).filter(n => n !== null);
+      return new DeckGLLayers.BitmapLayer({
+        id: 'bitmap-layer-' + n.id,
+        bounds,
+        // visible,
+        image: n.imageURL
+      });
+    });
   },
 
   refreshIconLayer() {
@@ -350,7 +348,7 @@ module.exports = {
   shouldHighlight(elem) {
     if(elem.from) {
       // For edge
-      return this.hoveredNodes.has(elem.from) || this.hoveredNodes.has(elem.to) || this.selectedNodes.has(elem.from) || this.selectedNodes.has(elem.to);
+      return this.hoveredNodes.has(elem.from) || this.hoveredNodes.has(elem.to) || this.selectedNodes.has(elem.from) || this.selectedNodes.has(elem.to) || this.hoveredEdges.has(elem.id);
     } else {
       return this.hoveredNodes.has(elem.id) || this.selectedNodes.has(elem.id);
     }
@@ -391,12 +389,10 @@ module.exports = {
       coordinateSystem,
       sizeUnits: sizeUnits,
       sizeScale: scale,
+      visible: this.viewState?.zoom > 2.5,
       outlineWidth: 1,
       outlineColor: [255, 255, 255, 255],
       onHover: info => this.onNodeHover(info),
-      updateTriggers: {
-        getText: [this.viewState],
-      },
       fontSettings: {
         sdf: true,
         smoothing: 0.3
@@ -741,28 +737,16 @@ module.exports = {
         ...this.thumbnailLayers
       ];
     } else {
-      if(!this.viewState || this.viewState.zoom < 2.5) {
-        this.layers = [
-          this.edgeLayer,
-          this.edgeTextLayer,
-          this.edgeArrowLayer,
-          this.nodeLayer,
-          this.highlightedNodeTextLayer,
-          this.iconLayer,
-          ...this.thumbnailLayers
-        ];
-      } else {
-        this.layers = [
-          this.edgeLayer,
-          this.edgeTextLayer,
-          this.nodeTextLayer,
-          this.edgeArrowLayer,
-          this.nodeLayer,
-          this.highlightedNodeTextLayer,
-          this.iconLayer,
-          ...this.thumbnailLayers
-        ];
-      }
+      this.layers = [
+        this.edgeLayer,
+        this.edgeTextLayer,
+        this.nodeTextLayer,
+        this.edgeArrowLayer,
+        this.nodeLayer,
+        this.highlightedNodeTextLayer,
+        this.iconLayer,
+        ...this.thumbnailLayers
+      ];
     }
     this.network.setProps({
       layers: this.layers

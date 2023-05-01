@@ -124,8 +124,10 @@ class Blitzboard {
           };
         }
         this.viewState = viewState.viewState;
-        this.updateThumbnailLayer();
-        this.nodeTextLayer = new DeckGLLayers.TextLayer(this.nodeTextLayer.props); // Recreate text layer to avoid assertion failure in Deck.GL
+        let attributes = {...this.nodeTextLayer.props};
+        attributes.visible = this.viewState?.zoom > 2.5;
+        attributes.data = this.nodeTextLayer.props.data;
+        this.nodeTextLayer = new DeckGLLayers.TextLayer(attributes); // Recreate text layer to avoid assertion failure in Deck.GL
         this.determineLayersToShow();
       },
       onClick: (event, info) => blitzboard.onLayerClick(event, info),
