@@ -20,7 +20,7 @@ class Blitzboard {
   static SCCColor = '#edc821';
   static selectedNodeColor = [0x21, 0x56, 0xee];
   static zoomLevelToLoadImage = 2.0;
-  static minNodeSizeInPixels = 3;
+  static minNodeSizeInPixels = 10;
   static defaultConfig = {
     doubleClickWait: 200,
     node: {

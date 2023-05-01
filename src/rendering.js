@@ -12,7 +12,8 @@ function updateLayers() {
 
   const scale = 0.2;
 
-  let highlightedNodes = new Set([...this.hoveredNodes, ...this.selectedNodes]);
+
+  let blitzboard = this;
 
   let tmpNodeData = this.nodeDataSet;
 
@@ -30,22 +31,23 @@ function updateLayers() {
     billboard: this.config.layout !== 'map',
     coordinateSystem,
     getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
-    getRadius: (n) => n._size * (this.config.layout === 'map' ? 100 : 1), // TODO
-    radiusMinPixels: Blitzboard.minNodeSizeInPixels, // TODO,
+    getRadius: (n) =>  {
+      let radius = n._size * (this.config.layout === 'map' ? 100 : 1); // TODO: avoid magic number
+      if(blitzboard.shouldHighlight(n))
+        radius *= 1.5; // TODO: avoid magic number
+      return radius;
+    },
+    radiusMinPixels: Blitzboard.minNodeSizeInPixels,
     radiusScale: scale,
     getFillColor: (n) => {
       if(this.selectedNodes.has(n.id))
         return Blitzboard.selectedNodeColor;
-      else if(highlightedNodes.has(n.id))
-        return n.color;
-      let color = [...n.color];
-      // for(let i = 0; i < 3; ++i)
-      //   color[i] = (128 + color[i]) / 2;
-      return color;
+      return [...n.color];
     },
     onHover: info => this.onNodeHover(info),
     updateTriggers: {
-      getFillColor: [highlightedNodes],
+      getRadius: [],
+      getFillColor: [],
     },
     radiusUnits: sizeUnits,
   });
@@ -66,7 +68,7 @@ function updateLayers() {
       return [x, y, z];
     },
     getColor: (e) => {
-      if(highlightedNodes.has(e.from) || highlightedNodes.has(e.to) || this.selectedEdges.has(e.id) || this.hoveredEdges.has(e.id)) {
+      if(this.shouldHighlight(e)) {
         return [e.color, e.color, e.color, 255];
       }
       let color = [...e.color];
@@ -76,7 +78,7 @@ function updateLayers() {
       return color;
     },
     updateTriggers: {
-      getColor: [highlightedNodes, this.selectedEdges, this.hoveredEdges],
+      getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
     },
     onHover: info => this.onEdgeHover(info),
     widthUnits: ('common'),
@@ -345,8 +347,18 @@ module.exports = {
   refreshIconLayer,
   iconRegisterer,
   updateNodeLocationOnTimeLine,
+
   svgToURL(svg) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  },
+
+  shouldHighlight(elem) {
+    if(elem.from) {
+      // For edge
+      return this.hoveredNodes.has(elem.from) || this.hoveredNodes.has(elem.to) || this.selectedNodes.has(elem.from) || this.selectedNodes.has(elem.to);
+    } else {
+      return this.hoveredNodes.has(elem.id) || this.selectedNodes.has(elem.id);
+    }
   },
 
   updateTextLayers() {
@@ -423,7 +435,7 @@ module.exports = {
       sizeMaxPixels: 60,
       sizeScale: scale,
       getColor: edge => {
-        if(highlightedNodes.has(edge.from) || highlightedNodes.has(edge.to) || this.selectedEdges.has(edge.id) || this.hoveredEdges.has(edge.id))
+        if(this.shouldHighlight(edge))
           return [0, 0, 255, 255];
         return [0, 0, 0, 255];
       },
@@ -649,6 +661,7 @@ module.exports = {
 
     return attrs;
   },
+
   createIconLayer(nodeData, scale, sizeUnits, coordinateSystem) {
     return new DeckGLLayers.IconLayer({
       id: 'icon-layer',
@@ -683,333 +696,6 @@ module.exports = {
       // }
     });
   },
-  createInitialViewState() {
-    if(this.config.layout === 'map') {
-      return {
-        latitude: (this.minY + this.maxY) / 2,
-        longitude: (this.minX + this.maxX) / 2,
-        zoom: 3
-      };
-    } else {
-      let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
-
-      return {
-        target: [(this.minX + this.maxX) / 2, (this.minY + this.maxY) / 2],
-        zoom: Math.log(rate) / Math.log(2)
-      };
-    }
-  },
-
-  updateLayers,
-  updateThumbnailLayer,
-  refreshIconLayer,
-  iconRegisterer,
-  updateNodeLocationOnTimeLine,
-
-  svgToURL(svg) {
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  },
-
-  updateTextLayers() {
-    const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
-    const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
-
-    const scale = 0.2;
-
-    let highlightedNodes = new Set([...this.hoveredNodes, ...this.selectedNodes]);
-
-    let tmpNodeData = this.nodeDataSet;
-
-    tmpNodeData = Object.values(tmpNodeData);
-
-    let tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
-
-    const fontSize = 3;
-
-    this.characterSet = tmpNodeData.map(n => Array.from(n.label)).flat();
-
-    let textLayerAttributes = {
-      id: 'node-text-layer',
-      pickable: true,
-      getPosition: (node) => {
-        return [node.x,
-          node.y + (this.config.layout === 'map' ? -0.001 * node._size / defaultNodeSize : node._size * scale),
-          node.z];
-      },
-      getText: node => node.label,
-      getSize: (n) => n._size / defaultNodeSize * fontSize * (this.config.layout === 'map' ? 100 : 1),
-      sizeMaxPixels: 30,
-      sizeMinPixels: 15,
-      billboard: this.config.layout !== 'map',
-      getAngle: 0,
-      getTextAnchor: 'middle',
-      getAlignmentBaseline: 'top',
-      coordinateSystem,
-      sizeUnits: sizeUnits,
-      sizeScale: scale,
-      outlineWidth: 1,
-      outlineColor: [255, 255, 255, 255],
-      onHover: info => this.onNodeHover(info),
-      updateTriggers: {
-        getText: [this.viewState],
-      },
-      fontSettings: {
-        sdf: true,
-        smoothing: 0.3
-      },
-      characterSet: this.characterSet
-    };
-
-    textLayerAttributes.data = tmpNodeData;
-
-    this.nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
-
-    textLayerAttributes = {...textLayerAttributes};
-    textLayerAttributes.data = Array.from(highlightedNodes).map(id => this.nodeDataSet[id]).filter(n => n);
-    textLayerAttributes.fontWeight = 900; // bolder than bold
-    textLayerAttributes.id = 'hilighted-node-text-layer';
-    this.highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
-
-    this.edgeTextLayer = new DeckGLLayers.TextLayer({
-      id: 'edge-text-layer',
-      data: tmpEdgeData,
-      pickable: true,
-      getPosition: (edge) => {
-        let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
-        let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
-        return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
-      },
-      getText: edge => edge.label,
-      getSize: fontSize,
-      sizeMaxPixels: 60,
-      sizeScale: scale,
-      getColor: edge => {
-        if(highlightedNodes.has(edge.from) || highlightedNodes.has(edge.to) || this.selectedEdges.has(edge.id) || this.hoveredEdges.has(edge.id))
-          return [0, 0, 255, 255];
-        return [0, 0, 0, 255];
-      },
-      billboard: this.config.layout !== 'map',
-      getAngle: 0,
-      getTextAnchor: 'middle',
-      getAlignmentBaseline: 'top',
-      coordinateSystem,
-      sizeUnits: sizeUnits,
-      outlineWidth: 1,
-      outlineColor: [255, 255, 255, 255],
-      onHover: info => this.onEdgeHover(info),
-      fontSettings: {
-        sdf: true,
-        smoothing: 0.3
-      },
-    });
-  },
-
-  toClusterNode(pgNodeIds, props, extraOptions = null) {
-    let nodes = pgNodeIds.map(id => this.nodeMap[id]);
-    let color = Blitzboard.SCCColor;
-
-    let rgb = getHexColors(color);
-
-    return {
-      objectType: 'node',
-      id: nodes[0].id,
-      color: rgb,
-      label: nodes.map(node => createLabelText(node, props)).join("\n"),
-      shape: 'dot',
-      _size: nodes[0].size,
-      _title: nodes.map(node => createTitle(node)).join("\n"),
-      borderWidth: 1,
-      x: x,
-      y: y,
-      z: z,
-    };
-  },
-
-  toVisNode(pgNode, extraOptions = null) {
-    const group = [...pgNode.labels].sort().join('_');
-    if(!this.nodeColorMap[group]) {
-      this.nodeColorMap[group] = getRandomColor(group, this.config.node.saturation, this.config.node.brightness);
-    }
-    let props = this.config.node.caption;
-
-    let x, y, z, fixed, width;
-
-    fixed = true;
-    try {
-      ({x, y, z = 0} = this.nodeLayout[pgNode.id]);
-    } catch {
-      this.nodeLayout[pgNode.id] = {x: 0, y: 0, z: 0};
-      ({x, y, z = 0} = this.nodeLayout[pgNode.id]);
-    }
-    width = null;
-
-
-    let url = retrieveHttpUrl(pgNode);
-    let thumbnailUrl = this.retrieveThumbnailUrl(pgNode);
-
-    let color = this.retrieveConfigProp(pgNode, 'node', 'color');
-
-    let opacity = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'opacity'));
-    let size = parseFloat(this.retrieveConfigProp(pgNode, 'node', 'size'));
-    let tooltip = this.retrieveConfigProp(pgNode, 'node', 'title');
-
-    color = color || this.nodeColorMap[group];
-
-    if(pgNode.clusterId) {
-      color = Blitzboard.SCCColor;
-    }
-
-    let rgb = getHexColors(color);
-
-    let attrs = {
-      objectType: 'node',
-      id: pgNode.id,
-      color: rgb,
-      opacity,
-      label: createLabelText(pgNode, props),
-      shape: 'dot',
-      _size: size || defaultNodeSize,
-      _title: tooltip != null ? tooltip : createTitle(pgNode),
-
-      borderWidth: url ? 3 : 1,
-      url: url,
-      x: x,
-      y: y,
-      z: z,
-      chosen: this.retrieveConfigProp(pgNode, 'node', 'chosen'),
-      font: {
-        color: url ? 'blue' : 'black',
-        strokeWidth: 2,
-      },
-      fixedByTime: fixed
-    };
-
-    if(this.config.layout !== 'map') {
-      attrs.size = attrs._size;
-    }
-
-    let otherProps = this.retrieveConfigPropAll(pgNode,
-      'node', ['color', 'size', 'opacity', 'title']);
-
-    for(let key of Object.keys(otherProps)) {
-      attrs[key] = otherProps[key] || attrs[key];
-    }
-
-    function registerIcon(icons, label) {
-      let lowerLabel = label.toLowerCase();
-      if(!Blitzboard.loadedIcons[lowerLabel]) {
-        Blitzboard.loadedIcons[lowerLabel] = 'retrieving'; // Avoid duplication of loading
-        setTimeout(() =>
-          Iconify.loadIcons(icons, iconRegisterer(lowerLabel)), 1000);
-      }
-      attrs['iconLabel'] = lowerLabel;
-    }
-
-    for(let label of pgNode.labels) {
-      let icon;
-      if(icon = this.config.node.icon?.[label]) {
-        registerIcon([icon], label);
-        break;
-      }
-    }
-
-    if(!attrs['iconLabel'] && this.config.node.icon?.['_default']) {
-      registerIcon(this.config.node.icon['_default'], pgNode.labels.length > 0 ? pgNode.labels[0] : '_default');
-    }
-
-    if(!attrs['iconLabel'] && (this.config.node.defaultIcon || this.config.node.autoIcon) && pgNode.labels.length > 0) {
-      let lowerLabel = pgNode.labels[0].toLowerCase();
-      registerIcon(Blitzboard.iconPrefixes.map((prefix) => prefix + lowerLabel), lowerLabel);
-    }
-
-    if(thumbnailUrl) {
-      attrs.imageURL = thumbnailUrl;
-    }
-    attrs = Object.assign(attrs, extraOptions);
-    return attrs;
-  },
-
-  retrieveProp(pgElem, config, loadFunction = true) {
-    if((typeof config) === 'function' && loadFunction) {
-      return config(new Proxy(pgElem, this.blitzProxy));
-    } else if((typeof config) === 'string' && config.startsWith('@')) {
-      return pgElem.properties[config.substr(1)]?.[0];
-    }
-    return config; // return as constant
-  },
-
-  retrieveConfigProp(pgElem, type, propName, loadFunction = true) {
-    const labels = pgElem.labels.join('_');
-    let propConfig = this.config?.[type][propName];
-    if((typeof propConfig) === 'object') {
-      return this.retrieveProp(pgElem, propConfig[labels], loadFunction)
-    }
-    return this.retrieveProp(pgElem, propConfig, loadFunction);
-  },
-
-  retrieveConfigPropAll(pgElem, type, except) {
-    let keys = Object.keys(this.config?.[type]);
-    let props = {};
-    for(let key of keys) {
-      if(except.includes(key))
-        continue;
-      // TODO: How can we allow functions for arbitrary config?
-      props[key] = this.retrieveConfigProp(pgElem, type, key, false);
-    }
-    return props;
-  },
-
-  toVisEdge(pgEdge, id) {
-    let props = this.config.edge.caption;
-    const edgeLabel = pgEdge.labels.join('_');
-    if(!this.edgeColorMap[edgeLabel]) {
-      this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
-    }
-    let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
-    let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
-    let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'width'));
-    let tooltip = this.retrieveConfigProp(pgEdge, 'edge', 'title');
-
-    color = color || this.edgeColorMap[edgeLabel];
-
-    let rgb = getHexColors(color);
-    let smooth = this.config.layout === 'map' || this.config.layout === 'hierarchical-scc' ? false : {roundness: 1};
-
-    let dashes = false;
-    // if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.from] === this.sccMap[pgEdge.to]) {
-    //   smooth = {roundness: 0.5};
-    //   dashes = true;
-    // }
-    let attrs = {
-      objectType: 'edge',
-      id: id,
-      from: pgEdge.from,
-      to: pgEdge.to,
-      color: rgb,
-      label: createLabelText(pgEdge, props),
-      _title: tooltip != null ? tooltip : createTitle(pgEdge),
-      remoteId: id,
-      width: width || defaultWidth,
-      hoverWidth: 0.5,
-      dashes,
-      smooth: smooth,
-      chosen: this.retrieveConfigProp(pgEdge, 'edge', 'chosen'),
-      arrows: {
-        to: {
-          enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false' || pgEdge.undirected === false
-        },
-      }
-    };
-
-    let otherProps = this.retrieveConfigPropAll(pgEdge,
-      'edge', ['color', 'opacity', 'width', 'title']);
-
-    for(let key of Object.keys(otherProps)) {
-      attrs[key] = otherProps[key] || attrs[key];
-    }
-
-    return attrs;
-  },
 
   createInitialViewState() {
     if(this.config.layout === 'map') {
@@ -1026,6 +712,24 @@ module.exports = {
         zoom: Math.log(rate) / Math.log(2)
       };
     }
+  },
+
+  updateHoverState() {
+    let newNodeAttributes = {...this.nodeLayer.props};
+    newNodeAttributes.data = this.nodeLayer.props.data;
+    newNodeAttributes.updateTriggers  = {
+      getRadius: Array.from(this.hoveredNodes)
+    };
+    this.nodeLayer = new DeckGLLayers.ScatterplotLayer(newNodeAttributes);
+
+
+    let newEdgeAttributes = {...this.edgeLayer.props};
+    newEdgeAttributes.data = this.edgeLayer.props.data;
+    newEdgeAttributes.updateTriggers = {
+      getColor: Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges))
+    };
+    this.edgeLayer = new DeckGLLayers.LineLayer(newEdgeAttributes);
+    this.determineLayersToShow();
   },
 
   determineLayersToShow() {
