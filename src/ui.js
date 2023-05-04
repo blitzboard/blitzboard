@@ -211,7 +211,7 @@ module.exports = {
       this.hoveredNodes.add(hoverInfo.object.id);
     }
 
-    this.updateHoverState();
+    this.updateHighlightState();
     if (this.config.node.onHover) {
       this.config.node.onHover(this.getNode(hoverInfo.object.id));
     }
@@ -222,7 +222,7 @@ module.exports = {
     if(hoverInfo.object) {
       this.hoveredEdges.add(hoverInfo.object.id);
     }
-    this.updateHoverState();
+    this.updateHighlightState();
     if (this.config.edge.onHover) {
       this.config.edge.onHover(this.getEdge(hoverInfo.object.id));
     }
@@ -313,6 +313,8 @@ function clickHandler(blitzboard, info, event) {
       needUpdate = true;
     }
   }
-  if(needUpdate)
-    blitzboard.updateLayers();
+
+  if(needUpdate) {
+    blitzboard.updateHighlightState();
+  }
 }

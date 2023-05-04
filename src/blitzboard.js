@@ -245,13 +245,6 @@ class Blitzboard {
   }
 }
 
-class DuplicateNodeError extends Error {
-  constructor(nodes) {
-    super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
-    this.name = "NodeDuplicationError";
-    this.nodes = nodes;
-  }
-}
 
 for(let module of [utilModule, renderingModule, layoutModule, apiModule, UIModule]) {
   for(let [key, value] of Object.entries(module)) {
@@ -260,4 +253,4 @@ for(let module of [utilModule, renderingModule, layoutModule, apiModule, UIModul
 }
 
 module.exports = Blitzboard;
-module.exports.DuplicateNodeError = DuplicateNodeError;
+module.exports.DuplicateNodeError = utilModule.DuplicateNodeError;
