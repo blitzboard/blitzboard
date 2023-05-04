@@ -1,3 +1,11 @@
+class DuplicateNodeError extends Error {
+  constructor(nodes) {
+    super(`Duplicate node: ${nodes.map(n => n.id).join(', ')}`);
+    this.name = "NodeDuplicationError";
+    this.nodes = nodes;
+  }
+}
+
 function deepMerge(target, source) {
   const isObject = obj => obj && typeof obj === 'object' && !Array.isArray(obj);
   let result = Object.assign({}, target);
@@ -175,5 +183,6 @@ module.exports = {
   createTitle,
   createLabelText,
   retrieveHttpUrl,
+  DuplicateNodeError,
   validateGraph
 }
