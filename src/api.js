@@ -247,14 +247,14 @@ module.exports = {
     this.selectedNodes.clear();
     this.selectedEdges.clear();
     this.selectedNodes.add(node.id);
-    this.updateLayers();
+    this.updateHighlightState();
   },
 
   selectEdge: function (edge) {
     this.selectedNodes.clear();
     this.selectedEdges.clear();
     this.selectedEdges.add(edge.id);
-    this.updateLayers();
+    this.updateHighlightState();
   },
 
   scrollNodeIntoView: function (node, select = true) {
