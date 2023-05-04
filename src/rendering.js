@@ -258,22 +258,13 @@ module.exports = {
   },
 
   updateThumbnailLayer() {
-    this.thumbnailLayers = this.nodeData.map((n) => {
-      let visible = false;
+    this.thumbnailLayers = this.nodeData.filter(n => n.imageURL).map((n) => {
       let bounds =  [ n.x + n._size / defaultNodeSize, n.y + n._size / defaultNodeSize,
         n.x - n._size / defaultNodeSize,
         n.y - n._size / defaultNodeSize];
-      if(n.imageURL && this.visibleBounds && this.viewState?.zoom >= Blitzboard.zoomLevelToLoadImage) {
-        visible =
-          this.visibleBounds.left <= n.x &&
-          this.visibleBounds.top <= n.y &&
-          n.x <= this.visibleBounds.right &&
-          n.y <= this.visibleBounds.bottom;
-      }
       return new DeckGLLayers.BitmapLayer({
         id: 'bitmap-layer-' + n.id,
         bounds,
-        // visible,
         image: n.imageURL
       });
     });
@@ -533,7 +524,7 @@ module.exports = {
     }
 
     let otherProps = this.retrieveConfigPropAll(pgNode,
-      'node', ['color', 'size', 'opacity', 'title']);
+      'node', ['color', 'size', 'opacity', 'title', 'thumbnail']);
 
     for(let key of Object.keys(otherProps)) {
       attrs[key] = otherProps[key] || attrs[key];
