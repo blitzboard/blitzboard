@@ -4,7 +4,7 @@ const DeckGLGeoLayers = require("@deck.gl/geo-layers");
 const {getRandomColor, getHexColors, createLabelText, createTitle, retrieveHttpUrl} = require("./util");
 
 const defaultNodeSize = 5;
-
+const highlightedNodeRadiusRate = 1.2;
 
 function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
   let currentTime = new Date(startTime);
@@ -141,7 +141,7 @@ module.exports = {
       getRadius: (n) =>  {
         let radius = n._size * (this.config.layout === 'map' ? 100 : 1); // TODO: avoid magic number
         if(blitzboard.shouldHighlight(n))
-          radius *= 1.2; // TODO: avoid magic number
+          radius *= highlightedNodeRadiusRate;
         return radius;
       },
       radiusMinPixels: Blitzboard.minNodeSizeInPixels,
@@ -375,7 +375,7 @@ module.exports = {
       pickable: true,
       getPosition: (node) => {
         return [node.x,
-          node.y + (this.config.layout === 'map' ? -0.001 * node._size / defaultNodeSize : node._size * scale),
+          node.y + (this.config.layout === 'map' ? -0.001 * node._size / defaultNodeSize : node._size * scale) * highlightedNodeRadiusRate,
           node.z];
       },
       getText: node => node.label,
