@@ -222,7 +222,9 @@ module.exports = {
     if(hoverInfo.object) {
       this.hoveredEdges.add(hoverInfo.object.id);
     }
-    this.updateHighlightState();
+    if(this.config.edge.canFocus) {
+      this.updateHighlightState();
+    }
     if (this.config.edge.onHover) {
       this.config.edge.onHover(this.getEdge(hoverInfo.object.id));
     }

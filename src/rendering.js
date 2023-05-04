@@ -126,7 +126,9 @@ module.exports = {
 
     tmpNodeData = Object.values(tmpNodeData);
 
-    let tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
+    this.allEdgesToDraw = JSON.parse(JSON.stringify(this.edgeDataSet))
+
+    let tmpEdgeData = this.config.edge.visibilityMode === 'onFocus' ? [] : this.allEdgesToDraw;
 
     this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
@@ -348,7 +350,9 @@ module.exports = {
   shouldHighlight(elem) {
     if(elem.from) {
       // For edge
-      return this.hoveredNodes.has(elem.from) || this.hoveredNodes.has(elem.to) || this.selectedNodes.has(elem.from) || this.selectedNodes.has(elem.to) || this.hoveredEdges.has(elem.id);
+      if(this.config.edge.canFocus && this.hoveredEdges.has(elem.id))
+        return true
+      return this.hoveredNodes.has(elem.from) || this.hoveredNodes.has(elem.to) || this.selectedNodes.has(elem.from) || this.selectedNodes.has(elem.to)
     } else {
       return this.hoveredNodes.has(elem.id) || this.selectedNodes.has(elem.id);
     }
@@ -366,7 +370,7 @@ module.exports = {
 
     tmpNodeData = Object.values(tmpNodeData);
 
-    let tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
+    tmpEdgeData = JSON.parse(JSON.stringify(this.edgeDataSet))
 
     const fontSize = 3;
 
@@ -714,11 +718,38 @@ module.exports = {
       },
     });
 
-    this.edgeLayer = this.edgeLayer.clone({
-      updateTriggers: {
-        getColor: Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges))
+    if(this.config.edge.visibilityMode !== 'always') {
+      let edgesToHighlight = new Set(Array.from(this.hoveredEdges).concat(Array.from(this.selectedEdges)));
+
+      for(let nodeId of nodesToHighlight) {
+        for(let edge of this.nodesToEdges[nodeId]) {
+          edgesToHighlight.add(edge.id);
+        }
       }
-    });
+
+      let edgesToDraw;
+      if(edgesToHighlight.size === 0 &&  this.config.edge.visibilityMode === 'noOtherFocused') {
+        edgesToDraw = this.allEdgesToDraw;
+      } else {
+        edgesToDraw = Array.from(edgesToHighlight).map(id => this.edgeMap[id]);
+      }
+      this.edgeLayer = this.edgeLayer.clone({
+        data: edgesToDraw
+      });
+      this.edgeArrowLayer = this.edgeArrowLayer.clone({
+        data: edgesToDraw
+      });
+      this.edgeTextLayer = this.edgeTextLayer.clone({
+        data: edgesToDraw
+      });
+    } else {
+      this.edgeLayer = this.edgeLayer.clone({
+        updateTriggers: {
+          getColor: Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges))
+        }
+      });
+    }
+
     this.determineLayersToShow();
   },
 

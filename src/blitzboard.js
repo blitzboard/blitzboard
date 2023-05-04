@@ -36,7 +36,9 @@ class Blitzboard {
       saturation: '0%',
       brightness: '62%',
       limit: 50000,
-      width: 1
+      width: 1,
+      visibilityMode: 'always', // always, onFocus, noOtherFocused
+      canFocus: false,
     },
     zoom: {
       max: 3.0,
@@ -108,7 +110,7 @@ class Blitzboard {
       parent: this.container,
       controller: {doubleClickZoom: false},
       getTooltip: (elem) => {
-        if(blitzboard.contextMenu.isOpened || !elem?.object)
+        if(blitzboard.contextMenu.isOpened || !elem?.object || (!blitzboard.config.edge.canFocus && elem.object.objectType === 'edge'))
           return null;
         return {
           html: elem.object._title
@@ -215,6 +217,7 @@ class Blitzboard {
     }
 
     this.edgeMap = {};
+    this.nodesToEdges = {};
     this.edgeDataSet = this.groupedGraph.edges.map((edge) => {
       // Create edge id from pair of nodes
       let id = `${edge.from}${Blitzboard.edgeDelimiter}${edge.to}`;
@@ -224,6 +227,10 @@ class Blitzboard {
       edge.id = id;
       let visEdge = this.toVisEdge(edge, id);
       this.edgeMap[visEdge.id] = edge;
+      this.nodesToEdges[edge.from] = this.nodesToEdges[edge.from] || [];
+      this.nodesToEdges[edge.from].push(edge);
+      this.nodesToEdges[edge.to] = this.nodesToEdges[edge.to] || [];
+      this.nodesToEdges[edge.to].push(edge);
       return visEdge;
     });
 
