@@ -706,22 +706,19 @@ module.exports = {
   },
 
   updateHighlightState() {
-    let newNodeAttributes = {...this.nodeLayer.props};
-    newNodeAttributes.data = this.nodeLayer.props.data;
     let nodesToHighlight = Array.from(this.hoveredNodes).concat(Array.from(this.selectedNodes));
-    newNodeAttributes.updateTriggers  = {
-      getRadius: nodesToHighlight,
-      getFillColor: nodesToHighlight
-    };
+    this.nodeLayer = this.nodeLayer.clone({
+      updateTriggers: {
+        getRadius: nodesToHighlight,
+        getFillColor: nodesToHighlight
+      },
+    });
 
-    this.nodeLayer = new DeckGLLayers.ScatterplotLayer(newNodeAttributes);
-
-    let newEdgeAttributes = {...this.edgeLayer.props};
-    newEdgeAttributes.data = this.edgeLayer.props.data;
-    newEdgeAttributes.updateTriggers = {
-      getColor: Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges))
-    };
-    this.edgeLayer = new DeckGLLayers.LineLayer(newEdgeAttributes);
+    this.edgeLayer = this.edgeLayer.clone({
+      updateTriggers: {
+        getColor: Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges))
+      }
+    });
     this.determineLayersToShow();
   },
 
