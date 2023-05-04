@@ -713,7 +713,8 @@ module.exports = {
       let edgesToHighlight = new Set(Array.from(this.hoveredEdges).concat(Array.from(this.selectedEdges)));
 
       for(let nodeId of nodesToHighlight) {
-        for(let edge of this.nodesToEdges[nodeId]) {
+        let edges = this.nodesToEdges[nodeId] || [];
+        for(let edge of edges) {
           edgesToHighlight.add(edge.id);
         }
       }
