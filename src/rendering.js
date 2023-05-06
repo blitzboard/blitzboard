@@ -109,11 +109,26 @@ function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, 
 //   }
 // });
 
-
-
-
+let currentTime = 0;
 
 module.exports = {
+
+  startEdgeAnimation() {
+    if(this.animationTimerId)
+      return;
+    this.animationTimerId = setInterval(() => {
+      if(this.highlightedTripsLayer.props.data.length === 0) {
+        clearInterval(this.animationTimerId);
+        this.animationTimerId = null;
+      }
+      currentTime = (currentTime + 2) % 110;
+      this.highlightedTripsLayer = this.highlightedTripsLayer.clone({
+        currentTime
+      });
+      this.determineLayersToShow();
+    }, 20);
+  },
+
   updateLayers() {
     const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
     const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
@@ -129,6 +144,7 @@ module.exports = {
     this.allEdgesToDraw = JSON.parse(JSON.stringify(this.edgeDataSet))
 
     let tmpEdgeData = this.config.edge.visibilityMode === 'onFocus' ? [] : this.allEdgesToDraw;
+
 
     this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
       id: 'scatterplot-layer',
@@ -160,7 +176,6 @@ module.exports = {
       },
       radiusUnits: sizeUnits,
     });
-
     this.edgeLayer = new DeckGLLayers.LineLayer({
       id: "line-layer",
       pickable: true,
@@ -183,7 +198,7 @@ module.exports = {
         let color = [...e.color];
         for(let i = 0; i < 3; ++i)
           color[i] = (128 * 3 + color[i]) / 4;
-        color[3] = 64;
+        color[3] = 192;
         return color;
       },
       updateTriggers: {
@@ -194,6 +209,61 @@ module.exports = {
       widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
       widthMinPixels: 1,
     });
+
+    this.tripsLayer = new DeckGLGeoLayers.TripsLayer({
+      id: "trips-layer",
+      pickable: true,
+      coordinateSystem,
+      data: tmpEdgeData,
+      getWidth: edge => edge.width,
+      getPath: edge => {
+        let {x: fromX, y: fromY} = this.nodeDataSet[edge.from];
+        let {x: toX, y: toY} = this.nodeDataSet[edge.to];
+        let path = [];
+        for(let i = 0; i < 10; ++i) {
+          let x = fromX + (toX - fromX) * i / 9;
+          let y = fromY + (toY - fromY) * i / 9;
+          path.push([x, y]);
+        }
+        return path;
+      },
+      getTimestamps: edge => {
+        let timestamps = [];
+        for(let i = 0; i < 10; ++i) {
+          timestamps.push(i * 10);
+        }
+        return timestamps;
+      },
+      rounded: true,
+      fadeTrail: true,
+      trailLength: 100,
+      currentTime: 100,
+      widthMinPixels: 4,
+      // getColor: (e) => {
+      //   if(this.shouldHighlight(e)) {
+      //     return [e.color, e.color, 0, 255];
+      //   }
+      //   let color = [...e.color];
+      //   for(let i = 0; i < 3; ++i)
+      //     color[i] = (128 * 3 + color[i]) / 4;
+      //   color[3] = 192;
+      //   color[2] = 0;
+      //   return color;
+      // },
+      getColor: [32, 64, 255, 192],
+      updateTriggers: {
+        getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
+      },
+      onHover: info => this.onEdgeHover(info),
+      widthUnits: ('common'),
+      widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
+    });
+
+    this.highlightedTripsLayer = this.tripsLayer.clone({
+      id: 'highlighted-trips-layer',
+      data: []
+    });
+
 
     this.edgeArrowLayer = new DeckGLLayers.IconLayer({
       id: 'edge-arrow-layer',
@@ -709,21 +779,22 @@ module.exports = {
       },
     });
 
-    if(this.config.edge.visibilityMode !== 'always') {
-      let edgesToHighlight = new Set(Array.from(this.hoveredEdges).concat(Array.from(this.selectedEdges)));
+    let edgesToHighlight = new Set(Array.from(this.hoveredEdges).concat(Array.from(this.selectedEdges)));
 
-      for(let nodeId of nodesToHighlight) {
-        let edges = this.nodesToEdges[nodeId] || [];
-        for(let edge of edges) {
-          edgesToHighlight.add(edge.id);
-        }
+    for(let nodeId of nodesToHighlight) {
+      let edges = this.nodesToEdges[nodeId] || [];
+      for(let edge of edges) {
+        edgesToHighlight.add(edge.id);
       }
+    }
+    edgesToHighlight = Array.from(edgesToHighlight).map(id => this.edgeMap[id]);
+    if(this.config.edge.visibilityMode !== 'always') {
 
       let edgesToDraw;
-      if(edgesToHighlight.size === 0 &&  this.config.edge.visibilityMode === 'noOtherFocused') {
+      if(edgesToHighlight.length === 0 &&  this.config.edge.visibilityMode === 'noOtherFocused') {
         edgesToDraw = this.allEdgesToDraw;
       } else {
-        edgesToDraw = Array.from(edgesToHighlight).map(id => this.edgeMap[id]);
+        edgesToDraw = edgesToHighlight;
       }
       this.edgeLayer = this.edgeLayer.clone({
         data: edgesToDraw
@@ -741,6 +812,11 @@ module.exports = {
         }
       });
     }
+    this.highlightedTripsLayer = this.highlightedTripsLayer.clone({
+      data: edgesToHighlight.filter(edge => edge.direction !== '--')
+    });
+    if(edgesToHighlight.length > 0)
+      this.startEdgeAnimation();
 
     this.determineLayersToShow();
   },
@@ -750,6 +826,8 @@ module.exports = {
       this.layers = [
         this.tileLayer,
         this.edgeLayer,
+        this.tripsLayer,
+        this.highlightedTripsLayer,
         this.edgeTextLayer,
         this.nodeTextLayer,
         this.nodeLayer,
@@ -762,8 +840,10 @@ module.exports = {
       this.layers = [
         this.edgeLayer,
         this.edgeTextLayer,
+        // this.tripsLayer,
+        this.highlightedTripsLayer,
         this.nodeTextLayer,
-        this.edgeArrowLayer,
+        // this.edgeArrowLayer,
         this.nodeLayer,
         this.highlightedNodeTextLayer,
         this.iconLayer,
