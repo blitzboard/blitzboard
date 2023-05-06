@@ -94,7 +94,7 @@ function createTitle(elem) {
     acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
   if(!elem.from) // for nodes
   {
-    let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
+    let idText = `<tr><td><b>${elem.id}</b></td></tr><tr><td> <b>${wrapText(elem.labels.join(' '), true)}</b></td></tr>`;
     flattend_props.splice(0, 0, idText);
   } else {
     let idText = `<tr><td><b>${elem.from} - ${elem.to}</b></td><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td></tr>`;
