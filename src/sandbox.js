@@ -5,7 +5,7 @@ let configOnModal = null;
 let targetNodeIdOnModal = null;
 let markers = [];
 let editor, configEditor;
-let savedGraphNames = [];
+let savedGraphs = [];
 let unsavedChangeExists = false;
 
 let backendUrl = localStorage.getItem('backendUrl');
@@ -387,8 +387,8 @@ $(() => {
     backendUrl = e.target.value;
     remoteMode = e.target.value.length > 0;
     updateGraphList(() => {
-      if(savedGraphNames.length > 0) {
-        loadGraphByName(savedGraphNames[0]);
+      if(savedGraphs.length > 0) {
+        loadGraphEntry(savedGraphs[0]);
       } else {
         createNewGraph(0);
       }
@@ -792,7 +792,7 @@ $(() => {
       i = parseInt(suffixMatched[1]);
     }
     let name = baseName;
-    while (savedGraphNames.indexOf(name) >= 0) {
+    while (savedGraphs.map(g => g.name).indexOf(name) >= 0) { // TODO: check ID instead of name
       name = baseName + '-' + (++i);
     }
     return name;
@@ -850,13 +850,13 @@ $(() => {
   }
 
   function updateGraphList(callback = null) {
-    savedGraphNames = [];
+    savedGraphs = [];
     if (remoteMode) {
       axios.get(`${backendUrl}/list`).then(response => {
         updateHistoryMenu(response.data.map((g) => {
-          return {name: g};
+          return {name: g.name};
         }));
-        savedGraphNames = response.data;
+        savedGraphs = response.data;
         if (callback)
           callback();
       }).catch((error) => {
@@ -885,9 +885,9 @@ $(() => {
           }
         }
       }
-      savedGraphNames = graphsFromLocalStorage.sort((a, b) => b.date - a.date).map((g) => g.name);
-      updateHistoryMenu(savedGraphNames.map((g) => {
-        return {name: g};
+      savedGraphs = graphsFromLocalStorage.sort((a, b) => b.date - a.date).map((g) => ({ name: g, id: g }));
+      updateHistoryMenu(savedGraphs.map((g) => {
+        return {name: g.name};
       }));
       if (callback)
         callback();
@@ -898,7 +898,7 @@ $(() => {
   $(document).on('click', '.edit-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
-    let oldName = savedGraphNames[i];
+    let oldName = savedGraphs[i].name;
 
     Swal.fire({
       text: `What is the new name of the page?`,
@@ -932,7 +932,8 @@ $(() => {
                 }
               };
               axios.post(`${backendUrl}/create`, graph).then((res) => {
-                savedGraphNames[i] = newName;
+                savedGraphs[i].name = newName;
+                savedGraphs[i].name = newName;
                 updateGraphList();
                 if (currentGraphName === oldName) {
                   currentGraphName = newName;
@@ -968,7 +969,7 @@ $(() => {
   $(document).on('click', '.delete-history-btn', (e) => {
     let item = $(e.target).closest('.history-item')[0];
     let i = $('.history-item').index(item);
-    let name = savedGraphNames[i];
+    let name = savedGraphs[i].name;
 
     Swal.fire({
       text: `Delete ${name}?`,
@@ -989,7 +990,7 @@ $(() => {
             toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
             updateGraphList(() => {
               if (currentGraphName === name) {
-                currentGraphName = savedGraphNames[0];
+                currentGraphName = savedGraphs[0].name;
                 loadCurrentGraph();
                 showGraphName();
               }
@@ -1002,7 +1003,7 @@ $(() => {
           toastr.success(`${name} has been removed!`, '', {preventDuplicates: true, timeOut: 3000});
           updateGraphList(() => {
             if (currentGraphName === name) {
-              currentGraphName = savedGraphNames[0];
+              currentGraphName = savedGraphs[0].name;
               loadCurrentGraph();
               showGraphName();
             }
@@ -1024,7 +1025,7 @@ $(() => {
     currentGraphName = graph.name;
     $('.dropdown-item.history-item').removeClass('active');
     $('.dropdown-item.history-item').removeClass('text-white');
-    let i = savedGraphNames.indexOf(graph.name);
+    let i = savedGraphs.map(graph => graph.name).indexOf(graph.name);
     $(`.dropdown-item.history-item:eq(${i})`).addClass('active');
     $(`.dropdown-item.history-item:eq(${i})`).addClass('text-white');
     reloadConfig();
@@ -1036,16 +1037,16 @@ $(() => {
     byProgram = false;
   }
   
-  function loadGraphByName(graphName) {
+  function loadGraphEntry(graphEntry) {
     if (remoteMode) {
-      axios.get(`${backendUrl}/get/?graph=${graphName}`).then((response) => {
+      axios.get(`${backendUrl}/get/?graph=${graphEntry.id}`).then((response) => {
         let props = response.data.properties;
         let config = props?.config?.[0] || defaultConfig;
         if(props?.pg === undefined || props?.config === undefined) {
-          axios.get(`${backendUrl}/get/?graph=${graphName}&response=pg`).then((response) => {
+          axios.get(`${backendUrl}/get/?graph=${graphEntry.id}&response=pg`).then((response) => {
             byProgram = true;
             loadGraph({
-              name: graphName,
+              name: graphEntry.name,
               pg: json2pg.translate(JSON.stringify(response.data.pg)),
               config
             });
@@ -1055,7 +1056,7 @@ $(() => {
         } else {
           byProgram = true;
           loadGraph({
-            name: graphName,
+            name: graphEntry.name,
             pg: props.pg[0],
             config: props.config[0],
             lastUpdate: props.lastUpdate[0]
@@ -1065,16 +1066,16 @@ $(() => {
         }
       });
     } else {
-      let graph = JSON.parse(localStorage.getItem('saved-graph-' + graphName));
+      let graph = JSON.parse(localStorage.getItem('saved-graph-' + graphEntry.name));
       loadGraph(graph);
     }
   }
 
   $(document).on('click', '.history-item', (e) => {
     let i = $('.history-item').index(e.target);
-    let graph = savedGraphNames[i];
+    let graph = savedGraphs[i];
     confirmToSaveGraph(() => {
-      loadGraphByName(graph);
+      loadGraphEntry(graph);
     });
   });
 
@@ -1150,9 +1151,9 @@ $(() => {
         name: name,
         date: Date.now()
       };
-      while (i < savedGraphNames.length - 1 && savedGraphNames[++i].name !== name) ;
-      if (i < savedGraphNames.length) {
-        savedGraphNames[i] = graph;
+      while (i < savedGraphs.length - 1 && savedGraphs[++i].name !== name) ;
+      if (i < savedGraphs.length) {
+        savedGraphs[i] = graph;
       }
       try {
         localStorage.setItem('saved-graph-' + name, JSON.stringify(graph));
@@ -1198,7 +1199,7 @@ $(() => {
           }
         };
 
-        let action = savedGraphNames.includes(graphName) ? 'update' : 'create';
+        let action = savedGraphs.includes(graphName) ? 'update' : 'create';
 
         axios.post(`${backendUrl}/${action}`, savedData).then((res) => {
           toastr.success(`${graphName} has been saved!`, '', {preventDuplicates: true, timeOut: 3000});
@@ -1268,7 +1269,7 @@ $(() => {
         if(value.trim().length === 0) {
           return 'Page name must not be empty.';
         }
-        if(savedGraphNames.indexOf(value) >= 0)
+        if(savedGraphs.map(g => g.name).indexOf(value) >= 0)
           return `"${value}" already exists. Please specify a different name.`;
       }
     }).then((result) => {
@@ -2196,9 +2197,9 @@ $(() => {
           configEditor.setValue(defaultConfig);
           byProgram = false;
         }
-        if (!savedGraphNames.includes(currentGraphName)) {
-          if (savedGraphNames.length > 0)
-            loadGraphByName(savedGraphNames[0]);
+        if (!savedGraphs.map(g => g.name).includes(currentGraphName)) { // TODO: Check ID instead of name
+          if (savedGraphs.length > 0)
+            loadGraphEntry(savedGraphs[0]);
           else
             createNewGraph(0);
         } else {
