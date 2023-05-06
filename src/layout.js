@@ -202,7 +202,7 @@ module.exports = {
       // Scale down the positions to fit coordinate systems in Deck.gl
       shrinkLayoutFromVisToDeck(this.nodeLayout);
 
-      if(this.config.sccMode === 'cluster') {
+      if(this.config.sccMode === 'cluster' || this.config.sccMode === 'longest-only') {
         this.groupedGraph = {
           nodes: groupedNodes,
           edges: groupedEdges
