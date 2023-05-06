@@ -50,8 +50,10 @@ function createNodeContents(pgObject, alignColumns) {
     if(alignColumns) {
       let propPart = '';
       for(let property in maxPropLength) {
-        for(let value of node.properties[property]) {
-          propPart += (property.quoteIfNeeded() + ':' + value.toString().quoteIfNeeded()).padEnd(maxPropLength[property]) + '  ';
+        if(node.properties[property]) {
+          for(let value of node.properties[property]) {
+            propPart += (property.quoteIfNeeded() + ':' + value.toString().quoteIfNeeded()).padEnd(maxPropLength[property]) + '  ';
+          }
         }
       }
       nodeContents.push(propPart);
@@ -95,8 +97,10 @@ function createEdgeContents(pgObject, alignColumns) {
     if(alignColumns) {
       let propPart = '';
       for(let property in maxPropLength) {
-        for(let value of edge.properties[property]) {
-          propPart += (property.quoteIfNeeded() + ':' + value.toString().quoteIfNeeded()).padEnd(maxPropLength[property]) + '  ';
+        if(edge.properties[property]) {
+          for(let value of edge.properties[property]) {
+            propPart += (property.quoteIfNeeded() + ':' + value.toString().quoteIfNeeded()).padEnd(maxPropLength[property]) + '  ';
+          }
         }
       }
       edgeContents.push(propPart);
