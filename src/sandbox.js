@@ -191,13 +191,51 @@ $(() => {
     try {
       let config = looseJsonParse(json);
       if(remoteMode) {
-        let oldTitleHandler = config.node.title;
-        config.node.title = (n) => {
-          let title = oldTitleHandler ? oldTitleHandler(n) : blitzboard.createTitle(n);
-          title += `<a href='#' class='expand-event-tree-link' data-node-id='${n.id}'>Show list of graphs</a>`;
-          title += `<br><a href='#' class='show-all-path-link' data-node-id='${n.id}'>Show all paths</a>`;
-          return title;
-        };
+        config.node.contextMenuItems = config.node.contextMenuItems || [];
+        config.node.contextMenuItems.push({
+          label: 'Show list of graphs',
+          onClick: (n) => {
+            axios.get(`${backendUrl}/query_table?query=SELECT v.GRAPH FROM MATCH (v) ON x2 WHERE v.ID = '${n.id}' GROUP BY v.GRAPH`).then(response => {
+              alert(response.data.table.records.map((r) => r.GRAPH).join('\n'));
+            }).catch((error) => {
+              console.log(error);
+              toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
+            });
+          }
+        });
+
+        config.node.contextMenuItems.push({
+          label: 'Show all paths',
+          onClick: (n) => {
+            targetNodeIdOnModal = n.id
+
+            let downstreamNodeIds = blitzboard.getDownstreamNodes(targetNodeIdOnModal);
+            let upstreamNodeIds = blitzboard.getUpstreamNodes(targetNodeIdOnModal);
+            $('#metagraph-modal-title')[0].innerText = targetNodeIdOnModal;
+
+            graphOnModal = {};
+            graphOnModal.nodes = blitzboard.graph.nodes.filter(n => downstreamNodeIds.has(n.id) ||upstreamNodeIds.has(n.id));
+            graphOnModal.edges = blitzboard.graph.edges.filter(e => upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to) ||
+              downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to));
+
+            if(!metaBlitzboard)
+              metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
+            metaGraphModal.show();
+            metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)), false);
+            configOnModal = JSON.parse(JSON.stringify(config)); // deepcopy
+            $('#all-graphs-checkbox').prop('checked', false);
+            $('#hierarchical-checkbox').prop('checked', false);
+            if(config.layout === 'hierarchical-scc') {
+              // If layout is already hierarchical-scc, hide config
+              $('#hierarchical-div').hide();
+            } else {
+              $('#hierarchical-div').show();
+            }
+            addHighlightOptionOnModal(configOnModal);
+
+            metaBlitzboard.setConfig(configOnModal, true);
+          }
+        })
       }
       return config;
     } catch (e) {
@@ -704,37 +742,6 @@ $(() => {
 
 
 
-  $(document).on('click', '.show-all-path-link', (e) => {
-    targetNodeIdOnModal = $(e.target).attr('data-node-id');
-
-    let downstreamNodeIds = blitzboard.getDownstreamNodes(targetNodeIdOnModal);
-    let upstreamNodeIds = blitzboard.getUpstreamNodes(targetNodeIdOnModal);
-    $('#metagraph-modal-title')[0].innerText = targetNodeIdOnModal;
-
-    graphOnModal = {};
-    graphOnModal.nodes = blitzboard.graph.nodes.filter(n => downstreamNodeIds.has(n.id) ||upstreamNodeIds.has(n.id));
-    graphOnModal.edges = blitzboard.graph.edges.filter(e => upstreamNodeIds.has(e.from) && upstreamNodeIds.has(e.to) ||
-        downstreamNodeIds.has(e.from) && downstreamNodeIds.has(e.to));
-
-
-    if(!metaBlitzboard)
-      metaBlitzboard = new Blitzboard(q('#metagraph-modal-graph'));
-    metaGraphModal.show();
-    metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)), false);
-    configOnModal = JSON.parse(JSON.stringify(config)); // deepcopy
-    $('#all-graphs-checkbox').prop('checked', false);
-    $('#hierarchical-checkbox').prop('checked', false);
-    if(config.layout === 'hierarchical-scc') {
-      // If layout is already hierarchical-scc, hide config
-      $('#hierarchical-div').hide();
-    } else {
-      $('#hierarchical-div').show();
-    }
-    addHighlightOptionOnModal(configOnModal);
-
-    metaBlitzboard.setConfig(configOnModal, true);
-  });
-  
   q('#export-csv-btn').addEventListener('click', () => {
     let nodeContent = Papa.unparse(blitzboard.graph.nodes.map((n) => {
       let data = {

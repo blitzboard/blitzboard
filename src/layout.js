@@ -214,8 +214,6 @@ module.exports = {
             edgeCosts[edge.from][edge.to] = -1;
         }
         for(let node of groupedNodes) {
-          console.log({node});
-          console.log({edgeCosts});
           let predList = getLongest(node, groupedNodes, edgeCosts);
           for(let [to, from] of Object.entries(predList)) {
             if(from && to) {

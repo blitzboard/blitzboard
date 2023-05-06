@@ -435,6 +435,11 @@ module.exports = {
 
     const fontSize = 3;
 
+    let characterSet = new Set();
+    tmpNodeData.forEach(n => {
+      n.label.split('').forEach(c => characterSet.add(c));
+    });
+
     let textLayerAttributes = {
       id: 'node-text-layer',
       pickable: true,
@@ -462,7 +467,7 @@ module.exports = {
         sdf: true,
         smoothing: 0.3
       },
-      characterSet: 'auto'
+      characterSet: characterSet
     };
 
     textLayerAttributes.data = tmpNodeData;
