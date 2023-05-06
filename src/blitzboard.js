@@ -154,6 +154,7 @@ class Blitzboard {
     if(this.config.edge.filter) {
       return !this.config.edge.filter(new Proxy(edge, this.blitzProxy));
     }
+
     return false;
   }
 

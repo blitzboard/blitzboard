@@ -202,6 +202,29 @@ module.exports = {
       // Scale down the positions to fit coordinate systems in Deck.gl
       shrinkLayoutFromVisToDeck(this.nodeLayout);
 
+
+      if(this.config.sccMode === 'longest-only') {
+        let edgeCosts = {};
+        let inLongestPath = {};
+
+        for(let edge of groupedEdges) {
+          inLongestPath[edge.from] = inLongestPath[edge.from] || {};
+          edgeCosts[edge.from] = edgeCosts[edge.from] || {};
+          if(edge.from !== edge.to)
+            edgeCosts[edge.from][edge.to] = -1;
+        }
+        for(let node of groupedNodes) {
+          console.log({node});
+          console.log({edgeCosts});
+          let predList = getLongest(node, groupedNodes, edgeCosts);
+          for(let [to, from] of Object.entries(predList)) {
+            if(from && to) {
+              inLongestPath[from][to] = true;
+            }
+          }
+        }
+        groupedEdges = groupedEdges.filter(e => inLongestPath[e.from][e.to]);
+      }
       if(this.config.sccMode === 'cluster' || this.config.sccMode === 'longest-only') {
         this.groupedGraph = {
           nodes: groupedNodes,
