@@ -2144,36 +2144,29 @@ function insertEdges() {
   let edgeMap = {};
   pg.edges.forEach((e) => {
     edgeMap[e.from] = edgeMap[e.from] || {};
-    edgeMap[e.from] = e.to
+    edgeMap[e.from][e.to] = true;
   });
 
-  pg.nodes.forEach((n) => {
-    if(n.id !== targetNode.id) {
-      if(!edgeMap[n.id]?.[targetNode.id])
+
+  // Create edges from targetNode
+  pg.nodes.forEach((sourceNode) => {
+    pg.nodes.forEach((destNode) => {
+      if(sourceNode.id !== destNode.id && !edgeMap[sourceNode.id]?.[destNode.id])
         newPG.edges.push({
-          from: n.id,
-          to: targetNode.id,
+          from: sourceNode.id,
+          to: destNode.id,
           undirected: false,
           labels: [],
           properties: {
+            /// TODO: specify default properties by config
             確率: ['']
           }
         });
-      if(!edgeMap[targetNode.id]?.[n.id])
-        newPG.edges.push({
-          from: targetNode.id,
-          to: n.id,
-          undirected: false,
-          labels: [],
-          properties: {
-            確率: ['']
-          }
-        });
-    }
+    });
   });
 
   byProgram = true;
-  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG)))
+  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG), true));
   byProgram = false;
 }
 
