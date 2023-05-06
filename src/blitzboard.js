@@ -177,7 +177,8 @@ class Blitzboard {
     this.filteredGraph = {};
     this.filteredGraph.nodes = this.graph.nodes.filter((node) => !blitzboard.isFilteredOutNode(node));
 
-    this.filteredGraph.edges = this.graph.edges.filter((edge) => !blitzboard.isFilteredOutEdge(edge) && !blitzboard.isFilteredOutNode(edge.from) && !blitzboard.isFilteredOutNode(edge.to));
+    this.filteredGraph.edges = this.graph.edges.filter((edge) => !blitzboard.isFilteredOutEdge(edge) &&
+      !blitzboard.isFilteredOutNode(this.nodeMap[edge.from]) && !blitzboard.isFilteredOutNode(this.nodeMap[edge.to]));
 
     this.updateSearchInput();
 
