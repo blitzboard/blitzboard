@@ -61,7 +61,7 @@ function getLongest(from, vertices, edgeCosts) {
 
 
 function insertEdges() {
-  let targetNode = blitzboard.nodeLineMap[editor.getCursor().line + 1];
+  let targetNode = nodeLineMap[editor.getCursor().line + 1];
   let pg = blitzboard.tryPgParse(editor.getValue());
   let newPG = {
     nodes: [],

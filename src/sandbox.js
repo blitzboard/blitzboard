@@ -2118,7 +2118,7 @@ function getCurrentCharacter() {
   return editor.getLine(cursor.line).charAt(cursor.ch - 1);
 }
 function insertEdges() {
-  let targetNode = blitzboard.nodeLineMap[editor.getCursor().line + 1];
+  let targetNode = nodeLineMap[editor.getCursor().line + 1];
   let pg = blitzboard.tryPgParse(editor.getValue());
   let newPG = {
     nodes: [],
