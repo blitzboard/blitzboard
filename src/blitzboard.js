@@ -174,6 +174,10 @@ class Blitzboard {
 
     let blitzboard = this;
 
+    this.graph.nodes.forEach((node) => {
+      this.nodeMap[node.id] = node;
+    });
+
     this.filteredGraph = {};
     this.filteredGraph.nodes = this.graph.nodes.filter((node) => !blitzboard.isFilteredOutNode(node));
 
@@ -182,9 +186,6 @@ class Blitzboard {
 
     this.updateSearchInput();
 
-    this.graph.nodes.forEach((node) => {
-      this.nodeMap[node.id] = node;
-    });
 
     this.validateGraph();
     this.determineLayout(afterUpdate);
