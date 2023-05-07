@@ -451,7 +451,7 @@ module.exports = {
       getText: node => node.label,
       getSize: (n) => n._size / defaultNodeSize * fontSize * (this.config.layout === 'map' ? 100 : 1),
       sizeMaxPixels: 30,
-      sizeMinPixels: 15,
+      sizeMinPixels: 20,
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
@@ -459,14 +459,13 @@ module.exports = {
       coordinateSystem,
       sizeUnits: sizeUnits,
       sizeScale: scale,
-      visible: this.viewState?.zoom > 2.5,
+      visible: this.viewState?.zoom > this.config.zoomLevelForText,
       outlineWidth: 1,
       outlineColor: [255, 255, 255, 255],
+      // fontSettings: {
+      //   sdf: true,
+      // },
       onHover: info => this.onNodeHover(info),
-      fontSettings: {
-        sdf: true,
-        smoothing: 0.3
-      },
       characterSet: characterSet
     };
 
@@ -508,10 +507,6 @@ module.exports = {
       outlineWidth: 1,
       outlineColor: [255, 255, 255, 255],
       onHover: info => this.onEdgeHover(info),
-      fontSettings: {
-        sdf: true,
-        smoothing: 0.3
-      },
       characterSet: 'auto'
     });
   },
@@ -778,16 +773,8 @@ module.exports = {
   },
 
   onViewStateChange(viewState) {
-    const viewport = blitzboard.network.getViewports()[0];
-    if(viewport) {
-      const [left, top] = viewport.unproject([0, 0]);
-      const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
-      this.visibleBounds = {
-        left, top, bottom, right
-      };
-    }
-    this.viewState = viewState.viewState;
-    let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : 2.5); // TODO: make this configurable
+    this.viewState = viewState;
+    let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : this.config.zoomLevelForText); // TODO: make this configurable
     this.nodeTextLayer = this.nodeTextLayer.clone({
       visible: textVisibility,
     });
@@ -816,7 +803,6 @@ module.exports = {
     }
     edgesToHighlight = Array.from(edgesToHighlight).map(id => this.edgeMap[id]);
     if(this.config.edge.visibilityMode !== 'always') {
-
       let edgesToDraw;
       if(edgesToHighlight.length === 0 &&  this.config.edge.visibilityMode === 'noOtherFocused') {
         edgesToDraw = this.allEdgesToDraw;
@@ -840,7 +826,7 @@ module.exports = {
       });
     }
     this.highlightedTripsLayer = this.highlightedTripsLayer.clone({
-      data: edgesToHighlight.filter(edge => edge.direction !== '--')
+      data: edgesToHighlight.filter(edge => edge && edge.direction !== '--')
     });
     if(edgesToHighlight.length > 0)
       this.startEdgeAnimation();
@@ -910,7 +896,6 @@ module.exports = {
         initialViewState: this.viewState,
         views: [view],
       });
-      console.log(this.viewState);
       this.onViewStateChange(this.viewState);
     }
   },
