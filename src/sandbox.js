@@ -885,7 +885,7 @@ $(() => {
           }
         }
       }
-      savedGraphs = graphsFromLocalStorage.sort((a, b) => b.date - a.date).map((g) => ({ name: g, id: g }));
+      savedGraphs = graphsFromLocalStorage.sort((a, b) => b.date - a.date).map((g) => ({...g, id: g.name}));
       updateHistoryMenu(savedGraphs.map((g) => {
         return {name: g.name};
       }));
