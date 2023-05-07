@@ -4,6 +4,7 @@ const DeckGLGeoLayers = require("@deck.gl/geo-layers");
 const {getRandomColor, getHexColors, createLabelText, createTitle, retrieveHttpUrl, getColorFromText} = require("./util");
 
 const defaultNodeSize = 5;
+const defaultEdgeWidth = 1;
 const highlightedNodeRadiusRate = 1.2;
 
 function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
@@ -158,24 +159,28 @@ module.exports = {
       getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
       getRadius: (n) =>  {
         let radius = n._size * (this.config.layout === 'map' ? 100 : 1); // TODO: avoid magic number
-        if(blitzboard.shouldHighlight(n))
-          radius *= highlightedNodeRadiusRate;
         return radius;
       },
       radiusMinPixels: Blitzboard.minNodeSizeInPixels,
       radiusScale: scale,
-      getFillColor: (n) => {
-        if(this.selectedNodes.has(n.id))
-          return Blitzboard.selectedNodeColor;
-        return [...n.color];
-      },
+      getFillColor: (n) => n.color,
       onHover: info => this.onNodeHover(info),
-      updateTriggers: {
-        getRadius: [],
-        getFillColor: [],
-      },
       radiusUnits: sizeUnits,
     });
+
+
+    function edgeColor(e) {
+      let color = [...e.color];
+      if(blitzboard.hoveredNodes.has(e.from) || blitzboard.selectedNodes.has(e.from)) {
+        color = blitzboard.nodeDataSet[e.from].color;
+      }
+      if(blitzboard.hoveredNodes.has(e.to) || blitzboard.selectedNodes.has(e.to)) {
+        color = blitzboard.nodeDataSet[e.to].color;
+      }
+      return [color[0], color[1], color[2], 0XFF];
+    }
+
+
     this.edgeLayer = new DeckGLLayers.LineLayer({
       id: "line-layer",
       pickable: true,
@@ -183,9 +188,9 @@ module.exports = {
       billboard: this.config.layout !== 'map',
       data: tmpEdgeData,
       getWidth: edge => {
-        // if(this.hoveredNodes.has(edge.from) || this.selectedNodes.has(edge.from) || this.hoveredNodes.has(edge.to) || this.selectedNodes.has(edge.to)) {
-        //   return parseFloat(edge.width) + 100;
-        // }
+        if(this.hoveredNodes.has(edge.from) || this.selectedNodes.has(edge.from) || this.hoveredNodes.has(edge.to) || this.selectedNodes.has(edge.to)) {
+          return parseFloat(edge.width) * 2;
+        }
         return edge.width;
       },
       getSourcePosition: (edge) => {
@@ -196,22 +201,13 @@ module.exports = {
         let {x, y, z} = this.nodeDataSet[edge.to];
         return [x, y, z];
       },
-      getColor: (e) => {
-        let color = [...e.color];
-        if(this.hoveredNodes.has(e.from) || this.selectedNodes.has(e.from)) {
-          color = this.nodeDataSet[e.from].color;
-        }
-        if(this.hoveredNodes.has(e.to) || this.selectedNodes.has(e.to)) {
-          color = this.nodeDataSet[e.to].color;
-        }
-        return [color[0], color[1], color[2], 0XFF];
-      },
+      getColor: edgeColor,
       updateTriggers: {
         getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
       },
       onHover: info => this.onEdgeHover(info),
       widthUnits: ('common'),
-      widthScale: 0.02 * (this.config.layout === 'map' ? 0.01 : 1),
+      widthScale: 0.2 * (this.config.layout === 'map' ? 0.01 : 1),
       widthMinPixels: 1,
     });
 
@@ -269,7 +265,6 @@ module.exports = {
       data: []
     });
 
-
     this.edgeArrowLayer = new DeckGLLayers.IconLayer({
       id: 'edge-arrow-layer',
       data: tmpEdgeData.filter(e => !e.undirected || e.direction === '->'),
@@ -295,10 +290,16 @@ module.exports = {
         let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
         return Math.atan2(-(fromY - toY), fromX - toX) * 180 / Math.PI + 90;
       },
-      getSize: n =>3 * (this.config.layout === 'map' ? 100 : 1),
+      getSize: edge => {
+        let size = 5 * (this.config.layout === 'map' ? 100 : 1);
+        if(this.hoveredNodes.has(edge.from) || this.selectedNodes.has(edge.from) || this.hoveredNodes.has(edge.to) || this.selectedNodes.has(edge.to)) {
+          size *= 2;
+        }
+        return size;
+      },
       sizeUnits: sizeUnits,
       sizeMinPixels: Blitzboard.minNodeSizeInPixels,
-      getColor: n => [0, 0, 0, 192]
+      getColor: edgeColor
     });
 
     this.iconLayer = this.createIconLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
@@ -485,6 +486,20 @@ module.exports = {
     textLayerAttributes.id = 'hilighted-node-text-layer';
     this.highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
 
+    function edgeTextColor(e) {
+      let color = [...e.color];
+      if(blitzboard.hoveredNodes.has(e.from) || blitzboard.selectedNodes.has(e.from)) {
+        color = blitzboard.nodeDataSet[e.from].color;
+      }
+      else if(blitzboard.hoveredNodes.has(e.to) || blitzboard.selectedNodes.has(e.to)) {
+        color = blitzboard.nodeDataSet[e.to].color;
+      } else {
+        color = [color[0] - 20, color[1] - 20, color[2] - 20];
+      }
+
+      return [color[0], color[1], color[2], 0XFF];
+    }
+
     this.edgeTextLayer = new DeckGLLayers.TextLayer({
       id: 'edge-text-layer',
       data: tmpEdgeData,
@@ -499,11 +514,7 @@ module.exports = {
       sizeMaxPixels: 30,
       sizeMinPixels: 12,
       sizeScale: scale,
-      getColor: edge => {
-        // if(this.shouldHighlight(edge))
-        //   return [0, 0, 255, 255];
-        return [0xAC, 0xAC, 0xAC, 0XFF];
-      },
+      getColor: edgeTextColor,
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
@@ -572,7 +583,6 @@ module.exports = {
     if(pgNode.clusterId) {
       color = getColorFromText('yellow');
     }
-    console.log({color});
 
     let rgb = getHexColors(color);
 
@@ -698,7 +708,7 @@ module.exports = {
       label: createLabelText(pgEdge, props),
       _title: tooltip != null ? tooltip : createTitle(pgEdge),
       remoteId: id,
-      width: width || defaultWidth,
+      width: width || defaultEdgeWidth,
       hoverWidth: 0.5,
       dashes,
       smooth: smooth,
@@ -823,7 +833,18 @@ module.exports = {
       this.edgeLayer = this.edgeLayer.clone({
         updateTriggers: {
           getColor: triggers,
-          // getWidth: triggers,
+          getWidth: triggers,
+        }
+      });
+      this.edgeArrowLayer = this.edgeArrowLayer.clone({
+        updateTriggers: {
+          getColor: triggers,
+          getSize: triggers,
+        }
+      });
+      this.edgeTextLayer = this.edgeTextLayer.clone({
+        updateTriggers: {
+          getColor: triggers,
         }
       });
     }
@@ -840,7 +861,7 @@ module.exports = {
     if(this.config.layout === 'map') {
       this.layers = [
         this.tileLayer,
-        this.edgeLayer,
+        // this.edgeLayer,
         this.tripsLayer,
         this.highlightedTripsLayer,
         this.edgeTextLayer,
@@ -856,7 +877,7 @@ module.exports = {
         this.edgeLayer,
         this.edgeTextLayer,
         // this.tripsLayer,
-        this.highlightedTripsLayer,
+        // this.highlightedTripsLayer,
         this.nodeTextLayer,
         this.edgeArrowLayer,
         this.nodeLayer,
