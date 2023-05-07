@@ -126,8 +126,12 @@ class Blitzboard {
           };
         }
         this.viewState = viewState.viewState;
+        let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : 2.5); // TODO: make this configurable
         this.nodeTextLayer = this.nodeTextLayer.clone({
-          visible: this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : 2.5), // TODO: make this configurable
+          visible: textVisibility,
+        });
+        this.edgeTextLayer = this.edgeTextLayer.clone({
+          visible: textVisibility,
         });
         this.determineLayersToShow();
       },
