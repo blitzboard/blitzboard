@@ -98,10 +98,10 @@ $(() => {
 
   function updateConfigByUI(config) {
     let filterFromUI = getFilterFromUI();
-    if(filterFromUI.node) {
+    if(filterFromUI.node && config.node) {
       config.node.filter = filterFromUI.node;
     }
-    if(filterFromUI.edge) {
+    if(filterFromUI.edge && config.edge) {
       config.edge.filter = filterFromUI.edge;
     }
   }
@@ -1883,19 +1883,22 @@ $(() => {
   
   function loadCurrentGraph() {
     if (remoteMode) {
-      axios.get(`${backendUrl}/get/?graph=${currentGraphName}`).then((response) => {
-        let props = response.data.properties;
-        let config = props?.config?.[0] || defaultConfig;
-        if(props?.pg === undefined || props?.config === undefined) {
-          axios.get(`${backendUrl}/get/?graph=${currentGraphName}&response=pg`).then((response) => {
-            loadValues( json2pg.translate(JSON.stringify(response.data.pg)), config);
+      let currentGraph = savedGraphs.find(g => g.name === currentGraphName);
+      if(currentGraph) {
+        axios.get(`${backendUrl}/get/?graph=${currentGraph.id}`).then((response) => {
+          let props = response.data.properties;
+          let config = props?.config?.[0] || defaultConfig;
+          if(props?.pg === undefined || props?.config === undefined) {
+            axios.get(`${backendUrl}/get/?graph=${currentGraph.id}&response=pg`).then((response) => {
+              loadValues(json2pg.translate(JSON.stringify(response.data.pg)), config);
+              setUnsavedStatus(false);
+            });
+          } else {
+            loadValues(props.pg[0], config);
             setUnsavedStatus(false);
-          });
-        } else {
-          loadValues(props.pg[0], config);
-          setUnsavedStatus(false);
-        }
-      });
+          }
+        });
+      }
     } else {
       try {
         let graph = JSON.parse(localStorage.getItem('saved-graph-' + currentGraphName));
