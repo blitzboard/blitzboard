@@ -777,6 +777,26 @@ module.exports = {
     }
   },
 
+  onViewStateChange(viewState) {
+    const viewport = blitzboard.network.getViewports()[0];
+    if(viewport) {
+      const [left, top] = viewport.unproject([0, 0]);
+      const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
+      this.visibleBounds = {
+        left, top, bottom, right
+      };
+    }
+    this.viewState = viewState.viewState;
+    let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : 2.5); // TODO: make this configurable
+    this.nodeTextLayer = this.nodeTextLayer.clone({
+      visible: textVisibility,
+    });
+    this.edgeTextLayer = this.edgeTextLayer.clone({
+      visible: textVisibility,
+    });
+    this.determineLayersToShow();
+  },
+
   updateHighlightState() {
     let nodesToHighlight = Array.from(this.hoveredNodes).concat(Array.from(this.selectedNodes));
     this.nodeLayer = this.nodeLayer.clone({
@@ -875,6 +895,8 @@ module.exports = {
         this.network.setProps({
           views: [view],
         });
+
+        this.onViewStateChange(this.viewState);
       }, 200); // TODO: This is a hack to make sure the map is rendered correctly
     } else {
       if(this.config.style) {
@@ -888,6 +910,8 @@ module.exports = {
         initialViewState: this.viewState,
         views: [view],
       });
+      console.log(this.viewState);
+      this.onViewStateChange(this.viewState);
     }
   },
 

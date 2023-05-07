@@ -116,25 +116,7 @@ class Blitzboard {
           html: elem.object._title
         }
       },
-      onViewStateChange: (viewState) => {
-        const viewport = blitzboard.network.getViewports()[0];
-        if(viewport) {
-          const [left, top] = viewport.unproject([0, 0]);
-          const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
-          this.visibleBounds = {
-            left, top, bottom, right
-          };
-        }
-        this.viewState = viewState.viewState;
-        let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : 2.5); // TODO: make this configurable
-        this.nodeTextLayer = this.nodeTextLayer.clone({
-          visible: textVisibility,
-        });
-        this.edgeTextLayer = this.edgeTextLayer.clone({
-          visible: textVisibility,
-        });
-        this.determineLayersToShow();
-      },
+      onViewStateChange: (viewState) => this.onViewStateChange(viewState),
       onClick: (event, info) => blitzboard.onLayerClick(event, info),
       initialViewState: {
         target: [0, 0],
