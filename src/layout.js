@@ -165,8 +165,8 @@ module.exports = {
         layout: {
           hierarchical: {
             enabled: true,
-            levelSeparation: 150,
-            nodeSpacing: 100,
+            levelSeparation: 250,
+            nodeSpacing: 150,
             treeSpacing: 200,
             blockShifting: true,
             edgeMinimization: true,
