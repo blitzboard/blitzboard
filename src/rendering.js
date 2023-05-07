@@ -491,7 +491,8 @@ module.exports = {
       },
       getText: edge => edge.label,
       getSize: fontSize,
-      sizeMaxPixels: 60,
+      sizeMaxPixels: 30,
+      sizeMinPixels: 15,
       sizeScale: scale,
       getColor: edge => {
         if(this.shouldHighlight(edge))
@@ -511,6 +512,7 @@ module.exports = {
         sdf: true,
         smoothing: 0.3
       },
+      characterSet: 'auto'
     });
   },
 
