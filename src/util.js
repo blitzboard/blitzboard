@@ -34,6 +34,45 @@ function getRandomColor(str, saturation, brightness) {
   return 'hsl(' + hue + `, ${saturation}, ${brightness})`;
 }
 
+
+// Assign color for each string and return it
+
+let defaultColors = [
+  '#C7243A',
+  '#DA6272',
+  '#E38692',
+  '#DA5019',
+  '#E06A3B',
+  '#E6855E',
+  '#EDAD0B',
+  '#F8D32F',
+  '#D8E212',
+  '#A4C520',
+  '#3EBA2B',
+  '#1BA466',
+  '#40BFB0',
+  '#009F8C',
+  '#42AAC7',
+  '#1F91BE',
+  '#4B75B9',
+  '#6A8CC7',
+  '#8858AA',
+  '#B492CC',
+  '#B75C9D',
+  '#B43C88',
+];
+
+function getColorFromText(str) {
+  let hash = 0;
+  for(let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    hash = hash & hash;
+  }
+  hash = Math.abs(hash);
+  console.log({hash});
+  return defaultColors[hash % defaultColors.length];
+}
+
 let renderedColors = {};
 
 function getHexColors(colorStr) {
@@ -178,6 +217,7 @@ function validateGraph() {
 
 module.exports = {
   deepMerge,
+  getColorFromText,
   getRandomColor,
   getHexColors,
   createTitle,

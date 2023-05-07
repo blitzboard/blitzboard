@@ -1,7 +1,7 @@
 const DeckGL = require("@deck.gl/core");
 const DeckGLLayers = require("@deck.gl/layers");
 const DeckGLGeoLayers = require("@deck.gl/geo-layers");
-const {getRandomColor, getHexColors, createLabelText, createTitle, retrieveHttpUrl} = require("./util");
+const {getRandomColor, getHexColors, createLabelText, createTitle, retrieveHttpUrl, getColorFromText} = require("./util");
 
 const defaultNodeSize = 5;
 const highlightedNodeRadiusRate = 1.2;
@@ -182,7 +182,12 @@ module.exports = {
       coordinateSystem,
       billboard: this.config.layout !== 'map',
       data: tmpEdgeData,
-      getWidth: edge => edge.width,
+      getWidth: edge => {
+        // if(this.hoveredNodes.has(edge.from) || this.selectedNodes.has(edge.from) || this.hoveredNodes.has(edge.to) || this.selectedNodes.has(edge.to)) {
+        //   return parseFloat(edge.width) + 100;
+        // }
+        return edge.width;
+      },
       getSourcePosition: (edge) => {
         let {x, y, z} = this.nodeDataSet[edge.from];
         return [x, y, z];
@@ -193,6 +198,12 @@ module.exports = {
       },
       getColor: (e) => {
         let color = [...e.color];
+        if(this.hoveredNodes.has(e.from) || this.selectedNodes.has(e.from)) {
+          color = this.nodeDataSet[e.from].color;
+        }
+        if(this.hoveredNodes.has(e.to) || this.selectedNodes.has(e.to)) {
+          color = this.nodeDataSet[e.to].color;
+        }
         return [color[0], color[1], color[2], 0XFF];
       },
       updateTriggers: {
@@ -531,7 +542,7 @@ module.exports = {
   toVisNode(pgNode, extraOptions = null) {
     const group = [...pgNode.labels].sort().join('_');
     if(!this.nodeColorMap[group]) {
-      this.nodeColorMap[group] = getRandomColor(group, this.config.node.saturation, this.config.node.brightness);
+      this.nodeColorMap[group] = getColorFromText(group);
     }
     let props = this.config.node.caption;
 
@@ -559,8 +570,9 @@ module.exports = {
     color = color || this.nodeColorMap[group];
 
     if(pgNode.clusterId) {
-      color = getRandomColor('yellow', this.config.node.saturation, this.config.node.brightness);
+      color = getColorFromText('yellow');
     }
+    console.log({color});
 
     let rgb = getHexColors(color);
 
@@ -667,9 +679,6 @@ module.exports = {
   toVisEdge(pgEdge, id) {
     let props = this.config.edge.caption;
     const edgeLabel = pgEdge.labels.join('_');
-    if(!this.edgeColorMap[edgeLabel]) {
-      this.edgeColorMap[edgeLabel] = getRandomColor(edgeLabel, this.config.edge.saturation || '0%', this.config.edge.brightness || '30%');
-    }
     let color = this.retrieveConfigProp(pgEdge, 'edge', 'color');
     let opacity = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'opacity')) || 1;
     let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'width'));
@@ -810,9 +819,11 @@ module.exports = {
         data: edgesToDraw
       });
     } else {
+      let triggers = Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges));
       this.edgeLayer = this.edgeLayer.clone({
         updateTriggers: {
-          getColor: Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges))
+          getColor: triggers,
+          // getWidth: triggers,
         }
       });
     }
