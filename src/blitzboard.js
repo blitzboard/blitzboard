@@ -52,6 +52,7 @@ class Blitzboard {
       x: 'x',
       y: 'y'
     },
+    zoomLevelForText: 1.5,
     dimensions: 2,
     style: "border: solid 1px #E6E6E6; background: radial-gradient(white, #E6E6E6);",
     extraOptions: {
@@ -116,25 +117,7 @@ class Blitzboard {
           html: elem.object._title
         }
       },
-      onViewStateChange: (viewState) => {
-        const viewport = blitzboard.network.getViewports()[0];
-        if(viewport) {
-          const [left, top] = viewport.unproject([0, 0]);
-          const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
-          this.visibleBounds = {
-            left, top, bottom, right
-          };
-        }
-        this.viewState = viewState.viewState;
-        let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : 2.5); // TODO: make this configurable
-        this.nodeTextLayer = this.nodeTextLayer.clone({
-          visible: textVisibility,
-        });
-        this.edgeTextLayer = this.edgeTextLayer.clone({
-          visible: textVisibility,
-        });
-        this.determineLayersToShow();
-      },
+      onViewStateChange: (info) => this.onViewStateChange(info.viewState),
       onClick: (event, info) => blitzboard.onLayerClick(event, info),
       initialViewState: {
         target: [0, 0],
@@ -232,7 +215,7 @@ class Blitzboard {
       }
       edge.id = id;
       let visEdge = this.toVisEdge(edge, id);
-      this.edgeMap[visEdge.id] = edge;
+      this.edgeMap[visEdge.id] = visEdge;
       this.nodesToEdges[edge.from] = this.nodesToEdges[edge.from] || [];
       this.nodesToEdges[edge.from].push(edge);
       this.nodesToEdges[edge.to] = this.nodesToEdges[edge.to] || [];

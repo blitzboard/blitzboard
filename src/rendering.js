@@ -459,7 +459,7 @@ module.exports = {
       coordinateSystem,
       sizeUnits: sizeUnits,
       sizeScale: scale,
-      visible: this.viewState?.zoom > 2.5,
+      visible: this.viewState?.zoom > this.config.zoomLevelForText,
       outlineWidth: 1,
       outlineColor: [255, 255, 255, 255],
       onHover: info => this.onNodeHover(info),
@@ -512,7 +512,7 @@ module.exports = {
         sdf: true,
         smoothing: 0.3
       },
-      characterSet: 'auto'
+      // characterSet: 'auto'
     });
   },
 
@@ -777,6 +777,26 @@ module.exports = {
     }
   },
 
+  onViewStateChange(viewState) {
+    const viewport = blitzboard.network.getViewports()[0];
+    if(viewport) {
+      const [left, top] = viewport.unproject([0, 0]);
+      const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
+      this.visibleBounds = {
+        left, top, bottom, right
+      };
+    }
+    this.viewState = viewState;
+    let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : this.config.zoomLevelForText); // TODO: make this configurable
+    this.nodeTextLayer = this.nodeTextLayer.clone({
+      visible: textVisibility,
+    });
+    this.edgeTextLayer = this.edgeTextLayer.clone({
+      visible: textVisibility,
+    });
+    this.determineLayersToShow();
+  },
+
   updateHighlightState() {
     let nodesToHighlight = Array.from(this.hoveredNodes).concat(Array.from(this.selectedNodes));
     this.nodeLayer = this.nodeLayer.clone({
@@ -796,7 +816,6 @@ module.exports = {
     }
     edgesToHighlight = Array.from(edgesToHighlight).map(id => this.edgeMap[id]);
     if(this.config.edge.visibilityMode !== 'always') {
-
       let edgesToDraw;
       if(edgesToHighlight.length === 0 &&  this.config.edge.visibilityMode === 'noOtherFocused') {
         edgesToDraw = this.allEdgesToDraw;
@@ -888,6 +907,7 @@ module.exports = {
         initialViewState: this.viewState,
         views: [view],
       });
+      this.onViewStateChange(this.viewState);
     }
   },
 
