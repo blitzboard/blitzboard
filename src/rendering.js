@@ -192,14 +192,8 @@ module.exports = {
         return [x, y, z];
       },
       getColor: (e) => {
-        if(this.shouldHighlight(e)) {
-          return [e.color, e.color, e.color, 255];
-        }
         let color = [...e.color];
-        for(let i = 0; i < 3; ++i)
-          color[i] = (128 * 3 + color[i]) / 4;
-        color[3] = 192;
-        return color;
+        return [color[0], color[1], color[2], 0XFF];
       },
       updateTriggers: {
         getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
@@ -451,7 +445,7 @@ module.exports = {
       getText: node => node.label,
       getSize: (n) => n._size / defaultNodeSize * fontSize * (this.config.layout === 'map' ? 100 : 1),
       sizeMaxPixels: 30,
-      sizeMinPixels: 20,
+      sizeMinPixels: 5,
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
@@ -461,6 +455,7 @@ module.exports = {
       sizeScale: scale,
       visible: this.viewState?.zoom > this.config.zoomLevelForText,
       outlineWidth: 1,
+      lineHeight: 1.2,
       outlineColor: [255, 255, 255, 255],
       // fontSettings: {
       //   sdf: true,
@@ -489,18 +484,19 @@ module.exports = {
         return [(fromX + toX) / 2, (fromY + toY) / 2, (fromZ + toZ) / 2];
       },
       getText: edge => edge.label,
-      getSize: fontSize,
+      getSize: fontSize * (this.config.layout === 'map' ? 100 : 1),
       sizeMaxPixels: 30,
-      sizeMinPixels: 15,
+      sizeMinPixels: 12,
       sizeScale: scale,
       getColor: edge => {
-        if(this.shouldHighlight(edge))
-          return [0, 0, 255, 255];
-        return [0, 0, 0, 255];
+        // if(this.shouldHighlight(edge))
+        //   return [0, 0, 255, 255];
+        return [0xAC, 0xAC, 0xAC, 0XFF];
       },
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
+      lineHeight: 1.2,
       getAlignmentBaseline: 'top',
       coordinateSystem,
       sizeUnits: sizeUnits,
@@ -563,7 +559,7 @@ module.exports = {
     color = color || this.nodeColorMap[group];
 
     if(pgNode.clusterId) {
-      color = Blitzboard.SCCColor;
+      color = getRandomColor('yellow', this.config.node.saturation, this.config.node.brightness);
     }
 
     let rgb = getHexColors(color);
@@ -571,11 +567,11 @@ module.exports = {
     let attrs = {
       objectType: 'node',
       id: pgNode.id,
+      _size: size || defaultNodeSize,
       color: rgb,
       opacity,
       label: createLabelText(pgNode, props),
       shape: 'dot',
-      _size: size || defaultNodeSize,
       _title: tooltip != null ? tooltip : createTitle(pgNode),
 
       borderWidth: url ? 3 : 1,
@@ -679,16 +675,11 @@ module.exports = {
     let width = parseFloat(this.retrieveConfigProp(pgEdge, 'edge', 'width'));
     let tooltip = this.retrieveConfigProp(pgEdge, 'edge', 'title');
 
-    color = color || this.edgeColorMap[edgeLabel];
 
-    let rgb = getHexColors(color);
+    let rgb = color ? getHexColors(color) : [0xCC, 0xCC, 0xCC];
     let smooth = this.config.layout === 'map' || this.config.layout === 'hierarchical-scc' ? false : {roundness: 1};
 
     let dashes = false;
-    // if(this.sccMap[pgEdge.from] && this.sccMap[pgEdge.from] === this.sccMap[pgEdge.to]) {
-    //   smooth = {roundness: 0.5};
-    //   dashes = true;
-    // }
     let attrs = {
       objectType: 'edge',
       id: id,
@@ -856,7 +847,7 @@ module.exports = {
         // this.tripsLayer,
         this.highlightedTripsLayer,
         this.nodeTextLayer,
-        // this.edgeArrowLayer,
+        this.edgeArrowLayer,
         this.nodeLayer,
         this.highlightedNodeTextLayer,
         this.iconLayer,

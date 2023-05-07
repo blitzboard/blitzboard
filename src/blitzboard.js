@@ -17,7 +17,6 @@ require('jquery-ui-bundle');
 require('jquery-ui-bundle/jquery-ui.css');
 
 class Blitzboard {
-  static SCCColor = '#edc821';
   static selectedNodeColor = [0x21, 0x56, 0xee];
   static zoomLevelToLoadImage = 2.0;
   static minNodeSizeInPixels = 10;
@@ -54,7 +53,7 @@ class Blitzboard {
     },
     zoomLevelForText: 1.5,
     dimensions: 2,
-    style: "border: solid 1px #E6E6E6; background: radial-gradient(white, #E6E6E6);",
+    style: "background: white;",
     extraOptions: {
     },
   };
@@ -103,6 +102,7 @@ class Blitzboard {
     this.onParseError = [];
     this.maxLine = 0;
     this.doubleClickTimer = null;
+
 
     let blitzboard = this;
 
