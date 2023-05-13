@@ -1,6 +1,7 @@
 const DeckGL = require("@deck.gl/core");
 const DeckGLLayers = require("@deck.gl/layers");
 const DeckGLGeoLayers = require("@deck.gl/geo-layers");
+const DeckGLExtensions = require("@deck.gl/extensions");
 const {getRandomColor, getHexColors, createLabelText, createTitle, retrieveHttpUrl, getColorFromText} = require("./util");
 
 const defaultNodeSize = 5;
@@ -305,7 +306,7 @@ module.exports = {
 
     this.iconLayer = this.createIconLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
 
-    this.updateThumbnailLayer();
+    this.updateThumbnailLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
     this.updateTextLayers();
 
     if(this.config.layout === 'map') {
@@ -333,16 +334,30 @@ module.exports = {
     this.determineLayersToShow();
   },
 
-  updateThumbnailLayer() {
-    this.thumbnailLayers = this.nodeData.filter(n => n.imageURL).map((n) => {
-      let bounds =  [ n.x + n._size / defaultNodeSize, n.y + n._size / defaultNodeSize,
-        n.x - n._size / defaultNodeSize,
-        n.y - n._size / defaultNodeSize];
-      return new DeckGLLayers.BitmapLayer({
-        id: 'bitmap-layer-' + n.id,
-        bounds,
-        image: n.imageURL
-      });
+  updateThumbnailLayer(nodeData, scale, sizeUnits, coordinateSystem) {
+    this.thumbnailLayer = new DeckGLLayers.IconLayer({
+      id: 'thumbnail-layer',
+      data: nodeData.filter(n => n.imageURL),
+      getPosition: node => [node.x, node.y],
+      getIcon: node => ({
+        url: node.imageURL,
+        width: 100,
+        height: 100
+      }),
+      getSize: n => n._size / defaultNodeSize * 10 * (this.config.layout === 'map' ? 100 : 1),
+      sizeScale: scale,
+      sizeUnits: sizeUnits,
+      pickable: true,
+      getCollisionPriority: node => node._size,
+      collisionGroup: 'thumbnail',
+      collisionTestProps: {
+        sizeScale: 15,
+        sizeUnits: 'pixels',
+        getSize: Blitzboard.minImageSizeInPixels * 2
+      },
+      onHover: info => this.onNodeHover(info),
+      sizeMinPixels: Blitzboard.minImageSizeInPixels,
+      extensions: [new DeckGLExtensions.CollisionFilterExtension()]
     });
   },
 
@@ -852,6 +867,7 @@ module.exports = {
       data: edgesToHighlight.filter(edge => edge && edge.direction !== '--')
     });
     this.highlightedEdgeLayer = this.highlightedEdgeLayer.clone({
+      widthMinPixels: this.config.edge.minWidthInPixels,
       data: edgesToHighlight
     });
     if(edgesToHighlight.length > 0)
@@ -873,7 +889,7 @@ module.exports = {
         // this.edgeArrowLayer,
         this.highlightedNodeTextLayer,
         this.iconLayer,
-        ...this.thumbnailLayers
+        this.thumbnailLayer
       ];
     } else {
       this.layers = [
@@ -887,7 +903,7 @@ module.exports = {
         this.nodeLayer,
         this.highlightedNodeTextLayer,
         this.iconLayer,
-        ...this.thumbnailLayers
+        this.thumbnailLayer
       ];
     }
     this.network.setProps({
