@@ -110,24 +110,25 @@ function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, 
 //   }
 // });
 
-let currentTime = 0;
+const ANIMATION_TIME_MAX = 1000;
 
 module.exports = {
-
   startEdgeAnimation() {
-    if(this.animationTimerId)
+    if(this.animationTimerId || this.config.edge.animationDuration <= 0)
       return;
+    const interval = 20;
+    this.currentTime = 0;
     this.animationTimerId = setInterval(() => {
-      if(this.highlightedTripsLayer.props.data.length === 0) {
+      if(this.highlightedTripsLayer.props.data.length === 0 || this.currentTime >= ANIMATION_TIME_MAX) {
         clearInterval(this.animationTimerId);
         this.animationTimerId = null;
       }
-      currentTime = (currentTime + 2) % 110;
+      this.currentTime += interval * ANIMATION_TIME_MAX / this.config.edge.animationDuration;
       this.highlightedTripsLayer = this.highlightedTripsLayer.clone({
-        currentTime
+        currentTime: this.currentTime
       });
       this.determineLayersToShow();
-    }, 20);
+    }, interval);
   },
 
   updateLayers() {
@@ -171,10 +172,10 @@ module.exports = {
 
     function edgeColor(e) {
       let color = [...e.color];
-      if(blitzboard.hoveredNodes.has(e.from) || blitzboard.selectedNodes.has(e.from)) {
+      if(blitzboard.hoveredNode === e.from || blitzboard.selectedNodes.has(e.from)) {
         color = blitzboard.nodeDataSet[e.from].color;
       }
-      if(blitzboard.hoveredNodes.has(e.to) || blitzboard.selectedNodes.has(e.to)) {
+      if(blitzboard.hoveredNode=== e.to || blitzboard.selectedNodes.has(e.to)) {
         color = blitzboard.nodeDataSet[e.to].color;
       }
       return [color[0], color[1], color[2], 0XFF];
@@ -188,7 +189,7 @@ module.exports = {
       billboard: this.config.layout !== 'map',
       data: tmpEdgeData,
       getWidth: edge => {
-        if(this.hoveredNodes.has(edge.from) || this.selectedNodes.has(edge.from) || this.hoveredNodes.has(edge.to) || this.selectedNodes.has(edge.to)) {
+        if(this.hoveredNode === edge.from || this.selectedNodes.has(edge.from) || this.hoveredNode === edge.to || this.selectedNodes.has(edge.to)) {
           return parseFloat(edge.width) * 2;
         }
         return edge.width;
@@ -203,7 +204,7 @@ module.exports = {
       },
       getColor: edgeColor,
       updateTriggers: {
-        getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
+        getColor: [Array.from(new Set([this.hoveredNode, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
       },
       onHover: info => this.onEdgeHover(info),
       widthUnits: ('common'),
@@ -211,6 +212,15 @@ module.exports = {
       widthMinPixels: 1,
     });
 
+
+    this.highlightedEdgeLayer = this.edgeLayer.clone({
+      id: "highlighted-edge-layer",
+      getWidth: edge => {
+        return parseFloat(edge.width) * 2;
+      },
+    });
+
+    const tripStep = 20;
     this.tripsLayer = new DeckGLGeoLayers.TripsLayer({
       id: "trips-layer",
       pickable: true,
@@ -221,39 +231,30 @@ module.exports = {
         let {x: fromX, y: fromY} = this.nodeDataSet[edge.from];
         let {x: toX, y: toY} = this.nodeDataSet[edge.to];
         let path = [];
-        for(let i = 0; i < 10; ++i) {
-          let x = fromX + (toX - fromX) * i / 9;
-          let y = fromY + (toY - fromY) * i / 9;
+        for(let i = 0; i < tripStep; ++i) {
+          let x = fromX + (toX - fromX) * i / (tripStep - 1);
+          let y = fromY + (toY - fromY) * i / (tripStep - 1);
           path.push([x, y]);
         }
         return path;
       },
       getTimestamps: edge => {
         let timestamps = [];
-        for(let i = 0; i < 10; ++i) {
-          timestamps.push(i * 10);
+        for(let i = 0; i < tripStep; ++i) {
+          timestamps.push(i * ANIMATION_TIME_MAX / tripStep);
         }
         return timestamps;
       },
       rounded: true,
       fadeTrail: true,
-      trailLength: 100,
-      currentTime: 100,
+      trailLength: ANIMATION_TIME_MAX * 1.5,
+      currentTime: ANIMATION_TIME_MAX,
       widthMinPixels: 4,
-      // getColor: (e) => {
-      //   if(this.shouldHighlight(e)) {
-      //     return [e.color, e.color, 0, 255];
-      //   }
-      //   let color = [...e.color];
-      //   for(let i = 0; i < 3; ++i)
-      //     color[i] = (128 * 3 + color[i]) / 4;
-      //   color[3] = 192;
-      //   color[2] = 0;
-      //   return color;
-      // },
-      getColor: [32, 64, 255, 192],
+      getColor: (e) => {
+        return [e.color[0], e.color[1], e.color[2], 192];
+      },
       updateTriggers: {
-        getColor: [Array.from(new Set([...this.hoveredNodes, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
+        getColor: [Array.from(new Set([this.hoveredNode, ...this.selectedNodes])), this.selectedEdges, this.hoveredEdges],
       },
       onHover: info => this.onEdgeHover(info),
       widthUnits: ('common'),
@@ -292,7 +293,7 @@ module.exports = {
       },
       getSize: edge => {
         let size = 5 * (this.config.layout === 'map' ? 100 : 1);
-        if(this.hoveredNodes.has(edge.from) || this.selectedNodes.has(edge.from) || this.hoveredNodes.has(edge.to) || this.selectedNodes.has(edge.to)) {
+        if(this.hoveredNode === edge.from || this.selectedNodes.has(edge.from) || this.hoveredNode === edge.to || this.selectedNodes.has(edge.to)) {
           size *= 2;
         }
         return size;
@@ -310,7 +311,6 @@ module.exports = {
     if(this.config.layout === 'map') {
       this.tileLayer = new DeckGLGeoLayers.TileLayer({
         id: 'TileLayer',
-        // data: "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png",
         data: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         maxZoom: 19,
         minZoom: 0,
@@ -419,9 +419,9 @@ module.exports = {
       // For edge
       if(this.config.edge.canFocus && this.hoveredEdges.has(elem.id))
         return true
-      return this.hoveredNodes.has(elem.from) || this.hoveredNodes.has(elem.to) || this.selectedNodes.has(elem.from) || this.selectedNodes.has(elem.to)
+      return this.hoveredNode === elem.from || this.hoveredNode === elem.to || this.selectedNodes.has(elem.from) || this.selectedNodes.has(elem.to)
     } else {
-      return this.hoveredNodes.has(elem.id) || this.selectedNodes.has(elem.id);
+      return this.hoveredNode === elem.id || this.selectedNodes.has(elem.id);
     }
   },
 
@@ -431,7 +431,7 @@ module.exports = {
 
     const scale = 0.2;
 
-    let highlightedNodes = new Set([...this.hoveredNodes, ...this.selectedNodes]);
+    let highlightedNodes = new Set([this.hoveredNode, ...this.selectedNodes]);
 
     let tmpNodeData = this.nodeDataSet;
 
@@ -488,10 +488,10 @@ module.exports = {
 
     function edgeTextColor(e) {
       let color = [...e.color];
-      if(blitzboard.hoveredNodes.has(e.from) || blitzboard.selectedNodes.has(e.from)) {
+      if(blitzboard.hoveredNode === e.from || blitzboard.selectedNodes.has(e.from)) {
         color = blitzboard.nodeDataSet[e.from].color;
       }
-      else if(blitzboard.hoveredNodes.has(e.to) || blitzboard.selectedNodes.has(e.to)) {
+      else if(blitzboard.hoveredNode === e.to || blitzboard.selectedNodes.has(e.to)) {
         color = blitzboard.nodeDataSet[e.to].color;
       } else {
         color = [color[0] - 20, color[1] - 20, color[2] - 20];
@@ -695,7 +695,7 @@ module.exports = {
     let tooltip = this.retrieveConfigProp(pgEdge, 'edge', 'title');
 
 
-    let rgb = color ? getHexColors(color) : [0xCC, 0xCC, 0xCC];
+    let rgb = color ? getHexColors(color) : (this.config.layout === 'map' ? [32, 64, 255] : [0xCC, 0xCC, 0xCC]);
     let smooth = this.config.layout === 'map' || this.config.layout === 'hierarchical-scc' ? false : {roundness: 1};
 
     let dashes = false;
@@ -795,7 +795,7 @@ module.exports = {
   },
 
   updateHighlightState() {
-    let nodesToHighlight = Array.from(this.hoveredNodes).concat(Array.from(this.selectedNodes));
+    let nodesToHighlight = [this.hoveredNode].concat(Array.from(this.selectedNodes));
     this.nodeLayer = this.nodeLayer.clone({
       updateTriggers: {
         getRadius: nodesToHighlight,
@@ -829,13 +829,13 @@ module.exports = {
         data: edgesToDraw
       });
     } else {
-      let triggers = Array.from(this.hoveredNodes).concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges));
-      this.edgeLayer = this.edgeLayer.clone({
-        updateTriggers: {
-          getColor: triggers,
-          getWidth: triggers,
-        }
-      });
+      let triggers = [this.hoveredNode].concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges));
+      // this.edgeLayer = this.edgeLayer.clone({
+      //   updateTriggers: {
+      //     getColor: triggers,
+      //     getWidth: triggers,
+      //   }
+      // });
       this.edgeArrowLayer = this.edgeArrowLayer.clone({
         updateTriggers: {
           getColor: triggers,
@@ -850,6 +850,9 @@ module.exports = {
     }
     this.highlightedTripsLayer = this.highlightedTripsLayer.clone({
       data: edgesToHighlight.filter(edge => edge && edge.direction !== '--')
+    });
+    this.highlightedEdgeLayer = this.highlightedEdgeLayer.clone({
+      data: edgesToHighlight
     });
     if(edgesToHighlight.length > 0)
       this.startEdgeAnimation();
@@ -876,6 +879,7 @@ module.exports = {
       this.layers = [
         this.edgeLayer,
         this.edgeTextLayer,
+        this.highlightedEdgeLayer,
         // this.tripsLayer,
         // this.highlightedTripsLayer,
         this.nodeTextLayer,

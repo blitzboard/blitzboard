@@ -69,7 +69,6 @@ function getColorFromText(str) {
     hash = hash & hash;
   }
   hash = Math.abs(hash);
-  console.log({hash});
   return defaultColors[hash % defaultColors.length];
 }
 

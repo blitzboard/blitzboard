@@ -38,6 +38,7 @@ class Blitzboard {
       width: 1,
       visibilityMode: 'always', // always, onFocus, noOtherFocused
       canFocus: false,
+      animationDuration: 1000,
     },
     zoom: {
       max: 3.0,
@@ -73,7 +74,7 @@ class Blitzboard {
     this.sccMode = 'cluster';
     this.configChoice = null;
     this.nodeLayout = {};
-    this.hoveredNodes = new Set();
+    this.hoveredNode = null;
     this.hoveredEdges = new Set();
     this.selectedNodes = new Set();
     this.selectedEdges = new Set();
