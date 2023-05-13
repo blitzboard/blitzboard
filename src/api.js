@@ -280,12 +280,17 @@ module.exports = {
 
   scrollNetworkToPosition: function(position) {
     if(this.config.layout === 'map') {
+      let latitude = position.y, longitude = position.x;
+      let diff = Math.sqrt(
+        Math.pow(blitzboard.viewState.latitude - latitude, 2),
+        Math.pow(blitzboard.viewState.longitude - longitude, 2));
+      duration = Math.max(100, Math.min(1000, diff * 1000));
       this.network.setProps({
         initialViewState: {
           latitude: position.y,
           longitude: position.x,
           zoom: 13,
-          transitionDuration: 1000,
+          transitionDuration: duration,
           transitionInterpolator: new DeckGL.FlyToInterpolator()
         }
       });
