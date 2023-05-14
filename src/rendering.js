@@ -221,6 +221,24 @@ module.exports = {
       },
     });
 
+
+    this.centerNodeId = null;
+
+    this.highlightedNodeLayer = this.nodeLayer.clone({
+      id: "highlighted-node-layer",
+      // getFillColor: n => [0, 0, 0, 255],
+      data: tmpNodeData[0],
+      getPosition: n => {
+        if(this.centerNodeId && this.centerNodeId !== n.id) {
+          let centerNode = this.nodeDataSet[this.centerNodeId];
+          let [x, y] = this.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
+          return [x, y, n.z];
+        }
+        let {x, y, z} = n;
+        return [x, y, z];
+      },
+    });
+
     const tripStep = 20;
     this.tripsLayer = new DeckGLGeoLayers.TripsLayer({
       id: "trips-layer",
@@ -335,30 +353,36 @@ module.exports = {
   },
 
   updateThumbnailLayer(nodeData, scale, sizeUnits, coordinateSystem) {
-    this.thumbnailLayer = new DeckGLLayers.IconLayer({
-      id: 'thumbnail-layer',
-      data: nodeData.filter(n => n.imageURL),
-      getPosition: node => [node.x, node.y],
-      getIcon: node => ({
-        url: node.imageURL,
-        width: 100,
-        height: 100
-      }),
-      getSize: n => n._size / defaultNodeSize * 10 * (this.config.layout === 'map' ? 100 : 1),
-      sizeScale: scale,
-      sizeUnits: sizeUnits,
-      pickable: true,
-      getCollisionPriority: node => node._size,
-      collisionGroup: 'thumbnail',
-      collisionTestProps: {
-        sizeScale: 15,
-        sizeUnits: 'pixels',
-        getSize: Blitzboard.minImageSizeInPixels * 2
-      },
-      onHover: info => this.onNodeHover(info),
-      sizeMinPixels: Blitzboard.minImageSizeInPixels,
-      extensions: [new DeckGLExtensions.CollisionFilterExtension()]
-    });
+    this.thumbnailLayers = [];
+    let nodes = nodeData.filter(n => n.imageURL);
+    const chunkSize = 1000;
+    for (let i = 0; i < nodes.length; i += chunkSize) {
+      const chunk = nodes.slice(i, i + chunkSize);
+      this.thumbnailLayers.push(new DeckGLLayers.IconLayer({
+        id: `thumbnail-layer-${i}`,
+        data: chunk,
+        getPosition: node => [node.x, node.y],
+        getIcon: node => ({
+          url: node.imageURL,
+          width: 100,
+          height: 100
+        }),
+        getSize: n => n._size / defaultNodeSize * 10 * (this.config.layout === 'map' ? 100 : 1),
+        sizeScale: scale,
+        sizeUnits: sizeUnits,
+        pickable: true,
+        getCollisionPriority: node => node._size,
+        collisionGroup: 'thumbnail',
+        collisionTestProps: {
+          sizeScale: 15,
+          sizeUnits: 'pixels',
+          getSize: Blitzboard.minImageSizeInPixels * 2
+        },
+        onHover: info => this.onNodeHover(info),
+        sizeMinPixels: Blitzboard.minImageSizeInPixels,
+        extensions: [new DeckGLExtensions.CollisionFilterExtension()]
+      }));
+    }
   },
 
   refreshIconLayer() {
@@ -369,6 +393,20 @@ module.exports = {
     Blitzboard.loadedIcons = {...Blitzboard.loadedIcons};
     let oldLayer = this.iconLayer;
     this.iconLayer = this.createIconLayer(this.nodeData, this.iconLayer.props.sizeScale, this.iconLayer.props.sizeUnits, this.iconLayer.props.coordinateSystem);
+
+
+    this.highlightedIconLayer = this.iconLayer.clone({
+      id: `highlighted-icon-layer`,
+      data: [],
+      getPosition: n => {
+        if(this.centerNodeId && this.centerNodeId !== n.id) {
+          let centerNode = this.nodeDataSet[this.centerNodeId];
+          let [x, y] = this.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * 0.2);
+          return [x, y, n.z];
+        }
+        return [n.x, n.y, n.z];
+      },
+    });
     // replace with new one
     for(let i = 0; i < this.layers.length; ++i) {
       if(this.layers[i] === oldLayer) {
@@ -440,6 +478,30 @@ module.exports = {
     }
   },
 
+  computeVisiblePositionFromCenter(targetX, targetY, centerX, centerY, margin) {
+    let xDiff = centerX - targetX;
+    let yDiff = centerY - targetY;
+    let angle = Math.atan2(yDiff, xDiff);
+    let x = targetX;
+    let y = targetY;
+    if(x < this.visibleBounds.left + margin) {
+      y += (this.visibleBounds.left + margin - x) * Math.tan(angle);
+      x = this.visibleBounds.left + margin;
+    } else if(x > this.visibleBounds.right - margin) {
+      y += (this.visibleBounds.right - margin - x) * Math.tan(angle);
+      x = this.visibleBounds.right - margin;
+    }
+
+    if(y < this.visibleBounds.top + margin) {
+      x += (this.visibleBounds.top + margin - y) / Math.tan(angle);
+      y = this.visibleBounds.top + margin;
+    } else if(y > this.visibleBounds.bottom - margin) {
+      x += (this.visibleBounds.bottom - margin - y) / Math.tan(angle);
+      y = this.visibleBounds.bottom - margin;
+    }
+    return [x, y];
+  },
+
   updateTextLayers() {
     const coordinateSystem = this.config.layout === 'map' ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
     const sizeUnits = this.config.layout === 'map' ? 'meters' : 'common';
@@ -461,9 +523,10 @@ module.exports = {
       n.label.split('').forEach(c => characterSet.add(c));
     });
 
-    let textLayerAttributes = {
+    this.nodeTextLayer = new DeckGLLayers.TextLayer({
       id: 'node-text-layer',
       pickable: true,
+      data: tmpNodeData,
       getPosition: (node) => {
         return [node.x,
           node.y + (this.config.layout === 'map' ? -0.001 * node._size / defaultNodeSize : node._size * scale) * highlightedNodeRadiusRate,
@@ -489,17 +552,23 @@ module.exports = {
       // },
       onHover: info => this.onNodeHover(info),
       characterSet: characterSet
-    };
+    });
 
-    textLayerAttributes.data = tmpNodeData;
-
-    this.nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
-
-    textLayerAttributes = {...textLayerAttributes};
-    textLayerAttributes.data = Array.from(highlightedNodes).map(id => this.nodeDataSet[id]).filter(n => n);
-    textLayerAttributes.fontWeight = 900; // bolder than bold
-    textLayerAttributes.id = 'hilighted-node-text-layer';
-    this.highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
+    this.highlightedNodeTextLayer = this.nodeTextLayer.clone({
+      data: Array.from(highlightedNodes).map(id => this.nodeDataSet[id]).filter(n => n),
+      fontWeight: 900,
+      id: 'hilighted-node-text-layer',
+      getPosition: n => {
+        if(this.centerNodeId && this.centerNodeId !== n.id) {
+          let centerNode = this.nodeDataSet[this.centerNodeId];
+          let [x, y] = this.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
+          return [x, y + (this.config.layout === 'map' ? -0.001 * n._size / defaultNodeSize : n._size * scale) * highlightedNodeRadiusRate, n.z];
+        }
+        let {x, y, z} = n;
+        return [x, y + (this.config.layout === 'map' ? -0.001 * n._size / defaultNodeSize : n._size * scale) * highlightedNodeRadiusRate, z + 10];
+      },
+      onHover: null,
+    })
 
     function edgeTextColor(e) {
       let color = [...e.color];
@@ -799,6 +868,16 @@ module.exports = {
 
   onViewStateChange(viewState) {
     this.viewState = viewState;
+    const viewport = this.network.getViewports()[0];
+    if(viewport) {
+      const [left, top] = viewport.unproject([0, 0]);
+      const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
+      this.visibleBounds = {
+        left, top, bottom, right
+      };
+    }
+
+
     let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : this.config.zoomLevelForText); // TODO: make this configurable
     this.nodeTextLayer = this.nodeTextLayer.clone({
       visible: textVisibility,
@@ -806,11 +885,30 @@ module.exports = {
     this.edgeTextLayer = this.edgeTextLayer.clone({
       visible: textVisibility,
     });
+    this.highlightedNodeLayer = this.highlightedNodeLayer.clone({
+      updateTriggers: {
+        getPosition: this.visibleBounds,
+      }
+    });
+
+    if(this.highlightedIconLayer) {
+      this.highlightedIconLayer = this.highlightedIconLayer.clone({
+        updateTriggers: {
+          getPosition: this.visibleBounds,
+        },
+      });
+    }
+
+    this.highlightedNodeTextLayer = this.highlightedNodeTextLayer.clone({
+      updateTriggers: {
+        getPosition: this.visibleBounds,
+      }
+    });
     this.determineLayersToShow();
   },
 
   updateHighlightState() {
-    let nodesToHighlight = [this.hoveredNode].concat(Array.from(this.selectedNodes));
+    let nodesToHighlight = [this.hoveredNode].concat(Array.from(this.selectedNodes)).filter(n => n);
     this.nodeLayer = this.nodeLayer.clone({
       updateTriggers: {
         getRadius: nodesToHighlight,
@@ -827,6 +925,31 @@ module.exports = {
       }
     }
     edgesToHighlight = Array.from(edgesToHighlight).map(id => this.edgeMap[id]);
+
+
+    let relatedNodes = new Set(nodesToHighlight);
+    for(let edge of edgesToHighlight) {
+      relatedNodes.add(edge.from);
+      relatedNodes.add(edge.to);
+    }
+
+
+    relatedNodes = Array.from(relatedNodes).map(id => this.nodeDataSet[id]);
+
+    this.highlightedNodeLayer = this.highlightedNodeLayer.clone({
+      data: relatedNodes
+    });
+
+    this.highlightedIconLayer = this.highlightedIconLayer.clone({
+      data: relatedNodes
+    });
+
+
+    this.highlightedNodeTextLayer = this.highlightedNodeTextLayer.clone({
+      data: relatedNodes
+    });
+
+
     if(this.config.edge.visibilityMode !== 'always') {
       let edgesToDraw;
       if(edgesToHighlight.length === 0 &&  this.config.edge.visibilityMode === 'noOtherFocused') {
@@ -889,7 +1012,7 @@ module.exports = {
         // this.edgeArrowLayer,
         this.highlightedNodeTextLayer,
         this.iconLayer,
-        this.thumbnailLayer
+        ...this.thumbnailLayers
       ];
     } else {
       this.layers = [
@@ -901,9 +1024,11 @@ module.exports = {
         this.nodeTextLayer,
         this.edgeArrowLayer,
         this.nodeLayer,
+        this.highlightedNodeLayer,
         this.highlightedNodeTextLayer,
         this.iconLayer,
-        this.thumbnailLayer
+        ...this.thumbnailLayers,
+        this.highlightedIconLayer
       ];
     }
     this.network.setProps({

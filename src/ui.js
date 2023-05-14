@@ -209,6 +209,7 @@ module.exports = {
     if(hoverInfo.object && this.hoveredNode === hoverInfo.object.id || !hoverInfo.object && this.hoveredNode === null)
         return;
     this.hoveredNode = hoverInfo.object?.id;
+    this.centerNodeId = this.hoveredNode;
 
     this.updateHighlightState();
     if (this.config.node.onHover) {
