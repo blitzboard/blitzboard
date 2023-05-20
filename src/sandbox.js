@@ -54,6 +54,12 @@ function getCurrentProp() {
   }
   return null;
 }
+let currentGraphMetadata = {};
+
+function getCurrentCharacter() {
+  let cursor = editor.getCursor();
+  return editor.getLine(cursor.line).charAt(cursor.ch - 1);
+}
 
 $(() => {
   let defaultConfig = pageTemplates[0].config;
@@ -67,7 +73,6 @@ $(() => {
   blitzboard = new Blitzboard(container);
   config = defaultConfig;
   let byProgram = false;
-  let currentGraphName;
   let noGraphLoaded = false;
   let prevInputWidth = null;
   let autocompletion = true;
@@ -116,15 +121,17 @@ $(() => {
     return this;
   };
 
-  if (!localStorage.getItem("currentGraphName")) {
+  if (!localStorage.getItem("currentGraphMetadata")) {
     noGraphLoaded = true;
-    localStorage.setItem("currentGraphName", newGraphName());
+  } else {
+    currentGraphMetadata = JSON.parse(
+      localStorage.getItem("currentGraphMetadata")
+    );
   }
-  currentGraphName = localStorage.getItem("currentGraphName");
 
-  if (remoteMode) {
+  if (remoteMode && currentGraphMetadata?.id) {
     axios
-      .get(`${backendUrl}/get/?graph=${currentGraphName}`)
+      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
       .then((response) => {
         lastUpdate = response.data.properties?.lastUpdate[0];
       });
@@ -853,11 +860,15 @@ $(() => {
                   });
                   `;
 
+    content = JSON.stringify(blitzboard.graph);
+
     let name =
-      (currentGraphName.startsWith("Untitled") ? "graph" : currentGraphName) +
+      (currentGraphMetadata.name.startsWith("Untitled")
+        ? "graph"
+        : currentGraphMetadata.name) +
       "_" +
       currentTimeString();
-    saveAs(new Blob([content], { type: "text/plain" }), name + ".js");
+    saveAs(new Blob([content], { type: "text/plain" }), name + ".json");
     $("#export-btn").dropdown("toggle");
   });
 
@@ -977,7 +988,9 @@ $(() => {
       })
     );
     let name =
-      (currentGraphName.startsWith("Untitled") ? "graph" : currentGraphName) +
+      (currentGraphMetadata.name.startsWith("Untitled")
+        ? "graph"
+        : currentGraphMetadata.name) +
       "-csv_" +
       currentTimeString();
     var zip = new JSZip();
@@ -1016,8 +1029,8 @@ $(() => {
   }
 
   function showGraphName() {
-    $("#history-dropdown")[0].innerText = currentGraphName;
-    $("title").html(currentGraphName);
+    $("#history-dropdown")[0].innerText = currentGraphMetadata.name;
+    $("title").html(currentGraphMetadata.name);
   }
 
   function updateHistoryMenu(graphs) {
@@ -1029,7 +1042,7 @@ $(() => {
     for (let graph of graphs) {
       let node = document.createElement("a");
       node.className = "dropdown-item history-item mr-3";
-      if (graph.name === currentGraphName)
+      if (graph.id === currentGraphMetadata.id && currentGraphMetadata.id)
         node.className += " active text-white";
       node.style = "position:relative";
       node.appendChild(document.createTextNode(graph.name));
@@ -1142,65 +1155,43 @@ $(() => {
       if (result.isConfirmed && result.value) {
         let newName = result.value;
         if (remoteMode) {
-          axios.get(`${backendUrl}/get/?graph=${oldName}`).then((response) => {
-            let properties = response.data.properties;
-            axios
-              .request({
-                method: "post",
-                url: `${backendUrl}/drop`,
-                data: `graph=${oldName}`,
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-              })
-              .finally((res) => {
-                let pgJSON = blitzboard.tryPgParse(properties.pg[0]);
-                let [nodes, edges] = nodesAndEdgesForSaving(
-                  pgJSON.nodes,
-                  pgJSON.edges
-                );
-                let graph = {
-                  name: newName,
-                  properties,
-                  pg: {
-                    nodes,
-                    edges,
-                  },
-                };
-                axios
-                  .post(`${backendUrl}/create`, graph)
-                  .then((res) => {
-                    savedGraphs[i].name = newName;
-                    savedGraphs[i].name = newName;
-                    updateGraphList();
-                    if (currentGraphName === oldName) {
-                      currentGraphName = newName;
-                    }
-                    showGraphName();
-                    toastr.success(`${newName} has been saved!`, "", {
-                      preventDuplicates: true,
-                      timeOut: 3000,
-                    });
-                  })
-                  .catch((error) => {
-                    toastr.error(`Failed to save ${newName}..`, "", {
-                      preventDuplicates: true,
-                      timeOut: 3000,
-                    });
-                  });
+          axios
+            .request({
+              method: "post",
+              url: `${backendUrl}/rename`,
+              data: `graph=${savedGraphs[i].id}&name=${newName}`,
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+            })
+            .finally((res) => {
+              toastr.success(`Renamed ${oldName} to ${newName}!`, "", {
+                preventDuplicates: true,
+                timeOut: 3000,
               });
-          });
+            })
+            .catch((error) => {
+              toastr.error(`Failed to rename ${oldName}..`, "", {
+                preventDuplicates: true,
+                timeOut: 3000,
+              });
+            });
+          if (currentGraphMetadata.id === savedGraphs[i].id) {
+            currentGraphMetadata.name = newName;
+            showGraphName();
+          }
+          updateGraphList();
         } else {
           let graph = JSON.parse(
             localStorage.getItem("saved-graph-" + oldName)
           );
           localStorage.removeItem("saved-graph-" + oldName);
-          if (currentGraphName === oldName) {
-            currentGraphName = newName;
-            showGraphName();
-          }
           graph.name = newName;
           localStorage.setItem("saved-graph-" + newName, JSON.stringify(graph));
+          if (oldName === currentGraphMetadata.name) {
+            currentGraphMetadata.name = newName;
+            showGraphName();
+          }
           updateGraphList();
         }
       }
@@ -1213,6 +1204,7 @@ $(() => {
     let i = $(".history-item").index(item);
     let name = savedGraphs[i].name;
 
+    let oldId = savedGraphs[i].id;
     Swal.fire({
       text: `Delete ${name}?`,
       showCancelButton: true,
@@ -1225,7 +1217,7 @@ $(() => {
             .request({
               method: "post",
               url: `${backendUrl}/drop`,
-              data: `graph=${name}`,
+              data: `graph=${savedGraphs[i].id}`,
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
               },
@@ -1236,22 +1228,22 @@ $(() => {
                 timeOut: 3000,
               });
               updateGraphList(() => {
-                if (currentGraphName === name) {
-                  currentGraphName = savedGraphs[0].name;
+                if (currentGraphMetadata.id === oldId) {
+                  currentGraphMetadata = savedGraphs[0];
                   loadCurrentGraph();
                   showGraphName();
                 }
               });
             });
         } else {
-          localStorage.removeItem("saved-graph-" + name);
+          localStorage.removeItem("saved-graph-" + oldId);
           toastr.success(`${name} has been removed!`, "", {
             preventDuplicates: true,
             timeOut: 3000,
           });
           updateGraphList(() => {
-            if (currentGraphName === name) {
-              currentGraphName = savedGraphs[0].name;
+            if (currentGraphMetadata.id === oldId) {
+              currentGraphMetadata = savedGraphs[0];
               loadCurrentGraph();
               showGraphName();
             }
@@ -1263,11 +1255,11 @@ $(() => {
   });
 
   function retrieveCurrentArticle() {
-    if (!currentGraphName) return;
+    if (!currentGraphMetadata) return;
     clearExtractionHighlights();
     axios
       .get(`${vectorDBUrl}/article`, {
-        params: { graphId: currentGraphName },
+        params: { graphId: currentGraphMetadata.id },
       })
       .then((response) => {
         extractionEditor.setValue(response.data);
@@ -1280,6 +1272,16 @@ $(() => {
       });
   }
 
+  function updateActiveHistoryItem() {
+    $(".dropdown-item.history-item").removeClass("active");
+    $(".dropdown-item.history-item").removeClass("text-white");
+    let i = savedGraphs.findIndex((g) => g.id === currentGraphMetadata.id);
+    if (i >= 0) {
+      $(`.dropdown-item.history-item:eq(${i})`).addClass("active");
+      $(`.dropdown-item.history-item:eq(${i})`).addClass("text-white");
+    }
+  }
+
   function loadGraph(graph) {
     if (!graph) return;
     byProgram = true;
@@ -1287,12 +1289,7 @@ $(() => {
     configEditor.setValue(graph.config);
     editor.getDoc().clearHistory();
     configEditor.getDoc().clearHistory();
-    currentGraphName = graph.name;
-    $(".dropdown-item.history-item").removeClass("active");
-    $(".dropdown-item.history-item").removeClass("text-white");
-    let i = savedGraphs.map((graph) => graph.name).indexOf(graph.name);
-    $(`.dropdown-item.history-item:eq(${i})`).addClass("active");
-    $(`.dropdown-item.history-item:eq(${i})`).addClass("text-white");
+    updateActiveHistoryItem();
     reloadConfig();
     showGraphName();
     unsavedChangeExists = false;
@@ -1303,6 +1300,7 @@ $(() => {
   }
 
   function loadGraphEntry(graphEntry) {
+    currentGraphMetadata = graphEntry;
     if (remoteMode) {
       axios
         .get(`${backendUrl}/get/?graph=${graphEntry.id}`)
@@ -1324,9 +1322,10 @@ $(() => {
             byProgram = true;
             loadGraph({
               name: graphEntry.name,
+              id: graphEntry.id,
               pg: props.pg[0],
               config: props.config[0],
-              lastUpdate: props.lastUpdate[0],
+              lastUpdate: props.lastUpdate?.[0],
             });
             byProgram = false;
             editor.getDoc().clearHistory();
@@ -1427,7 +1426,7 @@ $(() => {
   });
 
   function saveCurrentGraph(callback = null) {
-    let name = currentGraphName;
+    let name = currentGraphMetadata.name;
     if (!name) {
       name = newGraphName();
     }
@@ -1450,6 +1449,7 @@ $(() => {
         pg: editor.getValue(),
         config: configEditor.getValue(),
         layout: layoutMap,
+        id: name,
         name: name,
         date: Date.now(),
       };
@@ -1457,9 +1457,14 @@ $(() => {
       if (i < savedGraphs.length) {
         savedGraphs[i] = graph;
       }
-      localStorage.setItem("saved-graph-" + name, JSON.stringify(graph));
-      updateGraphList();
-      if (callback) callback();
+      try {
+        localStorage.setItem("saved-graph-" + name, JSON.stringify(graph));
+      } catch (e) {
+        toastr.warning("Failed to save graph in local storage: " + e.message, {
+          preventDuplicates: true,
+        });
+      }
+      updateGraphList(callback);
     } else {
       saveToBackend(callback);
     }
@@ -1467,12 +1472,12 @@ $(() => {
 
   function saveToBackend(callback = null) {
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
-    let graphName = currentGraphName;
+    let graphName = currentGraphMetadata.name;
     let configValue = configEditor.getValue();
     let pgValue = editor.getValue();
 
     axios
-      .get(`${backendUrl}/get/?graph=${currentGraphName}`)
+      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
       .then((response) => {
         let props = response.data.properties;
         if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
@@ -1485,8 +1490,9 @@ $(() => {
           lastUpdate = now;
 
           let savedData = {
-            name: graphName,
+            id: currentGraphMetadata.id,
             properties: {
+              name: [currentGraphMetadata.name],
               pg: [pgValue],
               config: [configValue],
               lastUpdate: [now],
@@ -1497,11 +1503,14 @@ $(() => {
               edges: tmpEdges,
             },
           };
+
           let alreadySaved =
             savedGraphs.findIndex(
               (graph) => graph.id === currentGraphMetadata.id
             ) >= 0;
+
           let action = alreadySaved ? "update" : "create";
+          if (alreadySaved) savedData.id = currentGraphMetadata.id;
 
           axios
             .post(`${backendUrl}/${action}`, savedData)
@@ -1510,9 +1519,9 @@ $(() => {
                 preventDuplicates: true,
                 timeOut: 3000,
               });
-              updateGraphList();
               setUnsavedStatus(false);
-              if (callback) callback();
+              if (!alreadySaved) currentGraphMetadata.id = res.data.graphId;
+              updateGraphList(callback);
             })
             .catch((error) => {
               toastr.error(`Failed to save ${graphName} ..`, "", {
@@ -1531,7 +1540,7 @@ $(() => {
     }
 
     return Swal.fire({
-      text: `Save your change for "${currentGraphName}" before leaving?`,
+      text: `Save your change for "${currentGraphMetadata.name}" before leaving?`,
       icon: "warning",
       showDenyButton: true,
       showCancelButton: true,
@@ -1550,9 +1559,13 @@ $(() => {
     let template = pageTemplates[templateIndex];
     let name = newGraphName(template.name);
     byProgram = true;
-    currentGraphName = name;
+    currentGraphMetadata = {
+      name: name,
+      id: name,
+    };
     loadGraph({
       name: name,
+      id: name,
       pg: template.pg,
       config: template.config,
     });
@@ -1567,7 +1580,7 @@ $(() => {
   q("#clone-btn").addEventListener("click", () => {
     Swal.fire({
       text: `What is the name of the cloned page?`,
-      inputValue: currentGraphName,
+      inputValue: currentGraphMetadata.name,
       input: "text",
       showCancelButton: true,
       inputPlaceholder: "Name",
@@ -1581,7 +1594,7 @@ $(() => {
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        currentGraphName = result.value.trim();
+        currentGraphMetadata.name = result.value.trim();
         saveCurrentGraph();
         showGraphName();
         blitzboard.update(false);
@@ -1597,6 +1610,7 @@ $(() => {
     let tmpEdges = JSON.parse(JSON.stringify(edges));
     for (let node of tmpNodes) {
       delete node.location;
+      delete node.clusterId;
     }
     for (let edge of tmpEdges) {
       delete edge.location;
@@ -1643,7 +1657,9 @@ $(() => {
   q("#export-zip-btn").addEventListener("click", () => {
     var zip = new JSZip();
     let name =
-      (currentGraphName.startsWith("Untitled") ? "graph" : currentGraphName) +
+      (currentGraphMetadata.name.startsWith("Untitled")
+        ? "graph"
+        : currentGraphMetadata.name) +
       "_" +
       currentTimeString();
     zip.file("graph.pg", editor.getValue());
@@ -1666,7 +1682,7 @@ $(() => {
   q("#register-article-btn").addEventListener("click", (e) => {
     let article = extractionEditor.getValue();
     let words = blitzboard.graph.nodes.map((n) => n.id);
-    let graphId = currentGraphName;
+    let graphId = currentGraphMetadata.id;
     let apiKey = q("#options-api-key-input").value;
     axios
       .post(`${vectorDBUrl}/register_article`, {
@@ -1864,21 +1880,25 @@ $(() => {
                     let edges = Papa.parse(content, { header: true }).data;
                     // The same process as #new-btn is clicked
                     let name = newGraphName(nameWithoutExtension);
-                    currentGraphName = name;
+                    currentGraphMetadata = {
+                      id: name,
+                      name,
+                    };
 
                     let nodeContent = nodes
                       .map((n) => {
-                        let line = n.id.quoteIfNeeded();
-                        if (n.label) line += " :" + n.label.quoteIfNeeded();
+                        let line = n.id.quoteIfNeededForPG();
+                        if (n.label)
+                          line += " :" + n.label.quoteIfNeededForPG();
                         for (let key of Object.keys(n)) {
                           if (
                             key !== "id" &&
                             key !== "label" &&
                             n[key]?.length > 0
                           ) {
-                            line += ` ${key.quoteIfNeeded()}:${n[
+                            line += ` ${key.quoteIfNeededForPG()}:${n[
                               key
-                            ].quoteIfNeeded()}`;
+                            ].quoteIfNeededForPG()}`;
                           }
                         }
                         return line;
@@ -1887,8 +1907,10 @@ $(() => {
 
                     let edgeContent = edges
                       .map((e) => {
-                        let line = `${e.from.quoteIfNeeded()} -> ${e.to.quoteIfNeeded()}`;
-                        if (e.label) line += " :" + e.label.quoteIfNeeded();
+                        if (!e.from) return null;
+                        let line = `${e.from.quoteIfNeededForPG()} -> ${e.to.quoteIfNeededForPG()}`;
+                        if (e.label)
+                          line += " :" + e.label.quoteIfNeededForPG();
                         for (let key of Object.keys(e)) {
                           if (
                             key !== "from" &&
@@ -1896,18 +1918,21 @@ $(() => {
                             key !== "label" &&
                             e[key]?.length > 0
                           ) {
-                            line += ` ${key.quoteIfNeeded()}:${e[
+                            line += ` ${key.quoteIfNeededForPG()}:${e[
                               key
-                            ].quoteIfNeeded()}`;
+                            ].quoteIfNeededForPG()}`;
                           }
                         }
                         return line;
                       })
+                      .filter((e) => e)
                       .join("\n");
 
                     loadValues(nodeContent + "\n" + edgeContent, defaultConfig);
-                    saveCurrentGraph();
-                    showGraphName();
+                    saveCurrentGraph(() => {
+                      showGraphName();
+                      updateActiveHistoryItem();
+                    });
                   });
               });
           } else if (!zip.file("graph.pg") || !zip.file("config.js")) {
@@ -1928,10 +1953,15 @@ $(() => {
                     let config = content;
                     // The same process as #new-btn is clicked
                     let name = newGraphName(nameWithoutExtension);
-                    currentGraphName = name;
+                    currentGraphMetadata = {
+                      id: name,
+                      name,
+                    };
                     loadValues(graph, config);
-                    saveCurrentGraph();
-                    showGraphName();
+                    saveCurrentGraph(() => {
+                      showGraphName();
+                      updateActiveHistoryItem();
+                    });
                   });
               });
           }
@@ -1994,7 +2024,7 @@ $(() => {
 
   q("#export-pgql-btn").addEventListener("click", () => {
     let pg = pgParser.parse(editor.getValue());
-    let graphName = currentGraphName;
+    let graphName = currentGraphMetadata.name;
     let graphNamePGQL = graphName
       .replace("'", "")
       .replace(" ", "_")
@@ -2057,7 +2087,7 @@ $(() => {
 
   q("#export-sql-btn").addEventListener("click", () => {
     let pg = pgParser.parse(editor.getValue());
-    let graphName = currentGraphName;
+    let graphName = currentGraphMetadata.name;
     let graphNameSQL = graphName
       .replace("'", "")
       .replace(" ", "_")
@@ -2202,7 +2232,10 @@ $(() => {
   });
 
   window.addEventListener("beforeunload", (e) => {
-    localStorage.setItem("currentGraphName", currentGraphName);
+    localStorage.setItem(
+      "currentGraphMetadata",
+      JSON.stringify(currentGraphMetadata)
+    );
     if (!(remoteMode && unsavedChangeExists)) {
       return undefined;
     }
@@ -2496,30 +2529,35 @@ $(() => {
     retrieveCurrentArticle();
 
     if (remoteMode) {
-      axios
-        .get(`${backendUrl}/get/?graph=${currentGraphName}`)
-        .then((response) => {
-          let props = response.data.properties;
-          let config = props?.config?.[0] || defaultConfig;
-          if (props?.pg === undefined || props?.config === undefined) {
-            axios
-              .get(`${backendUrl}/get/?graph=${currentGraphName}&response=pg`)
-              .then((response) => {
-                loadValues(
-                  json2pg.translate(JSON.stringify(response.data.pg)),
-                  config
-                );
-                setUnsavedStatus(false);
-              });
-          } else {
-            loadValues(props.pg[0], config);
-            setUnsavedStatus(false);
-          }
-        });
+      let currentGraph = savedGraphs.find(
+        (g) => g.id === currentGraphMetadata.id
+      );
+      if (currentGraph) {
+        axios
+          .get(`${backendUrl}/get/?graph=${currentGraph.id}`)
+          .then((response) => {
+            let props = response.data.properties;
+            let config = props?.config?.[0] || defaultConfig;
+            if (props?.pg === undefined || props?.config === undefined) {
+              axios
+                .get(`${backendUrl}/get/?graph=${currentGraph.id}&response=pg`)
+                .then((response) => {
+                  loadValues(
+                    json2pg.translate(JSON.stringify(response.data.pg)),
+                    config
+                  );
+                  setUnsavedStatus(false);
+                });
+            } else {
+              loadValues(props.pg[0], config);
+              setUnsavedStatus(false);
+            }
+          });
+      }
     } else {
       try {
         let graph = JSON.parse(
-          localStorage.getItem("saved-graph-" + currentGraphName)
+          localStorage.getItem("saved-graph-" + currentGraphMetadata.name)
         );
         if (graph.pg.length > 0 && graph.config.length > 0)
           loadValues(graph.pg, graph.config);
@@ -2536,12 +2574,17 @@ $(() => {
       window.location.href = window.location.href.split("?")[0];
     } else {
       loadSample(sampleNameInParam, (graph, config) => {
-        currentGraphName = newGraphName(sampleNameInParam);
-        localStorage.setItem("currentGraphName", currentGraphName);
+        currentGraphMetadata = {
+          name: newGraphName(sampleNameInParam),
+        };
         byProgram = true;
         editor.setValue(graph);
         configEditor.setValue(config);
         saveCurrentGraph();
+        localStorage.setItem(
+          "currentGraphMetadata",
+          JSON.stringify(currentGraphMetadata)
+        );
         window.location.href = window.location.href.split("?")[0];
       });
     }
@@ -2566,11 +2609,14 @@ $(() => {
       if (pgInParam) {
         editor.setValue(pgInParam);
         if (graphNameInParam) {
-          currentGraphName = graphNameInParam;
+          currentGraphMetadata = {
+            name: graphNameInParam,
+          };
         } else {
-          currentGraphName = newGraphName();
+          currentGraphMetadata = {
+            name: newGraphName(),
+          };
         }
-        localStorage.setItem("currentGraphName", currentGraphName);
       }
       if (configInParam) configEditor.setValue(configInParam);
       if (viewModeInParam) localStorage.setItem("viewMode", viewModeInParam);
@@ -2826,13 +2872,6 @@ $(() => {
       tooltipList.forEach((t) => t.hide());
     });
 
-    if (
-      !remoteMode &&
-      !localStorage.getItem("saved-graph-" + currentGraphName)
-    ) {
-      saveCurrentGraph();
-    }
-
     let sampleLoaded = false;
     if (remoteMode && !sampleNameInParam && localStorage.getItem("sample")) {
       sampleLoaded = true;
@@ -2844,7 +2883,9 @@ $(() => {
         configEditor.setValue(config);
         showGraphName();
       });
-      currentGraphName = newGraphName(sampleName);
+      currentGraphMetadata = {
+        name: newGraphName(sampleName),
+      };
       localStorage.removeItem("sample");
       setUnsavedStatus(true);
     }
@@ -2856,8 +2897,9 @@ $(() => {
           configEditor.setValue(defaultConfig);
           byProgram = false;
         }
-        if (!savedGraphs.map((g) => g.name).includes(currentGraphName)) {
-          // TODO: Check ID instead of name
+        if (
+          savedGraphs.findIndex((g) => g.id === currentGraphMetadata.id) < 0
+        ) {
           if (savedGraphs.length > 0) loadGraphEntry(savedGraphs[0]);
           else createNewGraph(0);
         } else {
@@ -2869,6 +2911,7 @@ $(() => {
             configEditor.setValue(defaultConfig);
           }
         }
+        updateActiveHistoryItem();
         showGraphName();
       }
 
@@ -2931,3 +2974,56 @@ document.fonts.ready.then(() => {
   if (editor) editor.refresh();
   if (configEditor) configEditor.refresh();
 });
+function insertContentsToEditor(contents) {
+  let oldCursor = editor.getCursor();
+  /// Insert line after the current line
+  let line = editor.getLine(oldCursor.line);
+  let pos = {
+    line: oldCursor.line,
+    ch: line.length, // set the character position to the end of the line
+  };
+  editor.replaceRange("\n" + contents, pos);
+}
+
+function getCurrentCharacter() {
+  let cursor = editor.getCursor();
+  return editor.getLine(cursor.line).charAt(cursor.ch - 1);
+}
+
+function insertEdges() {
+  let targetNode = nodeLineMap[editor.getCursor().line + 1];
+  let pg = blitzboard.tryPgParse(editor.getValue());
+  let newPG = {
+    nodes: [],
+    edges: [],
+  };
+  let edgeMap = {};
+  pg.edges.forEach((e) => {
+    edgeMap[e.from] = edgeMap[e.from] || {};
+    edgeMap[e.from][e.to] = true;
+  });
+
+  // Create edges from targetNode
+  pg.nodes.forEach((sourceNode) => {
+    pg.nodes.forEach((destNode) => {
+      if (
+        sourceNode.id !== destNode.id &&
+        !edgeMap[sourceNode.id]?.[destNode.id]
+      )
+        newPG.edges.push({
+          from: sourceNode.id,
+          to: destNode.id,
+          undirected: false,
+          labels: [],
+          properties: {
+            /// TODO: specify default properties by config
+            確率: [""],
+          },
+        });
+    });
+  });
+
+  byProgram = true;
+  insertContentsToEditor(json2pg.translate(JSON.stringify(newPG), true));
+  byProgram = false;
+}
