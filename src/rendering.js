@@ -8,6 +8,168 @@ const defaultNodeSize = 5;
 const defaultEdgeWidth = 1;
 const highlightedNodeRadiusRate = 1.2;
 
+class NodeLayer extends DeckGL.CompositeLayer {
+  static layerName = 'NodeLayer';
+  static defaultProps = {
+    id: 'node-layer',
+    forMap: false,
+    textVisible: true,
+    pickable: true,
+    getNodePosition: { type: "accessor", value: (n) => [n.x, n.y, n.z] },
+    onHover: { type: "accessor", value: (info) => {} },
+  }
+  renderLayers() {
+    let characterSet = new Set();
+    const coordinateSystem = this.props.forMap ? DeckGL.COORDINATE_SYSTEM.LNGLAT : DeckGL.COORDINATE_SYSTEM.CARTESIAN;
+    const sizeUnits = this.props.forMap ? 'meters' : 'common';
+    const scale = 0.2;
+    const fontSize = 3;
+    const billboard = !this.props.forMap;
+    let props = this.props;
+    let forMap = this.forMap;
+
+    this.props.data.forEach(n => {
+      n.label.split('').forEach(c => characterSet.add(c));
+    });
+
+
+    const thumbnailLayers = [];
+    let nodeWithThumbnails = this.props.data.filter(n => n.imageURL);
+    const chunkSize = 1000;
+    for (let i = 0; i < nodeWithThumbnails.length; i += chunkSize) {
+      const chunk = nodeWithThumbnails.slice(i, i + chunkSize);
+      thumbnailLayers.push(new DeckGLLayers.IconLayer({
+        id: `${this.props.id}-thumbnail-layer-${i}`,
+        data: chunk,
+        getPosition: this.props.getNodePosition,
+        getIcon: node => ({
+          url: node.imageURL,
+          width: 100,
+          height: 100
+        }),
+        forMap,
+        getSize: n => n._size / defaultNodeSize * 10 * (props.forMap ? 100 : 1),
+        sizeScale: scale,
+        sizeUnits: sizeUnits,
+        pickable: true,
+        visible: props.textVisible,
+        getCollisionPriority: node => node._size,
+        collisionGroup: 'thumbnail',
+        collisionTestProps: {
+          sizeScale: 15,
+          sizeUnits: 'pixels',
+          getSize: Blitzboard.minImageSizeInPixels * 2
+        },
+        sizeMinPixels: Blitzboard.minImageSizeInPixels,
+        extensions: [new DeckGLExtensions.CollisionFilterExtension()],
+        updateTriggers: {
+          getPosition: props.updateTriggers.getNodePosition
+        }
+      }));
+    }
+
+    return [
+      new DeckGLLayers.TextLayer({
+        id: `${props.id}-text`,
+        data: props.data,
+        pickable: true,
+        getPosition: (node) => {
+          let [x, y, z] = props.getNodePosition(node);
+          return [x,
+            y + (props.forMap ? -0.001 * node._size / defaultNodeSize : node._size * scale),
+            z];
+        },
+        forMap,
+        getText: node => node.label,
+        getSize: (n) => n._size / defaultNodeSize * fontSize * (props.forMap  ? 100 : 1),
+        sizeMaxPixels: 30,
+        sizeMinPixels: 10,
+        billboard,
+        getAngle: 0,
+        getTextAnchor: 'middle',
+        getColor: node => [0x33, 0x33, 0x33, 255],
+        getAlignmentBaseline: 'top',
+        coordinateSystem,
+        sizeUnits: sizeUnits,
+        sizeScale: scale,
+        visible: props.textVisible,
+        outlineWidth: 8,
+        lineHeight: 1.2,
+        characterSet,
+        outlineColor: [255, 255, 255, 192],
+        fontSettings: {
+          sdf: true,
+          radius: 16,
+          smoothing: 0.2,
+        },
+        updateTriggers: {
+          getPosition: props.updateTriggers.getNodePosition
+        }
+      }),
+
+      new DeckGLLayers.ScatterplotLayer({
+        id: `${props.id}-scatterplot`,
+        data: props.data,
+        pickable: true,
+        opacity: 1, // TODO
+        stroked: false,
+        filled: true,
+        billboard,
+        forMap,
+        coordinateSystem,
+        getPosition: props.getNodePosition,
+        getRadius: (n) => {
+          let radius = n._size * (props.forMap ? 100 : 1); // TODO: avoid magic number
+          return radius;
+        },
+        radiusMinPixels: Blitzboard.minNodeSizeInPixels,
+        radiusScale: scale,
+        getFillColor: (n) => n.color,
+        radiusUnits: sizeUnits,
+        updateTriggers: {
+          getPosition: props.updateTriggers.getNodePosition
+        }
+      }),
+
+      new DeckGLLayers.IconLayer({
+        id: `${props.id}-icon`,
+        data: props.data,
+        pickable: false,
+        coordinateSystem,
+        billboard,
+        forMap,
+        getIcon: (n) => {
+          if(n.iconLabel && Blitzboard.loadedIcons[n.iconLabel]) {
+            return {
+              url: Blitzboard.loadedIcons[n.iconLabel],
+              width: 240,
+              height: 240,
+              mask: true
+            }
+          }
+          return {
+            url: 'data:image/svg+xml;charset=utf-8,dummy', // dummy icon to avoid exception
+            width: 24,
+            height: 24,
+            mask: true
+          }
+        },
+        sizeScale: scale,
+        getPosition: props.getNodePosition,
+        getSize: n => n._size / defaultNodeSize * 6 * (props.forMap ? 100 : 1),
+        sizeUnits: sizeUnits,
+        getColor: [255, 255, 255, 232],
+        sizeMinPixels: Blitzboard.minNodeSizeInPixels * 1.2,
+        updateTriggers: {
+          getPosition: this.props.updateTriggers.getNodePosition,
+          getIcon: this.props.updateTriggers.getIcon,
+        }
+      }),
+      ...thumbnailLayers
+    ];
+  }
+}
+
 
 function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
   let currentTime = new Date(startTime);
@@ -150,25 +312,14 @@ module.exports = {
     let tmpEdgeData = this.config.edge.visibilityMode === 'onFocus' ? [] : this.allEdgesToDraw;
 
 
-    this.nodeLayer = new DeckGLLayers.ScatterplotLayer({
-      id: 'scatterplot-layer',
+
+    this.nodeLayerComp = new NodeLayer({
+      id: 'node-layer',
       data: tmpNodeData,
-      pickable: true,
-      opacity: 1, // TODO
-      stroked: false,
-      filled: true,
-      billboard: this.config.layout !== 'map',
-      coordinateSystem,
-      getPosition: (n) => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
-      getRadius: (n) =>  {
-        let radius = n._size * (this.config.layout === 'map' ? 100 : 1); // TODO: avoid magic number
-        return radius;
-      },
-      radiusMinPixels: Blitzboard.minNodeSizeInPixels,
-      radiusScale: scale,
-      getFillColor: (n) => n.color,
-      onHover: info => this.onNodeHover(info),
-      radiusUnits: sizeUnits,
+      forMap: this.config.layout === 'map',
+      blitzboard: this,
+      onHover: info => blitzboard.onNodeHover(info),
+      getNodePosition: n => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
     });
 
 
@@ -225,14 +376,13 @@ module.exports = {
 
     this.centerNodeId = null;
 
-    this.highlightedNodeLayer = this.nodeLayer.clone({
+    this.highlightedNodeLayer = this.nodeLayerComp.clone({
       id: "highlighted-node-layer",
-      // getFillColor: n => [0, 0, 0, 255],
-      data: tmpNodeData[0],
-      getPosition: n => {
-        if(this.centerNodeId && this.centerNodeId !== n.id) {
-          let centerNode = this.nodeDataSet[this.centerNodeId];
-          let [x, y] = this.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
+      data: [],
+      getNodePosition: n => {
+        if(blitzboard.centerNodeId && blitzboard.centerNodeId !== n.id) {
+          let centerNode = blitzboard.nodeDataSet[blitzboard.centerNodeId];
+          let [x, y] = blitzboard.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
           return [x, y, n.z];
         }
         let {x, y, z} = n;
@@ -388,35 +538,17 @@ module.exports = {
   },
 
   refreshIconLayer() {
-    if(!this.iconLayer)
+    if(!this.nodeLayerComp)
       return;
 
     // Refresh variables to trigger update of icons
     Blitzboard.loadedIcons = {...Blitzboard.loadedIcons};
-    let oldLayer = this.iconLayer;
-    this.iconLayer = this.createIconLayer(this.nodeData, this.iconLayer.props.sizeScale, this.iconLayer.props.sizeUnits, this.iconLayer.props.coordinateSystem);
-
-
-    this.highlightedIconLayer = this.iconLayer.clone({
-      id: `highlighted-icon-layer`,
-      data: [],
-      getPosition: n => {
-        if(this.centerNodeId && this.centerNodeId !== n.id) {
-          let centerNode = this.nodeDataSet[this.centerNodeId];
-          let [x, y] = this.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * 0.2);
-          return [x, y, n.z];
-        }
-        return [n.x, n.y, n.z];
-      },
-    });
-    // replace with new one
-    for(let i = 0; i < this.layers.length; ++i) {
-      if(this.layers[i] === oldLayer) {
-        this.layers[i] = this.iconLayer;
-        break;
+    this.nodeLayerComp = this.nodeLayerComp.clone({
+      updateTriggers: {
+        getIcon: Blitzboard.loadedIcons
       }
-    }
-    this.network.setProps({layers: [...this.layers]});
+    });
+    this.determineLayersToShow();
   },
 
   iconRegisterer(name) {
@@ -425,7 +557,6 @@ module.exports = {
         return;
       if(icons.length > 0) {
         let icon = null;
-
         function findIconWithHighestPriority(icons) {
           for(let prefix of Blitzboard.iconPrefixes) {
             for(let i of icons) {
@@ -483,23 +614,26 @@ module.exports = {
   computeVisiblePositionFromCenter(targetX, targetY, centerX, centerY, margin) {
     let xDiff = centerX - targetX;
     let yDiff = centerY - targetY;
-    let angle = Math.atan2(yDiff, xDiff);
     let x = targetX;
     let y = targetY;
     if(x < this.visibleBounds.left + margin) {
-      y += (this.visibleBounds.left + margin - x) * Math.tan(angle);
+      let rate = (this.visibleBounds.left + margin - x) / xDiff;
       x = this.visibleBounds.left + margin;
+      y = centerY - yDiff * (1 - rate);
     } else if(x > this.visibleBounds.right - margin) {
-      y += (this.visibleBounds.right - margin - x) * Math.tan(angle);
+      let rate = (this.visibleBounds.right - margin - x) / xDiff;
       x = this.visibleBounds.right - margin;
+      y = centerY - yDiff * (1 - rate);
     }
 
     if(y < this.visibleBounds.top + margin) {
-      x += (this.visibleBounds.top + margin - y) / Math.tan(angle);
+      let rate = (this.visibleBounds.top + margin - y) / yDiff;
       y = this.visibleBounds.top + margin;
+      x = centerX - xDiff * (1 - rate);
     } else if(y > this.visibleBounds.bottom - margin) {
-      x += (this.visibleBounds.bottom - margin - y) / Math.tan(angle);
+      let rate = (this.visibleBounds.bottom - margin - y) / yDiff;
       y = this.visibleBounds.bottom - margin;
+      x = centerX - xDiff * (1 - rate);
     }
     return [x, y];
   },
@@ -557,22 +691,6 @@ module.exports = {
         radius: 16,
         smoothing: 0.2,
       },
-    });
-
-    this.highlightedNodeTextLayer = this.nodeTextLayer.clone({
-      data: Array.from(highlightedNodes).map(id => this.nodeDataSet[id]).filter(n => n),
-      fontWeight: 900,
-      id: 'hilighted-node-text-layer',
-      getPosition: n => {
-        if(this.centerNodeId && this.centerNodeId !== n.id) {
-          let centerNode = this.nodeDataSet[this.centerNodeId];
-          let [x, y] = this.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
-          return [x, y + (this.config.layout === 'map' ? -0.001 * n._size / defaultNodeSize : n._size * scale) * highlightedNodeRadiusRate, n.z];
-        }
-        let {x, y, z} = n;
-        return [x, y + (this.config.layout === 'map' ? -0.001 * n._size / defaultNodeSize : n._size * scale) * highlightedNodeRadiusRate, z + 10];
-      },
-      onHover: null,
     });
 
     function edgeTextColor(e) {
@@ -882,31 +1000,18 @@ module.exports = {
       };
     }
 
-
     let textVisibility = this.viewState?.zoom > (this.config.layout === 'map' ? 12.0 : this.config.zoomLevelForText); // TODO: make this configurable
-    this.nodeTextLayer = this.nodeTextLayer.clone({
-      visible: textVisibility,
+
+    this.nodeLayerComp = this.nodeLayerComp.clone({
+      textVisible: textVisibility
     });
+
     this.edgeTextLayer = this.edgeTextLayer.clone({
       visible: textVisibility,
     });
     this.highlightedNodeLayer = this.highlightedNodeLayer.clone({
       updateTriggers: {
-        getPosition: this.visibleBounds,
-      }
-    });
-
-    if(this.highlightedIconLayer) {
-      this.highlightedIconLayer = this.highlightedIconLayer.clone({
-        updateTriggers: {
-          getPosition: this.visibleBounds,
-        },
-      });
-    }
-
-    this.highlightedNodeTextLayer = this.highlightedNodeTextLayer.clone({
-      updateTriggers: {
-        getPosition: this.visibleBounds,
+        getNodePosition: this.visibleBounds,
       }
     });
     this.determineLayersToShow();
@@ -914,7 +1019,7 @@ module.exports = {
 
   updateHighlightState() {
     let nodesToHighlight = [this.hoveredNode].concat(Array.from(this.selectedNodes)).filter(n => n);
-    this.nodeLayer = this.nodeLayer.clone({
+    this.nodeLayerComp = this.nodeLayerComp.clone({
       updateTriggers: {
         getRadius: nodesToHighlight,
         getFillColor: nodesToHighlight
@@ -942,15 +1047,6 @@ module.exports = {
     relatedNodes = Array.from(relatedNodes).map(id => this.nodeDataSet[id]);
 
     this.highlightedNodeLayer = this.highlightedNodeLayer.clone({
-      data: relatedNodes
-    });
-
-    this.highlightedIconLayer = this.highlightedIconLayer.clone({
-      data: relatedNodes
-    });
-
-
-    this.highlightedNodeTextLayer = this.highlightedNodeTextLayer.clone({
       data: relatedNodes
     });
 
@@ -1012,12 +1108,8 @@ module.exports = {
         this.tripsLayer,
         this.highlightedTripsLayer,
         this.edgeTextLayer,
-        this.nodeTextLayer,
-        this.nodeLayer,
-        // this.edgeArrowLayer,
-        this.highlightedNodeTextLayer,
-        this.iconLayer,
-        ...this.thumbnailLayers
+        this.nodeLayerComp,
+        this.highlightedNodeLayer,
       ];
     } else {
       this.layers = [
@@ -1026,14 +1118,9 @@ module.exports = {
         this.highlightedEdgeLayer,
         // this.tripsLayer,
         // this.highlightedTripsLayer,
-        this.nodeTextLayer,
         this.edgeArrowLayer,
-        this.nodeLayer,
+        this.nodeLayerComp,
         this.highlightedNodeLayer,
-        this.highlightedNodeTextLayer,
-        this.iconLayer,
-        ...this.thumbnailLayers,
-        this.highlightedIconLayer
       ];
     }
     this.network.setProps({
