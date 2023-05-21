@@ -301,6 +301,7 @@ span .syntax-warning-line {
 
 .dropdown-menu {
   max-height: 600px;
+  padding-right: 10px;
   overflow-y: auto;
 }
 
