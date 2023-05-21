@@ -472,7 +472,7 @@ module.exports = {
       getText: node => node.label,
       getSize: (n) => n._size / defaultNodeSize * fontSize * (this.config.layout === 'map' ? 100 : 1),
       sizeMaxPixels: 30,
-      sizeMinPixels: 5,
+      sizeMinPixels: 10,
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
@@ -483,25 +483,24 @@ module.exports = {
       sizeUnits: sizeUnits,
       sizeScale: scale,
       visible: this.viewState?.zoom > this.config.zoomLevelForText,
-      outlineWidth: 1,
+      outlineWidth: 8,
       lineHeight: 1.2,
-      outlineColor: [255, 255, 255, 255],
-      // fontSettings: {
-      //   sdf: true,
-      // },
-      onHover: info => this.onNodeHover(info),
-      characterSet: characterSet
+      outlineColor: [255, 255, 255, 192],
+      fontSettings: {
+        sdf: true,
+        radius: 16,
+        smoothing: 0.2,
+      },
     };
 
     textLayerAttributes.data = tmpNodeData;
 
     this.nodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
-
-    textLayerAttributes = {...textLayerAttributes};
-    textLayerAttributes.data = Array.from(highlightedNodes).map(id => this.nodeDataSet[id]).filter(n => n);
-    textLayerAttributes.fontWeight = 900; // bolder than bold
-    textLayerAttributes.id = 'hilighted-node-text-layer';
-    this.highlightedNodeTextLayer = new DeckGLLayers.TextLayer(textLayerAttributes);
+    this.highlightedNodeTextLayer = this.nodeTextLayer.clone({
+      id: 'hilighted-node-text-layer',
+      data: Array.from(highlightedNodes).map(id => this.nodeDataSet[id]).filter(n => n),
+      fontWeight: 900,
+    })
 
     function edgeTextColor(e) {
       let color = [...e.color];
