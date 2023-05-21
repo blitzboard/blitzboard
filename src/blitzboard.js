@@ -126,6 +126,7 @@ class Blitzboard {
         target: [0, 0],
         zoom: 1
       },
+      getCursor: () => "default",
       views: [new DeckGL.OrthographicView()],
       layers: [],
     });
