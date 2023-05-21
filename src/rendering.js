@@ -209,7 +209,7 @@ module.exports = {
       },
       onHover: info => this.onEdgeHover(info),
       widthUnits: ('common'),
-      widthScale: 0.2 * (this.config.layout === 'map' ? 0.01 : 1),
+      widthScale: 0.1 * (this.config.layout === 'map' ? 0.01 : 1),
       widthMinPixels: 1,
     });
 
@@ -284,8 +284,9 @@ module.exports = {
 
         let angle = Math.atan2(fromY - toY, fromX - toX);
         let nodeSize = this.nodeDataSet[edge.to]._size;
-        return [toX + Math.cos(angle) * (nodeSize * scale + 0.1),
-          toY + Math.sin(angle) * (nodeSize * scale + 0.1), (fromZ + toZ) / 2];
+        const offset = 0.2;
+        return [toX + Math.cos(angle) * (nodeSize * scale + offset),
+          toY + Math.sin(angle) * (nodeSize * scale + offset), (fromZ + toZ) / 2];
       },
       getAngle: (edge) => {
         let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
