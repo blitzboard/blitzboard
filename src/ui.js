@@ -1,9 +1,57 @@
 const $ = require("jquery");
 const ContextMenu = require("./ContextMenu");
 
+
+function addSideBar() {
+  // Add sidebar to this.container that scroll out from the right side of the element
+  let blitzboard = this;
+  let sideBar = document.createElement('div');
+  sideBar.id = "blitzboard-sidebar";
+  sideBar.style = `
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background-color: #151515;
+    color: white;
+    z-index: 100;
+    overflow-x: hidden;
+    transition: 0.3s;
+  `;
+  this.container.appendChild(sideBar);
+  this.sideBar = sideBar;
+
+  // Add button to toggle sidebar on the right side of this.container
+  let toggleButton = document.createElement('button');
+  toggleButton.id = "blitzboard-toggle-sidebar-button";
+  toggleButton.classList = "material-symbols-outlined";
+  toggleButton.innerText = "menu";
+  toggleButton.onclick = () => this.toggleSideBar();
+  this.container.appendChild(toggleButton);
+  this.toggleSideBarButton = toggleButton;
+}
+
+
+function toggleSideBar() {
+  let blitzboard = this;
+  let sideBar = document.getElementById('blitzboard-sidebar');
+  if (sideBar.style.width == '0px') {
+    sideBar.style.width = '400px';
+    this.toggleSideBarButton.innerText = "close";
+    this.toggleSideBarButton.style.color = "white";
+  } else {
+    sideBar.style.width = '0px';
+    this.toggleSideBarButton.innerText = "menu";
+    this.toggleSideBarButton.style.color = "";
+  }
+}
+
 function initializeUI() {
 
   let blitzboard = this;
+
+  this.addSideBar();
 
   this.screen = document.createElement('div');
   this.screenText = document.createElement('div');
@@ -27,8 +75,8 @@ function initializeUI() {
   this.configChoiceDiv.style =
     `
       max-width: 400px;
-      top: 20px;
-      right: 80px;
+      top: 50px;
+      right: 30px;
       position: absolute;
       z-index: 2000;
       display: none;
@@ -56,8 +104,8 @@ function initializeUI() {
   this.searchBarDiv.style =
     `
       width: 280px;
-      top: 60px;
-      right: 80px;
+      top: 90px;
+      right: 30px;
       height: 30px;
       position: absolute;
       z-index: 2000;
@@ -72,8 +120,8 @@ function initializeUI() {
   this.searchButton.setAttribute('for', 'blitzboard-search-input');
 
   this.container.appendChild(this.screen);
-  this.container.appendChild(this.searchBarDiv);
-  this.container.appendChild(this.configChoiceDiv);
+  this.sideBar.appendChild(this.searchBarDiv);
+  this.sideBar.appendChild(this.configChoiceDiv);
   this.configChoiceDiv.appendChild(this.configChoiceLabel);
   this.configChoiceDiv.appendChild(this.configChoiceDropdown);
   this.searchBarDiv.appendChild(this.searchButton);
@@ -88,16 +136,6 @@ function initializeUI() {
     }, 100); // Add short delay to show loader
   });
 
-  this.searchButton.addEventListener('click', (e) => {
-    if(blitzboard.searchInput.clientWidth > 0) {
-      blitzboard.config.onSearchInput(blitzboard.searchInput.value);
-    } else {
-      blitzboard.searchInput.style.width = '250px';
-      blitzboard.searchInput.style["padding-right"] = '30px';
-      blitzboard.searchButton.style.right = '250px';
-    }
-  })
-
 
   this.searchInput.addEventListener('transitionend', (e) => {
     if(this.searchInput.clientWidth > 0 && $(this.searchInput).autocomplete("instance")) {
@@ -109,14 +147,6 @@ function initializeUI() {
     // Enter
     if(e.code === "Enter" && blitzboard.config.onSearchInput)
       blitzboard.config.onSearchInput(blitzboard.searchInput.value);
-  });
-
-  this.searchInput.addEventListener('blur', (e) => {
-    if(e.target.value === '') {
-      blitzboard.searchInput.style.width = '0px';
-      blitzboard.searchInput.style["padding-right"] = '0px';
-      blitzboard.searchButton.style.right = '0px';
-    }
   });
 
   this.container.addEventListener('mouseout', (e) => {
@@ -140,7 +170,8 @@ function initializeUI() {
 
   this.container.addEventListener('keydown', (e) => {
     if(e.code === "Digit0") {
-      blitzboard.fit();
+      blitzboard.fit
+      ();
       e.preventDefault();
     }
     else if((e.ctrlKey && !this.clientIsMacLike || e.metaKey && this.clientIsMacLike) && e.code === "KeyF") {
@@ -158,6 +189,8 @@ function initializeUI() {
 
 module.exports = {
   initializeUI,
+  addSideBar,
+  toggleSideBar,
 
   updateSearchInput() {
     if($(this.searchInput).autocomplete("instance")){

@@ -2257,8 +2257,10 @@ $(() => {
       initializeByFilterConditions(edgeFilterConditions, 'edge');
     });
 
-
-
+    // move #filter-div into blitzboard.sidebar
+    let filterDiv = q('#filter-div');
+    q('#filter-div').remove();
+    blitzboard.sideBar.appendChild(filterDiv);
 
     if(clientIsMac) {
       q('#search-shortcut-text').innerText = 'Cmd-F';

@@ -476,6 +476,8 @@ module.exports = {
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
+      // set text color to #333333
+      getColor: node => [0x33, 0x33, 0x33, 255],
       getAlignmentBaseline: 'top',
       coordinateSystem,
       sizeUnits: sizeUnits,
