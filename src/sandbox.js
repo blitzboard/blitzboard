@@ -1330,10 +1330,6 @@ $(() => {
     })
   });
 
-  q('#zoom-fit-btn').addEventListener('click', () => {
-    blitzboard.fit();
-  });
-
   q('#export-zip-btn').addEventListener('click', () => {
     var zip = new JSZip();
     let name = (currentGraphMetadata.name.startsWith('Untitled') ? 'graph' : currentGraphMetadata.name) + '_' + currentTimeString();

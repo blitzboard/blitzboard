@@ -104,7 +104,7 @@ function initializeUI() {
   this.searchBarDiv.style =
     `
       width: 280px;
-      top: 90px;
+      top: 100px;
       right: 30px;
       height: 30px;
       position: absolute;
@@ -127,6 +127,15 @@ function initializeUI() {
   this.searchBarDiv.appendChild(this.searchButton);
   this.searchBarDiv.appendChild(this.searchInput);
 
+
+  let fitButton = document.createElement('button');
+  fitButton.id = "blitzboard-zoom-fit-btn";
+  fitButton.classList = "material-symbols-outlined";
+  fitButton.innerText = "fit_screen";
+  fitButton.onclick = () => this.fit();
+  this.container.appendChild(fitButton);
+  this.zoomFitButton = fitButton;
+
   this.configChoiceDropdown.addEventListener('change', (e) => {
     this.configChoice = e.target.value;
     this.showLoader();
@@ -136,8 +145,7 @@ function initializeUI() {
     }, 100); // Add short delay to show loader
   });
 
-
-  this.searchInput.addEventListener('transitionend', (e) => {
+  this.searchInput.addEventListener('focus', (e) => {
     if(this.searchInput.clientWidth > 0 && $(this.searchInput).autocomplete("instance")) {
       $(this.searchInput).autocomplete("search", this.searchInput.value);
     }

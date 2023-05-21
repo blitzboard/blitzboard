@@ -86,11 +86,22 @@
 
 
 #blitzboard-toggle-sidebar-button {
-    z-index: 994;
+    z-index: 990;
     background-color: transparent;
     position: absolute;
     color: #272822;
     border: 0px;
     top: 1rem;
+    right: 1rem;
+}
+
+
+#blitzboard-zoom-fit-btn {
+    z-index: 99;
+    background-color: transparent;
+    position: absolute;
+    color: #272822;
+    border: 0px;
+    top: 2em;
     right: 1rem;
 }
