@@ -8,6 +8,7 @@ const defaultNodeSize = 5;
 const defaultEdgeWidth = 1;
 const highlightedNodeRadiusRate = 1.2;
 
+
 function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
   let currentTime = new Date(startTime);
   switch(intervalUnit) {
@@ -209,7 +210,7 @@ module.exports = {
       },
       onHover: info => this.onEdgeHover(info),
       widthUnits: ('common'),
-      widthScale: 0.2 * (this.config.layout === 'map' ? 0.01 : 1),
+      widthScale: 0.1 * (this.config.layout === 'map' ? 0.01 : 1),
       widthMinPixels: 1,
     });
 
@@ -302,8 +303,9 @@ module.exports = {
 
         let angle = Math.atan2(fromY - toY, fromX - toX);
         let nodeSize = this.nodeDataSet[edge.to]._size;
-        return [toX + Math.cos(angle) * (nodeSize * scale + 0.1),
-          toY + Math.sin(angle) * (nodeSize * scale + 0.1), (fromZ + toZ) / 2];
+        const offset = 0.2;
+        return [toX + Math.cos(angle) * (nodeSize * scale + offset),
+          toY + Math.sin(angle) * (nodeSize * scale + offset), (fromZ + toZ) / 2];
       },
       getAngle: (edge) => {
         let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
@@ -535,23 +537,26 @@ module.exports = {
       getText: node => node.label,
       getSize: (n) => n._size / defaultNodeSize * fontSize * (this.config.layout === 'map' ? 100 : 1),
       sizeMaxPixels: 30,
-      sizeMinPixels: 5,
+      sizeMinPixels: 10,
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
+      // set text color to #333333
+      getColor: node => [0x33, 0x33, 0x33, 255],
       getAlignmentBaseline: 'top',
       coordinateSystem,
       sizeUnits: sizeUnits,
       sizeScale: scale,
       visible: this.viewState?.zoom > this.config.zoomLevelForText,
-      outlineWidth: 1,
+      outlineWidth: 8,
       lineHeight: 1.2,
-      outlineColor: [255, 255, 255, 255],
-      // fontSettings: {
-      //   sdf: true,
-      // },
-      onHover: info => this.onNodeHover(info),
-      characterSet: characterSet
+      characterSet,
+      outlineColor: [255, 255, 255, 192],
+      fontSettings: {
+        sdf: true,
+        radius: 16,
+        smoothing: 0.2,
+      },
     });
 
     this.highlightedNodeTextLayer = this.nodeTextLayer.clone({
@@ -568,7 +573,7 @@ module.exports = {
         return [x, y + (this.config.layout === 'map' ? -0.001 * n._size / defaultNodeSize : n._size * scale) * highlightedNodeRadiusRate, z + 10];
       },
       onHover: null,
-    })
+    });
 
     function edgeTextColor(e) {
       let color = [...e.color];

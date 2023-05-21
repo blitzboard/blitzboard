@@ -48,7 +48,7 @@
     background-size: 20px 20px;
     width: 40px;
     height: 40px;
-    right: 0px;
+    left: 0px;
     outline: none;
     box-shadow: 0 2px rgba(6,0,1,.26);
     cursor: pointer;
@@ -58,12 +58,11 @@
 
 #blitzboard-search-input {
     -webkit-appearance:none;
-    width: 0px;
-    right: 0px;
+    margin-left: 40px;
+    width: 240px;
     height: 40px;
     padding: 0px;
     border: none;
-    transition: all 0.5s;
     outline: none;
     box-shadow: 0 2px rgba(6,0,1,.26);
     position: absolute;
@@ -83,4 +82,26 @@
 
 #blitzboard-search-bar-div{
     right: 12px;
+}
+
+
+#blitzboard-toggle-sidebar-button {
+    z-index: 990;
+    background-color: transparent;
+    position: absolute;
+    color: #272822;
+    border: 0px;
+    top: 1rem;
+    right: 1rem;
+}
+
+
+#blitzboard-zoom-fit-btn {
+    z-index: 99;
+    background-color: transparent;
+    position: absolute;
+    color: #272822;
+    border: 0px;
+    top: 2em;
+    right: 1rem;
 }

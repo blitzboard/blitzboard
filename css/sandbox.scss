@@ -166,16 +166,6 @@ body {
   line-height: 3.3;
 }
 
-#zoom-fit-btn {
-  z-index: 994;
-  background-color: transparent;
-  position: absolute;
-  color: #272822;
-  border: 0px;
-  top: 4.4rem;
-  right: 1rem;
-}
-
 #switch-scc-dropdown {
   position: absolute;
   z-index: 994;
@@ -332,6 +322,7 @@ span .syntax-warning-line {
 
 .dropdown-menu {
   max-height: 600px;
+  padding-right: 10px;
   overflow-y: auto;
 }
 
