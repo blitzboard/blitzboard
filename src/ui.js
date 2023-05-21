@@ -199,6 +199,14 @@ module.exports = {
   initializeUI,
   addSideBar,
   toggleSideBar,
+  updateSideBarVisibility() {
+    if(this.config.editor?.showFilterUI || this.configChoiceDiv.style.display === 'block' || this.config.onSearchInput) {
+      this.toggleSideBarButton.style.display = 'block';
+    }
+    else {
+      this.toggleSideBarButton.style.display = 'none';
+    }
+  },
 
   updateSearchInput() {
     if($(this.searchInput).autocomplete("instance")){

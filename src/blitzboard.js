@@ -176,6 +176,7 @@ class Blitzboard {
       !blitzboard.isFilteredOutNode(this.nodeMap[edge.from]) && !blitzboard.isFilteredOutNode(this.nodeMap[edge.to]));
 
     this.updateSearchInput();
+    this.updateSideBarVisibility();
 
 
     this.validateGraph();
