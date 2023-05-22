@@ -76,7 +76,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
         getPosition: (node) => {
           let [x, y, z] = props.getNodePosition(node);
           return [x,
-            y + (props.forMap ? -0.001 * node._size / defaultNodeSize : node._size * scale),
+            y + (props.forMap ? -0.001 * node._size / defaultNodeSize : node._size * scale) * 1.1,
             z];
         },
         forMap,
@@ -991,7 +991,12 @@ module.exports = {
 
   onViewStateChange(viewState) {
     this.viewState = viewState;
-    const viewport = this.network.getViewports()[0];
+    let viewport = null;
+    try{
+      this.network.getViewports()[0];
+    } catch(e) {
+      // ignore
+    }
     if(viewport) {
       const [left, top] = viewport.unproject([0, 0]);
       const [right, bottom] = viewport.unproject([viewport.width, viewport.height]);
