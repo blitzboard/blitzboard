@@ -20,6 +20,7 @@ class Blitzboard {
   static selectedNodeColor = [0x21, 0x56, 0xee];
   static zoomLevelToLoadImage = 2.0;
   static minNodeSizeInPixels = 3;
+  static minArrowSizeInPixels = 10;
   static minImageSizeInPixels = 80;
   static defaultConfig = {
     doubleClickWait: 200,

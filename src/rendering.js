@@ -470,7 +470,7 @@ module.exports = {
         return size;
       },
       sizeUnits: sizeUnits,
-      sizeMinPixels: Blitzboard.minNodeSizeInPixels,
+      sizeMinPixels: Blitzboard.minArrowSizeInPixels,
       getColor: edgeColor
     });
 
