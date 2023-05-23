@@ -6,7 +6,7 @@ function addSideBar() {
   // Add sidebar to this.container that scroll out from the right side of the element
   let blitzboard = this;
   let sideBar = document.createElement('div');
-  sideBar.id = "blitzboard-sidebar";
+  sideBar.classList = "blitzboard-sidebar";
   sideBar.style = `
     position: absolute;
     right: 0;
@@ -35,7 +35,7 @@ function addSideBar() {
 
 function toggleSideBar() {
   let blitzboard = this;
-  let sideBar = document.getElementById('blitzboard-sidebar');
+  let sideBar = this.sideBar;
   if (sideBar.style.width == '0px') {
     sideBar.style.width = '400px';
     this.toggleSideBarButton.innerText = "close";
