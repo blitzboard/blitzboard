@@ -386,6 +386,7 @@ module.exports = {
 
     this.highlightedEdgeLayer = this.edgeLayer.clone({
       id: "highlighted-edge-layer",
+      data: [],
       getWidth: edge => {
         return parseFloat(edge.width) * 2;
       },
@@ -736,14 +737,19 @@ module.exports = {
       billboard: this.config.layout !== 'map',
       getAngle: 0,
       getTextAnchor: 'middle',
-      lineHeight: 1.2,
       getAlignmentBaseline: 'top',
       coordinateSystem,
       sizeUnits: sizeUnits,
-      outlineWidth: 1,
-      outlineColor: [255, 255, 255, 255],
       onHover: info => this.onEdgeHover(info),
-      characterSet: 'auto'
+      outlineWidth: 8,
+      lineHeight: 1.2,
+      outlineColor: [255, 255, 255, 192],
+      characterSet: 'auto',
+      fontSettings: {
+        sdf: true,
+        radius: 16,
+        smoothing: 0.2,
+      },
     });
   },
 
