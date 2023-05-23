@@ -980,7 +980,7 @@ module.exports = {
         zoom: 3
       };
     } else {
-      let rate = 0.9 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
+      let rate = 0.8 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
 
       return {
         target: [(this.minX + this.maxX) / 2, (this.minY + this.maxY) / 2],
