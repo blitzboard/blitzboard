@@ -378,15 +378,15 @@ module.exports = {
     this.highlightedNodeLayer = this.nodeLayerComp.clone({
       id: "highlighted-node-layer",
       data: [],
-      getNodePosition: n => {
-        if(blitzboard.centerNodeId && blitzboard.centerNodeId !== n.id) {
-          let centerNode = blitzboard.nodeDataSet[blitzboard.centerNodeId];
-          let [x, y] = blitzboard.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
-          return [x, y, n.z];
-        }
-        let {x, y, z} = n;
-        return [x, y, z];
-      },
+      // getNodePosition: n => {
+      //   if(blitzboard.centerNodeId && blitzboard.centerNodeId !== n.id) {
+      //     let centerNode = blitzboard.nodeDataSet[blitzboard.centerNodeId];
+      //     let [x, y] = blitzboard.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
+      //     return [x, y, n.z];
+      //   }
+      //   let {x, y, z} = n;
+      //   return [x, y, z];
+      // },
     });
 
     const tripStep = 20;
