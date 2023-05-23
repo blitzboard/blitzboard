@@ -52,7 +52,6 @@ class NodeLayer extends DeckGL.CompositeLayer {
         sizeScale: scale,
         sizeUnits: sizeUnits,
         pickable: true,
-        visible: props.textVisible,
         getCollisionPriority: node => node._size,
         collisionGroup: 'thumbnail',
         collisionTestProps: {
@@ -993,7 +992,7 @@ module.exports = {
     this.viewState = viewState;
     let viewport = null;
     try{
-      this.network.getViewports()[0];
+      viewport = this.network.getViewports()[0];
     } catch(e) {
       // ignore
     }
