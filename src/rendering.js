@@ -8,6 +8,22 @@ const defaultNodeSize = 5;
 const defaultEdgeWidth = 1;
 const highlightedNodeRadiusRate = 1.2;
 
+
+function edgeIsDirected(edge) {
+  return edge.direction === '->' || edge.undirected === 'false' || edge.undirected === false
+}
+
+function edgeArrowPosition(fromNode, toNode, scale) {
+  let {x: fromX, y: fromY, z: fromZ} = fromNode;
+  let {x: toX, y: toY, z: toZ} = toNode;
+
+  let angle = Math.atan2(fromY - toY, fromX - toX);
+  let nodeSize = toNode._size;
+  const offset = 0.2;
+  return [toX + Math.cos(angle) * (nodeSize * scale + offset),
+    toY + Math.sin(angle) * (nodeSize * scale + offset), (fromZ + toZ) / 2];
+}
+
 class NodeLayer extends DeckGL.CompositeLayer {
   static layerName = 'NodeLayer';
   static defaultProps = {
@@ -352,6 +368,9 @@ module.exports = {
       },
       getTargetPosition: (edge) => {
         let {x, y, z} = this.nodeDataSet[edge.to];
+        if(edgeIsDirected(edge)) {
+          return edgeArrowPosition(this.nodeDataSet[edge.from], this.nodeDataSet[edge.to], scale);
+        }
         return [x, y, z];
       },
       getColor: edgeColor,
@@ -447,14 +466,7 @@ module.exports = {
       }),
       sizeScale: 0.1,
       getPosition: (edge) => {
-        let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
-        let {x: toX, y: toY, z: toZ} = this.nodeDataSet[edge.to];
-
-        let angle = Math.atan2(fromY - toY, fromX - toX);
-        let nodeSize = this.nodeDataSet[edge.to]._size;
-        const offset = 0.2;
-        return [toX + Math.cos(angle) * (nodeSize * scale + offset),
-          toY + Math.sin(angle) * (nodeSize * scale + offset), (fromZ + toZ) / 2];
+        return edgeArrowPosition(this.nodeDataSet[edge.from], this.nodeDataSet[edge.to], scale);
       },
       getAngle: (edge) => {
         let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
@@ -470,7 +482,7 @@ module.exports = {
       },
       sizeUnits: sizeUnits,
       sizeMinPixels: Blitzboard.minArrowSizeInPixels,
-      getColor: edgeColor
+      getColor: edgeColor,
     });
 
     this.iconLayer = this.createIconLayer(tmpNodeData, scale, sizeUnits, coordinateSystem);
@@ -918,12 +930,8 @@ module.exports = {
       hoverWidth: 0.5,
       dashes,
       smooth: smooth,
+      undirected: !edgeIsDirected(pgEdge),
       chosen: this.retrieveConfigProp(pgEdge, 'edge', 'chosen'),
-      arrows: {
-        to: {
-          enabled: pgEdge.direction == '->' || pgEdge.undirected === 'false' || pgEdge.undirected === false
-        },
-      }
     };
 
     let otherProps = this.retrieveConfigPropAll(pgEdge,
