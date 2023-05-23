@@ -197,7 +197,13 @@ $(() => {
           label: 'Show list of graphs',
           onClick: (n) => {
             axios.get(`${backendUrl}/query_table?query=SELECT v.GRAPH FROM MATCH (v) ON x2 WHERE v.ID = '${n.id}' GROUP BY v.GRAPH`).then(response => {
-              alert(response.data.table.records.map((r) => r.GRAPH).join('\n'));
+              let graphIds = response.data.table.records.map((r) => r.GRAPH);
+              if(graphIds.length === 0) {
+                alert('No graphs found');
+                return;
+              }
+
+              alert(savedGraphs.filter(g => graphIds.includes(g.id)).map(g => g.name).join('\n'));
             }).catch((error) => {
               console.log(error);
               toastr.error(`Failed to query ${backendUrl}...: ${error}`, '', {preventDuplicates: true, timeOut: 3000});
