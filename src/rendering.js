@@ -7,19 +7,18 @@ const {getRandomColor, getHexColors, createLabelText, createTitle, retrieveHttpU
 const defaultNodeSize = 5;
 const defaultEdgeWidth = 1;
 const highlightedNodeRadiusRate = 1.2;
-
+const edgeArrowOffset = 0.2;
 
 function edgeIsDirected(edge) {
   return edge.direction === '->' || edge.undirected === 'false' || edge.undirected === false
 }
 
-function edgeArrowPosition(fromNode, toNode, scale) {
+function edgeArrowPosition(fromNode, toNode, scale, offset = edgeArrowOffset) {
   let {x: fromX, y: fromY, z: fromZ} = fromNode;
   let {x: toX, y: toY, z: toZ} = toNode;
 
   let angle = Math.atan2(fromY - toY, fromX - toX);
   let nodeSize = toNode._size;
-  const offset = 0.2;
   return [toX + Math.cos(angle) * (nodeSize * scale + offset),
     toY + Math.sin(angle) * (nodeSize * scale + offset), (fromZ + toZ) / 2];
 }
@@ -467,7 +466,8 @@ module.exports = {
       }),
       sizeScale: 0.1,
       getPosition: (edge) => {
-        return edgeArrowPosition(this.nodeDataSet[edge.from], this.nodeDataSet[edge.to], scale);
+        let hovered = this.hoveredNode === edge.from || this.selectedNodes.has(edge.from) || this.hoveredNode === edge.to || this.selectedNodes.has(edge.to);
+        return edgeArrowPosition(this.nodeDataSet[edge.from], this.nodeDataSet[edge.to], scale, hovered ? edgeArrowOffset * 2 : edgeArrowOffset);
       },
       getAngle: (edge) => {
         let {x: fromX, y: fromY, z: fromZ} = this.nodeDataSet[edge.from];
@@ -1095,6 +1095,7 @@ module.exports = {
       // });
       this.edgeArrowLayer = this.edgeArrowLayer.clone({
         updateTriggers: {
+          getPosition: triggers,
           getColor: triggers,
           getSize: triggers,
         }
