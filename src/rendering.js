@@ -368,7 +368,7 @@ module.exports = {
       getTargetPosition: (edge) => {
         let {x, y, z} = this.nodeDataSet[edge.to];
         if(edgeIsDirected(edge)) {
-          return edgeArrowPosition(this.nodeDataSet[edge.from], this.nodeDataSet[edge.to], scale);
+          return edgeArrowPosition(this.nodeDataSet[edge.from], this.nodeDataSet[edge.to], scale, edgeArrowOffset * 2);
         }
         return [x, y, z];
       },
@@ -1133,8 +1133,8 @@ module.exports = {
     } else {
       this.layers = [
         this.edgeLayer,
-        this.edgeTextLayer,
         this.highlightedEdgeLayer,
+        this.edgeTextLayer,
         // this.tripsLayer,
         // this.highlightedTripsLayer,
         this.edgeArrowLayer,
