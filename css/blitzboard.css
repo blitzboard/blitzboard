@@ -104,4 +104,5 @@
     border: 0px;
     top: 2em;
     right: 1rem;
+    transition: all 0.5s;
 }

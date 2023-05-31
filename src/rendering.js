@@ -397,15 +397,15 @@ module.exports = {
     this.highlightedNodeLayer = this.nodeLayerComp.clone({
       id: "highlighted-node-layer",
       data: [],
-      // getNodePosition: n => {
-      //   if(blitzboard.centerNodeId && blitzboard.centerNodeId !== n.id) {
-      //     let centerNode = blitzboard.nodeDataSet[blitzboard.centerNodeId];
-      //     let [x, y] = blitzboard.computeVisiblePositionFromCenter(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
-      //     return [x, y, n.z];
-      //   }
-      //   let {x, y, z} = n;
-      //   return [x, y, z];
-      // },
+      getNodePosition: n => {
+        if(blitzboard.centerNodeId && blitzboard.centerNodeId !== n.id) {
+          let centerNode = blitzboard.nodeDataSet[blitzboard.centerNodeId];
+          let [x, y] = blitzboard.computeVisiblePositionFromSource(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
+          return [x, y, n.z];
+        }
+        let {x, y, z} = n;
+        return [x, y, z];
+      },
     });
 
     const tripStep = 20;
@@ -623,29 +623,28 @@ module.exports = {
     }
   },
 
-  computeVisiblePositionFromCenter(targetX, targetY, centerX, centerY, margin) {
-    let xDiff = centerX - targetX;
-    let yDiff = centerY - targetY;
+  // TODO: consider name of function
+  computeVisiblePositionFromSource(targetX, targetY, sourceX, sourceY, margin) {
     let x = targetX;
     let y = targetY;
     if(x < this.visibleBounds.left + margin) {
-      let rate = (this.visibleBounds.left + margin - x) / xDiff;
+      let rate = (this.visibleBounds.left + margin - x) / (sourceX - x);
       x = this.visibleBounds.left + margin;
-      y = centerY - yDiff * (1 - rate);
+      y = sourceY - (sourceY - y) * (1 - rate);
     } else if(x > this.visibleBounds.right - margin) {
-      let rate = (this.visibleBounds.right - margin - x) / xDiff;
+      let rate = (this.visibleBounds.right - margin - x) / (sourceX - x);
       x = this.visibleBounds.right - margin;
-      y = centerY - yDiff * (1 - rate);
+      y = sourceY - (sourceY - y) * (1 - rate);
     }
 
     if(y < this.visibleBounds.top + margin) {
-      let rate = (this.visibleBounds.top + margin - y) / yDiff;
+      let rate = (this.visibleBounds.top + margin - y) / (sourceY - y);
       y = this.visibleBounds.top + margin;
-      x = centerX - xDiff * (1 - rate);
+      x = sourceX - (sourceX - x) * (1 - rate);
     } else if(y > this.visibleBounds.bottom - margin) {
-      let rate = (this.visibleBounds.bottom - margin - y) / yDiff;
+      let rate = (this.visibleBounds.bottom - margin - y) / (sourceY - y);
       y = this.visibleBounds.bottom - margin;
-      x = centerX - xDiff * (1 - rate);
+      x = sourceX - (sourceX - x) * (1 - rate);
     }
     return [x, y];
   },
@@ -985,6 +984,15 @@ module.exports = {
     });
   },
 
+  updateViewByViewState(viewState) {
+    this.network.setProps({
+      initialViewState: {
+        ...this.viewState,
+        transitionDuration: 200
+      },
+    });
+  },
+
   createInitialViewState() {
     if(this.config.layout === 'map') {
       return {
@@ -993,10 +1001,11 @@ module.exports = {
         zoom: 3
       };
     } else {
-      let rate = 0.8 * Math.min(this.container.clientWidth / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
+      const sideBarWidth = this.sideBarWidth || 0;
+      let rate = 0.8 * Math.min((this.container.clientWidth - sideBarWidth) / (this.maxX - this.minX), this.container.clientHeight / (this.maxY - this.minY));
 
       return {
-        target: [(this.minX + this.maxX) / 2, (this.minY + this.maxY) / 2],
+        target: [(this.minX + this.maxX + sideBarWidth / rate) / 2, (this.minY + this.maxY) / 2],
         zoom: Math.log(rate) / Math.log(2)
       };
     }

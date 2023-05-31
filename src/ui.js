@@ -13,7 +13,7 @@ function addSideBar() {
     top: 0;
     height: 100%;
     width: 0;
-    background-color: #151515;
+    background-color: rgba(21, 21, 21, 1.0);
     color: white;
     z-index: 100;
     overflow-x: hidden;
@@ -36,15 +36,32 @@ function addSideBar() {
 function toggleSideBar() {
   let blitzboard = this;
   let sideBar = this.sideBar;
-  if (sideBar.style.width == '0px') {
-    sideBar.style.width = '400px';
+  let sideBarWidth = 400;
+  let zoomRate = Math.pow(2, this.viewState.zoom);
+  let target = this.viewState.target;
+  if (sideBar.style.width === '0px') {
+    sideBar.style.width = `${sideBarWidth}px`;
+    this.zoomFitButton.style.right = `calc(${sideBarWidth}px + 1rem)`;
     this.toggleSideBarButton.innerText = "close";
     this.toggleSideBarButton.style.color = "white";
+    this.sideBarWidth = sideBarWidth;
+    let extendRate = (this.container.clientWidth - sideBarWidth) / this.container.clientWidth;
+    target = [target[0] + sideBarWidth / zoomRate / 2 / extendRate, target[1]];
+    zoomRate *= extendRate;
   } else {
     sideBar.style.width = '0px';
+    this.zoomFitButton.style.right = '1rem';
     this.toggleSideBarButton.innerText = "menu";
     this.toggleSideBarButton.style.color = "";
+    this.sideBarWidth = 0;
+    let extendRate = this.container.clientWidth / (this.container.clientWidth - sideBarWidth);
+    target = [target[0] - sideBarWidth / zoomRate / 2, target[1]];
+    zoomRate *= extendRate;
   }
+  this.viewState = {
+    zoom: Math.log(zoomRate) / Math.log(2), target
+  };
+  this.updateViewByViewState();
 }
 
 function initializeUI() {

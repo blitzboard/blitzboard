@@ -136,14 +136,8 @@ module.exports = {
     }
   },
   fit: function () {
-    // Set dummy viewState in advance so that the redrawing is triggered
-    this.network.setProps({
-      initialViewState: {target: [0, 0], zoom: 3},
-    });
-
-    this.network.setProps({
-      initialViewState: this.createInitialViewState(),
-    });
+    this.viewState = this.createInitialViewState();
+    this.updateViewByViewState();
   },
   clearGraph: function(update = true) {
     this.graph = this.tryPgParse(''); // Set empty pg
