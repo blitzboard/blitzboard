@@ -1061,10 +1061,10 @@ module.exports = class Blitzboard {
 
     this.searchBarDiv.style.display = this.config.onSearchInput ? 'block' : 'none';
 
-    if($(this.searchInput).autocomplete("instance")){
+    if($(this.searchInput).autocomplete && $(this.searchInput).autocomplete("instance")){
       $(this.searchInput).autocomplete( "destroy" );
     }
-    if(this.config.searchCandidates) {
+    if($(this.searchInput).autocomplete && this.config.searchCandidates) {
       $(this.searchInput).autocomplete({source: this.config.searchCandidates});
     }
 
