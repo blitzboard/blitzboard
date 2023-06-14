@@ -275,7 +275,6 @@ module.exports = {
     if(hoverInfo.object && this.hoveredNode === hoverInfo.object.id || !hoverInfo.object && this.hoveredNode === null)
         return;
     this.hoveredNode = hoverInfo.object?.id;
-    this.centerNodeId = this.hoveredNode;
 
     this.updateHighlightState();
     if (this.config.node.onHover) {
@@ -374,6 +373,7 @@ function clickHandler(blitzboard, info, event) {
       if(blitzboard.config.node.onClick)
         blitzboard.config.node.onClick(blitzboard.getNode(object.id));
       blitzboard.selectedNodes.add(object.id);
+      blitzboard.scrollNodeIntoView(object.id);
       needUpdate = true;
     } else if(object?.objectType === 'edge' && blitzboard.config.edge.onClick) {
       blitzboard.config.edge.onClick(blitzboard.getEdge(object.id));

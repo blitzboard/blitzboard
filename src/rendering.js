@@ -32,6 +32,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
     pickable: true,
     getNodePosition: { type: "accessor", value: (n) => [n.x, n.y, n.z] },
     onHover: { type: "accessor", value: (info) => {} },
+    scale: 1.0
   }
   renderLayers() {
     let characterSet = new Set();
@@ -63,7 +64,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
           height: 100
         }),
         forMap,
-        getSize: n => n._size / defaultNodeSize * 10 * (props.forMap ? 100 : 1),
+        getSize: n => n._size / defaultNodeSize * 10 * (props.forMap ? 100 : 1) * this.props.scale,
         sizeScale: scale,
         sizeUnits: sizeUnits,
         pickable: true,
@@ -90,7 +91,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
         getPosition: (node) => {
           let [x, y, z] = props.getNodePosition(node);
           return [x,
-            y + (props.forMap ? -0.001 * node._size / defaultNodeSize : node._size * scale) * 1.1,
+            y + (props.forMap ? -0.001 * node._size / defaultNodeSize : node._size * scale * this.props.scale) * 1.1,
             z];
         },
         forMap,
@@ -133,7 +134,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
         coordinateSystem,
         getPosition: props.getNodePosition,
         getRadius: (n) => {
-          let radius = n._size * (props.forMap ? 100 : 1); // TODO: avoid magic number
+          let radius = n._size * (props.forMap ? 100 : 1) * this.props.scale; // TODO: avoid magic number
           return radius;
         },
         radiusMinPixels: Blitzboard.minNodeSizeInPixels,
@@ -170,7 +171,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
         },
         sizeScale: scale,
         getPosition: props.getNodePosition,
-        getSize: n => n._size / defaultNodeSize * 6 * (props.forMap ? 100 : 1),
+        getSize: n => n._size / defaultNodeSize * 6 * (props.forMap ? 100 : 1) * this.props.scale,
         sizeUnits: sizeUnits,
         getColor: [255, 255, 255, 232],
         sizeMinPixels: Blitzboard.minNodeSizeInPixels * 1.2,
@@ -339,10 +340,10 @@ module.exports = {
 
     function edgeColor(e) {
       let color = [...e.color];
-      if(blitzboard.hoveredNode === e.from || blitzboard.selectedNodes.has(e.from)) {
+      if(blitzboard.hoveredNode === e.from && blitzboard.selectedNodes.size === 0 || blitzboard.selectedNodes.has(e.from)) {
         color = blitzboard.nodeDataSet[e.from].color;
       }
-      if(blitzboard.hoveredNode=== e.to || blitzboard.selectedNodes.has(e.to)) {
+      if(blitzboard.hoveredNode=== e.to && blitzboard.selectedNodes.size === 0 || blitzboard.selectedNodes.has(e.to)) {
         color = blitzboard.nodeDataSet[e.to].color;
       }
       return [color[0], color[1], color[2], 0XFF];
@@ -356,9 +357,6 @@ module.exports = {
       billboard: this.config.layout !== 'map',
       data: tmpEdgeData,
       getWidth: edge => {
-        if(this.hoveredNode === edge.from || this.selectedNodes.has(edge.from) || this.hoveredNode === edge.to || this.selectedNodes.has(edge.to)) {
-          return parseFloat(edge.width) * 2;
-        }
         return edge.width;
       },
       getSourcePosition: (edge) => {
@@ -387,21 +385,24 @@ module.exports = {
       id: "highlighted-edge-layer",
       data: [],
       getWidth: edge => {
+        if(blitzboard.selectedNodes.size > 0 && !blitzboard.selectedNodes.has(edge.from) && !blitzboard.selectedNodes.has(edge.to))
+          return edge.width;
         return parseFloat(edge.width) * 2;
       },
     });
 
-
-    this.centerNodeId = null;
-
     this.highlightedNodeLayer = this.nodeLayerComp.clone({
       id: "highlighted-node-layer",
       data: [],
+      scale: 1.5,
       getNodePosition: n => {
-        if(blitzboard.centerNodeId && blitzboard.centerNodeId !== n.id) {
-          let centerNode = blitzboard.nodeDataSet[blitzboard.centerNodeId];
-          let [x, y] = blitzboard.computeVisiblePositionFromSource(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
-          return [x, y, n.z];
+        let candidateIdOfCenters = blitzboard.selectedNodes.size > 0 ? [...blitzboard.selectedNodes] : (blitzboard.hoveredNode ? [blitzboard.hoveredNode] : []);
+        for(let centerNodeId of candidateIdOfCenters) {
+          if(centerNodeId !== n.id && blitzboard.nodesToEdges[centerNodeId].filter(e => e.from === n.id || e.to === n.id).length > 0) {
+            let centerNode = blitzboard.nodeDataSet[centerNodeId];
+            let [x, y] = blitzboard.computeVisiblePositionFromSource(n.x, n.y, centerNode.x, centerNode.y, n._size * scale);
+            return [x, y, n.z];
+          }
         }
         let {x, y, z} = n;
         return [x, y, z];
@@ -1053,7 +1054,7 @@ module.exports = {
       },
     });
 
-    let edgesToHighlight = new Set(Array.from(this.hoveredEdges).concat(Array.from(this.selectedEdges)));
+    let edgesToHighlight = this.selectedEdges.size > 0 ? new Set(this.selectedEdges) : new Set(this.hoveredEdges);
 
     for(let nodeId of nodesToHighlight) {
       let edges = this.nodesToEdges[nodeId] || [];
