@@ -630,21 +630,26 @@ module.exports = {
     let y = targetY;
     if(x < this.visibleBounds.left + margin) {
       let rate = (this.visibleBounds.left + margin - x) / (sourceX - x);
-      x = this.visibleBounds.left + margin;
+      // set rate from 0 to 1
+      rate = Math.min(Math.max(rate, 0), 1);
+      x = sourceX - (sourceX - x) * (1 - rate);
       y = sourceY - (sourceY - y) * (1 - rate);
     } else if(x > this.visibleBounds.right - margin) {
       let rate = (this.visibleBounds.right - margin - x) / (sourceX - x);
-      x = this.visibleBounds.right - margin;
+      rate = Math.min(Math.max(rate, 0), 1);
+      x = sourceX - (sourceX - x) * (1 - rate);
       y = sourceY - (sourceY - y) * (1 - rate);
     }
 
     if(y < this.visibleBounds.top + margin) {
       let rate = (this.visibleBounds.top + margin - y) / (sourceY - y);
-      y = this.visibleBounds.top + margin;
+      rate = Math.min(Math.max(rate, 0), 1);
+      y = sourceY - (sourceY - y) * (1 - rate);
       x = sourceX - (sourceX - x) * (1 - rate);
     } else if(y > this.visibleBounds.bottom - margin) {
       let rate = (this.visibleBounds.bottom - margin - y) / (sourceY - y);
-      y = this.visibleBounds.bottom - margin;
+      rate = Math.min(Math.max(rate, 0), 1);
+      y = sourceY - (sourceY - y) * (1 - rate);
       x = sourceX - (sourceX - x) * (1 - rate);
     }
     return [x, y];
