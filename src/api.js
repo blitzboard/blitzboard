@@ -289,11 +289,18 @@ module.exports = {
         }
       });
     } else {
+      let diff = Math.sqrt(
+        Math.pow(blitzboard.viewState.target[0] - position.x, 2),
+        Math.pow(blitzboard.viewState.target[1] - position.y, 2));
+      duration = Math.max(100, Math.min(500, diff * 10));
+      if(Number.isNaN(duration))
+        duration = 500;
+
       this.network.setProps({
         initialViewState: {
           target: [position.x, position.y],
           zoom: 4,
-          transitionDuration: 500,
+          transitionDuration: duration,
         }
       });
     }
