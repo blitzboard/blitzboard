@@ -604,6 +604,7 @@ module.exports = {
   },
 
   iconRegisterer(name) {
+    let blitzboard = this;
     return (icons) => {
       if(Blitzboard.loadedIcons[name] !== 'retrieving')
         return;
@@ -736,6 +737,8 @@ module.exports = {
         smoothing: 0.2,
       },
     });
+
+    let blitzboard = this;
 
     function edgeTextColor(e) {
       let color = [...e.color];
