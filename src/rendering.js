@@ -32,7 +32,8 @@ class NodeLayer extends DeckGL.CompositeLayer {
     pickable: true,
     getNodePosition: { type: "accessor", value: (n) => [n.x, n.y, n.z] },
     onHover: { type: "accessor", value: (info) => {} },
-    scale: 1.0
+    scale: 1.0,
+    invisibleNodes: [],
   }
   renderLayers() {
     let characterSet = new Set();
@@ -63,15 +64,15 @@ class NodeLayer extends DeckGL.CompositeLayer {
           width: 100,
           height: 100
         }),
-        forMap,
-        getSize: n => n._size / defaultNodeSize * 10 * (props.forMap ? 100 : 1) * this.props.scale,
         sizeScale: scale,
+        forMap,
+        getSize: n => n._size / defaultNodeSize * 10 * (props.forMap ? 100 : 1),
         sizeUnits: sizeUnits,
         pickable: true,
         getCollisionPriority: node => node._size,
         collisionGroup: 'thumbnail',
         collisionTestProps: {
-          sizeScale: 15,
+          sizeScale: 15 * this.props.scale,
           sizeUnits: 'pixels',
           getSize: Blitzboard.minImageSizeInPixels * 2
         },
@@ -89,6 +90,10 @@ class NodeLayer extends DeckGL.CompositeLayer {
         data: props.data,
         pickable: true,
         getPosition: (node) => {
+          if(props.invisibleNodes.includes(node.id)) {
+            // FIXME: instead of change visibility, move far away
+            return [Number.MAX_VALUE, Number.MAX_VALUE, 0]; 
+          }
           let [x, y, z] = props.getNodePosition(node);
           return [x,
             y + (props.forMap ? -0.001 * node._size / defaultNodeSize : node._size * scale * this.props.scale) * 1.1,
@@ -102,7 +107,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
         billboard,
         getAngle: 0,
         getTextAnchor: 'middle',
-        getColor: node => [0x33, 0x33, 0x33, 255],
+        getColor: [0x33, 0x33, 0x33, 255],
         getAlignmentBaseline: 'top',
         coordinateSystem,
         sizeUnits: sizeUnits,
@@ -118,13 +123,13 @@ class NodeLayer extends DeckGL.CompositeLayer {
           smoothing: 0.2,
         },
         updateTriggers: {
-          getPosition: props.updateTriggers.getNodePosition
+          getPosition: [props.updateTriggers.getNodePosition, props.invisibleNodes],
         }
       }),
 
       new DeckGLLayers.ScatterplotLayer({
         id: `${props.id}-scatterplot`,
-        data: props.data,
+        data:  props.data,
         pickable: true,
         opacity: 1, // TODO
         stroked: false,
@@ -139,10 +144,16 @@ class NodeLayer extends DeckGL.CompositeLayer {
         },
         radiusMinPixels: Blitzboard.minNodeSizeInPixels,
         radiusScale: scale,
-        getFillColor: (n) => n.color,
+        getFillColor: (n) => {
+          if(props.invisibleNodes.includes(n.id)) {
+            return [0, 0, 0, 0];
+          }
+          return n.color;
+        },
         radiusUnits: sizeUnits,
         updateTriggers: {
-          getPosition: props.updateTriggers.getNodePosition
+          getPosition: props.updateTriggers.getNodePosition,
+          getFillColor: props.invisibleNodes
         }
       }),
 
@@ -1081,6 +1092,10 @@ module.exports = {
 
     this.highlightedNodeLayer = this.highlightedNodeLayer.clone({
       data: relatedNodes
+    });
+
+    this.nodeLayerComp = this.nodeLayerComp.clone({
+      invisibleNodes: relatedNodes.map(n => n.id),
     });
 
 
