@@ -344,15 +344,7 @@ module.exports = {
         }
       }
     }
-
-    // if(e.nodes.length > 0 && !this.network.isCluster(e.nodes[0])){
-    //   let node = e.nodes[0]
-    //   this.upstreamNodes = this.getUpstreamNodes(node);
-    //   this.downstreamNodes = this.getDownstreamNodes(node);
-    //   this.network.setSelection({nodes: [], edges: []}); // reset
-    //   this.highlightedNodes = Array.from(this.upstreamNodes).concat(Array.from(this.downstreamNodes));
-    //   this.network.selectNodes( this.highlightedNodes, true);
-    // }
+    this.onViewStateChange(this.viewState);
   },
 }
 

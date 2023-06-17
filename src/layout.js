@@ -39,43 +39,34 @@ function computeHierarchicalPositions() {
   shrinkLayoutFromVisToDeck(this.nodeLayout);
 }
 
-function calcNodePosition(pgNode) {
-  let x, y, fixed, width;
-  if(this.config.layout === 'timeline' && this.timeInterval > 0) {
-    x = null;
-    fixed = false;
-    let fromProp = this.config.layoutSettings.time_from;
-    let toProp = this.config.layoutSettings.time_to;
-    let from = this.maxTime;
-    let to = this.minTime;
+function calcNodePositionOnTime(pgNode) {
+  let x, y, width;
+  y = 0;
+  x = null;
+  let fromProp = this.config.layoutSettings.time_from;
+  let toProp = this.config.layoutSettings.time_to;
+  let from = this.maxTime;
+  let to = this.minTime;
 
-    for(let prop of Object.keys(pgNode.properties)) {
-      if(prop === fromProp || prop === toProp) {
-        from = new Date(Math.min(from, new Date(pgNode.properties[prop][0])));
-        to = new Date(Math.max(to, new Date(pgNode.properties[prop][0])));
-      }
+  for(let prop of Object.keys(pgNode.properties)) {
+    if(prop === fromProp || prop === toProp) {
+      from = new Date(Math.min(from, new Date(pgNode.properties[prop][0])));
+      to = new Date(Math.max(to, new Date(pgNode.properties[prop][0])));
     }
-
-    if(from <= to) {
-      fixed = true;
-      let fromPosition = this.timeScale * (from.getTime() - this.minTime.getTime()) * 1.0 / this.timeInterval - this.timeScale * 0.5;
-      let toPosition = this.timeScale * (to.getTime() - this.minTime.getTime()) * 1.0 / this.timeInterval - this.timeScale * 0.5;
-      x = (fromPosition + toPosition) / 2;
-      if(from === to) {
-        width = fromPosition - toPosition;
-      } else {
-        width = 25;
-      }
-    } else {
-      x = 0;
-    }
-  } else {
-    x = null;
-    y = null;
-    fixed = this.config.layout === 'hierarchical';
-    width = null;
   }
-  return {x, y, fixed, width};
+
+  if(from <= to) {
+    fixed = true;
+    let fromPosition = this.timeScale * (from.getTime() - this.minTime.getTime()) * 1.0 / this.timeInterval - this.timeScale * 0.5;
+    let toPosition = this.timeScale * (to.getTime() - this.minTime.getTime()) * 1.0 / this.timeInterval - this.timeScale * 0.5;
+    x = (fromPosition + toPosition) / 2;
+    if(from === to) {
+      width = fromPosition - toPosition;
+    } else {
+      width = 25;
+    }
+  }
+  return {x, y, width};
 }
 
 
@@ -83,8 +74,7 @@ function calcNodePosition(pgNode) {
 
 module.exports = {
   computeHierarchicalPositions,
-  calcNodePosition,
-
+  calcNodePositionOnTime,
   hideExceptSCC() {
     this.expandSCC();
     let toBeUpdated = [];
@@ -96,25 +86,26 @@ module.exports = {
   },
 
   determineLayout(afterUpdate = null) {
-    // this.minTime = new Date(8640000000000000);
-    // this.maxTime = new Date(-8640000000000000);
-    //
-    // if(this.config.layout === 'timeline') {
-    //   let fromProp = this.config.layoutSettings.time_from;
-    //   let toProp = this.config.layoutSettings.time_to;
-    //
-    //   this.graph.nodes.forEach(node => {
-    //     for(let prop of Object.keys(node.properties)) {
-    //       if(prop === fromProp || prop === toProp) {
-    //         this.minTime = new Date(Math.min(this.minTime, new Date(node.properties[prop][0])));
-    //         this.maxTime = new Date(Math.max(this.maxTime, new Date(node.properties[prop][0])));
-    //       }
-    //     }
-    //   });
-    //   this.timeInterval = this.maxTime - this.minTime;
-    // }
-
-    if(this.config.layout === 'hierarchical') {
+    this.minTime = new Date(8640000000000000);
+    this.maxTime = new Date(-8640000000000000);
+    
+    if(this.config.layout === 'timeline') {
+      let fromProp = this.config.layoutSettings.time_from;
+      let toProp = this.config.layoutSettings.time_to;
+    
+      this.graph.nodes.forEach(node => {
+        for(let prop of Object.keys(node.properties)) {
+          if(prop === fromProp || prop === toProp) {
+            this.minTime = new Date(Math.min(this.minTime, new Date(node.properties[prop][0])));
+            this.maxTime = new Date(Math.max(this.maxTime, new Date(node.properties[prop][0])));
+          }
+        }
+      });
+      this.timeInterval = this.maxTime - this.minTime;
+      this.groupedGraph = this.filteredGraph;
+      this.layoutNodesByTime(afterUpdate);
+    }
+    else if(this.config.layout === 'hierarchical') {
       this.computeHierarchicalPositions();
       this.groupedGraph = this.filteredGraph;
       this.resetView(afterUpdate);
@@ -288,6 +279,44 @@ module.exports = {
     }
   },
 
+  layoutNodesByTime(afterUpdate) {
+    // First, we compute the horizontal position of each node using time
+    for(let node of this.groupedGraph.nodes) {
+      let { x, y, width } =  this.calcNodePositionOnTime(node);
+      this.nodeLayout[node.id] = {x, y, z: 0};
+    }
+
+    // Now, we compute the vertical position of each node using force-directed layout 
+    let count = {};
+    const d3Nodes = this.groupedGraph.nodes.map((n) => {
+      return {
+        id: n.id,
+        fx: this.nodeLayout[n.id].x,
+      };
+    });
+    const d3Edges = this.groupedGraph.edges.filter(e => this.nodeMap[e.from] && this.nodeMap[e.to]).map(e => {
+      count[e.from] = (count[e.from] || 0) + 1;
+      count[e.to] = (count[e.to] || 0) + 1;
+      return {
+        source: e.from,
+        target: e.to,
+      };
+    });
+
+    const SPRING_DISTANCE = 15;
+
+    this.d3Simulation = d3Force.forceSimulation(d3Nodes);
+
+    this.layoutNodes(
+      (step) => { this.d3Simulation.tick(step); },
+      () => {
+      this.nodeLayout = {};
+      for(const node of d3Nodes) {
+        this.nodeLayout[node.id] = {x: node.x, y: node.y, z: 0};
+      }
+      this.resetView(afterUpdate);
+    }, 1000);
+  },
 
   layoutNodesByNGraph(afterUpdate) {
     let ngraph = createGraph();

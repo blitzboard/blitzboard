@@ -23,6 +23,95 @@ function edgeArrowPosition(fromNode, toNode, scale, offset = edgeArrowOffset) {
     toY + Math.sin(angle) * (nodeSize * scale + offset), (fromZ + toZ) / 2];
 }
 
+
+class TimeLineLayer extends DeckGL.CompositeLayer {
+  static layerName = 'TimeLineLayer';
+  static defaultProps = {
+    id: 'timeline-layer',
+    verticalPosition: 0,
+    tickSize: 20,
+    timeForOneUnitLength: 1,
+    centerTime: 0,
+    timeUnit: 'year',
+  }
+  renderLayers() {
+    const coordinateSystem = DeckGL.COORDINATE_SYSTEM.CARTESIAN;
+    const sizeUnits = 'common';
+    let props = this.props;
+
+    // Assumed data: List of datetime
+
+    function computePosition(timePoint) {
+      let x = (timePoint.getTime() - props.centerTime) / props.timeForOneUnitLength;
+      return [x, props.verticalPosition, 0];
+    }
+
+    return [
+      new DeckGLLayers.LineLayer({
+        id: `${props.id}-line`,
+        coordinateSystem,
+        billboard: true,
+        data: props.data,
+        getWidth: 1,
+        getSourcePosition: computePosition,
+        getTargetPosition: (timePoint) => {
+          let [x, y, z] = computePosition(timePoint);
+          return [x, y + props.tickSize, z];
+        },
+        getColor: [0, 0, 0, 255],
+        widthUnits: ('common'),
+        widthMaxPixels: 1,
+        updateTriggers: {
+          getSourcePosition: props.verticalPosition,
+          getTargetPosition: [props.verticalPosition, props.tickSize],
+        }
+      }),
+
+      new DeckGLLayers.TextLayer({
+        id: `${props.id}-text`,
+        data: props.data,
+        getPosition: (timePoint) => {
+          let [x, y, z] = computePosition(timePoint);
+          return [x, y, z];
+        },
+        getText: timePoint => {
+          if(props.timeUnit === 'year') {
+            return timePoint.getFullYear().toString();
+          } else if(props.timeUnit === 'month') {
+            return timePoint.toLocaleDateString(undefined, {year: 'numeric', month: 'numeric'});
+          } else if(props.timeUnit === 'day') {
+            return timePoint.toLocaleDateString();
+          }
+        },
+        sizeMaxPixels: 15,
+        sizeMinPixels: 15,
+        billboard: true,
+        getAngle: 0,
+        getTextAnchor: 'middle',
+        getColor: [0, 0, 0, 255],
+        getAlignmentBaseline: 'top',
+        coordinateSystem,
+        sizeUnits: sizeUnits,
+        outlineWidth: 8,
+        background: [255, 255, 255, 255],
+        lineHeight: 1.2,
+        outlineColor: [255, 255, 255, 192],
+        fontSettings: {
+          sdf: true,
+          radius: 16,
+          smoothing: 0.2,
+        },
+        updateTriggers: {
+          getPosition: props.verticalPosition,
+          getText: props.timeUnit,
+        },
+      }),
+    ];
+  }
+}
+
+
+
 class NodeLayer extends DeckGL.CompositeLayer {
   static layerName = 'NodeLayer';
   static defaultProps = {
@@ -197,7 +286,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
 }
 
 
-function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, offsetY, rightMostX, context, scale) {
+function computeTimesToPlot(startTime, endTime, interval, intervalUnit) {
   let currentTime = new Date(startTime);
   switch(intervalUnit) {
     case 'year':
@@ -212,17 +301,11 @@ function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, 
     default:
       return;
   }
+  let timeList = [];
   let i = 0;
-  while(++i < 100) {
-    const nextPosition = -offsetX + (currentTime - startTime) / timeForOnePixel;
-    if(nextPosition > rightMostX) break;
-    if(intervalUnit === 'year')
-      context.fillText(currentTime.getFullYear(), nextPosition, -offsetY);
-    else
-      context.fillText(currentTime.toLocaleDateString(), nextPosition, -offsetY);
-    context.moveTo(nextPosition, -offsetY);
-    context.lineTo(nextPosition, -offsetY + 25 / scale);
-    context.stroke();
+  let maxLoop = 2000;
+  while(currentTime < endTime && ++i < maxLoop) {
+    timeList.push(new Date(currentTime));
     switch(intervalUnit) {
       case 'year':
         currentTime.setFullYear(currentTime.getFullYear() + interval);
@@ -237,68 +320,8 @@ function plotTimes(startTime, interval, intervalUnit, timeForOnePixel, offsetX, 
         return;
     }
   }
+  return timeList;
 }
-
-// this.network.on("afterDrawing", (ctx) => {
-//   this.updateTooltipLocation();
-//  if(this.config.layout === 'timeline'){
-//     const context = this.network.canvas.getContext("2d");
-//     const view = this.network.canvas.body.view;
-//     const offsetY = (view.translation.y - 20) / view.scale;
-//     const offsetX = view.translation.x / view.scale;
-//     const timeForOnePixel = (this.maxTime - this.minTime) / this.timeScale;
-//     const timeOnLeftEdge = new Date(((this.maxTime.getTime() + this.minTime.getTime()) / 2) - timeForOnePixel * offsetX);
-//     const clientWidth = this.network.canvas.body.container.clientWidth;
-//     const rightMost = -offsetX + clientWidth / view.scale;
-//     const oneMonth = 31 * 24 * 60 * 60 * 1000;
-//     const oneDay = 24 * 60 * 60 * 1000;
-//     const twoMonth = oneMonth * 2;
-//     const fourMonth = twoMonth * 2;
-//     const oneYear = 365 * oneDay;
-//     const minDistance = 200;
-//     context.font = (20 / view.scale).toString() + "px Arial";
-//     context.fillStyle = "blue";
-//     const minimumInterval = timeForOnePixel * minDistance / view.scale;
-//     if(minimumInterval > oneYear ) {
-//       plotTimes(timeOnLeftEdge, minimumInterval / oneYear, 'year', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     }
-//     else if(minimumInterval > fourMonth ) {
-//       plotTimes(timeOnLeftEdge, 4, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     }
-//     else if(minimumInterval > twoMonth) {
-//       plotTimes(timeOnLeftEdge, 2, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     }
-//     else if(minimumInterval > oneMonth) {
-//       plotTimes(timeOnLeftEdge, 1, 'month', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     } else if(minimumInterval > oneDay * 16) {
-//       plotTimes(timeOnLeftEdge, 16, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     } else if(minimumInterval > oneDay * 8) {
-//       plotTimes(timeOnLeftEdge, 8, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     } else if(minimumInterval > oneDay * 4) {
-//       plotTimes(timeOnLeftEdge, 4, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     } else if(minimumInterval > oneDay * 2) {
-//       plotTimes(timeOnLeftEdge, 2, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     } else {
-//       plotTimes(timeOnLeftEdge, 1, 'day', timeForOnePixel, offsetX, offsetY, rightMost, context, view.scale);
-//     }
-//   }
-// });
-
-// this.network.on("doubleClick", (e) => {
-//   clearTimeout(this.doubleClickTimer);
-//   this.doubleClickTimer = null;
-//   if(e.nodes.length > 0 && !blitzboard.network.isCluster(e.nodes[0])) {
-//     if(this.config.node.onDoubleClick) {
-//       this.config.node.onDoubleClick(this.getNode(e.nodes[0]));
-//     }
-//   } else if(e.edges.length > 0) {
-//     if(this.config.edge.onDoubleClick) {
-//       this.config.edge.onDoubleClick(this.getEdge(e.edges[0]));
-//     }
-//   } else {
-//     this.fit();
-//   }
-// });
 
 const ANIMATION_TIME_MAX = 1000;
 
@@ -347,7 +370,6 @@ module.exports = {
       onHover: info => blitzboard.onNodeHover(info),
       getNodePosition: n => [n.x, n.y, n.z + (this.config.layout === 'map' ? 20 : 0)],
     });
-
 
     function edgeColor(e) {
       let color = [...e.color];
@@ -523,7 +545,13 @@ module.exports = {
         },
         pickable: true,
       });
-
+    } else if(this.config.layout === 'timeline') {
+      this.timelineLayer = new TimeLineLayer({
+        data: [this.minTime],
+        id: 'timeline-layer',
+        centerTime: (this.minTime.getTime() + this.maxTime.getTime()) / 2,
+        timeForOneUnitLength: this.timeForOneUnitLength(),
+      });
     }
     this.determineLayersToShow();
   },
@@ -606,18 +634,6 @@ module.exports = {
         blitzboard.refreshIconLayer();
       }
     };
-  },
-
-  updateNodeLocationOnTimeLine() {
-    let nodePositions = [];
-    this.graph.nodes.forEach(node => {
-      let x, y, fixed, width;
-      ({x, y, fixed, width} = this.calcNodePosition(node));
-      nodePositions.push({
-        id: node.id,
-        x, y
-      });
-    });
   },
 
   svgToURL(svg) {
@@ -1058,7 +1074,53 @@ module.exports = {
         getNodePosition: this.visibleBounds,
       }
     });
+
+    if(this.config.layout === 'timeline' && this.visibleBounds && this.viewState) {
+      let timeForOneUnitLength = this.timeForOneUnitLength();
+      let zoomRate = Math.pow(2, this.viewState.zoom);
+      let centerTime = (this.minTime.getTime() + this.maxTime.getTime()) / 2;
+
+      let plotStartTime = (centerTime + this.visibleBounds.left * timeForOneUnitLength);
+      let plotEndTime = (centerTime + this.visibleBounds.right * timeForOneUnitLength);
+
+      let timeForOnePixel = timeForOneUnitLength / zoomRate;
+
+      const oneDay = 24 * 60 * 60 * 1000;
+      const oneMonth = 31 * oneDay;
+      const oneYear = 365 * oneDay;
+
+      const minDistanceInPixels = 200;
+      const minimumInterval = timeForOnePixel * minDistanceInPixels;
+      let plotTimeInterval, intervalUnit;
+      if(minimumInterval > oneYear ) {
+        intervalUnit = 'year';
+        plotTimeInterval = minimumInterval / oneYear;
+      }
+      else if(minimumInterval > oneMonth) {
+        intervalUnit = 'month';
+        plotTimeInterval = minimumInterval / oneMonth;
+      } else {
+        intervalUnit = 'day';
+        plotTimeInterval = minimumInterval / oneDay;
+      }
+
+      // round to the nearest power of 2
+      plotTimeInterval = Math.pow(2, Math.ceil(Math.log(plotTimeInterval)));
+      const tickSize = 40;
+
+      this.timelineLayer = this.timelineLayer.clone({
+        data: computeTimesToPlot(plotStartTime, plotEndTime, plotTimeInterval, intervalUnit),
+        verticalPosition: this.visibleBounds.top + tickSize / 2 / zoomRate,
+        tickSize: tickSize / zoomRate,
+        timeUnit: intervalUnit,
+      });
+    }
+
     this.determineLayersToShow();
+  },
+
+  timeForOneUnitLength() {
+    return (this.maxTime - this.minTime) / this.timeScale;
   },
 
   updateHighlightState() {
@@ -1117,12 +1179,6 @@ module.exports = {
       });
     } else {
       let triggers = [this.hoveredNode].concat(Array.from(this.hoveredEdges)).concat(Array.from(this.selectedNodes)).concat(Array.from(this.selectedEdges));
-      // this.edgeLayer = this.edgeLayer.clone({
-      //   updateTriggers: {
-      //     getColor: triggers,
-      //     getWidth: triggers,
-      //   }
-      // });
       this.edgeArrowLayer = this.edgeArrowLayer.clone({
         updateTriggers: {
           getPosition: triggers,
@@ -1153,7 +1209,6 @@ module.exports = {
     if(this.config.layout === 'map') {
       this.layers = [
         this.tileLayer,
-        // this.edgeLayer,
         this.tripsLayer,
         this.highlightedTripsLayer,
         this.edgeTextLayer,
@@ -1165,13 +1220,16 @@ module.exports = {
         this.edgeLayer,
         this.highlightedEdgeLayer,
         this.edgeTextLayer,
-        // this.tripsLayer,
-        // this.highlightedTripsLayer,
         this.edgeArrowLayer,
         this.nodeLayerComp,
         this.highlightedNodeLayer,
       ];
+      if(this.config.layout === 'timeline')
+      {
+        this.layers.unshift(this.timelineLayer);
+      }
     }
+
     this.network.setProps({
       layers: this.layers
     });

@@ -94,7 +94,7 @@ class Blitzboard {
       z-index: 0;
     `;
 
-    this.timeScale = 1000;
+    this.timeScale = 100;
     this.dragging = false;
     this.onNodeAdded = [];
     this.onEdgeAdded = [];
