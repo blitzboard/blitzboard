@@ -296,13 +296,19 @@ module.exports = {
       if(Number.isNaN(duration))
         duration = 500;
 
-      this.network.setProps({
+      let newProps = {
         initialViewState: {
           target: [position.x, position.y],
           zoom: 4,
           transitionDuration: duration,
         }
-      });
+      };
+      if(this.config.layout === 'timeline' && this.viewState) {
+        newProps.initialViewState.zoom = this.viewState.zoom;
+      }
+  
+
+      this.network.setProps(newProps);
     }
   },
   scrollEdgeIntoView: function(edge, select = true) {

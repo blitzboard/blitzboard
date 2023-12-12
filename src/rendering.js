@@ -24,11 +24,18 @@ function edgeIsDirected(edge) {
   );
 }
 
+function angleBetweenNodes(fromNode, toNode) {
+  let { x: fromX, y: fromY } = fromNode;
+  let { x: toX, y: toY } = toNode;
+
+  return Math.atan2(fromY - toY, fromX - toX);
+}
+
 function edgeArrowPosition(fromNode, toNode, scale, offset = edgeArrowOffset) {
   let { x: fromX, y: fromY, z: fromZ } = fromNode;
   let { x: toX, y: toY, z: toZ } = toNode;
 
-  let angle = Math.atan2(fromY - toY, fromX - toX);
+  let angle = angleBetweenNodes(fromNode, toNode);
   let nodeSize = toNode._size;
   return [
     toX + Math.cos(angle) * (nodeSize * scale + offset),
@@ -98,10 +105,18 @@ class TimeLineLayer extends DeckGL.CompositeLayer {
           } else if (props.timeUnit === "day") {
             return timePoint.toLocaleDateString();
           } else if (props.timeUnit === "hour") {
-            return timePoint.toLocaleString(undefined, {
-              hour: "numeric",
-              minute: "numeric",
-            });
+            if (timePoint.getHours() === 0) {
+              return timePoint.toLocaleString(undefined, {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "numeric",
+              });
+            } else {
+              return timePoint.toLocaleString(undefined, {
+                hour: "numeric",
+              });
+            }
           } else {
             return timePoint.toLocaleString(undefined, {
               hour: "numeric",
@@ -212,7 +227,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
         data: props.data,
         pickable: true,
         getPosition: (node) => {
-          if (props.invisibleNodes.includes(node.id)) {
+          if (!props.forTimeLine && props.invisibleNodes.includes(node.id)) {
             // FIXME: instead of change visibility, move far away
             return [Number.MAX_VALUE, Number.MAX_VALUE, 0];
           }
@@ -220,17 +235,19 @@ class NodeLayer extends DeckGL.CompositeLayer {
           return [
             x,
             y +
-              (props.forMap
-                ? (-0.001 * node._size) / defaultNodeSize
-                : node._size * scale * this.props.scale) *
-                1.1,
+              (props.forTimeLine
+                ? 0
+                : (props.forMap
+                    ? (-0.001 * node._size) / defaultNodeSize
+                    : node._size * scale * this.props.scale) * 1.1),
             z,
           ];
         },
         forMap,
         getText: (node) => node.label,
-        getSize: (n) =>
-          (n._size / defaultNodeSize) * fontSize * (props.forMap ? 100 : 1),
+        getSize: 10,
+        // getSize: (n) =>
+          // (n._size / defaultNodeSize) * fontSize * (props.forMap ? 100 : 1),
         sizeMaxPixels: 30,
         sizeMinPixels: 10,
         billboard,
@@ -239,7 +256,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
         getColor: [0x33, 0x33, 0x33, 255],
         getAlignmentBaseline: "top",
         coordinateSystem,
-        sizeUnits: sizeUnits,
+        sizeUnits: 'common',
         sizeScale: scale,
         visible: props.textVisible,
         outlineWidth: 8,
@@ -251,6 +268,18 @@ class NodeLayer extends DeckGL.CompositeLayer {
           radius: 16,
           smoothing: 0.2,
         },
+        getPixelOffset: [
+          0,
+          props.forTimeLine ? Blitzboard.minTimelineNodeSizeInPixels : 0,
+        ],
+
+        getCollisionPriority: 1,
+        collisionGroup: "node-text",
+        // collisionTestProps: {
+          // sizeScale: scale * 1.5,
+        // },
+        extensions: [new DeckGLExtensions.CollisionFilterExtension()],
+
         updateTriggers: {
           getPosition: [
             props.updateTriggers.getNodePosition,
@@ -272,11 +301,13 @@ class NodeLayer extends DeckGL.CompositeLayer {
         getPosition: props.getNodePosition,
         getRadius: (n) => {
           let radius = props.forTimeLine
-            ? 0.001
+            ? Blitzboard.minTimelineNodeSizeInPixels
             : n._size * (props.forMap ? 100 : 1) * this.props.scale; // TODO: avoid magic number
           return radius;
         },
-        radiusMinPixels:  props.forTimeLine ? Blitzboard.minTimelineNodeSizeInPixels : Blitzboard.minNodeSizeInPixels,
+        radiusMinPixels: props.forTimeLine
+          ? Blitzboard.minTimelineNodeSizeInPixels
+          : Blitzboard.minNodeSizeInPixels,
         radiusScale: scale,
         getFillColor: (n) => {
           if (props.invisibleNodes.includes(n.id)) {
@@ -284,7 +315,7 @@ class NodeLayer extends DeckGL.CompositeLayer {
           }
           return n.color;
         },
-        radiusUnits: sizeUnits,
+        radiusUnits: props.forTimeLine ? 'pixels' : sizeUnits,
         updateTriggers: {
           getPosition: props.updateTriggers.getNodePosition,
           getFillColor: props.invisibleNodes,
@@ -533,7 +564,7 @@ module.exports = {
       widthUnits: "common",
       widthScale:
         this.config.layout === "timeline"
-          ? 0.0001
+          ? 1e-10
           : 0.1 * (this.config.layout === "map" ? 0.01 : 1),
       widthMinPixels: 1,
     });
@@ -555,7 +586,7 @@ module.exports = {
     this.highlightedNodeLayer = this.nodeLayerComp.clone({
       id: "highlighted-node-layer",
       data: [],
-      scale: 1.5,
+      scale: blitzboard.config.layout === "timeline" ? 1 : 1.5,
       getNodePosition: (n) => {
         let candidateIdOfCenters =
           blitzboard.selectedNodes.size > 0
@@ -576,7 +607,7 @@ module.exports = {
               n.y,
               centerNode.x,
               centerNode.y,
-              n._size * scale
+              blitzboard.config.layout === "timeline" ? 0 : n._size * scale
             );
             return [x, y, n.z];
           }
@@ -661,8 +692,12 @@ module.exports = {
         return edgeArrowPosition(
           this.nodeDataSet[edge.from],
           this.nodeDataSet[edge.to],
-          scale,
-          hovered ? edgeArrowOffset * 2 : edgeArrowOffset
+          this.config.layout !== "timeline" ? scale : 0,
+          this.config.layout !== "timeline"
+            ? hovered
+              ? edgeArrowOffset * 2
+              : edgeArrowOffset
+            : 0
         );
       },
       getAngle: (edge) => {
@@ -680,11 +715,29 @@ module.exports = {
         ) {
           size *= 2;
         }
+        if (this.config.layout === "timeline") {
+          return 1e-6;
+        }
         return size;
       },
       sizeUnits: sizeUnits,
       sizeMinPixels: Blitzboard.minArrowSizeInPixels,
       getColor: edgeColor,
+      getPixelOffset: (edge) => {
+        let hovered =
+          this.hoveredNode === edge.from ||
+          this.selectedNodes.has(edge.from) ||
+          this.hoveredNode === edge.to ||
+          this.selectedNodes.has(edge.to);
+        let angle = angleBetweenNodes(
+          this.nodeDataSet[edge.from],
+          this.nodeDataSet[edge.to]
+        );
+        return [
+          Math.cos(angle) * Blitzboard.minTimelineNodeSizeInPixels,
+          Math.sin(angle) * Blitzboard.minTimelineNodeSizeInPixels,
+        ];
+      },
     });
 
     this.iconLayer = this.createIconLayer(
@@ -1434,9 +1487,11 @@ module.exports = {
       data: relatedNodes,
     });
 
-    this.nodeLayerComp = this.nodeLayerComp.clone({
-      invisibleNodes: relatedNodes.map((n) => n.id),
-    });
+    if (this.config.layout !== "timeline") {
+      this.nodeLayerComp = this.nodeLayerComp.clone({
+        invisibleNodes: relatedNodes.map((n) => n.id),
+      });
+    }
 
     if (this.config.edge.visibilityMode !== "always") {
       let edgesToDraw;
@@ -1502,9 +1557,11 @@ module.exports = {
       case "timeline":
         this.layers = [
           this.tileLayer,
-          this.tripsLayer,
-          this.highlightedTripsLayer,
+          // this.tripsLayer,
+          // this.highlightedTripsLayer,
+          this.edgeLayer,
           this.edgeTextLayer,
+          this.edgeArrowLayer,
           this.nodeLayerComp,
           this.highlightedNodeLayer,
           this.timelineLayer,

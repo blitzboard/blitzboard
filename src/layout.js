@@ -117,7 +117,7 @@ module.exports = {
       const oneMonth = 31 * oneDay;
       const oneYear = 365 * oneDay;
       this.timeScale = 400 * (this.timeInterval / oneYear);
-      this.timeScale = Math.min(1000, this.timeScale);
+      this.timeScale = Math.min(3000, this.timeScale);
 
       this.groupedGraph = this.filteredGraph;
       this.layoutNodesByTime(afterUpdate);
