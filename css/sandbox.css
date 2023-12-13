@@ -396,4 +396,27 @@ span .syntax-warning-line {
   margin-left: 30px;
 }
 
-/*# sourceMappingURL=sandbox.css.map */
+.modeless {
+  overflow: hidden;
+  top: 10%;
+  left: auto;
+  bottom: auto;
+  right: auto;
+}
+.modeless .modal-dialog {
+  max-width: 1000px;
+  margin-right: auto;
+  margin-left: auto;
+}
+.modeless .CodeMirror {
+  min-height: 600px;
+  border: 1px solid #444;
+}
+
+.extraction-bubble {
+  background-color: #b61717;
+  color: white;
+  border-radius: 5px;
+  padding: 5px;
+  z-index: 10000;
+}/*# sourceMappingURL=sandbox.css.map */

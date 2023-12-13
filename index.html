@@ -20,6 +20,7 @@
     <link href='./css/jquery-ui.min.css' rel='stylesheet'>
     <link href='./css/codemirror/codemirror.css' rel='stylesheet'>
     <link href='./css/monokai.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/theme/neat.min.css" />
     <link href='./css/codemirror/addon/show-hint.css' rel='stylesheet'>
     <link href='./img/favicon.ico' rel='shortcut icon' type='image/x-icon'>
     <link href='https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css' rel='stylesheet'>
@@ -88,6 +89,17 @@
                 </label>
             </li>
             <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
+
+
+                <li class='nav-item'>
+                    <label class='btn text-white' href='#' title='Extract' for="extract-modal-btn">
+                        <span class="material-symbols-outlined" id="extract-modal-btn">
+                            file_upload
+                        </span>
+
+                    </label>
+                </li>
+
                 <input autocomplete='off' class='btn-check' id='edit-panel-btn' name='view-mode' type='checkbox'>
                 <label class='me-3 btn btn-outline-secondary text-white' data-bs-toggle='tooltip'
                     data-placement='bottom' for='edit-panel-btn' style='border: none' title='Edit mode'>
@@ -124,9 +136,9 @@
                         <span class="material-symbols-outlined" id='import-btn'>
                             file_upload
                         </span>
-                        </label>
-                        <input accept='.zip' id='import-input' type='file'>
-                        </input>
+                    </label>
+                    <input accept='.zip' id='import-input' type='file'>
+                    </input>
                     </label>
                 </li>
                 <li class='nav-item'>
@@ -264,8 +276,9 @@
                     <label>
                         ノードフィルタ
                     </label>
-                    <label class='btn text-white bg-black add-node-filter-btn filter-btn' data-bs-toggle='tooltip' data-placement='bottom' href='#'
-                           title='Add filter' style="margin-left: 30px; width: 30px; height: 30px; padding: 0">
+                    <label class='btn text-white bg-black add-node-filter-btn filter-btn' data-bs-toggle='tooltip'
+                        data-placement='bottom' href='#' title='Add filter'
+                        style="margin-left: 30px; width: 30px; height: 30px; padding: 0">
                         <span class="material-symbols-outlined">
                             Add
                         </span>
@@ -278,8 +291,9 @@
                     <label>
                         エッジフィルタ
                     </label>
-                    <label class='btn text-white bg-black add-edge-filter-btn' data-bs-toggle='tooltip' data-placement='bottom' href='#'
-                           title='Add filter' style="margin-left: 30px; width: 30px; height: 30px; padding: 0">
+                    <label class='btn text-white bg-black add-edge-filter-btn' data-bs-toggle='tooltip'
+                        data-placement='bottom' href='#' title='Add filter'
+                        style="margin-left: 30px; width: 30px; height: 30px; padding: 0">
                         <span class="material-symbols-outlined">
                             Add
                         </span>
@@ -369,9 +383,31 @@
             </div>
         </div>
     </div>
+
+    <div id="extract-modeless" class="modal fade modeless">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Extraction</h5>
+                </div>
+                <div class="modal-body">
+                    <textarea id="extract-textarea" style="width: 100em; height: 50em;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="extract-btn">Extract events</button>
+                    <button type="button" class="btn btn-success" id="extract-relation-btn">Extract
+                        relationships</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal"
+                        id="extract-modeless-close-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src='./page_templates.js'></script>
     <script src='./src/sandbox.js'></script>
     <script src='./src/scc.js'></script>
+    <script src="./src/extract_events.js"></script>
 </body>
 
 </html>

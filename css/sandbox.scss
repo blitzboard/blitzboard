@@ -428,3 +428,31 @@ span .syntax-warning-line {
 .add-node-filter-btn {
   margin-left: 30px;
 }
+
+
+.modeless{
+    overflow: hidden;
+    top:10%;
+    left: auto;
+    bottom:auto;
+    right:auto;
+
+    .modal-dialog {
+      max-width: 1000px;
+      margin-right: auto;
+      margin-left: auto;
+    }
+    .CodeMirror { 
+      min-height: 600px; 
+      border: 1px solid #444;
+    }
+}
+
+.extraction-bubble {
+  background-color: #b61717;
+  color: white;
+  border-radius: 5px;
+  padding: 5px;
+  z-index: 10000;
+}
+
