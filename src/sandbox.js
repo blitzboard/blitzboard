@@ -13,6 +13,9 @@ let unsavedChangeExists = false;
 let backendUrl = localStorage.getItem("backendUrl");
 let remoteMode = !!backendUrl;
 
+let extractionWidgets = [];
+let extractionMarkers = [];
+
 let config = null;
 
 let edgeFilterConditions = null;
@@ -1657,23 +1660,39 @@ $(() => {
     });
   });
 
+  function clearExtractionHighlights() {
+    for (let widget of extractionWidgets) {
+      widget.remove();
+    }
+    extractionWidgets = [];
+
+    for (let marker of extractionMarkers) {
+      marker.clear();
+    }
+    extractionMarkers = [];
+  }
+
   q("#extract-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
     let originalText = extractionEditor.getValue();
     let disasters = await extractDisasterEvents(originalText);
     let newPG = "";
+    clearExtractionHighlights();
     for (let disaster of disasters.events) {
       newPG += disaster.event + "\n";
       if (!disaster.original_phrase) continue;
       let cursor = extractionEditor.getSearchCursor(disaster.original_phrase);
       while (cursor.findNext()) {
-        extractionEditor.markText(cursor.from(), cursor.to(), {
-          className: "syntax-warning-line",
-        });
+        extractionMarkers.push(
+          extractionEditor.markText(cursor.from(), cursor.to(), {
+            className: "syntax-warning-line",
+          })
+        );
         let bubble = document.createElement("div");
         bubble.innerText = disaster.event;
         bubble.className = "extraction-bubble";
         extractionEditor.addWidget(cursor.from(), bubble, false);
+        extractionWidgets.push(bubble);
       }
     }
     editor.setValue(newPG);
@@ -1686,19 +1705,24 @@ $(() => {
     let events = editor.getValue().split("\n");
     let response = await extractRelationships(events, article);
     let newPG = editor.getValue();
+    if (!newPG.endsWith("\n")) newPG += "\n";
+    clearExtractionHighlights();
     for (let relation of response.relationships) {
       // TODO: Maybe cause or result includes quote
       newPG += `"${relation.cause}" -> "${relation.result}"\n`;
       if (!relation.original_phrase) continue;
       let cursor = extractionEditor.getSearchCursor(relation.original_phrase);
       while (cursor.findNext()) {
-        extractionEditor.markText(cursor.from(), cursor.to(), {
-          className: "syntax-warning-line",
-        });
+        extractionMarkers.push(
+          extractionEditor.markText(cursor.from(), cursor.to(), {
+            className: "syntax-warning-line",
+          })
+        );
         let bubble = document.createElement("div");
         bubble.innerText = `${relation.cause} -> ${relation.result}`;
         bubble.className = "extraction-bubble";
         extractionEditor.addWidget(cursor.from(), bubble, false);
+        extractionWidgets.push(bubble);
       }
     }
     editor.setValue(newPG);

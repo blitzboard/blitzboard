@@ -402,6 +402,7 @@ span .syntax-warning-line {
   left: auto;
   bottom: auto;
   right: auto;
+  pointer-events: none;
 }
 .modeless .modal-dialog {
   max-width: 1000px;
