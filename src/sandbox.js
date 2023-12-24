@@ -1675,58 +1675,95 @@ $(() => {
   q("#extract-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
     let originalText = extractionEditor.getValue();
-    let disasters = await extractDisasterEvents(originalText);
-    let newPG = "";
     clearExtractionHighlights();
-    for (let disaster of disasters.events) {
-      newPG += disaster.event + "\n";
-      if (!disaster.original_phrase) continue;
-      let cursor = extractionEditor.getSearchCursor(disaster.original_phrase);
-      while (cursor.findNext()) {
-        extractionMarkers.push(
-          extractionEditor.markText(cursor.from(), cursor.to(), {
-            className: "syntax-warning-line",
-          })
-        );
-        let bubble = document.createElement("div");
-        bubble.innerText = disaster.event;
-        bubble.className = "extraction-bubble";
-        extractionEditor.addWidget(cursor.from(), bubble, false);
-        extractionWidgets.push(bubble);
+
+    function updateHighlightAndGetNewPG(disasters) {
+      let newPG = "";
+      if (!disasters?.events || disasters.events.length === 0) return "";
+      clearExtractionHighlights();
+      for (let disaster of disasters.events) {
+        if (!disaster.event) continue;
+        newPG += disaster.event + "\n";
+        if (!disaster.original_phrase) continue;
+        let cursor = extractionEditor.getSearchCursor(disaster.original_phrase);
+        while (cursor.findNext()) {
+          extractionMarkers.push(
+            extractionEditor.markText(cursor.from(), cursor.to(), {
+              className: "syntax-warning-line",
+            })
+          );
+          let bubble = document.createElement("div");
+          bubble.innerText = disaster.event;
+          bubble.className = "extraction-bubble";
+          extractionEditor.addWidget(cursor.from(), bubble, false);
+          extractionWidgets.push(bubble);
+        }
       }
+      return newPG;
     }
-    editor.setValue(newPG);
-    blitzboard.hideLoader();
+
+    function whileStreaming(disasters) {
+      let newPG = updateHighlightAndGetNewPG(disasters);
+      byProgram = true;
+      editor.setValue(newPG);
+      byProgram = false;
+    }
+
+    function onCompletion(disasters) {
+      let newPG = updateHighlightAndGetNewPG(disasters);
+      editor.setValue(newPG);
+      blitzboard.hideLoader();
+    }
+    await extractDisasterEvents(originalText, whileStreaming, onCompletion);
   });
 
   q("#extract-relation-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
     let article = extractionEditor.getValue();
     let events = editor.getValue().split("\n");
-    let response = await extractRelationships(events, article);
-    let newPG = editor.getValue();
-    if (!newPG.endsWith("\n")) newPG += "\n";
-    clearExtractionHighlights();
-    for (let relation of response.relationships) {
-      // TODO: Maybe cause or result includes quote
-      newPG += `"${relation.cause}" -> "${relation.result}"\n`;
-      if (!relation.original_phrase) continue;
-      let cursor = extractionEditor.getSearchCursor(relation.original_phrase);
-      while (cursor.findNext()) {
-        extractionMarkers.push(
-          extractionEditor.markText(cursor.from(), cursor.to(), {
-            className: "syntax-warning-line",
-          })
-        );
-        let bubble = document.createElement("div");
-        bubble.innerText = `${relation.cause} -> ${relation.result}`;
-        bubble.className = "extraction-bubble";
-        extractionEditor.addWidget(cursor.from(), bubble, false);
-        extractionWidgets.push(bubble);
+    let oldPG = editor.getValue();
+    if (!oldPG.endsWith("\n")) oldPG += "\n";
+
+    function updateHighlightAndGetNewPG(relationships) {
+      let newPG = "";
+      if (!relationships || relationships.length === 0) return "";
+      clearExtractionHighlights();
+      for (let relation of relationships) {
+        newPG += `"${relation.cause}" -> "${relation.result}"\n`;
+        if (!relation.original_phrase) continue;
+        let cursor = extractionEditor.getSearchCursor(relation.original_phrase);
+        while (cursor.findNext()) {
+          extractionMarkers.push(
+            extractionEditor.markText(cursor.from(), cursor.to(), {
+              className: "syntax-warning-line",
+            })
+          );
+          let bubble = document.createElement("div");
+          bubble.innerText = `${relation.cause} -> ${relation.result}`;
+          bubble.className = "extraction-bubble";
+          extractionEditor.addWidget(cursor.from(), bubble, false);
+          extractionWidgets.push(bubble);
+        }
       }
+      return newPG;
     }
-    editor.setValue(newPG);
-    blitzboard.hideLoader();
+
+    function whileStreaming(response) {
+      if (!response.relationships) return;
+      let newPG = updateHighlightAndGetNewPG(response.relationships);
+      byProgram = true;
+      editor.setValue(oldPG + newPG);
+      byProgram = false;
+    }
+
+    function onCompletion(response) {
+      if (!response.relationships) return;
+      let newPG = updateHighlightAndGetNewPG(response.relationships);
+      editor.setValue(oldPG + newPG);
+      blitzboard.hideLoader();
+    }
+
+    await extractRelationships(events, article, whileStreaming, onCompletion);
   });
 
   q("#extract-modeless-close-btn").addEventListener("click", (e) => {
