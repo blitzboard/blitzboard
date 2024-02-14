@@ -1,17 +1,46 @@
 
 from flask import Flask, send_file, request
+from flask_cors import CORS
 import json
-from flask import render_template
+import re
+import os
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain.docstore.document import Document
 
 
 load_dotenv()
 
 app = Flask(__name__, template_folder='templates')
 
+CORS(app)
+
 vector_db_path = os.getenv("VECTOR_STORE", "vector_store.faiss")
+
+embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
+store = None
+if os.path.exists(vector_db_path):
+  store = FAISS.load_local(vector_db_path, embeddings)
+
+article_dir = os.getenv("ARTICLE_DIR", "./articles")
+# create article directory if not exists
+if not os.path.exists(article_dir):
+    os.makedirs(article_dir)
+
+def find_by_metadata(
+    faiss, filter) -> 'dict[str, Document]':
+    if filter is None:
+        return faiss.docstore._dict
+
+    response = {
+        key: item
+        for key, item in faiss.docstore._dict.items()
+        if all(item.metadata.get(k) == value for k, value in filter.items())
+    }
+
+    return response
+
 
 # POST: /register_article
 # data format:
@@ -24,23 +53,62 @@ vector_db_path = os.getenv("VECTOR_STORE", "vector_store.faiss")
 # }
 @app.route('/register_article', methods=['POST'])
 def register_article():
+    global store, embeddings
     data = request.get_json()
     # Register article to vector store with FAISS
-    # 1. Get article from data
     article = data['article']
-    # 2. Get words from data
     words = data['words']
-    # 3. Get graphId from data
     graphId = data['graphId']
-    # 4. Save article to local file
 
-    # 5. Get embedding model
-    # 6. Create vector store
-    # 7. Save vector store
-    # 8. Return status
+    # save article to file
+    file_path = os.path.join(article_dir, f"{graphId}.txt")
+    with open(file_path, "w") as f:
+        f.write(article)
 
+    # create documents from words
+    documents = []
+    for word in words:
+        documents.append(Document(word, metadata=dict(graphId=graphId)))
 
+    if store is None:
+        store = FAISS.from_documents(documents, embeddings)
+    else:
+        ids_to_delete = find_by_metadata(store, {"graphId": graphId})
+        store.delete(ids_to_delete)
+        store.add_documents(documents)
+    store.save_local(vector_db_path)
     return json.dumps({"status": "ok"})
+
+
+# GET: /related_words?article=<記事の内容>
+# 記事をチャンクへ分割→関連のあるワードを取得する
+# data format:
+# [
+#   {
+#     word: "word1",
+#     graphId: 1,
+#     distance: 0.9,
+#     articleId: 2,
+# 	},
+#   ...
+# ]
+@app.route('/related_words', methods=['GET'])
+def related_words():
+    article = request.args.get('article')
+    # split article into chunks by "。", "．", "？", "！", newline
+    chunks = re.split(r'。|．|？|！|\n', article)
+    nearest_list = [store.similarity_search_with_score(chunk, k=5) for chunk in chunks if chunk]
+    # flatten nearest_list
+    nearest = [n for nearest in nearest_list for n in nearest]
+    # remove duplicate words
+    nearest = list({n[0].page_content: n for n in nearest}.values())
+    # sort by score
+    nearest = sorted(nearest, key=lambda x: x[1])
+    nearest_100 = nearest[:100]    
+    result = []
+    for n in nearest_100:
+        result.append({"word": n[0].page_content, "graphId": n[0].metadata['graphId'], "distance": float(n[1]), "articleId": n[0].metadata['articleId']})
+    return json.dumps(result)
 
 
 if __name__ == '__main__':
