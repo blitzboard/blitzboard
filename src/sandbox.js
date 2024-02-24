@@ -11,6 +11,7 @@ let savedGraphNames = [];
 let unsavedChangeExists = false;
 
 let backendUrl = localStorage.getItem("backendUrl");
+const vectorDBUrl = "http://localhost:5005";
 let remoteMode = !!backendUrl;
 
 let extractionWidgets = [];
@@ -1272,6 +1273,24 @@ $(() => {
     e.stopPropagation();
   });
 
+  function retrieveCurrentArticle() {
+    if (!currentGraphName) return;
+    clearExtractionHighlights();
+    axios
+      .get(`${vectorDBUrl}/article`, {
+        params: { graphId: currentGraphName },
+      })
+      .then((response) => {
+        extractionEditor.setValue(response.data);
+      })
+      .catch((error) => {
+        toastr.error(`Failed to retrieve article..`, "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+      });
+  }
+
   function loadGraph(graph) {
     if (!graph) return;
     byProgram = true;
@@ -1290,6 +1309,7 @@ $(() => {
     showGraphName();
     unsavedChangeExists = false;
     if (remoteMode && graph.lastUpdate) lastUpdate = graph.lastUpdate;
+    retrieveCurrentArticle();
 
     byProgram = false;
   }
@@ -1577,6 +1597,7 @@ $(() => {
         saveCurrentGraph();
         showGraphName();
         blitzboard.update(false);
+        retrieveCurrentArticle();
       }
     });
   });
@@ -1654,7 +1675,32 @@ $(() => {
     },
   });
 
+  q("#register-article-btn").addEventListener("click", (e) => {
+    let article = extractionEditor.getValue();
+    let words = blitzboard.graph.nodes.map((n) => n.id);
+    let graphId = currentGraphName;
+    axios
+      .post(`${vectorDBUrl}/register_article`, { article, words, graphId })
+      .then((response) => {
+        console.log(response.data);
+        toastr.success(`Article has been registered!`, "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+      })
+      .catch((error) => {
+        toastr.error(`Failed to register article..`, "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+      });
+  });
+
   q("#extract-modal-btn").addEventListener("click", (e) => {
+    setTimeout(() => {
+      extractionEditor.refresh();
+    }, 100);
+
     extractModeless.show({
       backdrop: false,
     });
@@ -2432,6 +2478,8 @@ $(() => {
   }
 
   function loadCurrentGraph() {
+    retrieveCurrentArticle();
+
     if (remoteMode) {
       axios
         .get(`${backendUrl}/get/?graph=${currentGraphName}`)

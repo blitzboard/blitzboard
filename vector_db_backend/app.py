@@ -42,17 +42,29 @@ def find_by_metadata(
     return response
 
 
-# POST: /register_article
-# data format:
-# {
-# 	"graphId": 1,
-# 	"article": <記事の内容>,
-#   "words": [ 
-#     <単語群>
-#   ]
-# }
+#GET: /article?graphId=<グラフID>
+@app.route('/article', methods=['GET'])
+def article():
+    graphId = request.args.get('graphId')
+    file_path = os.path.join(article_dir, f"{graphId}.txt")
+    if not os.path.exists(file_path):
+        return ""
+    with open(file_path, "r") as f:
+        article = f.read()
+    return article
+
+
 @app.route('/register_article', methods=['POST'])
 def register_article():
+    # data format:
+    # {
+    # 	"graphId": 1,
+    # 	"article": <記事の内容>,
+    #   "words": [ 
+    #     <単語群>
+    #   ]
+    # }
+
     global store, embeddings
     data = request.get_json()
     # Register article to vector store with FAISS
@@ -74,30 +86,30 @@ def register_article():
         store = FAISS.from_documents(documents, embeddings)
     else:
         ids_to_delete = find_by_metadata(store, {"graphId": graphId})
-        store.delete(ids_to_delete)
+        if len(ids_to_delete.values()) > 0:
+            store.delete(ids_to_delete)
         store.add_documents(documents)
     store.save_local(vector_db_path)
     return json.dumps({"status": "ok"})
 
 
-# GET: /related_words?article=<記事の内容>
-# 記事をチャンクへ分割→関連のあるワードを取得する
-# data format:
-# [
-#   {
-#     word: "word1",
-#     graphId: 1,
-#     distance: 0.9,
-#     articleId: 2,
-# 	},
-#   ...
-# ]
 @app.route('/related_words', methods=['GET'])
 def related_words():
+    # GET: /related_words?article=<記事の内容>
+    # 記事をチャンクへ分割→関連のあるワードを取得する
+    # data format:
+    # [
+    #   {
+    #     word: "word1",
+    #     graphId: 1,
+    #     distance: 0.9,
+    # 	},
+    #   ...
+    # ]
+
     article = request.args.get('article')
-    # split article into chunks by "。", "．", "？", "！", newline
     chunks = re.split(r'。|．|？|！|\n', article)
-    nearest_list = [store.similarity_search_with_score(chunk, k=5) for chunk in chunks if chunk]
+    nearest_list = [store.similarity_search_with_score(chunk, k=3) for chunk in chunks if chunk]
     # flatten nearest_list
     nearest = [n for nearest in nearest_list for n in nearest]
     # remove duplicate words
@@ -107,7 +119,7 @@ def related_words():
     nearest_100 = nearest[:100]    
     result = []
     for n in nearest_100:
-        result.append({"word": n[0].page_content, "graphId": n[0].metadata['graphId'], "distance": float(n[1]), "articleId": n[0].metadata['articleId']})
+        result.append({"word": n[0].page_content, "graphId": n[0].metadata['graphId'], "distance": float(n[1])})
     return json.dumps(result)
 
 
