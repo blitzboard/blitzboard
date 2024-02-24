@@ -93,14 +93,12 @@
                 </label>
             </li>
             <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
-
-
                 <li class='nav-item'>
-                    <label class='btn text-white' href='#' title='Extract' for="extract-modal-btn">
+                    <label class='btn text-white' href='#' title='Extract from article' for="extract-modal-btn"
+                        data-bs-toggle='tooltip' data-placement='bottom'>
                         <span class="material-symbols-outlined" id="extract-modal-btn">
-                            file_upload
+                            quick_reference_all
                         </span>
-
                     </label>
                 </li>
 
@@ -398,8 +396,14 @@
                     <textarea id="extract-textarea" style="width: 100em; height: 50em;"></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="extract-btn">Extract events</button>
-                    <button type="button" class="btn btn-success" id="extract-relation-btn">Extract
+                    <button type="button" class="btn btn-primary mx-5" id="register-article-btn">
+                        <span class="material-symbols-outlined">
+                            cloud_sync
+                        </span>
+                        Register article
+                    </button>
+                    <button type="button" class="btn btn-success mx-5" id="extract-btn">Extract events</button>
+                    <button type="button" class="btn btn-success mx-5" id="extract-relation-btn">Extract
                         relationships</button>
                     <button type="button" class="btn btn-default" data-dismiss="modal"
                         id="extract-modeless-close-btn">Close</button>
