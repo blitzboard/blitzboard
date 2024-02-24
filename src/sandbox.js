@@ -474,6 +474,12 @@ $(() => {
     });
   });
 
+  q("#options-api-key-input").value =
+    localStorage.getItem("openaiAPIKey") || "";
+  q("#options-api-key-input").addEventListener("change", (e) => {
+    localStorage.setItem("openaiAPIKey", e.target.value);
+  });
+
   toastr.subscribe(() => {
     updateToastrPosition();
   });
@@ -1760,7 +1766,17 @@ $(() => {
       editor.setValue(newPG);
       blitzboard.hideLoader();
     }
-    await extractDisasterEvents(originalText, whileStreaming, onCompletion);
+    await extractDisasterEvents(
+      originalText,
+      whileStreaming,
+      onCompletion
+    ).catch((e) => {
+      toastr.error(`Failed to extract disaster events: ${e}`, "", {
+        preventDuplicates: true,
+        timeOut: 3000,
+      });
+      blitzboard.hideLoader();
+    });
   });
 
   q("#extract-relation-btn").addEventListener("click", async function (e) {
@@ -1809,7 +1825,18 @@ $(() => {
       blitzboard.hideLoader();
     }
 
-    await extractRelationships(events, article, whileStreaming, onCompletion);
+    await extractRelationships(
+      events,
+      article,
+      whileStreaming,
+      onCompletion
+    ).catch((e) => {
+      toastr.error(`Failed to extract disaster relationships: ${e}`, "", {
+        preventDuplicates: true,
+        timeOut: 3000,
+      });
+      blitzboard.hideLoader();
+    });
   });
 
   q("#extract-modeless-close-btn").addEventListener("click", (e) => {

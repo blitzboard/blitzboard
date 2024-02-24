@@ -1,10 +1,6 @@
-let apiKey = ""; // <your api key>;
-
 async function retrieveRelatedWords(query) {
-  let result = await axios.get(`${vectorDBUrl}/related_words`, {
-    params: {
-      article: query,
-    },
+  let result = await axios.post(`${vectorDBUrl}/related_words`, {
+    article: query,
   });
   result = result.data;
   return result;
@@ -54,6 +50,10 @@ async function fetchCompletionInStream(
   doneCallback,
   model = "gpt-3.5-turbo-1106"
 ) {
+  let apiKey = document.querySelector("#options-api-key-input").value;
+  if (apiKey === "" || apiKey == undefined) {
+    throw new Error("API Key is not set");
+  }
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {

@@ -93,7 +93,7 @@ def register_article():
     return json.dumps({"status": "ok"})
 
 
-@app.route('/related_words', methods=['GET'])
+@app.route('/related_words', methods=['POST'])
 def related_words():
     # GET: /related_words?article=<記事の内容>
     # 記事をチャンクへ分割→関連のあるワードを取得する
@@ -107,18 +107,23 @@ def related_words():
     #   ...
     # ]
 
-    article = request.args.get('article')
+    data = request.get_json()
+
+    max_len = 5
+    max_distance = 1
+
+    article = data['article']
     chunks = re.split(r'。|．|？|！|\n', article)
-    nearest_list = [store.similarity_search_with_score(chunk, k=3) for chunk in chunks if chunk]
-    # flatten nearest_list
-    nearest = [n for nearest in nearest_list for n in nearest]
-    # remove duplicate words
-    nearest = list({n[0].page_content: n for n in nearest}.values())
-    # sort by score
-    nearest = sorted(nearest, key=lambda x: x[1])
-    nearest_100 = nearest[:100]    
+    nearest_list = []
+    for chunk in chunks:
+        chunk = chunk.strip()
+        nearest_list += store.similarity_search_with_score(chunk, k=3)
+        nearest_list = list({n[0].page_content: n for n in nearest_list}.values())
+        nearest_list = list(filter(lambda n: n[1] < max_distance, nearest_list))
+        if(len(nearest_list) > max_len):
+            break
     result = []
-    for n in nearest_100:
+    for n in nearest_list:
         result.append({"word": n[0].page_content, "graphId": n[0].metadata['graphId'], "distance": float(n[1])})
     return json.dumps(result)
 
