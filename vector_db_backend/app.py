@@ -18,11 +18,6 @@ CORS(app)
 
 vector_db_path = os.getenv("VECTOR_STORE", "vector_store.faiss")
 
-embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
-store = None
-if os.path.exists(vector_db_path):
-  store = FAISS.load_local(vector_db_path, embeddings)
-
 article_dir = os.getenv("ARTICLE_DIR", "./articles")
 # create article directory if not exists
 if not os.path.exists(article_dir):
