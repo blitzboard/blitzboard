@@ -62,15 +62,22 @@ def register_article():
     # 	"article": <記事の内容>,
     #   "words": [ 
     #     <単語群>
-    #   ]
+    #   ],
+    #   "apiKey": <OpenAI API Key>
     # }
 
-    global store, embeddings
+
     data = request.get_json()
     # Register article to vector store with FAISS
     article = data['article']
     words = data['words']
     graphId = data['graphId']
+    os.environ["OPENAI_API_KEY"] = data['apiKey']
+
+    embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
+    store = None
+    if os.path.exists(vector_db_path):
+        store = FAISS.load_local(vector_db_path, embeddings)
 
     # save article to file
     file_path = os.path.join(article_dir, f"{graphId}.txt")
@@ -107,12 +114,18 @@ def related_words():
     #   ...
     # ]
 
+
     data = request.get_json()
 
     max_len = 5
     max_distance = 1
 
     article = data['article']
+    os.environ["OPENAI_API_KEY"] = data['apiKey']
+    embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
+    store = None
+    if os.path.exists(vector_db_path):
+        store = FAISS.load_local(vector_db_path, embeddings)
     chunks = re.split(r'。|．|？|！|\n', article)
     nearest_list = []
     for chunk in chunks:

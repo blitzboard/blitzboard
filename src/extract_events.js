@@ -1,6 +1,8 @@
 async function retrieveRelatedWords(query) {
+  let apiKey = document.querySelector("#options-api-key-input").value;
   let result = await axios.post(`${vectorDBUrl}/related_words`, {
     article: query,
+    apiKey,
   });
   result = result.data;
   return result;

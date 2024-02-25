@@ -1685,8 +1685,14 @@ $(() => {
     let article = extractionEditor.getValue();
     let words = blitzboard.graph.nodes.map((n) => n.id);
     let graphId = currentGraphName;
+    let apiKey = q("#options-api-key-input").value;
     axios
-      .post(`${vectorDBUrl}/register_article`, { article, words, graphId })
+      .post(`${vectorDBUrl}/register_article`, {
+        article,
+        words,
+        graphId,
+        apiKey,
+      })
       .then((response) => {
         console.log(response.data);
         toastr.success(`Article has been registered!`, "", {
