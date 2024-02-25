@@ -12,7 +12,10 @@ let savedGraphs = [];
 let unsavedChangeExists = false;
 
 let backendUrl = localStorage.getItem("backendUrl");
-const vectorDBUrl = "http://localhost:5005";
+let currentHost = window.location.protocol + "//" + window.location.host;
+// remove port from currentHost
+currentHost = currentHost.replace(/:\d+$/, "");
+let vectorDBUrl = currentHost + ":5005";
 let remoteMode = !!backendUrl;
 
 let extractionWidgets = [];
@@ -1265,6 +1268,7 @@ $(() => {
         extractionEditor.setValue(response.data);
       })
       .catch((error) => {
+        console.log(error);
         toastr.error(`Failed to retrieve article..`, "", {
           preventDuplicates: true,
           timeOut: 3000,
