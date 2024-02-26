@@ -11,7 +11,7 @@ async function retrieveRelatedWords(query) {
 async function extractDisasterEvents(query, inProgressCallback, doneCallback) {
   let systemPrompt = `
 # 命令: 
-与えられる災害のニュース記事から、災害と、その原因、引き起こされた被害をひとつひとつ個別の事象として抜き出し、事象の配列を作ってください。
+与えられる災害のニュース記事から、災害と、その原因、引き起こされた被害をひとつひとつ個別の事象としてなるべく多く抜き出し、事象の配列を作ってください。
 ただし、各事象の文字数は１５文字以内になるようにしてください
 また、各事象に対して、元のニュース記事のどのフレーズから抜き出したのかを明示してください。
 
@@ -31,6 +31,7 @@ async function extractDisasterEvents(query, inProgressCallback, doneCallback) {
         ...
     ]
 }
+
 # 抽出する事象の例
 `;
 
