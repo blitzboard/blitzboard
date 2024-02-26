@@ -1742,7 +1742,8 @@ $(() => {
       if (!disasters?.events || disasters.events.length === 0) return "";
       clearExtractionHighlights();
       for (let disaster of disasters.events) {
-        if (!disaster.event) continue;
+        if (!disaster.event || addedNodes.has(disaster.event)) continue;
+        addedNodes.add(disaster.event);
         newPG += disaster.event + "\n";
         if (!disaster.original_phrase) continue;
         let cursor = extractionEditor.getSearchCursor(disaster.original_phrase);
