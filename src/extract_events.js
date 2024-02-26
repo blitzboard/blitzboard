@@ -94,7 +94,12 @@ async function fetchCompletionInStream(
           .map((data) => {
             const trimData = data.trim();
             if (["", "[DONE]"].includes(trimData)) return undefined;
-            return JSON.parse(data.trim());
+            try {
+              return JSON.parse(data.trim());
+            } catch (e) {
+              console.error(e);
+              return null;
+            }
           })
           .filter((data) => data)
           .map((data) => {

@@ -1740,6 +1740,7 @@ $(() => {
     function updateHighlightAndGetNewPG(disasters) {
       let newPG = "";
       if (!disasters?.events || disasters.events.length === 0) return "";
+      let addedNodes = new Set();
       clearExtractionHighlights();
       for (let disaster of disasters.events) {
         if (!disaster.event || addedNodes.has(disaster.event)) continue;
