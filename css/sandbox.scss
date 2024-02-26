@@ -455,5 +455,9 @@ span .syntax-warning-line {
   border-radius: 5px;
   padding: 5px;
   z-index: 10000;
+  // set opacity on hover
+  &:hover {
+    opacity: 0.3;
+  }
 }
 
