@@ -1230,6 +1230,7 @@ $(() => {
                 preventDuplicates: true,
                 timeOut: 3000,
               });
+              removeArticleFromVectorDB(oldId);
               updateGraphList(() => {
                 if (currentGraphMetadata.id === oldId) {
                   currentGraphMetadata = savedGraphs[0];
@@ -1244,6 +1245,7 @@ $(() => {
             preventDuplicates: true,
             timeOut: 3000,
           });
+          removeArticleFromVectorDB(oldId);
           updateGraphList(() => {
             if (currentGraphMetadata.id === oldId) {
               currentGraphMetadata = savedGraphs[0];
@@ -1599,6 +1601,7 @@ $(() => {
     }).then((result) => {
       if (result.isConfirmed) {
         currentGraphMetadata.name = result.value.trim();
+        currentGraphMetadata.id = currentGraphMetadata.name;
         saveCurrentGraph();
         showGraphName();
         blitzboard.update(false);
@@ -2980,6 +2983,23 @@ document.fonts.ready.then(() => {
   if (editor) editor.refresh();
   if (configEditor) configEditor.refresh();
 });
+
+function removeArticleFromVectorDB(graphId) {
+  axios
+    .delete(`${vectorDBUrl}/article`, {
+      params: { graphId: currentGraphMetadata.id },
+    })
+    .then((response) => {
+      console.log(response.data);
+    })
+    .catch((error) => {
+      toastr.error(`Failed to remove article..`, "", {
+        preventDuplicates: true,
+        timeOut: 3000,
+      });
+    });
+}
+
 function insertContentsToEditor(contents) {
   let oldCursor = editor.getCursor();
   /// Insert line after the current line

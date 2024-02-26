@@ -48,6 +48,28 @@ def article():
         article = f.read()
     return article
 
+@app.route('/article', methods=['DELETE'])
+def delete_article():
+    graphId = request.args.get('graphId')
+    file_path = os.path.join(article_dir, f"{graphId}.txt")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    os.environ["OPENAI_API_KEY"] = "dummy" # set dummy key because api is not used actually 
+    embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
+    store = None
+    if os.path.exists(vector_db_path):
+        store = FAISS.load_local(vector_db_path, embeddings)
+
+    if store is None:
+        return json.dumps({"status": "not found"})
+    else:
+        ids_to_delete = find_by_metadata(store, {"graphId": graphId})
+        if len(ids_to_delete.values()) > 0:
+            store.delete(ids_to_delete)
+    store.save_local(vector_db_path)
+    return json.dumps({"status": "ok"})
+
 
 @app.route('/register_article', methods=['POST'])
 def register_article():
