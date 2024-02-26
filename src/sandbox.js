@@ -1799,7 +1799,7 @@ $(() => {
       if (!relationships || relationships.length === 0) return "";
       clearExtractionHighlights();
       for (let relation of relationships) {
-        newPG += `"${relation.cause}" -> "${relation.result}"\n`;
+        newPG += `"${relation.cause}" -> "${relation.result || ""}"\n`;
         if (!relation.original_phrase) continue;
         let cursor = extractionEditor.getSearchCursor(relation.original_phrase);
         if (cursor.findNext()) {
@@ -1809,7 +1809,7 @@ $(() => {
             })
           );
           let bubble = document.createElement("div");
-          bubble.innerText = `${relation.cause} -> ${relation.result}`;
+          bubble.innerText = `${relation.cause} -> ${relation.result || ""}`;
           bubble.className = "extraction-bubble";
           extractionEditor.addWidget(cursor.from(), bubble, false);
           extractionWidgets.push(bubble);

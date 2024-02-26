@@ -101,8 +101,13 @@ async function fetchCompletionInStream(
             return data.choices[0].delta.content;
           });
         json_snippet += contents.join("");
-        if (json_snippet !== "")
-          inProgressCallback(bestEffortJsonParser.parse(json_snippet));
+        if (json_snippet !== "") {
+          try {
+            inProgressCallback(bestEffortJsonParser.parse(json_snippet));
+          } catch (e) {
+            console.error(e);
+          }
+        }
         return read();
       };
       await read();
