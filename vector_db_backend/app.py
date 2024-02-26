@@ -112,8 +112,9 @@ def related_words():
 
     data = request.get_json()
 
-    max_len = 5
-    max_distance = 1
+    max_len = 30
+    max_distance = 1.3
+    chunks_num = 5
 
     article = data['article']
     os.environ["OPENAI_API_KEY"] = data['apiKey']
@@ -121,16 +122,24 @@ def related_words():
     store = None
     if os.path.exists(vector_db_path):
         store = FAISS.load_local(vector_db_path, embeddings)
-    chunks = re.split(r'。|．|？|！|\n', article)
+    # split article to chunks by chunks_num. each chunk should have same length
+    chunk_len = len(article) // chunks_num
+    chunks = [article[i * chunk_len:(i+1) * chunk_len] for i in range(0, chunks_num)]        
+
     nearest_list = []
     for chunk in chunks:
         chunk = chunk.strip()
-        nearest_list += store.similarity_search_with_score(chunk, k=3)
+        if len(chunk) == 0:
+            continue
+        nearest_list += store.similarity_search_with_score(chunk, k=20, fetch_k=20)
+        # make unique
         nearest_list = list({n[0].page_content: n for n in nearest_list}.values())
         nearest_list = list(filter(lambda n: n[1] < max_distance, nearest_list))
-        if(len(nearest_list) > max_len):
-            break
     result = []
+    # sort by distance
+    nearest_list.sort(key=lambda x: x[1])
+    nearest_list = nearest_list[:max_len]
+
     for n in nearest_list:
         result.append({"word": n[0].page_content, "graphId": n[0].metadata['graphId'], "distance": float(n[1])})
     return json.dumps(result)
