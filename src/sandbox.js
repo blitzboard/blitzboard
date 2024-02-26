@@ -1746,7 +1746,7 @@ $(() => {
         newPG += disaster.event + "\n";
         if (!disaster.original_phrase) continue;
         let cursor = extractionEditor.getSearchCursor(disaster.original_phrase);
-        while (cursor.findNext()) {
+        if (cursor.findNext()) {
           extractionMarkers.push(
             extractionEditor.markText(cursor.from(), cursor.to(), {
               className: "syntax-warning-line",
@@ -1802,7 +1802,7 @@ $(() => {
         newPG += `"${relation.cause}" -> "${relation.result}"\n`;
         if (!relation.original_phrase) continue;
         let cursor = extractionEditor.getSearchCursor(relation.original_phrase);
-        while (cursor.findNext()) {
+        if (cursor.findNext()) {
           extractionMarkers.push(
             extractionEditor.markText(cursor.from(), cursor.to(), {
               className: "syntax-warning-line",
