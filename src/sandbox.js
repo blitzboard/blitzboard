@@ -1702,6 +1702,7 @@ $(() => {
       });
       return;
     }
+    $(e.target).prop("disabled", true);
     axios
       .post(`${vectorDBUrl}/register_article`, {
         article,
@@ -1721,6 +1722,9 @@ $(() => {
           preventDuplicates: true,
           timeOut: 3000,
         });
+      })
+      .finally(() => {
+        $(e.target).prop("disabled", false);
       });
   });
 
@@ -1790,21 +1794,23 @@ $(() => {
       editor.setValue(newPG);
       blitzboard.hideLoader();
     }
-    await extractDisasterEvents(
-      originalText,
-      whileStreaming,
-      onCompletion
-    ).catch((e) => {
-      toastr.error(`Failed to extract disaster events: ${e}`, "", {
-        preventDuplicates: true,
-        timeOut: 3000,
+    $(e.target).prop("disabled", true);
+    await extractDisasterEvents(originalText, whileStreaming, onCompletion)
+      .catch((e) => {
+        toastr.error(`Failed to extract disaster events: ${e}`, "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+        blitzboard.hideLoader();
+      })
+      .finally(() => {
+        $(e.target).prop("disabled", false);
       });
-      blitzboard.hideLoader();
-    });
   });
 
   q("#extract-relation-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
+    $(e.target).prop("disabled", true);
     let article = extractionEditor.getValue();
     let events = editor.getValue().split("\n");
     let oldPG = editor.getValue();
@@ -1843,24 +1849,23 @@ $(() => {
     }
 
     function onCompletion(response) {
+      $(e.target).prop("disabled", false);
       if (!response.relationships) return;
       let newPG = updateHighlightAndGetNewPG(response.relationships);
       editor.setValue(oldPG + newPG);
       blitzboard.hideLoader();
     }
 
-    await extractRelationships(
-      events,
-      article,
-      whileStreaming,
-      onCompletion
-    ).catch((e) => {
-      toastr.error(`Failed to extract disaster relationships: ${e}`, "", {
-        preventDuplicates: true,
-        timeOut: 3000,
-      });
-      blitzboard.hideLoader();
-    });
+    $(e.target).prop("disabled", true);
+    await extractRelationships(events, article, whileStreaming, onCompletion)
+      .catch((e) => {
+        toastr.error(`Failed to extract disaster relationships: ${e}`, "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+        blitzboard.hideLoader();
+      })
+      .finally(() => $(e.target).prop("disabled", false));
   });
 
   q("#extract-modeless-close-btn").addEventListener("click", (e) => {
