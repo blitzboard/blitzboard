@@ -1262,9 +1262,13 @@ $(() => {
   function retrieveCurrentArticle() {
     if (!currentGraphMetadata) return;
     clearExtractionHighlights();
+    let apiKey = document.querySelector("#options-api-key-input").value;
+    if (apiKey === "" || apiKey == undefined) {
+      return;
+    }
     axios
       .get(`${vectorDBUrl}/article`, {
-        params: { graphId: currentGraphMetadata.id },
+        params: { graphId: currentGraphMetadata.id, apiKey },
       })
       .then((response) => {
         extractionEditor.setValue(response.data);
@@ -1691,6 +1695,13 @@ $(() => {
     let words = blitzboard.graph.nodes.map((n) => n.id);
     let graphId = currentGraphMetadata.id;
     let apiKey = q("#options-api-key-input").value;
+    if (apiKey === "" || apiKey == undefined) {
+      toastr.error(`OpenAI API key has not been set yet.`, "", {
+        preventDuplicates: true,
+        timeOut: 3000,
+      });
+      return;
+    }
     axios
       .post(`${vectorDBUrl}/register_article`, {
         article,

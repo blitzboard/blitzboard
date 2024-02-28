@@ -1,5 +1,8 @@
 async function retrieveRelatedWords(query) {
   let apiKey = document.querySelector("#options-api-key-input").value;
+  if (apiKey === "" || apiKey == undefined) {
+    throw new Error("OpenAI API Key is not set");
+  }
   let result = await axios.post(`${vectorDBUrl}/related_words`, {
     article: query,
     apiKey,
@@ -55,7 +58,7 @@ async function fetchCompletionInStream(
 ) {
   let apiKey = document.querySelector("#options-api-key-input").value;
   if (apiKey === "" || apiKey == undefined) {
-    throw new Error("API Key is not set");
+    throw new Error("OpenAI API Key is not set");
   }
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
