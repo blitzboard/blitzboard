@@ -3,7 +3,7 @@ async function retrieveRelatedWords(query) {
   if (apiKey === "" || apiKey == undefined) {
     throw new Error("OpenAI API Key is not set");
   }
-  let result = await axios.post(`${vectorDBUrl}/related_words`, {
+  let result = await axios.post(`${vectorDBUrl()}/related_words`, {
     article: query,
     apiKey,
   });

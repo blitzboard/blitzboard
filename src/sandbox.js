@@ -1496,6 +1496,43 @@ $(() => {
     }
   }
 
+  function registerArticle() {
+    let article = extractionEditor.getValue();
+    let words = blitzboard.graph.nodes.map((n) => n.id);
+    let graphId = currentGraphMetadata.id;
+    let apiKey = q("#options-api-key-input").value;
+    if (!remoteMode) return;
+    if (article === "") {
+      return;
+    }
+    if (apiKey === "" || apiKey == undefined) {
+      toastr.error(`OpenAI API key has not been set yet.`, "", {
+        preventDuplicates: true,
+        timeOut: 3000,
+      });
+      return;
+    }
+    axios
+      .post(`${vectorDBUrl()}/register_article`, {
+        article,
+        words,
+        graphId,
+        apiKey,
+      })
+      .then((response) => {
+        // do nothing
+      })
+      .catch((error) => {
+        toastr.error(`Failed to register article..`, "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+      })
+      .finally(() => {
+        $(e.target).prop("disabled", false);
+      });
+  }
+
   function saveToBackend(callback = null) {
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
     let graphName = currentGraphMetadata.name;
@@ -1548,6 +1585,7 @@ $(() => {
               setUnsavedStatus(false);
               if (!alreadySaved) currentGraphMetadata.id = res.data.graphId;
               updateGraphList(callback);
+              registerArticle();
             })
             .catch((error) => {
               toastr.error(`Failed to save ${graphName} ..`, "", {
