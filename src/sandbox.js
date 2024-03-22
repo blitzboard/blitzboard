@@ -1262,13 +1262,9 @@ $(() => {
   function retrieveCurrentArticle() {
     if (!currentGraphMetadata) return;
     clearExtractionHighlights();
-    let apiKey = document.querySelector("#options-api-key-input").value;
-    if (apiKey === "" || apiKey == undefined) {
-      return;
-    }
     axios
       .get(`${vectorDBUrl}/article`, {
-        params: { graphId: currentGraphMetadata.id, apiKey },
+        params: { graphId: currentGraphMetadata.id },
       })
       .then((response) => {
         extractionEditor.setValue(response.data);
