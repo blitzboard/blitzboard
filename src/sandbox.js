@@ -11,11 +11,12 @@ let nodeLayout = null;
 let savedGraphs = [];
 let unsavedChangeExists = false;
 
+let graphDBPort = 7000;
+let vectorDBPort = 5005;
 let backendUrl = localStorage.getItem("backendUrl");
+
 let currentHost = window.location.protocol + "//" + window.location.host;
 // remove port from currentHost
-currentHost = currentHost.replace(/:\d+$/, "");
-let vectorDBUrl = currentHost + ":5005";
 let remoteMode = !!backendUrl;
 
 let extractionWidgets = [];
@@ -27,6 +28,14 @@ let edgeFilterConditions = null;
 let nodeFilterConditions = null;
 
 let clientIsMac = navigator.platform.startsWith("Mac");
+
+function graphDBUrl() {
+  return `${backendUrl}:${graphDBPort}`;
+}
+
+function vectorDBUrl() {
+  return `${backendUrl}:${vectorDBPort}`;
+}
 
 function insertContentsToEditor(contents) {
   let oldCursor = editor.getCursor();
@@ -57,6 +66,17 @@ function getCurrentProp() {
   }
   return null;
 }
+
+function updateButtonsForRemoteMode() {
+  if (remoteMode) {
+    document.querySelector("#save-btn").classList.remove("d-none");
+    document.querySelector("#extract-modal-btn").classList.remove("d-none");
+  } else {
+    document.querySelector("#save-btn").classList.add("d-none");
+    document.querySelector("#extract-modal-btn").classList.add("d-none");
+  }
+}
+
 let currentGraphMetadata = {};
 
 function getCurrentCharacter() {
@@ -134,7 +154,7 @@ $(() => {
 
   if (remoteMode && currentGraphMetadata?.id) {
     axios
-      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
+      .get(`${graphDBUrl()}/get/?graph=${currentGraphMetadata.id}`)
       .then((response) => {
         lastUpdate = response.data.properties?.lastUpdate[0];
       });
@@ -477,11 +497,10 @@ $(() => {
       }
       if (remoteMode) {
         toastr.success(`Backend has been changed to ${backendUrl}`);
-        q("#save-btn").classList.remove("d-none");
       } else {
         toastr.success(`Local mode has been enabled`);
-        q("#save-btn").classList.add("d-none");
       }
+      updateButtonsForRemoteMode();
     });
   });
 
@@ -879,7 +898,7 @@ $(() => {
     let nodeId = $(e.target).data("node-id");
     axios
       .get(
-        `${backendUrl}/query_table?query=SELECT v.GRAPH FROM MATCH (v) ON x2 WHERE v.ID = '${nodeId}' GROUP BY v.GRAPH`
+        `${graphDBUrl()}/query_table?query=SELECT v.GRAPH FROM MATCH (v) ON x2 WHERE v.ID = '${nodeId}' GROUP BY v.GRAPH`
       )
       .then((response) => {
         e.target.outerHTML =
@@ -889,7 +908,7 @@ $(() => {
       })
       .catch((error) => {
         console.log(error);
-        toastr.error(`Failed to query ${backendUrl}...: ${error}`, "", {
+        toastr.error(`Failed to query ${graphDBUrl()}...: ${error}`, "", {
           preventDuplicates: true,
           timeOut: 3000,
         });
@@ -1080,7 +1099,7 @@ $(() => {
     savedGraphs = [];
     if (remoteMode) {
       axios
-        .get(`${backendUrl}/list`)
+        .get(`${graphDBUrl()}/list`)
         .then((response) => {
           updateHistoryMenu(
             response.data.map((g) => {
@@ -1093,7 +1112,7 @@ $(() => {
         .catch((error) => {
           console.log(error);
           toastr.error(
-            `Failed to retrieve graph list from ${backendUrl}...: ${error}`,
+            `Failed to retrieve graph list from ${graphDBUrl()}...: ${error}`,
             "",
             { preventDuplicates: true, timeOut: 3000 }
           );
@@ -1101,7 +1120,7 @@ $(() => {
 
       axios
         .get(
-          `${backendUrl}/query_table?query=SELECT v.id, COUNT(*) AS cnt FROM MATCH (v) ON x2 GROUP BY v.id ORDER BY cnt DESC`
+          `${graphDBUrl()}/query_table?query=SELECT v.id, COUNT(*) AS cnt FROM MATCH (v) ON x2 GROUP BY v.id ORDER BY cnt DESC`
         )
         .then((response) => {
           additionalAutocompleteTargets = response.data.table.records.map(
@@ -1111,7 +1130,7 @@ $(() => {
         .catch((error) => {
           console.log(error);
           toastr.error(
-            `Failed to retrieve candidate nodes from ${backendUrl}...: ${error}`,
+            `Failed to retrieve candidate nodes from ${graphDBUrl()}...: ${error}`,
             "",
             { preventDuplicates: true, timeOut: 3000 }
           );
@@ -1161,7 +1180,7 @@ $(() => {
           axios
             .request({
               method: "post",
-              url: `${backendUrl}/rename`,
+              url: `${graphDBUrl()}/rename`,
               data: `graph=${savedGraphs[i].id}&name=${newName}`,
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -1219,7 +1238,7 @@ $(() => {
           axios
             .request({
               method: "post",
-              url: `${backendUrl}/drop`,
+              url: `${graphDBUrl()}/drop`,
               data: `graph=${savedGraphs[i].id}`,
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -1262,8 +1281,9 @@ $(() => {
   function retrieveCurrentArticle() {
     if (!currentGraphMetadata) return;
     clearExtractionHighlights();
+    if (!remoteMode) return;
     axios
-      .get(`${vectorDBUrl}/article`, {
+      .get(`${vectorDBUrl()}/article`, {
         params: { graphId: currentGraphMetadata.id },
       })
       .then((response) => {
@@ -1309,13 +1329,13 @@ $(() => {
     currentGraphMetadata = graphEntry;
     if (remoteMode) {
       axios
-        .get(`${backendUrl}/get/?graph=${graphEntry.id}`)
+        .get(`${graphDBUrl()}/get/?graph=${graphEntry.id}`)
         .then((response) => {
           let props = response.data.properties;
           let config = props?.config?.[0] || defaultConfig;
           if (props?.pg === undefined || props?.config === undefined) {
             axios
-              .get(`${backendUrl}/get/?graph=${graphEntry.id}&response=pg`)
+              .get(`${graphDBUrl()}/get/?graph=${graphEntry.id}&response=pg`)
               .then((response) => {
                 byProgram = true;
                 loadGraph({
@@ -1483,7 +1503,7 @@ $(() => {
     let pgValue = editor.getValue();
 
     axios
-      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
+      .get(`${graphDBUrl()}/get/?graph=${currentGraphMetadata.id}`)
       .then((response) => {
         let props = response.data.properties;
         if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
@@ -1519,7 +1539,7 @@ $(() => {
           if (alreadySaved) savedData.id = currentGraphMetadata.id;
 
           axios
-            .post(`${backendUrl}/${action}`, savedData)
+            .post(`${graphDBUrl()}/${action}`, savedData)
             .then((res) => {
               toastr.success(`${graphName} has been saved!`, "", {
                 preventDuplicates: true,
@@ -1629,7 +1649,7 @@ $(() => {
   }
 
   if (!remoteMode) {
-    q("#save-btn").classList.add("d-none");
+    updateButtonsForRemoteMode();
   }
 
   function setUnsavedStatus(unsaved) {
@@ -1698,9 +1718,10 @@ $(() => {
       });
       return;
     }
+    if (!remoteMode) return;
     $(e.target).prop("disabled", true);
     axios
-      .post(`${vectorDBUrl}/register_article`, {
+      .post(`${vectorDBUrl()}/register_article`, {
         article,
         words,
         graphId,
@@ -2555,13 +2576,15 @@ $(() => {
       );
       if (currentGraph) {
         axios
-          .get(`${backendUrl}/get/?graph=${currentGraph.id}`)
+          .get(`${graphDBUrl()}/get/?graph=${currentGraph.id}`)
           .then((response) => {
             let props = response.data.properties;
             let config = props?.config?.[0] || defaultConfig;
             if (props?.pg === undefined || props?.config === undefined) {
               axios
-                .get(`${backendUrl}/get/?graph=${currentGraph.id}&response=pg`)
+                .get(
+                  `${graphDBUrl()}/get/?graph=${currentGraph.id}&response=pg`
+                )
                 .then((response) => {
                   loadValues(
                     json2pg.translate(JSON.stringify(response.data.pg)),
@@ -2710,13 +2733,13 @@ $(() => {
       if (fromAllGraph) {
         axios
           .get(
-            `${backendUrl}/query_path?match=ALL (n1)->{1,${maxDepth}}(n2)&where=n2.id='${targetNodeIdOnModal}'`
+            `${graphDBUrl()}/query_path?match=ALL (n1)->{1,${maxDepth}}(n2)&where=n2.id='${targetNodeIdOnModal}'`
           )
           .then((response) => {
             let upstreamPg = response.data.pg;
             axios
               .get(
-                `${backendUrl}/query_path?match=ALL (n2)->{1,${maxDepth}}(n3)&where=n2.id='${targetNodeIdOnModal}'`
+                `${graphDBUrl()}/query_path?match=ALL (n2)->{1,${maxDepth}}(n3)&where=n2.id='${targetNodeIdOnModal}'`
               )
               .then((response) => {
                 let downstreamPg = response.data.pg;
@@ -2739,7 +2762,7 @@ $(() => {
           })
           .catch((error) => {
             console.log(error);
-            toastr.error(`Failed to query ${backendUrl}...: ${error}`, "", {
+            toastr.error(`Failed to query ${graphDBUrl()}...: ${error}`, "", {
               preventDuplicates: true,
               timeOut: 3000,
             });
@@ -2997,8 +3020,9 @@ document.fonts.ready.then(() => {
 });
 
 function removeArticleFromVectorDB(graphId) {
+  if (!remoteMode) return;
   axios
-    .delete(`${vectorDBUrl}/article`, {
+    .delete(`${vectorDBUrl()}/article`, {
       params: { graphId: currentGraphMetadata.id },
     })
     .then((response) => {
