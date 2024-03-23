@@ -304,18 +304,6 @@ span .syntax-warning-line {
   z-index: 999 !important;
 }
 
-@font-face {
-  font-family: 'Noto Sans Mono CJK JP';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(./NotoSansMonoCJKjp-VF.ttf) format('truetype');
-}
-
-.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
-  font-family: 'Noto Sans Mono CJK JP', monospace;
-}
-
 
 .dropdown-menu {
   max-height: 600px;
@@ -461,8 +449,8 @@ span .syntax-warning-line {
       color: rgb(74, 83, 92) !important;
     }
     .btn {
-      padding-left: 35px;
-      padding-right: 35px;
+      padding-left: 10px;
+      padding-right: 17px;
       border-radius: 35px;
       span{
         vertical-align: middle;

@@ -296,18 +296,6 @@ span .syntax-warning-line {
   z-index: 999 !important;
 }
 
-@font-face {
-  font-family: 'Noto Sans Mono CJK JP';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(./NotoSansMonoCJKjp-VF.ttf) format("truetype");
-}
-
-.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
-  font-family: 'Noto Sans Mono CJK JP', monospace;
-}
-
 .dropdown-menu {
   max-height: 600px;
   padding-right: 10px;
@@ -418,7 +406,7 @@ span .syntax-warning-line {
   margin-right: auto;
   margin-left: auto;
   border-radius: 10px;
-  border: 1px solid rgb(56, 62, 69);
+  border: 1px solid #383e45;
 }
 
 .modeless .modal-content {
@@ -455,31 +443,37 @@ span .syntax-warning-line {
 }
 
 .modeless .btn {
-  padding-left: 35px;
-  padding-right: 35px;
+  padding-left: 10px;
+  padding-right: 17px;
   border-radius: 35px;
 }
+
 .modeless .btn span {
   vertical-align: middle;
   font-size: normal;
 }
+
 .modeless .btn#extract-modeless-clear-btn {
   padding: 0px;
   border-radius: 0px;
   margin-right: auto !important;
 }
+
 .modeless .btn#extract-modeless-clear-btn img {
   height: 20px;
 }
+
 .modeless .btn#extract-modeless-close-btn {
   padding: 0px;
   border-radius: 0px;
   height: 23.5px;
   width: 23.5px;
 }
+
 .modeless .btn#extract-modeless-close-btn img {
   height: 20px;
 }
+
 .modeless .btn img {
   height: 30px;
 }
