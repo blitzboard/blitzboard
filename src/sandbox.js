@@ -152,6 +152,7 @@ $(() => {
             extractRelation: "Extract relationships",
             close: "Close",
             extractionPlaceHolder: "Enter the article information...",
+            clear: "Clear",
           },
         },
         ja: {
@@ -191,6 +192,7 @@ $(() => {
             extractRelation: "関係を抽出",
             close: "閉じる",
             extractionPlaceHolder: "記事情報を入力してください...",
+            clear: "クリア",
           },
         },
       },
@@ -1776,44 +1778,6 @@ $(() => {
     },
   });
 
-  q("#register-article-btn").addEventListener("click", (e) => {
-    let article = extractionEditor.getValue();
-    let words = blitzboard.graph.nodes.map((n) => n.id);
-    let graphId = currentGraphMetadata.id;
-    let apiKey = q("#options-api-key-input").value;
-    if (apiKey === "" || apiKey == undefined) {
-      toastr.error(`OpenAI API key has not been set yet.`, "", {
-        preventDuplicates: true,
-        timeOut: 3000,
-      });
-      return;
-    }
-    $(e.target).prop("disabled", true);
-    axios
-      .post(`${vectorDBUrl}/register_article`, {
-        article,
-        words,
-        graphId,
-        apiKey,
-      })
-      .then((response) => {
-        console.log(response.data);
-        toastr.success(`Article has been registered!`, "", {
-          preventDuplicates: true,
-          timeOut: 3000,
-        });
-      })
-      .catch((error) => {
-        toastr.error(`Failed to register article..`, "", {
-          preventDuplicates: true,
-          timeOut: 3000,
-        });
-      })
-      .finally(() => {
-        $(e.target).prop("disabled", false);
-      });
-  });
-
   q("#extract-modal-btn").addEventListener("click", (e) => {
     setTimeout(() => {
       extractionEditor.refresh();
@@ -1957,6 +1921,12 @@ $(() => {
   q("#extract-modeless-close-btn").addEventListener("click", (e) => {
     extractModeless.hide();
   });
+
+  q("#extract-modeless-clear-btn").addEventListener("click", (e) => {
+    clearExtractionHighlights();
+    extractionEditor.setValue("");
+  });
+
   $("#extract-modeless").draggable({
     handle: ".modal-header",
   });

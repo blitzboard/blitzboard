@@ -440,6 +440,8 @@ span .syntax-warning-line {
       max-width: 1000px;
       margin-right: auto;
       margin-left: auto;
+      border-radius: 10px;
+      border: 1px solid rgb(56, 62, 69);
     }
     .modal-content {
       background-color: #282c31;
@@ -447,15 +449,16 @@ span .syntax-warning-line {
     }
     .modal-header {
       border-bottom: 0px;
+      padding-bottom: 0px;
     }
     .modal-footer {
       border-top: 0px;
     }
     .CodeMirror { 
       max-height: 80vh;
-      border: 1px solid #444;
       background-color: #31353e;
       padding: 15px;
+      border-radius: 5px;
       span {
         color: white !important;     
       }
@@ -470,6 +473,30 @@ span .syntax-warning-line {
       padding-left: 35px;
       padding-right: 35px;
       border-radius: 35px;
+      span{
+        vertical-align: middle;
+        font-size: normal;
+      }
+      &#extract-modeless-clear-btn {
+        padding: 0px;
+        border-radius: 0px;
+        img {
+          height: 20px;
+        }
+        margin-right: auto !important;
+      }
+      &#extract-modeless-close-btn {
+        padding: 0px;
+        border-radius: 0px;
+        height: 23.5px;
+        width: 23.5px;
+        img {
+          height: 20px;
+        }
+      }
+      img {
+        height: 30px;
+      }
     }
 }
 

@@ -399,26 +399,30 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 data-i18n="extraction"></h5>
+                    <h5 class="my-auto">
+                        <img src="/img/extract.svg">
+                        <span data-i18n="extraction"></span>
+                    </h5>
+                    <button type="button" class="btn text-white" data-dismiss="modal" id="extract-modeless-close-btn">
+                        <img src="/img/close.svg">
+                    </button>
                 </div>
                 <div class="modal-body">
                     <textarea id="extract-textarea" style="width: 100em; height: 20em;"
                         data-i18n="[placeholder]extractionPlaceHolder"></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary mx-5" id="register-article-btn">
-                        <span class="material-symbols-outlined">
-                            cloud_sync
-                        </span>
-                        <span data-i18n="registerArticle"></span>
+                    <button type="button" class="btn btn-default text-white" id="extract-modeless-clear-btn"><img
+                            src="/img/clear.svg"><span data-i18n="clear"></span></button>
+                    <button type="button" class="btn bg-white" id="extract-btn">
+                        <img src="/img/events.svg">
+                        <span data-i18n="extractEvent"></span>
                     </button>
-                    <button type="button" class="btn bg-white mx-5" id="extract-btn" data-i18n="extractEvent"></button>
-                    <button type="button" class="btn bg-white mx-5" id="extract-relation-btn"
-                        data-i18n="extractRelation"></button>
-                    <button type="button" class="btn btn-default" data-dismiss="modal" id="extract-modeless-close-btn"
-                        data-i18n="close"></button>
-                    <button type="button" class="btn btn-default text-white" id="extract-modeless-clear-btn"
-                        data-i18n="clear"></button>
+                    <button type="button" class="btn bg-white" id="extract-relation-btn">
+                        <img src="/img/relationships.svg">
+                        <span data-i18n="extractRelation"></span>
+                    </button>
+
                 </div>
             </div>
         </div>
