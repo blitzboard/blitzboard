@@ -1759,7 +1759,7 @@ $(() => {
       for (let disaster of disasters.events) {
         if (!disaster.event || addedNodes.has(disaster.event)) continue;
         addedNodes.add(disaster.event);
-        newPG += disaster.event + "\n";
+        newPG += disaster.event.quoteIfNeeded() + "\n";
         if (!disaster.original_phrase) continue;
         let cursor = extractionEditor.getSearchCursor(disaster.original_phrase);
         if (cursor.findNext()) {
