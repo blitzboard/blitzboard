@@ -412,14 +412,24 @@
                         data-i18n="[placeholder]extractionPlaceHolder"></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default text-white" id="extract-modeless-clear-btn"><img
-                            src="/img/clear.svg"><span data-i18n="clear"></span></button>
+                    <button type="button" class="btn btn-default text-white  btn-about-extraction"
+                        id="extract-modeless-clear-btn"><img src="/img/clear.svg"><span
+                            data-i18n="clear"></span></button>
+
                     <button type="button" class="btn bg-white btn-about-extraction" id="extract-btn">
-                        <img src="/img/events.svg">
+                        <img src="/img/events.svg" class="extract-icon">
+                        <div class="spinner-border spinner-border-sm text-dark  ms-2 me-2 extract-loader" role="status"
+                            style="display: none;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                         <span data-i18n="extractEvent"></span>
                     </button>
                     <button type="button" class="btn bg-white btn-about-extraction" id="extract-relation-btn">
-                        <img src="/img/relationships.svg">
+                        <img src="/img/relationships.svg" class="extract-icon">
+                        <div class="spinner-border spinner-border-sm text-dark ms-2 me-2 extract-loader" role="status"
+                            style="display: none;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                         <span data-i18n="extractRelation"></span>
                     </button>
 

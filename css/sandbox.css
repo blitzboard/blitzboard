@@ -431,6 +431,7 @@ span .syntax-warning-line {
 .modeless .btn span {
   vertical-align: middle;
   font-size: normal;
+  margin-left: -5px;
 }
 .modeless .btn#extract-modeless-clear-btn {
   padding: 0px;
@@ -438,7 +439,10 @@ span .syntax-warning-line {
   margin-right: auto !important;
 }
 .modeless .btn#extract-modeless-clear-btn img {
-  height: 20px;
+  height: 12px;
+}
+.modeless .btn#extract-modeless-clear-btn span {
+  margin-left: 0px;
 }
 .modeless .btn#extract-modeless-close-btn {
   padding: 0px;
@@ -451,6 +455,14 @@ span .syntax-warning-line {
 }
 .modeless .btn img {
   height: 30px;
+  width: 30px;
+}
+.modeless .btn .spinner-border {
+  width: 15px;
+  height: 15px;
+}
+.modeless .CodeMirror-vscrollbar {
+  scrollbar-color: lightgray transparent;
 }
 
 .extraction-bubble {
@@ -465,5 +477,7 @@ span .syntax-warning-line {
 }
 
 .extracted-line {
-  background-color: rgb(75, 90, 107);
+  background-color: #3E5270;
+  border-radius: 5px;
+  padding: 5px;
 }/*# sourceMappingURL=sandbox.css.map */

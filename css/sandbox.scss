@@ -464,12 +464,16 @@ span .syntax-warning-line {
       span{
         vertical-align: middle;
         font-size: normal;
+        margin-left: -5px;
       }
       &#extract-modeless-clear-btn {
         padding: 0px;
         border-radius: 0px;
         img {
-          height: 20px;
+          height: 12px;
+        }
+        span {
+          margin-left: 0px;
         }
         margin-right: auto !important;
       }
@@ -484,7 +488,15 @@ span .syntax-warning-line {
       }
       img {
         height: 30px;
+        width: 30px;
       }
+      .spinner-border {
+        width: 15px;
+        height: 15px;
+      }
+    }
+    .CodeMirror-vscrollbar {
+      scrollbar-color: lightgray transparent;
     }
 }
 
@@ -502,6 +514,8 @@ span .syntax-warning-line {
 
 
 .extracted-line {
-  background-color: rgba(75, 90, 107, 1);
+  background-color: #3E5270;
+  border-radius: 5px;
+  padding: 5px;
 }
 

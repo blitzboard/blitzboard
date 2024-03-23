@@ -1804,6 +1804,7 @@ $(() => {
     blitzboard.showLoader();
     let originalText = extractionEditor.getValue();
     clearExtractionHighlights();
+    let targetButton = this;
 
     function updateHighlightAndGetNewPG(disasters) {
       let newPG = "";
@@ -1844,7 +1845,7 @@ $(() => {
       editor.setValue(newPG);
       blitzboard.hideLoader();
     }
-    $(".btn-about-extraction").prop("disabled", true);
+    changeUiStateBeforeExtraction(targetButton);
     await extractDisasterEvents(originalText, whileStreaming, onCompletion)
       .catch((e) => {
         toastr.error(`Failed to extract disaster events: ${e}`, "", {
@@ -1854,17 +1855,31 @@ $(() => {
         blitzboard.hideLoader();
       })
       .finally(() => {
-        $(".btn-about-extraction").prop("disabled", false);
+        changeUiStateAfterExtraction(targetButton);
       });
   });
 
+  function changeUiStateBeforeExtraction(target) {
+    $(".btn-about-extraction").prop("disabled", true);
+    $(target).find(".extract-icon").hide();
+    $(target).find(".extract-loader").show();
+    extractionEditor.setOption("readOnly", true);
+  }
+
+  function changeUiStateAfterExtraction(target) {
+    $(".btn-about-extraction").prop("disabled", false);
+    $(target).find(".extract-icon").show();
+    $(target).find(".extract-loader").hide();
+    extractionEditor.setOption("readOnly", false);
+  }
+
   q("#extract-relation-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
-    $(".btn-about-extraction").prop("disabled", true);
     let article = extractionEditor.getValue();
     let events = editor.getValue().split("\n");
     let oldPG = editor.getValue();
     if (!oldPG.endsWith("\n")) oldPG += "\n";
+    let targetButton = this;
 
     function updateHighlightAndGetNewPG(relationships) {
       let newPG = "";
@@ -1899,14 +1914,12 @@ $(() => {
     }
 
     function onCompletion(response) {
-      $(e.target).prop("disabled", false);
       if (!response.relationships) return;
       let newPG = updateHighlightAndGetNewPG(response.relationships);
       editor.setValue(oldPG + newPG);
       blitzboard.hideLoader();
     }
-
-    $(e.target).prop("disabled", true);
+    changeUiStateBeforeExtraction(targetButton);
     await extractRelationships(events, article, whileStreaming, onCompletion)
       .catch((e) => {
         toastr.error(`Failed to extract disaster relationships: ${e}`, "", {
@@ -1915,7 +1928,9 @@ $(() => {
         });
         blitzboard.hideLoader();
       })
-      .finally(() => $(".btn-about-extraction").prop("disabled", false));
+      .finally(() => {
+        changeUiStateAfterExtraction(targetButton);
+      });
   });
 
   q("#extract-modeless-close-btn").addEventListener("click", (e) => {
