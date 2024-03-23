@@ -316,9 +316,6 @@ span .syntax-warning-line {
   font-family: 'Noto Sans Mono CJK JP', monospace;
 }
 
-.CodeMirror-scroll {
-  padding: 0;
-}
 
 .dropdown-menu {
   max-height: 600px;
@@ -419,6 +416,52 @@ span .syntax-warning-line {
 .add-node-filter-btn {
   margin-left: 30px;
 }
+
+
+.modeless{
+    overflow: hidden;
+    top:10%;
+    left: auto;
+    bottom:auto;
+    right:auto;
+    pointer-events: none;
+
+    .modal-dialog {
+      background-color: #282c31;
+      max-width: 1000px;
+      margin-right: auto;
+      margin-left: auto;
+    }
+    .modal-content {
+      background-color: #282c31;
+      color: #fff;
+    }
+    .modal-header {
+      border-bottom: 0px;
+    }
+    .modal-footer {
+      border-top: 0px;
+    }
+    .CodeMirror { 
+      max-height: 80vh;
+      border: 1px solid #444;
+      background-color: #31353e;
+      padding: 15px;
+      span {
+        color: white !important;     
+      }
+      .CodeMirror-cursor {
+        border-left: 1px solid #fff;
+      }
+    }
+    .CodeMirror-placeholder {
+      color: rgb(74, 83, 92) !important;
+    }
+    .btn {
+      padding-left: 35px;
+      padding-right: 35px;
+      border-radius: 35px;
+    }
 }
 
 
