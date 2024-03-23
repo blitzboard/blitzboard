@@ -36,6 +36,12 @@ body {
 .navbar {
   justify-content: flex-start;
 }
+.navbar .btn {
+  padding: 5px;
+}
+.navbar .btn img {
+  height: 32px;
+}
 
 #network-popUp {
   display: none;

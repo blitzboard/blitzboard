@@ -93,29 +93,20 @@
             <li class='nav-item'>
                 <label class='btn disabled text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#'
                     id='save-btn' data-i18n="[title]save">
-                    <span class="material-symbols-outlined">
-                        save
-                    </span>
+                    <img src="/img/w_save.svg">
                 </label>
             </li>
             <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
                 <input autocomplete='off' class='btn-check' id='edit-panel-btn' name='view-mode' type='checkbox'>
-                <label class='me-3 btn btn-outline-secondary text-white' data-bs-toggle='tooltip'
-                    data-placement='bottom' for='edit-panel-btn' style='border: none' data-i18n="[title]editMode">
-                    <span class="material-symbols-outlined edit">
-                        edit
-                    </span>
-                    <span class="material-symbols-outlined edit-off">
-                        edit_off
-                    </span>
+                <label class='btn btn-outline-secondary text-white' data-bs-toggle='tooltip' data-placement='bottom'
+                    for='edit-panel-btn' style='border: none' data-i18n="[title]editMode">
+                    <img src="/img/w_edit.svg">
                 </label>
                 </input>
                 <li class='nav-item'>
                     <div aria-haspopup class='dropdown' data-bs-toggle='tooltip' data-i18n="[title]new">
                         <div class='btn dropdown-toggle' data-bs-toggle='dropdown' id='new-btn' type='button'>
-                            <span class="material-symbols-outlined">
-                                note_add
-                            </span>
+                            <img src="/img/w_new.svg">
                         </div>
                         <div aria-labelledby='new-btn' class='dropdown-menu dropdown-menu-end' id='templates-dropdown'>
                         </div>
@@ -124,28 +115,23 @@
                 <li class='nav-item'>
                     <label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' href='#'
                         id='clone-btn' data-i18n="[title]clone">
-                        <span class="material-symbols-outlined">
-                            file_copy
-                        </span>
+                        <img src="/img/w_copy.svg">
                     </label>
                 </li>
                 <li class='nav-item'>
                     <label class='btn text-white' data-bs-toggle='tooltip' data-placement='bottom' for='import-btn'
                         href='#' data-i18n="[title]import">
-                        <span class="material-symbols-outlined" id='import-btn'>
-                            file_upload
+                        <span id="import-btn">
+                            <img src="/img/w_import.svg">
                         </span>
                     </label>
-                    <input accept='.zip' id='import-input' type='file'>
+                    <input accept='.zip' id='import-input' type='file' hidden>
                     </input>
-                    </label>
                 </li>
                 <li class='nav-item'>
                     <div aria-haspopup class='dropdown' data-bs-toggle='tooltip' data-i18n="[title]export">
                         <div class='btn dropdown-toggle' data-bs-toggle='dropdown' id='export-btn' type='button'>
-                            <span class="material-symbols-outlined">
-                                file_download
-                            </span>
+                            <img src="/img/w_export.svg">
                         </div>
                         <div aria-labelledby='export-btn' class='dropdown-menu dropdown-menu-end'>
                             <a class='dropdown-item' href='#' id='export-zip-btn'>
@@ -195,9 +181,7 @@
                     <div aria-haspopup class='dropdown' data-bs-toggle='tooltip' id='options-btn'
                         style='position: absolute' data-i18n="[title]options">
                         <div class='btn text-white' data-bs-toggle='dropdown' id='options-dropdown' type='button'>
-                            <span class="material-symbols-outlined">
-                                settings
-                            </span>
+                            <img src="/img/w_set.svg">
                         </div>
                         <div aria-labelledby='options-dropdown' class='dropdown-menu dropdown-menu-right'>
                             <a class='dropdown-item' href='#' id='options-auto-complete'>
@@ -266,9 +250,7 @@
 
             <div class='float-btn btn btn-info' data-bs-toggle='tooltip' data-placement='bottom' href='#'
                 id='zoom-fit-btn' style='padding:4px;' data-i18n='[title]fit'>
-                <span class="material-symbols-outlined fit-screen">
-                    fit_screen
-                </span>
+                <img src="/img/b_fit.svg" class="fit-screen">
             </div>
 
             <div id="filter-div" style="display: none;">

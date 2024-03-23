@@ -40,6 +40,12 @@ body {
 
 .navbar {
   justify-content: flex-start;
+  .btn {
+    padding: 5px;
+    img {
+      height: 32px;
+    }
+  }
 }
 
 
