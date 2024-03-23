@@ -56,6 +56,7 @@
     <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/show-hint.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/hint/anyword-hint.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/comment/comment.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.59.1/addon/display/placeholder.js'></script>
     <script src='./src/codemirror/javascript_mode.js'></script>
     <script src='./src/util.js'></script>
     <script src='./src/cia.js'></script>
@@ -394,14 +395,15 @@
         </div>
     </div>
 
-    <div id="extract-modeless" class="modal fade modeless">
+    <div id="extract-modeless" class="modal text-white fade modeless">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 data-i18n="extraction"></h5>
                 </div>
                 <div class="modal-body">
-                    <textarea id="extract-textarea" style="width: 100em; height: 50em;"></textarea>
+                    <textarea id="extract-textarea" style="width: 100em; height: 20em;"
+                        data-i18n="[placeholder]extractionPlaceHolder"></textarea>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary mx-5" id="register-article-btn">
@@ -410,12 +412,13 @@
                         </span>
                         <span data-i18n="registerArticle"></span>
                     </button>
-                    <button type="button" class="btn btn-success mx-5" id="extract-btn"
-                        data-i18n="extractEvent"></button>
-                    <button type="button" class="btn btn-success mx-5" id="extract-relation-btn"
+                    <button type="button" class="btn bg-white mx-5" id="extract-btn" data-i18n="extractEvent"></button>
+                    <button type="button" class="btn bg-white mx-5" id="extract-relation-btn"
                         data-i18n="extractRelation"></button>
                     <button type="button" class="btn btn-default" data-dismiss="modal" id="extract-modeless-close-btn"
                         data-i18n="close"></button>
+                    <button type="button" class="btn btn-default text-white" id="extract-modeless-clear-btn"
+                        data-i18n="clear"></button>
                 </div>
             </div>
         </div>
