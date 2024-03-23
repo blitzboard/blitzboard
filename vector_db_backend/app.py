@@ -59,7 +59,7 @@ def delete_article():
     embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
     store = None
     if os.path.exists(vector_db_path):
-        store = FAISS.load_local(vector_db_path, embeddings)
+        store = FAISS.load_local(vector_db_path, embeddings, allow_dangerous_deserialization=True)
 
     if store is None:
         return json.dumps({"status": "not found"})
@@ -94,7 +94,7 @@ def register_article():
     embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
     store = None
     if os.path.exists(vector_db_path):
-        store = FAISS.load_local(vector_db_path, embeddings)
+        store = FAISS.load_local(vector_db_path, embeddings, allow_dangerous_deserialization=True)
 
     # save article to file
     file_path = os.path.join(article_dir, f"{graphId}.txt")
@@ -143,7 +143,7 @@ def related_words():
     embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
     store = None
     if os.path.exists(vector_db_path):
-        store = FAISS.load_local(vector_db_path, embeddings)
+        store = FAISS.load_local(vector_db_path, embeddings, allow_dangerous_deserialization=True)
     # split article to chunks by chunks_num. each chunk should have same length
     chunk_len = len(article) // chunks_num
     chunks = [article[i * chunk_len:(i+1) * chunk_len] for i in range(0, chunks_num)]        
