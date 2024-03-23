@@ -111,6 +111,93 @@ $(() => {
     hour12: false,
   });
 
+  i18next.use(i18nextBrowserLanguageDetector).init(
+    {
+      resources: {
+        // evtl. load via xhr https://github.com/i18next/i18next-xhr-backend
+        en: {
+          translation: {
+            import: "Import",
+            export: "Export",
+            new: "New",
+            clone: "Clone",
+            editMode: "Edit mode",
+            extract: "Extract",
+            aboutBlitzboard: "About Blitzboard",
+            autocomplete: "Auto Complete",
+            showConfig: "Show Config",
+            crossImpactFactor: "Cross impact factor",
+            insertEdges: "Insert edges",
+            search: "Search",
+            replace: "Replace",
+            sort: "Sort",
+            backendUrl: "Backend URL",
+            openaiApiKey: "OpenAI API Key",
+            options: "Options",
+            extractFromArticle: "Extract from article",
+            save: "Save",
+            fit: "Fit",
+            sortLines: "Sort lines",
+            sortNodeLinesBy: "Sort node lines by:",
+            sortEdgeLinesBy: "Sort edge lines by:",
+            none: "None",
+            sortOrder: "Sort order:",
+            sortWarning: "Warning: Comment lines will be deleted after sort.",
+            ascending: "ASC",
+            descending: "DESC",
+            alignColumn: "Align column",
+            registerArticle: "Register article",
+            extractEvent: "Extract event",
+            extractRelation: "Extract relationship",
+            close: "Close",
+          },
+        },
+        ja: {
+          translation: {
+            import: "インポート",
+            export: "エクスポート",
+            new: "新規",
+            clone: "コピー",
+            editMode: "編集モード",
+            extract: "抽出",
+            aboutBlitzboard: "Blitzboardについて",
+            autocomplete: "オートコンプリート",
+            showConfig: "設定を表示",
+            crossImpactFactor: "クロスインパクト係数",
+            insertEdges: "エッジを挿入",
+            search: "検索",
+            replace: "置換",
+            sort: "ソート",
+            backendUrl: "バックエンドURL",
+            openaiApiKey: "OpenAI APIキー",
+            options: "オプション",
+            extractFromArticle: "記事から抽出",
+            sortWarning: "注意: ソートするとコメント行は削除されます。",
+            save: "保存",
+            fit: "ウィンドウに合わせる",
+            sortLines: "ソート",
+            sortNodeLinesBy: "ノードのソート方法:",
+            sortEdgeLinesBy: "エッジのソート方法:",
+            none: "ソートなし",
+            sortOrder: "ソート順",
+            ascending: "昇順",
+            descending: "降順",
+            alignColumn: "列を揃える",
+            extraction: "抽出",
+            registerArticle: "記事を登録",
+            extractEvent: "イベントを抽出",
+            extractRelation: "関係を抽出",
+            close: "閉じる",
+          },
+        },
+      },
+    },
+    function (err, t) {
+      jqueryI18next.init(i18next, $, { useOptionsAttr: true });
+      $("[data-i18n]").localize();
+    }
+  );
+
   String.prototype.quoteIfNeeded = function () {
     if (
       this.includes('"') ||
@@ -251,12 +338,12 @@ $(() => {
 
     // Each option is a pair of value and text
     let nodeOptions = [
-      ["", "None"],
+      ["", i18next.translator.translate("none")],
       [":id", "id"],
       [":label", "label"],
     ];
     let edgeOptions = [
-      ["", "None"],
+      ["", i18next.translator.translate("none")],
       [":from-to", "from&to"],
       [":label", "label"],
     ];
