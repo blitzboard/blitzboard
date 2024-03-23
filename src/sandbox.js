@@ -1819,7 +1819,7 @@ $(() => {
         if (cursor.findNext()) {
           extractionMarkers.push(
             extractionEditor.markText(cursor.from(), cursor.to(), {
-              className: "syntax-warning-line",
+              className: "extracted-line",
             })
           );
           let bubble = document.createElement("div");
@@ -1844,7 +1844,7 @@ $(() => {
       editor.setValue(newPG);
       blitzboard.hideLoader();
     }
-    $(e.target).prop("disabled", true);
+    $(".btn-about-extraction").prop("disabled", true);
     await extractDisasterEvents(originalText, whileStreaming, onCompletion)
       .catch((e) => {
         toastr.error(`Failed to extract disaster events: ${e}`, "", {
@@ -1854,13 +1854,13 @@ $(() => {
         blitzboard.hideLoader();
       })
       .finally(() => {
-        $(e.target).prop("disabled", false);
+        $(".btn-about-extraction").prop("disabled", false);
       });
   });
 
   q("#extract-relation-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
-    $(e.target).prop("disabled", true);
+    $(".btn-about-extraction").prop("disabled", true);
     let article = extractionEditor.getValue();
     let events = editor.getValue().split("\n");
     let oldPG = editor.getValue();
@@ -1877,7 +1877,7 @@ $(() => {
         if (cursor.findNext()) {
           extractionMarkers.push(
             extractionEditor.markText(cursor.from(), cursor.to(), {
-              className: "syntax-warning-line",
+              className: "extracted-line",
             })
           );
           let bubble = document.createElement("div");
@@ -1915,7 +1915,7 @@ $(() => {
         });
         blitzboard.hideLoader();
       })
-      .finally(() => $(e.target).prop("disabled", false));
+      .finally(() => $(".btn-about-extraction").prop("disabled", false));
   });
 
   q("#extract-modeless-close-btn").addEventListener("click", (e) => {

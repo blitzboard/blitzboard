@@ -314,18 +314,6 @@ span .syntax-warning-line {
   z-index: 999 !important;
 }
 
-@font-face {
-  font-family: 'Noto Sans Mono CJK JP';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(./NotoSansMonoCJKjp-VF.ttf) format('truetype');
-}
-
-.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
-  font-family: 'Noto Sans Mono CJK JP', monospace;
-}
-
 
 .dropdown-menu {
   max-height: 600px;
@@ -470,8 +458,8 @@ span .syntax-warning-line {
       color: rgb(74, 83, 92) !important;
     }
     .btn {
-      padding-left: 35px;
-      padding-right: 35px;
+      padding-left: 10px;
+      padding-right: 17px;
       border-radius: 35px;
       span{
         vertical-align: middle;
@@ -501,14 +489,19 @@ span .syntax-warning-line {
 }
 
 .extraction-bubble {
-  background-color: #b61717;
+  background-color: rgba(49, 132, 255);
   color: white;
-  border-radius: 5px;
-  padding: 5px;
+  border-radius: 25px;
+  padding: 2px 18px 2px 18px;
   z-index: 10000;
   // set opacity on hover
   &:hover {
     opacity: 0.3;
   }
+}
+
+
+.extracted-line {
+  background-color: rgba(75, 90, 107, 1);
 }
 
