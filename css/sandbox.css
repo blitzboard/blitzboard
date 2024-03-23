@@ -451,6 +451,7 @@ span .syntax-warning-line {
 .modeless .btn span {
   vertical-align: middle;
   font-size: normal;
+  margin-left: -5px;
 }
 
 .modeless .btn#extract-modeless-clear-btn {
@@ -460,7 +461,10 @@ span .syntax-warning-line {
 }
 
 .modeless .btn#extract-modeless-clear-btn img {
-  height: 20px;
+  height: 12px;
+}
+.modeless .btn#extract-modeless-clear-btn span {
+  margin-left: 0px;
 }
 
 .modeless .btn#extract-modeless-close-btn {
@@ -476,6 +480,14 @@ span .syntax-warning-line {
 
 .modeless .btn img {
   height: 30px;
+  width: 30px;
+}
+.modeless .btn .spinner-border {
+  width: 15px;
+  height: 15px;
+}
+.modeless .CodeMirror-vscrollbar {
+  scrollbar-color: lightgray transparent;
 }
 
 #edge-filter-div {
