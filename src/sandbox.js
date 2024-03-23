@@ -763,7 +763,7 @@ $(() => {
             blitzboard.addedEdges.has(warning.edge.id)
           ) {
             if (addedNode.has(warning.node)) continue;
-            insertContentsToEditor(warning.node);
+            insertContentsToEditor(warning.node.quoteIfNeeded());
             if (infoMessage !== "") infoMessage += ", ";
             infoMessage += `Missing node '${warning.node}' is created`;
             addedNode.add(warning.node);
