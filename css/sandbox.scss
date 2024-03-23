@@ -449,7 +449,8 @@ span .syntax-warning-line {
       border-top: 0px;
     }
     .CodeMirror { 
-      max-height: 80vh;
+      height: calc(100vh - 300px);
+
       background-color: #31353e;
       padding: 15px;
       border-radius: 5px;
