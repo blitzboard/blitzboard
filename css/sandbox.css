@@ -417,6 +417,8 @@ span .syntax-warning-line {
   max-width: 1000px;
   margin-right: auto;
   margin-left: auto;
+  border-radius: 10px;
+  border: 1px solid rgb(56, 62, 69);
 }
 
 .modeless .modal-content {
@@ -426,6 +428,7 @@ span .syntax-warning-line {
 
 .modeless .modal-header {
   border-bottom: 0px;
+  padding-bottom: 0px;
 }
 
 .modeless .modal-footer {
@@ -434,9 +437,9 @@ span .syntax-warning-line {
 
 .modeless .CodeMirror {
   max-height: 80vh;
-  border: 1px solid #444;
   background-color: #31353e;
   padding: 15px;
+  border-radius: 5px;
 }
 
 .modeless .CodeMirror span {
@@ -455,6 +458,30 @@ span .syntax-warning-line {
   padding-left: 35px;
   padding-right: 35px;
   border-radius: 35px;
+}
+.modeless .btn span {
+  vertical-align: middle;
+  font-size: normal;
+}
+.modeless .btn#extract-modeless-clear-btn {
+  padding: 0px;
+  border-radius: 0px;
+  margin-right: auto !important;
+}
+.modeless .btn#extract-modeless-clear-btn img {
+  height: 20px;
+}
+.modeless .btn#extract-modeless-close-btn {
+  padding: 0px;
+  border-radius: 0px;
+  height: 23.5px;
+  width: 23.5px;
+}
+.modeless .btn#extract-modeless-close-btn img {
+  height: 20px;
+}
+.modeless .btn img {
+  height: 30px;
 }
 
 #edge-filter-div {

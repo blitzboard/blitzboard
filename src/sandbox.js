@@ -108,6 +108,7 @@ $(() => {
             extractRelation: "Extract relationships",
             close: "Close",
             extractionPlaceHolder: "Enter the article information...",
+            clear: "Clear",
           },
         },
         ja: {
@@ -147,6 +148,7 @@ $(() => {
             extractRelation: "関係を抽出",
             close: "閉じる",
             extractionPlaceHolder: "記事情報を入力してください...",
+            clear: "クリア",
           },
         },
       },
