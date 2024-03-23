@@ -145,6 +145,7 @@ $(() => {
             sortWarning: "Warning: Comment lines will be deleted after sort.",
             ascending: "ASC",
             descending: "DESC",
+            extraction: "Extraction",
             alignColumn: "Align column",
             registerArticle: "Register article",
             extractEvent: "Extract event",
