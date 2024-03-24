@@ -57,7 +57,6 @@ def delete_article():
     if os.path.exists(file_path):
         os.remove(file_path)
 
-    os.environ["OPENAI_API_KEY"] = "dummy" # set dummy key because api is not used actually 
     embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
     store = None
     if os.path.exists(vector_db_path):
