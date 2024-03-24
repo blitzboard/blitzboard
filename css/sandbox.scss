@@ -134,7 +134,7 @@ body {
 #main-area {
   display: inline-flex;
   width: 100%;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 60px);
 }
 
 .float-btn {
@@ -429,6 +429,10 @@ span .syntax-warning-line {
     right:auto;
     pointer-events: none;
 
+    .CodeMirror-gutter, .CodeMirror-linenumber {
+      background-color: #31353e !important;
+    }
+
     .modal-dialog {
       background-color: #282c31;
       max-width: 1000px;
@@ -502,10 +506,12 @@ span .syntax-warning-line {
         height: 15px;
       }
     }
-    .CodeMirror-vscrollbar {
-      scrollbar-color: lightgray transparent;
-    }
 }
+
+.CodeMirror-vscrollbar {
+  scrollbar-color: lightgray transparent;
+}
+
 
 .extraction-bubble {
   background-color: rgba(49, 132, 255);

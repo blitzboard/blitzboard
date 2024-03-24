@@ -126,7 +126,7 @@ body {
 #main-area {
   display: inline-flex;
   width: 100%;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 60px);
 }
 
 .float-btn {
@@ -395,6 +395,9 @@ span .syntax-warning-line {
   right: auto;
   pointer-events: none;
 }
+.modeless .CodeMirror-gutter, .modeless .CodeMirror-linenumber {
+  background-color: #31353e !important;
+}
 .modeless .modal-dialog {
   background-color: #282c31;
   max-width: 1000px;
@@ -467,7 +470,8 @@ span .syntax-warning-line {
   width: 15px;
   height: 15px;
 }
-.modeless .CodeMirror-vscrollbar {
+
+.CodeMirror-vscrollbar {
   scrollbar-color: lightgray transparent;
 }
 
