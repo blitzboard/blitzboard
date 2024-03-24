@@ -399,6 +399,10 @@ span .syntax-warning-line {
   margin-left: 30px;
 }
 
+.CodeMirror-gutter, .CodeMirror-linenumber {
+  background-color: #212529 !important;
+}
+
 .modeless {
   overflow: hidden;
   top: 10%;
