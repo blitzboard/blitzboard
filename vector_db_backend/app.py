@@ -1,5 +1,5 @@
 
-from flask import Flask, send_file, request
+from flask import Flask, send_file, request, Response, stream_with_context
 from flask_cors import CORS
 import json
 import re
@@ -8,9 +8,11 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
-
+from openai import OpenAI
 
 load_dotenv()
+
+openai_client = OpenAI()
 
 app = Flask(__name__, template_folder='templates')
 
@@ -80,7 +82,6 @@ def register_article():
     #   "words": [ 
     #     <単語群>
     #   ],
-    #   "apiKey": <OpenAI API Key>
     # }
 
 
@@ -89,7 +90,6 @@ def register_article():
     article = data['article']
     words = data['words']
     graphId = data['graphId']
-    os.environ["OPENAI_API_KEY"] = data['apiKey']
 
     embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
     store = None
@@ -139,7 +139,6 @@ def related_words():
     chunks_num = 5
 
     article = data['article']
-    os.environ["OPENAI_API_KEY"] = data['apiKey']
     embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
     store = None
     if os.path.exists(vector_db_path):
@@ -166,6 +165,24 @@ def related_words():
         result.append({"word": n[0].page_content, "graphId": n[0].metadata['graphId'], "distance": float(n[1])})
     return json.dumps(result)
 
+
+@app.route("/completion", methods=["POST"])
+def conversation():
+    def gpt_stream():
+        generator = openai_client.chat.completions.create(model="gpt-3.5-turbo",
+            messages = [
+                { "role": "system", "content": request.json["systemPrompt"] },
+                { "role": "user", "content": request.json["query"] }
+            ],
+        stream=True)
+        import time
+        for chunk in generator:
+            if chunk.choices[0].finish_reason is None:
+                stream_token = chunk.choices[0].delta.content
+                yield stream_token
+
+    response = Response(stream_with_context(gpt_stream()), mimetype='text/event-stream')
+    return response
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

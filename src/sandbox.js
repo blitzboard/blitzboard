@@ -132,7 +132,6 @@ $(() => {
             replace: "Replace",
             sort: "Sort",
             backendUrl: "Backend URL",
-            openaiApiKey: "OpenAI API Key",
             options: "Options",
             extractFromArticle: "Extract from article",
             save: "Save",
@@ -173,7 +172,6 @@ $(() => {
             replace: "置換",
             sort: "ソート",
             backendUrl: "バックエンドURL",
-            openaiApiKey: "OpenAI APIキー",
             options: "オプション",
             resetConfig: "設定をリセット",
             extractFromArticle: "記事から抽出",
@@ -577,12 +575,6 @@ $(() => {
         q("#save-btn").classList.add("d-none");
       }
     });
-  });
-
-  q("#options-api-key-input").value =
-    localStorage.getItem("openaiAPIKey") || "";
-  q("#options-api-key-input").addEventListener("change", (e) => {
-    localStorage.setItem("openaiAPIKey", e.target.value);
   });
 
   toastr.subscribe(() => {

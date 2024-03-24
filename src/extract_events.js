@@ -1,11 +1,6 @@
 async function retrieveRelatedWords(query) {
-  let apiKey = document.querySelector("#options-api-key-input").value;
-  if (apiKey === "" || apiKey == undefined) {
-    throw new Error("OpenAI API Key is not set");
-  }
   let result = await axios.post(`${vectorDBUrl}/related_words`, {
     article: query,
-    apiKey,
   });
   result = result.data;
   return result;
@@ -53,79 +48,30 @@ async function fetchCompletionInStream(
   systemPrompt,
   query,
   inProgressCallback,
-  doneCallback,
-  model = "gpt-3.5-turbo-1106"
+  doneCallback
 ) {
-  let apiKey = document.querySelector("#options-api-key-input").value;
-  if (apiKey === "" || apiKey == undefined) {
-    throw new Error("OpenAI API Key is not set");
-  }
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const resp = await fetch(`${vectorDBUrl}/completion`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: query },
-      ],
-      temperature: 0,
-      response_format: { type: "json_object" },
-      stream: true,
+      systemPrompt,
+      query,
     }),
   });
-  const reader = response.body?.getReader();
-
-  if (response.status !== 200 || !reader) {
-    return {};
-  } else {
-    const decoder = new TextDecoder("utf-8");
-    let json_snippet = "";
+  const reader = resp.body.getReader();
+  let jsonSnippet = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const text = new TextDecoder("utf-8").decode(value);
+    jsonSnippet += text;
     try {
-      const read = async () => {
-        const { done, value } = await reader.read();
-        if (done) return reader.releaseLock();
-
-        const chunk = decoder.decode(value, { stream: true });
-
-        const contents = chunk
-          .split("data:")
-          .map((data) => {
-            const trimData = data.trim();
-            if (["", "[DONE]"].includes(trimData)) return undefined;
-            try {
-              return JSON.parse(data.trim());
-            } catch (e) {
-              console.error(e);
-              return null;
-            }
-          })
-          .filter((data) => data)
-          .map((data) => {
-            return data.choices[0].delta.content;
-          });
-        json_snippet += contents.join("");
-        if (json_snippet !== "") {
-          try {
-            inProgressCallback(bestEffortJsonParser.parse(json_snippet));
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        return read();
-      };
-      await read();
+      inProgressCallback(bestEffortJsonParser.parse(jsonSnippet));
     } catch (e) {
-      console.error(e);
-      throw e;
+      // do nothing
     }
-    reader.releaseLock();
-    doneCallback(JSON.parse(json_snippet));
   }
+  doneCallback(bestEffortJsonParser.parse(jsonSnippet));
 }
 
 async function extractRelationships(
