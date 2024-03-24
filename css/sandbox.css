@@ -36,9 +36,11 @@ body {
 .navbar {
   justify-content: flex-start;
 }
+
 .navbar .btn {
   padding: 5px;
 }
+
 .navbar .btn img {
   height: 32px;
 }
@@ -128,7 +130,7 @@ body {
 #main-area {
   display: inline-flex;
   width: 100%;
-  height: calc(100vh - 50px);
+  height: calc(100vh - 60px);
 }
 
 .float-btn {
@@ -406,6 +408,10 @@ span .syntax-warning-line {
   pointer-events: none;
 }
 
+.modeless .CodeMirror-gutter, .modeless .CodeMirror-linenumber {
+  background-color: #31353e !important;
+}
+
 .modeless .modal-dialog {
   background-color: #282c31;
   max-width: 1000px;
@@ -469,6 +475,7 @@ span .syntax-warning-line {
 .modeless .btn#extract-modeless-clear-btn img {
   height: 12px;
 }
+
 .modeless .btn#extract-modeless-clear-btn span {
   margin-left: 0px;
 }
@@ -488,11 +495,13 @@ span .syntax-warning-line {
   height: 30px;
   width: 30px;
 }
+
 .modeless .btn .spinner-border {
   width: 15px;
   height: 15px;
 }
-.modeless .CodeMirror-vscrollbar {
+
+.CodeMirror-vscrollbar {
   scrollbar-color: lightgray transparent;
 }
 
