@@ -1865,6 +1865,7 @@ $(() => {
     changeUiStateBeforeExtraction(targetButton);
     await extractDisasterEvents(originalText, whileStreaming, onCompletion)
       .catch((e) => {
+        console.error(e);
         toastr.error(`Failed to extract disaster events: ${e}`, "", {
           preventDuplicates: true,
           timeOut: 3000,
