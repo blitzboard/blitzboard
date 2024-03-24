@@ -147,7 +147,6 @@ $(() => {
             descending: "DESC",
             extraction: "Extract",
             alignColumn: "Align column",
-            registerArticle: "Register article",
             extractEvent: "Extract events",
             extractRelation: "Extract relationships",
             close: "Close",
@@ -187,7 +186,6 @@ $(() => {
             descending: "降順",
             alignColumn: "列を揃える",
             extraction: "抽出",
-            registerArticle: "記事を登録",
             extractEvent: "イベントを抽出",
             extractRelation: "関係を抽出",
             close: "閉じる",
@@ -1562,6 +1560,30 @@ $(() => {
     }
   }
 
+  function registerArticle() {
+    let article = extractionEditor.getValue();
+    let words = blitzboard.graph.nodes.map((n) => n.id);
+    let graphId = currentGraphMetadata.id;
+    axios
+      .post(`${vectorDBUrl}/register_article`, {
+        article,
+        words,
+        graphId,
+      })
+      .then((response) => {
+        // do nothing
+      })
+      .catch((error) => {
+        toastr.error(`Failed to register article..`, "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+      })
+      .finally(() => {
+        $(e.target).prop("disabled", false);
+      });
+  }
+
   function saveToBackend(callback = null) {
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
     let graphName = currentGraphMetadata.name;
@@ -1611,6 +1633,7 @@ $(() => {
                 preventDuplicates: true,
                 timeOut: 3000,
               });
+              registerArticle();
               setUnsavedStatus(false);
               if (!alreadySaved) currentGraphMetadata.id = res.data.graphId;
               updateGraphList(callback);

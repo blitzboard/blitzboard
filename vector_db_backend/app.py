@@ -84,7 +84,6 @@ def register_article():
     #   ],
     # }
 
-
     data = request.get_json()
     # Register article to vector store with FAISS
     article = data['article']
@@ -109,6 +108,7 @@ def register_article():
     if store is None:
         store = FAISS.from_documents(documents, embeddings)
     else:
+        # TODO: not to re-register same words to reduce cost of indexing
         ids_to_delete = find_by_metadata(store, {"graphId": graphId})
         if len(ids_to_delete.values()) > 0:
             store.delete(ids_to_delete)
