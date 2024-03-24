@@ -432,6 +432,7 @@ span .syntax-warning-line {
 }
 
 .modeless .modal-footer {
+  padding-top: 0px;
   border-top: 0px;
 }
 
