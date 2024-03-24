@@ -415,6 +415,7 @@ span .syntax-warning-line {
   padding-bottom: 0px;
 }
 .modeless .modal-footer {
+  padding-top: 0px;
   border-top: 0px;
 }
 .modeless .CodeMirror {
