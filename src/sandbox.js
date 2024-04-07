@@ -1817,6 +1817,19 @@ $(() => {
     extractionMarkers = [];
   }
 
+  function setMarginForExtractionWidget(widget) {
+    // Set margin to avoid the bounding box of the widget to stick out of the editor
+    let parentWidth = widget.parentElement.offsetWidth;
+    let widgetWidth = widget.offsetWidth;
+    let left = widget.offsetLeft;
+    const margin = 10;
+    if (parentWidth - left < widgetWidth + margin) {
+      widget.style.marginLeft = `${
+        parentWidth - left - widgetWidth - margin
+      }px`;
+    }
+  }
+
   q("#extract-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
     let originalText = extractionEditor.getValue();
@@ -1845,6 +1858,7 @@ $(() => {
           bubble.className = "extraction-bubble";
           extractionEditor.addWidget(cursor.from(), bubble, false);
           extractionWidgets.push(bubble);
+          setMarginForExtractionWidget(bubble);
         }
       }
       return newPG;
@@ -1918,6 +1932,7 @@ $(() => {
           bubble.className = "extraction-bubble";
           extractionEditor.addWidget(cursor.from(), bubble, false);
           extractionWidgets.push(bubble);
+          setMarginForExtractionWidget(bubble);
         }
       }
       return newPG;

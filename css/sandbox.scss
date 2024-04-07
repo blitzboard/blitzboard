@@ -519,10 +519,11 @@ span .syntax-warning-line {
 
 
 .extraction-bubble {
-  background-color: rgba(49, 132, 255);
+  background-color: rgb(49, 132, 255);
   color: white;
   border-radius: 25px;
   padding: 2px 18px 2px 18px;
+  white-space: nowrap;
   z-index: 10000;
   // set opacity on hover
   &:hover {
