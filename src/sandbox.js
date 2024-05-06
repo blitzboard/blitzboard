@@ -152,6 +152,24 @@ $(() => {
             close: "Close",
             extractionPlaceHolder: "Enter the article information...",
             clear: "Clear",
+            errorBeforeSort: "Please write a valid graph before sort.",
+            newNamePrompt: "What is the new name of the page?",
+            newName: "New name",
+            rename: "Rename",
+            deleteConfirmation: `Delete {{ name}} ?`,
+            conflictErrorBeforeSaving:
+              "This data has been updated outside. Please reload first.",
+            saveConfirmation: `Save your change for "{{name}}" before leaving?`,
+            save: "Save",
+            discard: "Discard",
+            clonePrompt: "`What is the name of the cloned page?`",
+            cloneName: "Clone name",
+            clone: "Clone",
+            resetConfig: "Reset config?",
+            reset: "Reset",
+            invalidZipFile: "Invalid zip file",
+            loadFileError: "Error reading {{name}}: {{message}}",
+            cancel: "Cancel",
           },
         },
         ja: {
@@ -191,6 +209,25 @@ $(() => {
             close: "閉じる",
             extractionPlaceHolder: "記事情報を入力してください...",
             clear: "クリア",
+            errorBeforeSort:
+              "グラフの内容が不正です。ソートするために、先に内容を修正してください。",
+            newNamePrompt: "このページの新しい名前を入力してください。",
+            newName: "新しい名前",
+            rename: "変更する",
+            deleteConfirmation: `{{ name }} を削除しますか？`,
+            conflictErrorBeforeSaving:
+              "他のユーザーによってデータが更新されました。再度読み込んでください。",
+            saveConfirmation: `ページ "{{ name }}" を保存しますか？`,
+            save: "保存",
+            discard: "破棄",
+            clonePrompt: "コピー後の名前を入力してください。",
+            cloneName: "コピー後の名前",
+            resetConfig: "設定をリセットしますか？",
+            reset: "リセット",
+            invalidZipFile: "無効なzipファイルです",
+            loadFileError: "{{name}} の読み込みに失敗しました: {{message}}",
+            cancel: "キャンセル",
+            delete: "削除",
           },
         },
       },
@@ -200,6 +237,8 @@ $(() => {
       $("[data-i18n]").localize();
     }
   );
+
+  let i18nTranslate = i18next.translator.translate.bind(i18next.translator);
 
   String.prototype.quoteIfNeeded = function () {
     if (
@@ -331,7 +370,7 @@ $(() => {
     pgToBeSorted = blitzboard.tryPgParse(editor.getValue());
     if (!pgToBeSorted) {
       Swal.fire({
-        text: `Please write a valid graph before sort.`,
+        text: i18nTranslate("errorBeforeSort"),
         icon: "error",
       });
       return;
@@ -341,12 +380,12 @@ $(() => {
 
     // Each option is a pair of value and text
     let nodeOptions = [
-      ["", i18next.translator.translate("none")],
+      ["", i18nTranslate("none")],
       [":id", "id"],
       [":label", "label"],
     ];
     let edgeOptions = [
-      ["", i18next.translator.translate("none")],
+      ["", i18nTranslate("none")],
       [":from-to", "from&to"],
       [":label", "label"],
     ];
@@ -1232,12 +1271,13 @@ $(() => {
     let oldName = savedGraphs[i].name;
 
     Swal.fire({
-      text: `What is the new name of the page?`,
+      text: i18nTranslate("newNamePrompt"),
       inputValue: oldName,
       input: "text",
       showCancelButton: true,
-      inputPlaceholder: "New name",
-      confirmButtonText: "Rename",
+      inputPlaceholder: i18nTranslate("newName"),
+      confirmButtonText: i18nTranslate("rename"),
+      cancelButtonText: i18nTranslate("cancel"),
     }).then((result) => {
       if (result.isConfirmed && result.value) {
         let newName = result.value;
@@ -1293,10 +1333,11 @@ $(() => {
 
     let oldId = savedGraphs[i].id;
     Swal.fire({
-      text: `Delete ${name}?`,
+      text: i18nTranslate(`deleteConfirmation`, { name }),
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      confirmButtonText: "Delete",
+      confirmButtonText: i18nTranslate("delete"),
+      cancelButtonText: i18nTranslate("cancel"),
     }).then((result) => {
       if (result.isConfirmed) {
         if (remoteMode) {
@@ -1596,7 +1637,7 @@ $(() => {
         let props = response.data.properties;
         if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
           Swal.fire({
-            text: "This data has been updated outside. Please reload first.",
+            text: i18nTranslate("conflictErrorBeforeSaving"),
             icon: "error",
           });
         } else {
@@ -1655,12 +1696,15 @@ $(() => {
     }
 
     return Swal.fire({
-      text: `Save your change for "${currentGraphMetadata.name}" before leaving?`,
+      text: i18nTranslate("saveConfirmation", {
+        name: currentGraphMetadata.name,
+      }),
       icon: "warning",
       showDenyButton: true,
       showCancelButton: true,
-      confirmButtonText: "Save",
-      denyButtonText: `Discard`,
+      confirmButtonText: i18nTranslate("save"),
+      denyButtonText: i18nTranslate("discard"),
+      cancelButtonText: i18nTranslate("cancel"),
     }).then((result) => {
       if (result.isConfirmed && callback) {
         saveCurrentGraph(callback);
@@ -1694,12 +1738,13 @@ $(() => {
 
   q("#clone-btn").addEventListener("click", () => {
     Swal.fire({
-      text: `What is the name of the cloned page?`,
+      text: i18nTranslate("clonePrompt"),
       inputValue: currentGraphMetadata.name,
       input: "text",
       showCancelButton: true,
-      inputPlaceholder: "Name",
-      confirmButtonText: "Clone",
+      inputPlaceholder: i18nTranslate("cloneName"),
+      confirmButtonText: i18nTranslate("clone"),
+      cancelButtonText: i18nTranslate("cancel"),
       inputValidator: (value) => {
         if (value.trim().length === 0) {
           return "Page name must not be empty.";
@@ -1755,10 +1800,11 @@ $(() => {
 
   q("#reset-config-btn").addEventListener("click", () => {
     Swal.fire({
-      text: `Reset config?`,
+      text: i18nTranslate("resetConfig"),
       showCancelButton: true,
-      confirmButtonText: "Reset",
+      confirmButtonText: i18nTranslate("reset"),
       confirmButtonColor: "#d33",
+      cancelButtonText: i18nTranslate("cancel"),
     }).then((result) => {
       if (result.isConfirmed) {
         configEditor.setValue(defaultConfig);
@@ -2066,7 +2112,7 @@ $(() => {
               });
           } else if (!zip.file("graph.pg") || !zip.file("config.js")) {
             Swal.fire({
-              text: "Invalid zip file",
+              text: i18nTranslate("invalidZipFile"),
               icon: "error",
             });
           } else {
@@ -2097,7 +2143,10 @@ $(() => {
         },
         function (e) {
           Swal.fire({
-            text: `Error reading ${f.name}: ${e.message}`,
+            text: i18nTranslate("loadFileError", {
+              name: f.name,
+              message: e.message,
+            }),
             icon: "error",
           });
         }
