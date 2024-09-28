@@ -263,7 +263,7 @@ $(() => {
 
   if (remoteMode && currentGraphMetadata?.id) {
     axios
-      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
+      .get(`${backendUrl}/get/?graph_id=${currentGraphMetadata.id}`)
       .then((response) => {
         lastUpdate = response.data.properties?.lastUpdate[0];
       });
@@ -1002,7 +1002,7 @@ $(() => {
     let nodeId = $(e.target).data("node-id");
     axios
       .get(
-        `${backendUrl}/query_table?query=SELECT v.GRAPH FROM MATCH (v) ON x2 WHERE v.ID = '${nodeId}' GROUP BY v.GRAPH`
+        `${backendUrl}/query_table?query=SELECT DISTINCT graph FROM x2node WHERE id = '${nodeId}'`
       )
       .then((response) => {
         e.target.outerHTML =
@@ -1224,7 +1224,7 @@ $(() => {
 
       axios
         .get(
-          `${backendUrl}/query_table?query=SELECT v.id, COUNT(*) AS cnt FROM MATCH (v) ON x2 GROUP BY v.id ORDER BY cnt DESC`
+          `${backendUrl}/query_table?query=SELECT id, COUNT(*) AS cnt FROM x2node GROUP BY id ORDER BY cnt DESC`
         )
         .then((response) => {
           additionalAutocompleteTargets = response.data.table.records.map(
@@ -1286,7 +1286,10 @@ $(() => {
             .request({
               method: "post",
               url: `${backendUrl}/rename`,
-              data: `graph=${savedGraphs[i].id}&name=${newName}`,
+              data: {
+                graph: savedGraphs[i].id,
+                name: newName,
+              },
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
               },
@@ -1345,7 +1348,9 @@ $(() => {
             .request({
               method: "post",
               url: `${backendUrl}/drop`,
-              data: `graph=${savedGraphs[i].id}`,
+              data: {
+                graph: savedGraphs[i].id,
+              },
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
               },
@@ -1417,7 +1422,7 @@ $(() => {
     if (!graph) return;
     byProgram = true;
     editor.setValue(graph.pg);
-    configEditor.setValue(graph.config);
+    if (graph.config) configEditor.setValue(graph.config);
     editor.getDoc().clearHistory();
     configEditor.getDoc().clearHistory();
     updateActiveHistoryItem();
@@ -1434,13 +1439,13 @@ $(() => {
     currentGraphMetadata = graphEntry;
     if (remoteMode) {
       axios
-        .get(`${backendUrl}/get/?graph=${graphEntry.id}`)
+        .get(`${backendUrl}/get/?graph_id=${graphEntry.id}`)
         .then((response) => {
           let props = response.data.properties;
           let config = props?.config?.[0] || defaultConfig;
           if (props?.pg === undefined || props?.config === undefined) {
             axios
-              .get(`${backendUrl}/get/?graph=${graphEntry.id}&response=pg`)
+              .get(`${backendUrl}/get/?graph_id=${graphEntry.id}&response=pg`)
               .then((response) => {
                 byProgram = true;
                 loadGraph({
@@ -1632,9 +1637,9 @@ $(() => {
     let pgValue = editor.getValue();
 
     axios
-      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
+      .get(`${backendUrl}/get/?graph_id=${currentGraphMetadata.id}`)
       .then((response) => {
-        let props = response.data.properties;
+        let props = response.data?.properties;
         if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
           Swal.fire({
             text: i18nTranslate("conflictErrorBeforeSaving"),
@@ -1645,7 +1650,6 @@ $(() => {
           lastUpdate = now;
 
           let savedData = {
-            id: currentGraphMetadata.id,
             properties: {
               name: [currentGraphMetadata.name],
               pg: [pgValue],
@@ -1665,7 +1669,9 @@ $(() => {
             ) >= 0;
 
           let action = alreadySaved ? "update" : "create";
-          if (alreadySaved) savedData.id = currentGraphMetadata.id;
+          if (alreadySaved) {
+            savedData.id = currentGraphMetadata.id;
+          }
 
           axios
             .post(`${backendUrl}/${action}`, savedData)
@@ -2712,13 +2718,15 @@ $(() => {
       );
       if (currentGraph) {
         axios
-          .get(`${backendUrl}/get/?graph=${currentGraph.id}`)
+          .get(`${backendUrl}/get/?graph_id=${currentGraph.id}`)
           .then((response) => {
             let props = response.data.properties;
             let config = props?.config?.[0] || defaultConfig;
             if (props?.pg === undefined || props?.config === undefined) {
               axios
-                .get(`${backendUrl}/get/?graph=${currentGraph.id}&response=pg`)
+                .get(
+                  `${backendUrl}/get/?graph_id=${currentGraph.id}&response=pg`
+                )
                 .then((response) => {
                   loadValues(
                     json2pg.translate(JSON.stringify(response.data.pg)),
