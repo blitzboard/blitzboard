@@ -658,7 +658,6 @@ $(() => {
     } else {
       $("#reset-config-btn").show();
     }
-    console.log("config area height", totalHeight - height);
     $(".input-area-resizable .ui-resizable-handle.ui-resizable-e").css(
       "top",
       `${height / 2}px`
@@ -2443,8 +2442,11 @@ $(() => {
     Esc: (cm) => cm.closeDialog(),
   };
   let shortcutPrefix = clientIsMac ? "Cmd-" : "Ctrl-";
-  extraKeys[shortcutPrefix + "F"] = "findPersistent";
-  extraKeys[shortcutPrefix + "/"] = (cm) => cm.toggleComment();
+  let shortCutKeys = {};
+  shortCutKeys[shortcutPrefix + "F"] = "findPersistent";
+  shortCutKeys[shortcutPrefix + "Alt-F"] = (cm) => cm.execCommand("replace");
+  shortCutKeys[shortcutPrefix + "/"] = (cm) => cm.toggleComment();
+  extraKeys = { ...extraKeys, ...shortCutKeys };
 
   editor = CodeMirror.fromTextArea(q("#graph-input"), {
     lineNumbers: true,
@@ -2578,8 +2580,7 @@ $(() => {
   extraKeys = {
     "Shift-Tab": "indentLess",
   };
-  extraKeys[shortcutPrefix + "F"] = "findPersistent";
-  extraKeys[shortcutPrefix + "/"] = (cm) => cm.toggleComment();
+  extraKeys = { ...extraKeys, ...shortCutKeys };
 
   configEditor = CodeMirror.fromTextArea(q("#config-input"), {
     viewportMargin: Infinity,
@@ -2593,6 +2594,9 @@ $(() => {
       node.className = "double-byte-highlight";
       if (char === "：" || char === "　") node.innerText = char;
       return node;
+    },
+    search: {
+      bottom: true,
     },
     extraKeys,
     hintOptions: {
