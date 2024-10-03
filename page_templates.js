@@ -73,3 +73,5 @@ Choco -- Shiro :friend since:2018
     config: baseConfig
   },
 ];
+
+let propHints = {};

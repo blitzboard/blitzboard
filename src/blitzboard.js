@@ -865,6 +865,11 @@ module.exports = class Blitzboard {
       }
     };
 
+    if(this.config.layout === "hierarchical-scc" && this.config.sccMode === 'longest-only' &&
+      !this.edgeMapInLongestPath?.[pgEdge.from]?.[pgEdge.to]) {
+      attrs.hidden = true;
+    }
+
     let otherProps = this.retrieveConfigPropAll(pgEdge,
       'edge', ['color', 'opacity', 'width', 'title']);
 
@@ -984,10 +989,10 @@ module.exports = class Blitzboard {
       acc.concat(`<tr valign="top"><td>${prop[0]}</td><td> ${convertToHyperLinkIfURL(prop[1])}</td></tr>`), []);
     if (!elem.from) // for nodes
     {
-      let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)}</b></td></tr>`;
+      let idText = `<tr><td><b>${elem.id}</b></td><td> <b>${wrapText(elem.labels.join(', '), true)}</b></td></tr>`;
       flattend_props.splice(0, 0, idText);
-    } else if(elem.labels.length > 0) {
-      let idText = `<tr><td><b>${wrapText(elem.labels.map((l) => ':' + l).join(' '), true)} </b></td><td></td></tr>`;
+    } else {
+      let idText = `<tr><td><b>${elem.from} - ${elem.to}</b></td><td><b>${wrapText(elem.labels.join(', '), true)} </b></td></tr>`;
       flattend_props.splice(0, 0, idText);
     }
     if (flattend_props.length === 0) {
@@ -1149,7 +1154,7 @@ module.exports = class Blitzboard {
   
   /// Return a set of upstream nodes from node specified by srcNodeId
   getUpstreamNodes(srcNodeId) {
-    const edges = this.graph.edges;
+    const edges = Object.values(this.edgeMap);
     const upstreamNodes = new Set();
     const stack = [srcNodeId];
     while(stack.length > 0) {
@@ -1167,7 +1172,7 @@ module.exports = class Blitzboard {
 
   /// Return a set of downstream nodes from node specified by srcNodeId
   getDownstreamNodes(srcNodeId) {
-    const edges = this.graph.edges;
+    const edges = Object.values(this.edgeMap);
     const downStreamNodes = new Set();
     const stack = [srcNodeId];
     while(stack.length > 0) {
@@ -1185,8 +1190,11 @@ module.exports = class Blitzboard {
 
   computeHierarchicalSCCPositions() {
     this.hierarchicalPositionMap = {};
-    let sccList = stronglyConnectedComponents(this.graph.edges);
+    let tmpEdges = JSON.parse(JSON.stringify(this.graph.edges.filter(e => !this.isFilteredOutEdge(e))));
+    let sccList = stronglyConnectedComponents(tmpEdges);
     let tmpNodes = this.graph.nodes.filter(n => {
+      if(this.isFilteredOutNode(n))
+        return false;
       for(let scc of sccList) {
         if(scc.has(n.id))
           return false;
@@ -1209,11 +1217,41 @@ module.exports = class Blitzboard {
       tmpNodes.push({ id: sccId, labels: [], properties: [], location: { start: { line: 0, column: 0}, end: { line: 0, column: 0} } });
     }
 
-    let tmpEdges = JSON.parse(JSON.stringify(this.graph.edges));
-
     for(let edge of tmpEdges) {
       edge.from = this.sccMap[edge.from] || edge.from;
       edge.to = this.sccMap[edge.to] || edge.to;
+    }
+
+    if(this.config.sccMode === 'longest-only') {
+      let edgeCosts = {};
+      let inLongestPath = {};
+
+      for(let edge of tmpEdges) {
+        inLongestPath[edge.from] = inLongestPath[edge.from] || {};
+        edgeCosts[edge.from] = edgeCosts[edge.from] || {};
+        if(edge.from !== edge.to)
+          edgeCosts[edge.from][edge.to] = -1;
+      }
+      for(let node of tmpNodes) {
+        let predList = getLongest(node, tmpNodes, edgeCosts);
+        for(let [to, from] of Object.entries(predList)) {
+          if(from && to) {
+            inLongestPath[from][to] = true;
+            let srcNodesInScc = sccReverseMap[from] || [];
+            for(let nodeId of srcNodesInScc) {
+              inLongestPath[nodeId] = inLongestPath[nodeId] || {};
+              inLongestPath[nodeId][to] = true;
+            }
+
+            let dstNodesInScc = sccReverseMap[to] || [];
+            for(let nodeId of dstNodesInScc) {
+              inLongestPath[from][nodeId] = true;
+            }
+          }
+        }
+      }
+      tmpEdges = tmpEdges.filter(e => inLongestPath[e.from][e.to]);
+      this.edgeMapInLongestPath = inLongestPath;
     }
 
     let tmpNodeDataSet = new visData.DataSet();
@@ -1246,10 +1284,24 @@ module.exports = class Blitzboard {
       }
     }
   }
-  
+
+  isFilteredOutNode(node) {
+    if(this.config.node.filter)
+      return !this.config.node.filter(new Proxy(node, Blitzboard.blitzProxy));
+    return false;
+  }
+
+  isFilteredOutEdge(edge) {
+    if(this.config.edge.filter) {
+      return !this.config.edge.filter(new Proxy(edge, Blitzboard.blitzProxy));
+    }
+    return false;
+  }
+
   update(applyDiff = true) {
     let blitzboard = this;
     this.warnings = [];
+
 
     if(this.baseConfig.configChoices?.configs) {
       let chosenConfig;
@@ -1271,7 +1323,7 @@ module.exports = class Blitzboard {
         nodeSpacing: 100,
         treeSpacing: 200,
         blockShifting: true,
-        edgeMinimization: true,
+        edgeMinimization: false,
         parentCentralization: true,
         direction: 'LR',
         sortMethod: 'directed',
@@ -1298,17 +1350,19 @@ module.exports = class Blitzboard {
       let newEdgeMap = {};
 
       this.maxLine = 0;
+      let newVisNodes = [];
       this.graph.nodes.forEach(node => {
+        if(this.isFilteredOutNode(node)) return;
         let existingNode = this.nodeMap[node.id];
         if(existingNode) {
           if(!nodeEquals(node, existingNode)) {
             this.nodeDataSet.remove(existingNode);
             let visNode = this.toVisNode(node, this.config.node.caption);
-            this.nodeDataSet.update(visNode);
+            newVisNodes.push(visNode);
           }
         } else {
           let visNode = this.toVisNode(node, this.config.node.caption);
-          this.nodeDataSet.add(visNode);
+          newVisNodes.push(visNode);
           this.addedNodes.add(node.id);
         }
         this.nodeMap[node.id] = node;
@@ -1322,7 +1376,12 @@ module.exports = class Blitzboard {
         }
       });
 
+      this.nodeDataSet.update(newVisNodes);
+
+      let newVisEdges = [];
+
       this.graph.edges.forEach(edge => {
+        if(this.isFilteredOutEdge(edge)) return;
         let id = this.toNodePairString(edge);
         if(!this.edgeMap[id])
           this.addedEdges.add(id);
@@ -1332,7 +1391,7 @@ module.exports = class Blitzboard {
         edge.id = id;
         newEdgeMap[id] = edge;
         let visEdge = this.toVisEdge(edge, this.config.edge.caption, id);
-        this.edgeDataSet.update(visEdge);
+        newVisEdges.push(visEdge);
         if(edge.location) {
           for (let i = edge.location.start.line; i <= edge.location.end.line; i++) {
             if (i < edge.location.end.line || edge.location.end.column > 1)
@@ -1341,6 +1400,7 @@ module.exports = class Blitzboard {
           this.maxLine = Math.max(this.maxLine, edge.location.end.line);
         }
       });
+      this.edgeDataSet.update(newVisEdges);
 
       this.deletedNodes.forEach((nodeId) => {
         delete this.nodeMap[nodeId];
@@ -1469,11 +1529,15 @@ module.exports = class Blitzboard {
 
     this.nodeDataSet = new visData.DataSet();
     this.nodeDataSet.add(this.graph.nodes.map((node) => {
+      if(this.isFilteredOutNode(node))
+        return null;
       return this.toVisNode(node, defaultNodeProps);
-    }));
+    }).filter(n => n));
     
     this.edgeMap = {};
     this.edgeDataSet = new visData.DataSet(this.graph.edges.map((edge) => {
+      if(this.isFilteredOutEdge(edge))
+        return null;
       let id = this.toNodePairString(edge);
       while(this.edgeMap[id]) {
         id += '_';
@@ -1485,11 +1549,8 @@ module.exports = class Blitzboard {
           if (i < edge.location.end.line || edge.location.end.column > 1)
             this.edgeLineMap[i] = visEdge;
       }
-
       return visEdge;
-    }));
-
-
+    }).filter(e => e));
 
     // create a network
     let data = {
@@ -1961,6 +2022,7 @@ module.exports = class Blitzboard {
           this.expandSCC();
           break;
         case 'cluster':
+        case 'longest-only':
           this.clusterSCC();
           break;
         case 'only-scc':
