@@ -43,20 +43,26 @@
     }
 }
 
+#blitzboard-search-bar-div{
+    right: 12px;
+}
+
+
+
 #blitzboard-search-button {
-    background:#fff url("https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/search/default/48px.svg") no-repeat 12px center;
+    background:rgba(255, 255, 255, 0) url("https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/search/default/48px.svg") no-repeat 12px center;
     background-size: 20px 20px;
     width: 40px;
     height: 40px;
     right: 0px;
     outline: none;
-    box-shadow: 0 2px rgba(6,0,1,.26);
     cursor: pointer;
     position: absolute;
     transition: all 0.5s;
 }
 
 #blitzboard-search-input {
+    background-color: rgba(255, 255, 255, 0);
     -webkit-appearance:none;
     width: 0px;
     right: 0px;
@@ -65,11 +71,21 @@
     border: none;
     transition: all 0.5s;
     outline: none;
-    box-shadow: 0 2px rgba(6,0,1,.26);
+    box-shadow: 0 1px #151515;
     position: absolute;
 }
 
 #blitzboard-search-input::-webkit-search-cancel-button {
     position: absolute;
     right: 10px;
+}
+
+#blitzboard-config-choice-div{
+}
+
+
+#blitzboard-config-choice-dropdown{
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
 }

@@ -88,3 +88,7 @@ lerna-debug.log
 # System Files
 .DS_Store
 Thumbs.db
+
+.ipynb_checkpoints
+vector_db_backend/articles
+vector_db_backend/*.faiss
