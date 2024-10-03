@@ -72,7 +72,6 @@ $(() => {
   let container = document.getElementById("graph");
   let pgTimerId = null,
     configTimerId = null;
-  let localMode = true;
   blitzboard = new Blitzboard(container);
   config = defaultConfig;
   let byProgram = false;
@@ -659,6 +658,11 @@ $(() => {
     } else {
       $("#reset-config-btn").show();
     }
+    console.log("config area height", totalHeight - height);
+    $(".input-area-resizable .ui-resizable-handle.ui-resizable-e").css(
+      "top",
+      `${height / 2}px`
+    );
   }
 
   function getMousePos(canvas, evt) {
@@ -931,7 +935,14 @@ $(() => {
 
   window.onresize = onResize;
   $("#input-area")
-    .resizable({ handles: "e,s", grid: [1, 10000] })
+    .resizable({
+      handles: "e",
+      grid: [1, 10000],
+      minWidth: 100,
+      classes: {
+        "ui-resizable": "input-area-resizable",
+      },
+    })
     .bind("resize", onResize)
     .bind("create", onResize);
   $("#pg-area")
@@ -1662,7 +1673,6 @@ $(() => {
               edges: tmpEdges,
             },
           };
-
           let alreadySaved =
             savedGraphs.findIndex(
               (graph) => graph.id === currentGraphMetadata.id
@@ -2641,7 +2651,6 @@ $(() => {
     if (!byProgram) {
       if (!pgTimerId) blitzboard.showLoader();
       clearTimeout(pgTimerId);
-      localMode = true;
       setUnsavedStatus(true);
       pgTimerId = setTimeout(() => {
         reflectEditorChange();
@@ -2933,8 +2942,6 @@ $(() => {
       editor.focus();
     });
 
-    $("#options-cross-impact").click(computeCrossImpactFactor);
-    $("#options-insert-edges").click(insertEdges);
     $("#options-search").click(() => editor.execCommand("findPersistent"));
     $("#options-replace").click(() => editor.execCommand("replace"));
     $("#options-sort").click(showSortModal);

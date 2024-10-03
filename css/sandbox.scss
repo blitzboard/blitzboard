@@ -28,9 +28,13 @@ body {
   }
 }
 
-#options-dropdown {
+#options-dropdown-button {
   height: 40px;
   width: 40px;
+}
+
+#options-dropdown {
+  overflow: hidden;
 }
 
 
@@ -196,7 +200,7 @@ body {
   overflow: hidden;
 }
 
-#options-dropdown {
+#options-dropdown-button {
   padding: 0;
 }
 
@@ -515,6 +519,9 @@ span .syntax-warning-line {
 
 .CodeMirror-vscrollbar {
   scrollbar-color: lightgray transparent;
+  // Offset the scrollbar to the right
+  scrollbar-width: thin;
+  right: 15px;
 }
 
 
@@ -538,3 +545,29 @@ span .syntax-warning-line {
   padding: 5px;
 }
 
+$resizable-handle-length: 50px;
+$resizable-handle-width: 3px;
+$resizable-handle-offset: 8px;
+
+.ui-resizable-handle.ui-resizable-e {
+  top: calc(50% - $resizable-handle-length);
+  width: $resizable-handle-width;
+  height: $resizable-handle-length;
+  border-radius: 3px;
+  cursor: col-resize;
+  background-color: #cccccc;
+  right: $resizable-handle-offset;
+}
+
+.ui-resizable-handle.ui-resizable-s {
+  left: calc(50% - $resizable-handle-length);
+  width: $resizable-handle-length;
+  height: $resizable-handle-width;
+  border-radius: 3px;
+  background-color: #cccccc;
+  bottom: $resizable-handle-offset;
+}
+
+.cm-s-monokai {
+  border-bottom: 1px solid #ccc;
+}
