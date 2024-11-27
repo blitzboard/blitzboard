@@ -1,14 +1,22 @@
 
 from flask import Flask, send_file, request, Response, stream_with_context
+
 from flask_cors import CORS
 import json
 import re
 import os
+import sys
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 from openai import OpenAI
+from langchain.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
+
 
 load_dotenv()
 
@@ -37,6 +45,17 @@ def find_by_metadata(
     }
 
     return response
+
+
+chat_model = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0,
+    max_tokens=None,
+    streaming=True,
+    timeout=None,
+    max_retries=2,
+)
+
 
 
 #GET: /article?graphId=<グラフID>
@@ -165,23 +184,86 @@ def related_words():
     return json.dumps(result)
 
 
-@app.route("/completion", methods=["POST"])
-def conversation():
-    def gpt_stream():
-        generator = openai_client.chat.completions.create(model="gpt-3.5-turbo",
-            messages = [
-                { "role": "system", "content": request.json["systemPrompt"] },
-                { "role": "user", "content": request.json["query"] }
-            ],
-        stream=True)
-        import time
-        for chunk in generator:
-            if chunk.choices[0].finish_reason is None:
-                stream_token = chunk.choices[0].delta.content
-                yield stream_token
+def gpt_stream(output_class, system_prompt, user_prompt):
 
-    response = Response(stream_with_context(gpt_stream()), mimetype='text/event-stream')
+    parser = PydanticOutputParser(pydantic_object=output_class)
+
+    generator = openai_client.chat.completions.create(model="gpt-4o",
+        messages = [
+            { "role": "system", "content": system_prompt + "\n" + parser.get_format_instructions() }, 
+            { "role": "user", "content": user_prompt }
+        ],
+        response_format={"type": "json_object"},
+    stream=True)
+
+    print(parser.get_format_instructions(), file=sys.stderr)
+
+    for chunk in generator:
+        if chunk.choices[0].finish_reason is None:
+            stream_token = chunk.choices[0].delta.content
+            yield stream_token
+
+@app.route('/extract_events', methods=['POST'])
+def extract_events():
+    system_prompt = """
+# タスク説明 
+災害のニュース記事からナレッジグラフを作ろうとしています。
+まずはナレッジグラフのノードを列挙するため、災害と、その原因、引き起こされた被害をひとつひとつ個別の事象としてなるべく多く抜き出し、事象の配列を作ってください。
+ただし、各事象の文字数は１５文字以内になるようにしてください
+また、各事象に対して、元のニュース記事のどのフレーズから抜き出したのかを明示してください。
+"""
+    user_prompt = request.json["query"]
+    sample_events = request.json["sampleEvents"]
+    # system_prompt += sample_events
+    class Event(BaseModel):
+        event: str = Field(description="The event name")
+        original_phrase: str = Field(description="The original phrase from the news article")
+    class EventExtractionResult(BaseModel):
+        events: list[Event] = Field(description="The extracted events")
+    response = Response(gpt_stream(EventExtractionResult, system_prompt, user_prompt), mimetype='text/event-stream')
     return response
+
+@app.route('/extract_relations', methods=['POST'])
+def extract_relations():
+    system_prompt = """
+# 命令: 
+災害時の事象間の連鎖関係に関するナレッジグラフを作成しようと思っています。
+{{ 事象リスト }}と、災害の {{ ニュース記事 }}を与えるので、
+ニュース記事の中に「{{原因事象}} -> {{結果事象}}」のような因果関係が含まれる場合は、その因果関係を抽出してください。
+また、抽出した因果関係に対して、元のニュース記事のどの部分から抜き出したのかを明示してください。
+
+# 出力フォーマット
+・出力するフォーマットは以下のようなJSONです。
+{
+    "relationships": [
+        {
+            "cause": "{{ 原因事象 }}",
+            "result": "{{ 結果事象 }}",
+            "original_phrase": "{{ ニュース記事の該当部分 }}"
+        },
+        {
+            "cause": "{{ 原因事象 }}",
+            "result": "{{ 結果事象 }}",
+            "original_phrase": "{{ ニュース記事の該当部分 }}"
+        },
+        ...
+    ]
+}
+
+# その他の制約条件: 
+・与えられた事象リストに含まれていない事象は、出力に含めないようにしてください。
+・「原因事象」の部分は、結果に対する直接の原因になるようにしてください。`;
+"""
+    user_prompt = request.json["query"]
+    class Event(BaseModel):
+        cause: str = Field(description="The cause event")
+        result: str = Field(description="The result event")
+        original_phrase: str = Field(description="The original phrase from the news article")
+    class RelationExtractionResult(BaseModel):
+        relations: list[Event] = Field(description="The extracted relations")
+    response = Response(gpt_stream(RelationExtractionResult, system_prompt, user_prompt), mimetype='text/event-stream')
+    return response
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

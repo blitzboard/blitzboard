@@ -2000,16 +2000,16 @@ $(() => {
     }
 
     function whileStreaming(response) {
-      if (!response.relationships) return;
-      let newPG = updateHighlightAndGetNewPG(response.relationships);
+      if (!response.relations) return;
+      let newPG = updateHighlightAndGetNewPG(response.relations);
       byProgram = true;
       editor.setValue(oldPG + newPG);
       byProgram = false;
     }
 
     function onCompletion(response) {
-      if (!response.relationships) return;
-      let newPG = updateHighlightAndGetNewPG(response.relationships);
+      if (!response.relations) return;
+      let newPG = updateHighlightAndGetNewPG(response.relations);
       editor.setValue(oldPG + newPG);
       blitzboard.hideLoader();
     }
