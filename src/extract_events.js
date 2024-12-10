@@ -6,7 +6,7 @@ async function retrieveRelatedWords(query) {
   return result;
 }
 
-async function extractDisasterEvents(query, inProgressCallback, doneCallback) {
+async function extractEvents(query, inProgressCallback, doneCallback) {
   const relatedWords = await retrieveRelatedWords(query);
   return fetchInStream(
     "/extract_events",
@@ -49,7 +49,7 @@ async function extractRelationships(
 ) {
   const query = `
   # 事象リスト
-  ${events.join("\n")}
+  ${JSON.stringify(events)}
   # ニュース記事
   ${article}
   `;
@@ -58,6 +58,25 @@ async function extractRelationships(
     "/extract_relations",
     {
       query,
+    },
+    inProgressCallback,
+    doneCallback
+  );
+}
+
+async function extractProps(
+  nodeName,
+  article,
+  props,
+  inProgressCallback,
+  doneCallback
+) {
+  return fetchInStream(
+    "/extract_missing_props",
+    {
+      node: nodeName,
+      props,
+      article,
     },
     inProgressCallback,
     doneCallback

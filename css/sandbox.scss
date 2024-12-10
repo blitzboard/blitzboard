@@ -536,8 +536,16 @@ span .syntax-warning-line {
   &:hover {
     opacity: 0.3;
   }
+  &.refined-bubble {
+    background-color: rgb(255, 49, 132);
+  }
+  &.invalidate-bubble {
+    background-color: darkgray;
+  }
+  &.completion-bubble {
+    background-color: rgb(34, 181, 93);
+  }
 }
-
 
 .extracted-line {
   background-color: #3E5270;
