@@ -20,8 +20,9 @@ let remoteMode = !!backendUrl;
 
 let extractionWidgets = [];
 let extractionMarkers = [];
-const emptyExtractionInfo = { nodes: {}, edges: {} };
+const emptyExtractionInfo = { nodes: {}, edges: [] };
 let extractionInfo = Object.assign({}, emptyExtractionInfo);
+let extractionConnectorLines = [];
 
 let config = null;
 
@@ -68,6 +69,20 @@ function getCurrentCharacter() {
 
 function nodeToLine(nodeName, labels = [], properties = {}) {
   let content = nodeName.quoteIfNeeded();
+  for (let label of labels) content += ` :${label.quoteIfNeeded()}`;
+  for (let key in properties) {
+    if (Array.isArray(properties[key])) {
+      for (let value of properties[key])
+        content += ` ${key.quoteIfNeeded()}:${value.quoteIfNeeded()}`;
+    } else {
+      content += ` ${key.quoteIfNeeded()}:${properties[key].quoteIfNeeded()}`;
+    }
+  }
+  return content + "\n";
+}
+
+function edgeToLine(from, to, direction, labels = [], properties = {}) {
+  let content = `${from.quoteIfNeeded()} ${direction} ${to.quoteIfNeeded()}`;
   for (let label of labels) content += ` :${label.quoteIfNeeded()}`;
   for (let key in properties) {
     if (Array.isArray(properties[key])) {
@@ -165,6 +180,7 @@ $(() => {
             extractEvent: "Extract events",
             refineEvent: "Refine events",
             completeEvent: "Complete events",
+            refineRelation: "Refine relationships",
             extractRelation: "Extract relationships",
             close: "Close",
             extractionPlaceHolder: "Enter the article information...",
@@ -1459,7 +1475,7 @@ $(() => {
 
     byProgram = false;
     extractionInfo =
-      graph.extractionInfo || Object.assign({}.emptyExtractionInfo);
+      graph.extractionInfo || Object.assign({}, emptyExtractionInfo);
   }
 
   function loadGraphEntry(graphEntry) {
@@ -1907,8 +1923,22 @@ $(() => {
     }
   }
 
+  function debounce(func, wait) {
+    let notCompleted = false;
+    return function (...args) {
+      if (notCompleted) return;
+      notCompleted = true;
+      setTimeout(() => {
+        func.apply(this, args);
+        notCompleted = false;
+      }, wait);
+    };
+  }
+
   function renderExtractionInfo() {
     clearExtractionHighlights();
+    // Place bubbles for nodes
+    const markerMap = {};
     for (let node of Object.keys(extractionInfo.nodes)) {
       let nodeInfo = extractionInfo.nodes[node];
       let cursor = extractionEditor.getSearchCursor(nodeInfo.originalPhrase);
@@ -1930,10 +1960,50 @@ $(() => {
         }
         extractionEditor.addWidget(cursor.from(), bubble, false);
         extractionWidgets.push(bubble);
+        markerMap[node] = bubble;
         setMarginForExtractionWidget(bubble);
       }
     }
+    // Connect bubbles with lines
+    extractionConnectorLines = [];
+    for (let edge of extractionInfo.edges) {
+      extractionConnectorLines.push({
+        from: markerMap[edge.from],
+        to: markerMap[edge.to],
+      });
+    }
+    updatePositionOfConnectorLines();
   }
+  let debouncedRenderExtractionInfo = debounce(renderExtractionInfo, 100);
+
+  function updatePositionOfConnectorLines() {
+    let canvas = document.getElementById("lineCanvas");
+    canvas.innerHTML = "";
+    for (let connectorLine of extractionConnectorLines) {
+      let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      const { from, to } = connectorLine;
+      if (!from || !to) continue;
+      const rect1 = from.getBoundingClientRect();
+      const rect2 = to.getBoundingClientRect();
+      const parentRect = canvas.getBoundingClientRect();
+
+      const x1 = rect1.left + rect1.width / 2 - parentRect.left;
+      const y1 = rect1.top + rect1.height / 2 - parentRect.top;
+      const x2 = rect2.left + rect2.width / 2 - parentRect.left;
+      const y2 = rect2.top + rect2.height / 2 - parentRect.top;
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      line.setAttribute("strokeWidth", 1);
+      line.setAttribute("stroke", "yellow");
+      canvas.appendChild(line);
+    }
+  }
+
+  window.addEventListener("resize", updatePositionOfConnectorLines);
+  window.addEventListener("scroll", updatePositionOfConnectorLines);
+  extractionEditor.on("scroll", updatePositionOfConnectorLines);
 
   q("#extract-btn").addEventListener("click", async function (e) {
     blitzboard.showLoader();
@@ -1958,7 +2028,7 @@ $(() => {
           phase: "firstExtraction",
         };
       }
-      renderExtractionInfo();
+      debouncedRenderExtractionInfo();
       return newPG;
     }
 
@@ -1998,11 +2068,12 @@ $(() => {
     let newNodes = [];
     for (let node of blitzboard.graph.nodes) {
       let resp = await fetch(`${vectorDBUrl}/similar_node?node=${node.id}`, {
-        method: "GET",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(node),
       });
       resp = await resp.json();
-      const threshold = 0.5;
-      if (resp.distance > threshold) {
+      if (!resp.matched) {
         newNodes.push(node);
       } else {
         properties = Object.assign({}, node.properties);
@@ -2035,8 +2106,12 @@ $(() => {
             properties,
             nodeToMerge.properties
           );
-          extractionInfo.nodes[node.id].phase = "invalidate";
-          extractionInfo.nodes[refinedName].phase = "refine";
+          if (extractionInfo.nodes[node.id]) {
+            extractionInfo.nodes[node.id].phase = "invalidate";
+          }
+          if (extractionInfo.nodes[refinedName]) {
+            extractionInfo.nodes[refinedName].phase = "refine";
+          }
         } else {
           newNodes.push({
             id: refinedName,
@@ -2044,7 +2119,7 @@ $(() => {
             properties: properties,
           });
           refinedNodeNames.push(refinedName);
-          if (refinedName !== node.id) {
+          if (refinedName !== node.id && extractionInfo.nodes[node.id]) {
             extractionInfo.nodes[refinedName] = extractionInfo.nodes[node.id];
             extractionInfo.nodes[refinedName].phase = "refine";
             delete extractionInfo.nodes[node.id];
@@ -2089,6 +2164,41 @@ $(() => {
     byProgram = false;
     blitzboard.hideLoader();
     changeUiStateAfterExtraction(e.target);
+    renderExtractionInfo();
+  });
+
+  q("#refine-relation-btn").addEventListener("click", async function (e) {
+    blitzboard.showLoader();
+    changeUiStateBeforeExtraction(e.target);
+    let params = {
+      nodes: blitzboard.graph.nodes.map((n) => n.id),
+    };
+    let newPG = editor.getValue();
+    let resp = await fetch(`${vectorDBUrl}/edges_between_nodes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    resp = await resp.json();
+    const existingEdges = blitzboard.graph.edges;
+    for (let edge of resp) {
+      if (
+        !existingEdges.find((e) => e.from === edge.from && e.to === edge.to)
+      ) {
+        newPG +=
+          "\n" + edgeToLine(edge.from, edge.to, "->", [], edge.properties);
+        extractionInfo.edges.push({
+          from: edge.from,
+          to: edge.to,
+        });
+      }
+    }
+
+    editor.setValue(newPG);
+    changeUiStateAfterExtraction(e.target);
+    updateGraph(newPG);
+    blitzboard.hideLoader();
+    renderExtractionInfo();
   });
 
   function changeUiStateBeforeExtraction(target) {
@@ -2117,24 +2227,15 @@ $(() => {
       let newPG = "";
       if (!relationships || relationships.length === 0) return "";
       clearExtractionHighlights();
+      extractionInfo.edges = [];
       for (let relation of relationships) {
         newPG += `${relation.cause.quoteIfNeeded()} -> ${relation.result.quoteIfNeeded()}\n`;
-        if (!relation.original_phrase) continue;
-        let cursor = extractionEditor.getSearchCursor(relation.original_phrase);
-        if (cursor.findNext()) {
-          extractionMarkers.push(
-            extractionEditor.markText(cursor.from(), cursor.to(), {
-              className: "extracted-line",
-            })
-          );
-          let bubble = document.createElement("div");
-          bubble.innerText = `${relation.cause} -> ${relation.result || ""}`;
-          bubble.className = "extraction-bubble";
-          extractionEditor.addWidget(cursor.from(), bubble, false);
-          extractionWidgets.push(bubble);
-          setMarginForExtractionWidget(bubble);
-        }
+        extractionInfo.edges.push({
+          from: relation.cause,
+          to: relation.result,
+        });
       }
+      debouncedRenderExtractionInfo();
       return newPG;
     }
 
@@ -2598,6 +2699,13 @@ $(() => {
           properties: n.properties,
         };
       }),
+      edges: blitzboard.graph.edges.map((e) => {
+        return {
+          from: e.from,
+          to: e.to,
+          properties: e.properties,
+        };
+      }),
     };
     // Register current graph as an abstract graph
     const resp = await fetch(`${vectorDBUrl}/register_abstract_nodes`, {
@@ -2605,7 +2713,6 @@ $(() => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
     });
-    console.log({ resp });
   };
 
   extraKeys = { ...extraKeys, ...shortCutKeys };

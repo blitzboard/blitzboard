@@ -33,6 +33,10 @@ abstract_node_store_path = "abstract_node_store.faiss"
 
 abstract_node_store = None
 
+abstract_edge_store_path = "abstract_edge_store.json"
+
+abstract_edge_store = None
+
 embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
 
 model_name = "gpt-4o"
@@ -40,11 +44,42 @@ model_name = "gpt-4o"
 if os.path.exists(abstract_node_store_path):
     abstract_node_store = FAISS.load_local(abstract_node_store_path, embeddings, allow_dangerous_deserialization=True)
 
+if os.path.exists(abstract_edge_store_path):
+    with open(abstract_edge_store_path, "r") as f:
+        abstract_edge_store = json.load(f)
 
 article_dir = os.getenv("ARTICLE_DIR", "./articles")
 # create article directory if not exists
 if not os.path.exists(article_dir):
     os.makedirs(article_dir)
+
+
+def quote_if_needed(value):
+    if ' ' in value or ':' in value:
+        return f'"{value}"'
+    return value
+
+def node_to_line(node):
+    node_name = node["id"]
+    labels = node["labels"]
+    properties = node["properties"]
+    if labels is None:
+        labels = []
+    if properties is None:
+        properties = {}
+
+    content = quote_if_needed(node_name)
+    for label in labels:
+        content += f' :{quote_if_needed(label)}'
+    for key, value in properties.items():
+        if isinstance(value, list):
+            for item in value:
+                content += f' {quote_if_needed(key)}:{quote_if_needed(item)}'
+        else:
+            content += f' {quote_if_needed(key)}:{quote_if_needed(value)}'
+    return content
+
+
 
 def find_by_metadata(
     faiss, filter) -> 'dict[str, Document]':
@@ -58,17 +93,6 @@ def find_by_metadata(
     }
 
     return response
-
-
-chat_model = ChatOpenAI(
-    model=model_name,
-    temperature=0,
-    max_tokens=None,
-    streaming=True,
-    timeout=None,
-    max_retries=2,
-)
-
 
 
 #GET: /article?graphId=<グラフID>
@@ -161,14 +185,35 @@ def register_abstract_nodes():
     #   },
     #   ...
     # ]
+    # data format of edges:
+    # [
+    #   {
+    #     "from": "node1",
+    #     "to": "node2",
+    #     "properties": {
+    #       "property1": "description1",
+    #       "property2": "description2",
+    #       ...
+    #     }
+    #   },
+    #   ...
+    # ]
+
+    global abstract_node_store, abstract_edge_store
 
     data = request.get_json()["nodes"]
     documents = []
     for node_definition in data:
         documents.append(Document(node_definition['name'], metadata=node_definition['properties']))
 
+    # By default, L2 distance is used in FAISS
     abstract_node_store = FAISS.from_documents(documents, embeddings)
     abstract_node_store.save_local(abstract_node_store_path)
+
+    edges = request.get_json()["edges"]
+    with open(abstract_edge_store_path, "w") as f:
+        json.dump(edges, f, ensure_ascii=False)
+    abstract_edge_store = edges
     return json.dumps({"status": "ok"})
 
 def retrieve_from_abstract_node_store(node_name, k=1):
@@ -176,19 +221,44 @@ def retrieve_from_abstract_node_store(node_name, k=1):
         return []
     return abstract_node_store.similarity_search_with_score(node_name, k=k)
 
+def check_node_matching(abstract_node_name, instance_node_description):
+    prompt = f"""
+# 命令: 
+以下に「一般的な事象の名前」と、「個別の事象の説明」を与えるので、「個別な事象」が「一般的な事象」に含まれるかどうかを判定してください。
+含まれる場合には「yes」、含まれない場合には「no」と入力してください。
 
-@app.route('/similar_node', methods=['GET'])
+# 一般的な事象の名前
+{abstract_node_name}
+
+# 個別の事象の説明
+{instance_node_description}
+"""
+    class MatchingResult(BaseModel):
+        result: str = Field(description="The result of matching. 'yes' or 'no'")
+    res = gpt_synchronous(MatchingResult, prompt, "")
+    return res.result == "yes"
+
+
+@app.route('/similar_node', methods=['POST'])
 def similar_node():
     # GET: /similar_node?node=<ノード名>
     # ノード名に類似するノードを取得する
 
     # Wordnet使えるかも
-    node = request.args.get('node')
-    nearest = retrieve_from_abstract_node_store(node)
+    node = request.get_json()
+    nearest = retrieve_from_abstract_node_store(node["id"])
     if len(nearest) == 0:
         return json.dumps({})
     nearest = nearest[0]
-    return json.dumps({"name": nearest[0].page_content, "distance": float(nearest[1]), "properties": nearest[0].metadata}, ensure_ascii=False)
+    threshold = 1.0
+    epsilon = 0.0001
+    if nearest[1] > threshold:
+        matched = False
+    elif nearest[1] < epsilon:
+        matched = True
+    else:
+        matched = check_node_matching(nearest[0].page_content, node_to_line(node))
+    return json.dumps({"name": nearest[0].page_content, "distance": float(nearest[1]), "matched": matched, "properties": nearest[0].metadata}, ensure_ascii=False)
 
 @app.route('/extract_missing_props', methods=['POST'])
 def extract_missing_props():
@@ -309,20 +379,32 @@ def related_words():
         result.append({"word": n[0].page_content, "graphId": n[0].metadata['graphId'], "distance": float(n[1])})
     return json.dumps(result)
 
+@app.route('/edges_between_nodes', methods=['POST'])
+def edges_between_nodes():
+    data = request.get_json()
+    nodes = data['nodes']
+    if abstract_edge_store is None:
+        return json.dumps([])
+    result = []
+    for edge in abstract_edge_store:
+        if edge['from'] in nodes and edge['to'] in nodes:
+            result.append(edge)
+    return json.dumps(result)
+
 
 def gpt_stream(output_class, system_prompt, user_prompt):
 
     parser = PydanticOutputParser(pydantic_object=output_class)
 
     generator = openai_client.chat.completions.create(model=model_name,
+                                                      
         messages = [
             { "role": "system", "content": system_prompt + "\n" + parser.get_format_instructions() }, 
             { "role": "user", "content": user_prompt }
         ],
+        temperature=0,
         response_format={"type": "json_object"},
     stream=True)
-
-    print(parser.get_format_instructions(), file=sys.stderr)
 
     for chunk in generator:
         if chunk.choices[0].finish_reason is None:
@@ -337,6 +419,7 @@ def gpt_synchronous(output_class, system_prompt, user_prompt):
             { "role": "system", "content": system_prompt + "\n" + parser.get_format_instructions() }, 
             { "role": "user", "content": user_prompt }
         ],
+        temperature=0,
         response_format={"type": "json_object"})
 
     return parser.parse(completion.choices[0].message.content)
