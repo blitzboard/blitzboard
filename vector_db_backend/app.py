@@ -39,7 +39,7 @@ abstract_edge_store = None
 
 embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
 
-model_name = "gpt-4o"
+base_model_name = "gpt-4o"
 
 if os.path.exists(abstract_node_store_path):
     abstract_node_store = FAISS.load_local(abstract_node_store_path, embeddings, allow_dangerous_deserialization=True)
@@ -252,6 +252,9 @@ def similar_node():
     nearest = nearest[0]
     threshold = 1.0
     epsilon = 0.0001
+
+    print(f"Nearest node: {nearest[0].page_content}, distance: {nearest[1]}", file=sys.stderr)
+
     if nearest[1] > threshold:
         matched = False
     elif nearest[1] < epsilon:
@@ -294,7 +297,9 @@ def extract_missing_nodes():
     class NounPhraseList(BaseModel):
         noun_phrases: list[str] = Field(description="The list of noun phrases")
 
-    phrase_result = gpt_synchronous(NounPhraseList, system_prompt, article)
+    phrase_result = gpt_synchronous(NounPhraseList, system_prompt, article, "gpt-4o-mini")
+
+    print(f"Extracted noun phrases: {phrase_result.noun_phrases}", file=sys.stderr)
 
     # 次に、各名詞句に対して類似するノードを抽象グラフから抽出
     threshold = 0.5
@@ -305,7 +310,7 @@ def extract_missing_nodes():
             nearest = nearest[0]
             node_name = nearest[0].page_content
             if nearest[1] < threshold and node_name not in existing_nodes and node_name not in [n['name'] for n in missing_nodes]:
-                print(f"Found missing node from {phrase}: {node_name}")
+                print(f"Found missing node from {phrase}: {node_name}", file=sys.stderr)
                 missing_nodes.append({"name": node_name, "properties": nearest[0].metadata, "original_phrase": phrase})
 
     # プロパティの抽出
@@ -323,6 +328,7 @@ def extract_missing_nodes():
         ExtractedProps = create_model('ExtractedProps', **fields)
         response = gpt_synchronous(ExtractedProps, system_prompt, article)
         node['properties'] = response.dict()
+        print(f"Extracted properties for {node['name']}: {node['properties']}", file=sys.stderr)
 
         # Remove prop whose value is empty
         node['properties'] = {prop: value for prop, value in node['properties'].items() if value}
@@ -392,17 +398,20 @@ def edges_between_nodes():
     return json.dumps(result)
 
 
-def gpt_stream(output_class, system_prompt, user_prompt):
+def gpt_stream(output_class, system_prompt, user_prompt, model=None):
+    if model is None:
+        model = base_model_name
 
     parser = PydanticOutputParser(pydantic_object=output_class)
 
-    generator = openai_client.chat.completions.create(model=model_name,
+    generator = openai_client.chat.completions.create(model=model,
                                                       
         messages = [
             { "role": "system", "content": system_prompt + "\n" + parser.get_format_instructions() }, 
             { "role": "user", "content": user_prompt }
         ],
         temperature=0,
+        seed=42,
         response_format={"type": "json_object"},
     stream=True)
 
@@ -411,15 +420,19 @@ def gpt_stream(output_class, system_prompt, user_prompt):
             stream_token = chunk.choices[0].delta.content
             yield stream_token
 
-def gpt_synchronous(output_class, system_prompt, user_prompt):
+def gpt_synchronous(output_class, system_prompt, user_prompt, model=None):
+    if model is None:
+        model = base_model_name
+
     parser = PydanticOutputParser(pydantic_object=output_class)
 
-    completion = openai_client.chat.completions.create(model=model_name,
+    completion = openai_client.chat.completions.create(model=model,
         messages = [
             { "role": "system", "content": system_prompt + "\n" + parser.get_format_instructions() }, 
             { "role": "user", "content": user_prompt }
         ],
         temperature=0,
+        seed=42,
         response_format={"type": "json_object"})
 
     return parser.parse(completion.choices[0].message.content)
