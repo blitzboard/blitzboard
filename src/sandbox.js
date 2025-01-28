@@ -117,8 +117,11 @@ $(() => {
   let viewMode = loadConfig("viewMode");
   let pgToBeSorted;
   let sortModal = new bootstrap.Modal(document.getElementById("sort-modal"));
-  let metaGraphModal = new bootstrap.Modal(
-    document.getElementById("metagraph-modal")
+  let metaGraphModeless = new bootstrap.Modal(
+    document.getElementById("metagraph-modeless"),
+    {
+      backdrop: false,
+    }
   );
   let extractModeless = new bootstrap.Modal(
     document.getElementById("extract-modeless"),
@@ -203,6 +206,7 @@ $(() => {
             invalidZipFile: "Invalid zip file",
             loadFileError: "Error reading {{name}}: {{message}}",
             cancel: "Cancel",
+            metagraph: "Metagraph",
           },
         },
         ja: {
@@ -261,6 +265,7 @@ $(() => {
             loadFileError: "{{name}} の読み込みに失敗しました: {{message}}",
             cancel: "キャンセル",
             delete: "削除",
+            metagraph: "メタグラフ",
           },
         },
       },
@@ -559,7 +564,9 @@ $(() => {
           ctx.lineTo(lineEnd.x, lineEnd.y);
           ctx.stroke();
         }
+        adjustNodeAppearanceInMetaGraph();
       });
+
       prevNetwork = blitzboard.network;
     }
     updateAutoCompletion();
@@ -1097,7 +1104,7 @@ $(() => {
 
     let downstreamNodeIds = blitzboard.getDownstreamNodes(targetNodeIdOnModal);
     let upstreamNodeIds = blitzboard.getUpstreamNodes(targetNodeIdOnModal);
-    $("#metagraph-modal-title")[0].innerText = targetNodeIdOnModal;
+    $("#metagraph-modeless-title")[0].innerText = targetNodeIdOnModal;
 
     graphOnModal = {};
     graphOnModal.nodes = blitzboard.graph.nodes.filter(
@@ -1110,21 +1117,66 @@ $(() => {
     );
 
     if (!metaBlitzboard)
-      metaBlitzboard = new Blitzboard(q("#metagraph-modal-graph"));
-    metaGraphModal.show();
+      metaBlitzboard = new Blitzboard(q("#metagraph-modeless-graph"));
+    metaGraphModeless.show();
     metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)), false);
     configOnModal = parseConfig(configEditor.getValue());
-    $("#all-graphs-checkbox").prop("checked", false);
-    $("#hierarchical-checkbox").prop("checked", false);
-    if (config.layout === "hierarchical-scc") {
-      // If layout is already hierarchical-scc, hide config
-      $("#hierarchical-div").hide();
-    } else {
-      $("#hierarchical-div").show();
-    }
     addHighlightOptionOnModal(configOnModal);
 
     metaBlitzboard.setConfig(configOnModal, true);
+  });
+
+  function adjustNodeAppearanceInMetaGraph() {
+    if (metaGraphModeless._isShown) {
+      let nodesOnlyInMetaGraph = new Set();
+      for (let node of metaBlitzboard.graph.nodes) {
+        nodesOnlyInMetaGraph.add(node.id);
+      }
+      for (let node of blitzboard.graph.nodes) {
+        let nodeProp = blitzboard.nodeDataSet.get(node.id);
+        if (metaBlitzboard.nodeDataSet.get(node.id)) {
+          nodesOnlyInMetaGraph.delete(node.id);
+          let positionInInstanceGraph = blitzboard.network.getPosition(node.id);
+          metaBlitzboard.nodeDataSet.update({
+            id: node.id,
+            x: positionInInstanceGraph.x,
+            y: positionInInstanceGraph.y,
+            color: nodeProp.color,
+            fixed: true,
+          });
+        }
+      }
+      for (let nodeId of nodesOnlyInMetaGraph) {
+        metaBlitzboard.nodeDataSet.update({
+          id: nodeId,
+          color: "#f0f0f0",
+        });
+      }
+
+      // Adjust viewports between instance graph and metagraph
+      metaBlitzboard.network.moveTo({
+        position: blitzboard.network.getViewPosition(),
+        scale: blitzboard.network.getScale() / 2,
+      });
+    }
+  }
+
+  $(".modal-content").resizable({});
+
+  $(document).on("click", "#metagraph-modeless-btn", (e) => {
+    let metagraph = blitzboard.tryPgParse(
+      JSON.parse(localStorage.getItem("saved-graph-抽象グラフ")).pg
+    );
+
+    if (!metaBlitzboard)
+      metaBlitzboard = new Blitzboard(q("#metagraph-modeless-graph"));
+    metaGraphModeless.show({ backdrop: false });
+    metaBlitzboard.setGraph(metagraph, false);
+    configOnModal = parseConfig(configEditor.getValue());
+    addHighlightOptionOnModal(configOnModal);
+
+    metaBlitzboard.setConfig(configOnModal, true);
+    adjustNodeAppearanceInMetaGraph();
   });
 
   q("#export-csv-btn").addEventListener("click", () => {
@@ -1646,12 +1698,42 @@ $(() => {
       }
       updateGraphList(callback);
       registerArticle();
+
+      if (graph.name === "抽象グラフ" && blitzboard.graph) {
+        let params = {
+          nodes: blitzboard.graph.nodes.map((n) => {
+            return {
+              name: n.id,
+              properties: n.properties,
+            };
+          }),
+          edges: blitzboard.graph.edges.map((e) => {
+            return {
+              from: e.from,
+              to: e.to,
+              properties: e.properties,
+            };
+          }),
+        };
+        // Register current graph as an abstract graph
+        fetch(`${vectorDBUrl}/register_abstract_nodes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params),
+        }).then((response) => {
+          toastr.success("抽象グラフを更新しました", "", {
+            preventDuplicates: true,
+            timeOut: 3000,
+          });
+        });
+      }
     } else {
       saveToBackend(callback);
     }
   }
 
   function registerArticle() {
+    if (!blitzboard.graph) return;
     let article = extractionEditor.getValue();
     let words = blitzboard.graph.nodes.map((n) => n.id);
     let graphId = currentGraphMetadata.id;
@@ -1955,6 +2037,8 @@ $(() => {
           bubble.classList.add("refined-bubble");
         } else if (nodeInfo.phase === "invalidate") {
           bubble.classList.add("invalidated-bubble");
+        } else if (nodeInfo.phase === "refine-with-no-change") {
+          bubble.classList.add("no-change-bubble");
         } else if (nodeInfo.phase === "completion") {
           bubble.classList.add("completion-bubble");
         }
@@ -2074,6 +2158,7 @@ $(() => {
       });
       resp = await resp.json();
       if (!resp.matched) {
+        node.labels = ["抽象グラフに存在しない"];
         newNodes.push(node);
       } else {
         properties = Object.assign({}, node.properties);
@@ -2111,18 +2196,25 @@ $(() => {
           }
           if (extractionInfo.nodes[refinedName]) {
             extractionInfo.nodes[refinedName].phase = "refine";
+            nodeToMerge.labels = ["抽象グラフに存在＋補正"];
           }
         } else {
-          newNodes.push({
+          const newNode = {
             id: refinedName,
             labels: node.labels,
             properties: properties,
-          });
+          };
+          newNodes.push(newNode);
           refinedNodeNames.push(refinedName);
           if (refinedName !== node.id && extractionInfo.nodes[node.id]) {
             extractionInfo.nodes[refinedName] = extractionInfo.nodes[node.id];
             extractionInfo.nodes[refinedName].phase = "refine";
+            newNode.labels = ["抽象グラフに存在＋補正"];
             delete extractionInfo.nodes[node.id];
+          }
+          if (refinedName === node.id && extractionInfo.nodes[refinedName]) {
+            extractionInfo.nodes[refinedName].phase = "refine-with-no-change";
+            newNode.labels = ["抽象グラフに存在＋完全一致"];
           }
         }
       }
@@ -2131,9 +2223,7 @@ $(() => {
       newPG += nodeToLine(node.id, node.labels, node.properties);
     }
     renderExtractionInfo();
-    byProgram = true;
     editor.setValue(newPG);
-    byProgram = false;
     blitzboard.hideLoader();
     changeUiStateAfterExtraction(e.target);
   });
@@ -2153,15 +2243,13 @@ $(() => {
     });
     resp = await resp.json();
     for (let node of resp) {
-      newPG += nodeToLine(node.name, [], node.properties);
+      newPG += nodeToLine(node.name, ["抽象グラフから追加"], node.properties);
       extractionInfo.nodes[node.name] = {
         originalPhrase: node.original_phrase,
         phase: "completion",
       };
     }
-    byProgram = true;
     editor.setValue(newPG);
-    byProgram = false;
     blitzboard.hideLoader();
     changeUiStateAfterExtraction(e.target);
     renderExtractionInfo();
@@ -2267,8 +2355,8 @@ $(() => {
       });
   });
 
-  q("#extract-modeless-close-btn").addEventListener("click", (e) => {
-    extractModeless.hide();
+  $(".modeless-close-btn").on("click", (e) => {
+    $(e.target).closest(".modeless").modal("hide");
   });
 
   q("#extract-modeless-clear-btn").addEventListener("click", (e) => {
@@ -2277,6 +2365,10 @@ $(() => {
   });
 
   $("#extract-modeless").draggable({
+    handle: ".modal-header",
+  });
+
+  $("#metagraph-modeless").draggable({
     handle: ".modal-header",
   });
 
@@ -3152,51 +3244,6 @@ $(() => {
       e.preventDefault();
       localStorage.setItem("optionsShowConfig", showConfig);
       showOrHideConfig();
-    });
-
-    $("#all-graphs-checkbox").click((e) => {
-      let fromAllGraph = $(e.target).prop("checked");
-      const maxDepth = 5;
-      if (fromAllGraph) {
-        axios
-          .get(
-            `${backendUrl}/query_path?match=ALL (n1)->{1,${maxDepth}}(n2)&where=n2.id='${targetNodeIdOnModal}'`
-          )
-          .then((response) => {
-            let upstreamPg = response.data.pg;
-            axios
-              .get(
-                `${backendUrl}/query_path?match=ALL (n2)->{1,${maxDepth}}(n3)&where=n2.id='${targetNodeIdOnModal}'`
-              )
-              .then((response) => {
-                let downstreamPg = response.data.pg;
-                let mergedNodes = {};
-                let mergedEdges = {};
-
-                for (let node of upstreamPg.nodes.concat(downstreamPg.nodes)) {
-                  mergedNodes[node.id] = node;
-                }
-
-                for (let edge of upstreamPg.edges.concat(downstreamPg.edges)) {
-                  mergedEdges[edge.from + "-" + edge.to] = edge;
-                }
-                let mergedPg = {
-                  nodes: Object.values(mergedNodes),
-                  edges: Object.values(mergedEdges),
-                };
-                metaBlitzboard.setGraph(mergedPg);
-              });
-          })
-          .catch((error) => {
-            console.log(error);
-            toastr.error(`Failed to query ${backendUrl}...: ${error}`, "", {
-              preventDuplicates: true,
-              timeOut: 3000,
-            });
-          });
-      } else {
-        metaBlitzboard.setGraph(JSON.parse(JSON.stringify(graphOnModal)));
-      }
     });
 
     $("#hierarchical-checkbox").click((e) => {

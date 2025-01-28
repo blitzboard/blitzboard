@@ -103,7 +103,14 @@
                 </label>
             </li>
             <ul class='navbar-nav justify-content-end' style='margin-left: auto; margin-right: 0;'>
-                <li class='nav-item d-none'>
+
+                <li class='nav-item'>
+                    <label class='btn text-white' href='#' data-i18n="[title]metagraph" id="metagraph-modeless-btn"
+                        data-bs-toggle='tooltip' data-placement='bottom'>
+                        <img src="./img/metagraph.svg">
+                    </label>
+                </li>
+                <li class='nav-item'>
                     <label class='btn text-white' href='#' data-i18n="[title]extractFromArticle" id="extract-modal-btn"
                         data-bs-toggle='tooltip' data-placement='bottom'>
                         <img src="./img/w_extract.svg">
@@ -343,25 +350,26 @@
             </div>
         </div>
     </div>
-    <div class='modal' id='metagraph-modal' tabindex='-1'>
-        <div class='modal-dialog' style='max-width: 90vw;'>
+    <div class='modal text-white fade modeless' id='metagraph-modeless' tabindex='-1'>
+        <div class='modal-dialog' style='min-width: 300px; min-height: 300px;'>
             <div class='modal-content'>
                 <div class='modal-header my-0'>
-                    <div id='metagraph-modal-title'></div>
+                    <h5 class="my-auto">
+                        <span data-i18n="metagraph"></span>
+                    </h5>
+                    <button type="button" class="btn text-white modeless-close-btn" data-dismiss="modal">
+                        <img src="./img/close.svg">
+                    </button>
                 </div>
                 <div class='modal-body' style='overflow-y:auto;'>
-                    <div id='metagraph-pane' style='height: 75vh; width: 100%;'>
-                        <div id='metagraph-modal-graph'></div>
-                    </div>
-                    <div class='pull-right'>
-                        <input id='all-graphs-checkbox' type='checkbox'>
-                        <label for='all-graphs-checkbox'>All graphs</label>
-                        <button class='ms-5 btn btn-secondary' data-bs-dismiss='modal' type='button'>close</button>
+                    <div id='metagraph-pane' style="height: 100%; width:100%">
+                        <div id='metagraph-modeless-graph'></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <div id="extract-modeless" class="modal text-white fade modeless">
         <div class="modal-dialog">
@@ -371,11 +379,14 @@
                         <img src="./img/w_extract.svg">
                         <span data-i18n="extraction"></span>
                     </h5>
-                    <button type="button" class="btn text-white" data-dismiss="modal" id="extract-modeless-close-btn">
+                    <button type="button" class="btn text-white modeless-close-btn" data-dismiss="modal">
                         <img src="./img/close.svg">
                     </button>
                 </div>
                 <div class="modal-body">
+                    <svg id="lineCanvas"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; pointer-events: none;">
+                    </svg>
                     <textarea id="extract-textarea" style="width: 100em; height: 20em;"
                         data-i18n="[placeholder]extractionPlaceHolder"></textarea>
                 </div>
@@ -413,6 +424,13 @@
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <span data-i18n="extractRelation"></span>
+                    </button>
+                    <button type="button" class="btn bg-white btn-about-extraction" id="refine-relation-btn">
+                        <div class="spinner-border spinner-border-sm text-dark ms-2 me-2 extract-loader" role="status"
+                            style="display: none;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span data-i18n="refineRelation"></span>
                     </button>
 
                 </div>

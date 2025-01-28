@@ -113,7 +113,7 @@ body {
   position: relative;
 }
 
-#metagraph-modal-graph {
+#metagraph-modeless-graph {
   height: 100%;
   width: 100%;
   top: 0;
@@ -131,7 +131,7 @@ body {
   z-index: 2;
 }
 
-.ui-resizable-handle {
+main-area > .ui-resizable-handle {
   background: #cccccc;
 }
 
@@ -497,7 +497,7 @@ span .syntax-warning-line {
         }
         margin-right: auto !important;
       }
-      &#extract-modeless-close-btn {
+      &.modeless-close-btn {
         padding: 0px;
         border-radius: 0px;
         height: 23.5px;
@@ -513,7 +513,24 @@ span .syntax-warning-line {
       .spinner-border {
         width: 15px;
         height: 15px;
-      }
+      } 
+    }
+    
+    $metragraph-modeless-width: 600px;
+    &#metagraph-modeless{
+      top: 50px;
+      left: calc(100% - #{$metragraph-modeless-width});
+    }
+    
+    &#metagraph-modeless .modal-dialog {
+      display: contents;
+    }
+    
+    &#metagraph-modeless .modal-dialog .modal-content {
+      height: #{$metragraph-modeless-width};
+      width: #{$metragraph-modeless-width};
+      top: 0px;
+      position: absolute;
     }
 }
 
@@ -542,6 +559,9 @@ span .syntax-warning-line {
   &.invalidate-bubble {
     background-color: darkgray;
   }
+  &.no-change-bubble {
+    background-color: rgb(132, 49, 255);
+  }
   &.completion-bubble {
     background-color: rgb(34, 181, 93);
   }
@@ -557,7 +577,7 @@ $resizable-handle-length: 50px;
 $resizable-handle-width: 3px;
 $resizable-handle-offset: 8px;
 
-.ui-resizable-handle.ui-resizable-e {
+#main-area .ui-resizable-handle.ui-resizable-e {
   top: calc(50% - $resizable-handle-length);
   width: $resizable-handle-width;
   height: $resizable-handle-length;
@@ -567,7 +587,7 @@ $resizable-handle-offset: 8px;
   right: $resizable-handle-offset;
 }
 
-.ui-resizable-handle.ui-resizable-s {
+#main-area .ui-resizable-handle.ui-resizable-s {
   left: calc(50% - $resizable-handle-length);
   width: $resizable-handle-length;
   height: $resizable-handle-width;
@@ -575,6 +595,17 @@ $resizable-handle-offset: 8px;
   background-color: #cccccc;
   bottom: $resizable-handle-offset;
 }
+
+
+.modal .ui-resizable-handle.ui-resizable-e {
+  right: -5px;
+}
+
+
+.modal .ui-resizable-handle.ui-resizable-s {
+  bottom: -5px;
+}
+
 
 .cm-s-monokai {
   border-bottom: 1px solid #ccc;
