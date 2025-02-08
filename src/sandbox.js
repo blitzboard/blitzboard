@@ -21,7 +21,7 @@ let remoteMode = !!backendUrl;
 let extractionWidgets = [];
 let extractionMarkers = [];
 const emptyExtractionInfo = { nodes: {}, edges: [] };
-let extractionInfo = Object.assign({}, emptyExtractionInfo);
+let extractionInfo = structuredClone(emptyExtractionInfo);
 let extractionConnectorLines = [];
 
 let config = null;
@@ -1127,6 +1127,25 @@ $(() => {
   });
 
   function adjustNodeAppearanceInMetaGraph() {
+    for (let node of blitzboard.graph.nodes) {
+      let extractionPhase = extractionInfo.nodes[node.id].phase;
+      if (extractionPhase) {
+        let color = null;
+        if (extractionPhase === "refine") {
+          color = "rgb(255, 49, 132)";
+        } else if (extractionPhase === "refine-with-no-change") {
+          color = "rgb(255, 142, 49)";
+        } else if (extractionPhase === "completion") {
+          color = "rgb(49, 255, 132)";
+        }
+        if (color)
+          blitzboard.nodeDataSet.update({
+            id: node.id,
+            color: color,
+          });
+      }
+    }
+
     if (metaGraphModeless._isShown) {
       let nodesOnlyInMetaGraph = new Set();
       for (let node of metaBlitzboard.graph.nodes) {
@@ -1135,13 +1154,14 @@ $(() => {
       for (let node of blitzboard.graph.nodes) {
         let nodeProp = blitzboard.nodeDataSet.get(node.id);
         if (metaBlitzboard.nodeDataSet.get(node.id)) {
+          let color = nodeProp.color;
           nodesOnlyInMetaGraph.delete(node.id);
           let positionInInstanceGraph = blitzboard.network.getPosition(node.id);
           metaBlitzboard.nodeDataSet.update({
             id: node.id,
             x: positionInInstanceGraph.x,
             y: positionInInstanceGraph.y,
-            color: nodeProp.color,
+            color: color,
             fixed: true,
           });
         }
@@ -1527,7 +1547,7 @@ $(() => {
 
     byProgram = false;
     extractionInfo =
-      graph.extractionInfo || Object.assign({}, emptyExtractionInfo);
+      graph.extractionInfo || structuredClone(emptyExtractionInfo);
   }
 
   function loadGraphEntry(graphEntry) {
@@ -2090,6 +2110,7 @@ $(() => {
   extractionEditor.on("scroll", updatePositionOfConnectorLines);
 
   q("#extract-btn").addEventListener("click", async function (e) {
+    extractionInfo = structuredClone(emptyExtractionInfo);
     blitzboard.showLoader();
     let originalText = extractionEditor.getValue();
     clearExtractionHighlights();
@@ -2099,7 +2120,7 @@ $(() => {
       let newPG = "";
       if (!events || events.length === 0) return "";
       let addedNodes = new Set();
-      extractionInfo = Object.assign({}, emptyExtractionInfo);
+      extractionInfo = structuredClone(emptyExtractionInfo);
       for (let event of events) {
         if (!event.name || addedNodes.has(event.name)) continue;
         addedNodes.add(event.name);
@@ -2151,71 +2172,80 @@ $(() => {
     let refinedNodeNames = [];
     let newNodes = [];
     for (let node of blitzboard.graph.nodes) {
-      let resp = await fetch(`${vectorDBUrl}/similar_node?node=${node.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(node),
-      });
+      let resp = await fetch(
+        `${vectorDBUrl}/search_matched_nodes?node=${node.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(node),
+        }
+      );
       resp = await resp.json();
-      if (!resp.matched) {
-        node.labels = ["抽象グラフに存在しない"];
+      if (resp.length === 0) {
+        // No matched node in the metagraph
         newNodes.push(node);
       } else {
-        properties = Object.assign({}, node.properties);
-        let missingProps = [];
-        for (let prop of Object.keys(resp.properties)) {
-          if (!properties[prop]) {
-            missingProps.push(prop);
+        for (let matchedNode of resp) {
+          properties = Object.assign({}, node.properties);
+          let missingProps = [];
+          for (let prop of Object.keys(matchedNode.properties)) {
+            if (!properties[prop]) {
+              missingProps.push(prop);
+            }
           }
-        }
-        if (missingProps.length > 0) {
-          let propResult = await fetch(`${vectorDBUrl}/extract_missing_props`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              node: resp.name,
-              props: missingProps,
-              article: extractionEditor.getValue(),
-            }),
-          });
-          propResult = await propResult.json();
-          for (let prop of Object.keys(propResult)) {
-            if (propResult[prop]) properties[prop] = propResult[prop];
+          if (missingProps.length > 0) {
+            let propResult = await fetch(
+              `${vectorDBUrl}/extract_missing_props`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  node: matchedNode.name,
+                  props: missingProps,
+                  article: extractionEditor.getValue(),
+                }),
+              }
+            );
+            propResult = await propResult.json();
+            for (let prop of Object.keys(propResult)) {
+              if (propResult[prop]) properties[prop] = propResult[prop];
+            }
           }
-        }
-        const refinedName = resp.name;
+          const refinedName = matchedNode.name;
 
-        if (refinedNodeNames.includes(refinedName)) {
-          let nodeToMerge = newNodes.find((n) => n.id === refinedName);
-          nodeToMerge.properties = Object.assign(
-            properties,
-            nodeToMerge.properties
-          );
-          if (extractionInfo.nodes[node.id]) {
+          if (refinedNodeNames.includes(refinedName)) {
+            let nodeToMerge = newNodes.find((n) => n.id === refinedName);
+            nodeToMerge.properties = Object.assign(
+              properties,
+              nodeToMerge.properties
+            );
+            if (!extractionInfo.nodes[node.id]) {
+              extractionInfo.nodes[node.id] = {};
+            }
             extractionInfo.nodes[node.id].phase = "invalidate";
-          }
-          if (extractionInfo.nodes[refinedName]) {
+
+            if (!extractionInfo.nodes[refinedName]) {
+              extractionInfo.nodes[refinedName] = {};
+            }
             extractionInfo.nodes[refinedName].phase = "refine";
-            nodeToMerge.labels = ["抽象グラフに存在＋補正"];
+          } else {
+            const newNode = {
+              id: refinedName,
+              labels: node.labels,
+              properties: properties,
+            };
+            newNodes.push(newNode);
+            refinedNodeNames.push(refinedName);
+            if (refinedName !== node.id && extractionInfo.nodes[node.id]) {
+              extractionInfo.nodes[refinedName] = extractionInfo.nodes[node.id];
+              extractionInfo.nodes[refinedName].phase = "refine";
+              delete extractionInfo.nodes[node.id];
+            }
+            if (refinedName === node.id && extractionInfo.nodes[refinedName]) {
+              extractionInfo.nodes[refinedName].phase = "refine-with-no-change";
+            }
           }
-        } else {
-          const newNode = {
-            id: refinedName,
-            labels: node.labels,
-            properties: properties,
-          };
-          newNodes.push(newNode);
-          refinedNodeNames.push(refinedName);
-          if (refinedName !== node.id && extractionInfo.nodes[node.id]) {
-            extractionInfo.nodes[refinedName] = extractionInfo.nodes[node.id];
-            extractionInfo.nodes[refinedName].phase = "refine";
-            newNode.labels = ["抽象グラフに存在＋補正"];
-            delete extractionInfo.nodes[node.id];
-          }
-          if (refinedName === node.id && extractionInfo.nodes[refinedName]) {
-            extractionInfo.nodes[refinedName].phase = "refine-with-no-change";
-            newNode.labels = ["抽象グラフに存在＋完全一致"];
-          }
+          renderExtractionInfo();
         }
       }
     }
@@ -2243,7 +2273,7 @@ $(() => {
     });
     resp = await resp.json();
     for (let node of resp) {
-      newPG += nodeToLine(node.name, ["抽象グラフから追加"], node.properties);
+      newPG += nodeToLine(node.name, [], node.properties);
       extractionInfo.nodes[node.name] = {
         originalPhrase: node.original_phrase,
         phase: "completion",
@@ -3121,7 +3151,8 @@ $(() => {
         );
         if (graph.pg.length > 0 && graph.config.length > 0)
           loadValues(graph.pg, graph.config);
-        extractionInfo = graph.extractionInfo || emptyExtractionInfo;
+        extractionInfo =
+          graph.extractionInfo || structuredClone(emptyExtractionInfo);
       } catch (e) {
         console.error(e);
       }
