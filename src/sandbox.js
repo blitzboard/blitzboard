@@ -1128,7 +1128,7 @@ $(() => {
 
   function adjustNodeAppearanceInMetaGraph() {
     for (let node of blitzboard.graph.nodes) {
-      let extractionPhase = extractionInfo.nodes[node.id].phase;
+      let extractionPhase = extractionInfo.nodes[node.id]?.phase;
       if (extractionPhase) {
         let color = null;
         if (extractionPhase === "refine") {
