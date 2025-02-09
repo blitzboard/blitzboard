@@ -301,7 +301,7 @@ $(() => {
 
   if (remoteMode && currentGraphMetadata?.id) {
     axios
-      .get(`${backendUrl}/get/?graph_id=${currentGraphMetadata.id}`)
+      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
       .then((response) => {
         lastUpdate = response.data.properties?.lastUpdate[0];
       });
@@ -1049,7 +1049,7 @@ $(() => {
     let nodeId = $(e.target).data("node-id");
     axios
       .get(
-        `${backendUrl}/query_table?query=SELECT DISTINCT graph FROM x2node WHERE id = '${nodeId}'`
+        `${backendUrl}/query_table?query=SELECT v.GRAPH FROM MATCH (v) ON x2 WHERE v.ID = '${nodeId}' GROUP BY v.GRAPH`
       )
       .then((response) => {
         e.target.outerHTML =
@@ -1336,7 +1336,7 @@ $(() => {
 
       axios
         .get(
-          `${backendUrl}/query_table?query=SELECT id, COUNT(*) AS cnt FROM x2node GROUP BY id ORDER BY cnt DESC`
+          `${backendUrl}/query_table?query=SELECT v.id, COUNT(*) AS cnt FROM MATCH (v) ON x2 GROUP BY v.id ORDER BY cnt DESC`
         )
         .then((response) => {
           additionalAutocompleteTargets = response.data.table.records.map(
@@ -1398,10 +1398,7 @@ $(() => {
             .request({
               method: "post",
               url: `${backendUrl}/rename`,
-              data: {
-                graph: savedGraphs[i].id,
-                name: newName,
-              },
+              data: `graph=${savedGraphs[i].id}&name=${newName}`,
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
               },
@@ -1460,9 +1457,7 @@ $(() => {
             .request({
               method: "post",
               url: `${backendUrl}/drop`,
-              data: {
-                graph: savedGraphs[i].id,
-              },
+              data: `graph=${savedGraphs[i].id}`,
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
               },
@@ -1554,13 +1549,13 @@ $(() => {
     currentGraphMetadata = graphEntry;
     if (remoteMode) {
       axios
-        .get(`${backendUrl}/get/?graph_id=${graphEntry.id}`)
+        .get(`${backendUrl}/get/?graph=${graphEntry.id}`)
         .then((response) => {
           let props = response.data.properties;
           let config = props?.config?.[0] || defaultConfig;
           if (props?.pg === undefined || props?.config === undefined) {
             axios
-              .get(`${backendUrl}/get/?graph_id=${graphEntry.id}&response=pg`)
+              .get(`${backendUrl}/get/?graph=${graphEntry.id}&response=pg`)
               .then((response) => {
                 byProgram = true;
                 loadGraph({
@@ -1781,7 +1776,7 @@ $(() => {
     let pgValue = editor.getValue();
 
     axios
-      .get(`${backendUrl}/get/?graph_id=${currentGraphMetadata.id}`)
+      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
       .then((response) => {
         let props = response.data?.properties;
         if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
@@ -3122,15 +3117,13 @@ $(() => {
       );
       if (currentGraph) {
         axios
-          .get(`${backendUrl}/get/?graph_id=${currentGraph.id}`)
+          .get(`${backendUrl}/get/?graph=${currentGraph.id}`)
           .then((response) => {
             let props = response.data.properties;
             let config = props?.config?.[0] || defaultConfig;
             if (props?.pg === undefined || props?.config === undefined) {
               axios
-                .get(
-                  `${backendUrl}/get/?graph_id=${currentGraph.id}&response=pg`
-                )
+                .get(`${backendUrl}/get/?graph=${currentGraph.id}&response=pg`)
                 .then((response) => {
                   loadValues(
                     json2pg.translate(JSON.stringify(response.data.pg)),
