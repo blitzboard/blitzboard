@@ -1713,37 +1713,37 @@ $(() => {
       }
       updateGraphList(callback);
       registerArticle();
-
-      if (graph.name === "抽象グラフ" && blitzboard.graph) {
-        let params = {
-          nodes: blitzboard.graph.nodes.map((n) => {
-            return {
-              name: n.id,
-              properties: n.properties,
-            };
-          }),
-          edges: blitzboard.graph.edges.map((e) => {
-            return {
-              from: e.from,
-              to: e.to,
-              properties: e.properties,
-            };
-          }),
-        };
-        // Register current graph as an abstract graph
-        fetch(`${vectorDBUrl}/register_abstract_nodes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        }).then((response) => {
-          toastr.success("抽象グラフを更新しました", "", {
-            preventDuplicates: true,
-            timeOut: 3000,
-          });
-        });
-      }
     } else {
       saveToBackend(callback);
+    }
+
+    if (name === "抽象グラフ" && blitzboard.graph) {
+      let params = {
+        nodes: blitzboard.graph.nodes.map((n) => {
+          return {
+            name: n.id,
+            properties: n.properties,
+          };
+        }),
+        edges: blitzboard.graph.edges.map((e) => {
+          return {
+            from: e.from,
+            to: e.to,
+            properties: e.properties,
+          };
+        }),
+      };
+      // Register current graph as an abstract graph
+      fetch(`${vectorDBUrl}/register_abstract_nodes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      }).then((response) => {
+        toastr.success("抽象グラフを更新しました", "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+      });
     }
   }
 
