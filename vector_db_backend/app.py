@@ -14,9 +14,9 @@ from openai import OpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from typing import Dict
-from langchain_core.pydantic_v1 import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, create_model
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 load_dotenv()
@@ -239,29 +239,37 @@ def check_node_matching(abstract_node_name, instance_node_description):
     return res.result == "yes"
 
 
-@app.route('/similar_node', methods=['POST'])
-def similar_node():
-    # GET: /similar_node?node=<ノード名>
-    # ノード名に類似するノードを取得する
+@app.route('/search_matched_nodes', methods=['POST'])
+def search_matched_nodes():
+    # GET: /search_matched_nodes?node=<ノード名>
+    # ノード名に類似するノード群を、置換候補として返す
 
-    # Wordnet使えるかも
+    # TODO: Wordnet使えるかも
     node = request.get_json()
-    nearest = retrieve_from_abstract_node_store(node["id"])
+    node_text = node["id"]
+    for k, v in node["properties"].items():
+        if isinstance(v, list):
+            for item in v:
+                node_text += " " + k + ":" + item
+        else:
+            node_text += " " + k + ":" + v
+
+    print(node_text, file=sys.stderr)
+    nearest = retrieve_from_abstract_node_store(node_text, k=5)
     if len(nearest) == 0:
         return json.dumps({})
-    nearest = nearest[0]
+    print(nearest, file=sys.stderr)
     threshold = 1.0
     epsilon = 0.0001
-
-    print(f"Nearest node: {nearest[0].page_content}, distance: {nearest[1]}", file=sys.stderr)
-
-    if nearest[1] > threshold:
-        matched = False
-    elif nearest[1] < epsilon:
-        matched = True
-    else:
-        matched = check_node_matching(nearest[0].page_content, node_to_line(node))
-    return json.dumps({"name": nearest[0].page_content, "distance": float(nearest[1]), "matched": matched, "properties": nearest[0].metadata}, ensure_ascii=False)
+    nearest = [n for n in nearest if n[1] < threshold]
+    matched_nodes = []
+    for n in nearest:
+        if n[1] < epsilon or check_node_matching(n[0].page_content, node_to_line(node)):
+            matched_nodes.append({"name": n[0].page_content, "distance": float(n[1]), "properties": n[0].metadata})
+            if n[0].page_content == node["id"]:
+                # Stop searching if the exact match is found
+                break
+    return json.dumps(matched_nodes, ensure_ascii=False)
 
 @app.route('/extract_missing_props', methods=['POST'])
 def extract_missing_props():
