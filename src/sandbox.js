@@ -1184,19 +1184,42 @@ $(() => {
   $(".modal-content").resizable({});
 
   $(document).on("click", "#metagraph-modeless-btn", (e) => {
-    let metagraph = blitzboard.tryPgParse(
-      JSON.parse(localStorage.getItem("saved-graph-抽象グラフ")).pg
-    );
+    let metagraph;
+    if (remoteMode) {
+      metagraphId = savedGraphs.find((g) => g.name === "抽象グラフ").id;
+      console.log({ metagraphId });
+      axios
+        .get(`${backendUrl}/get/?graph=${metagraphId}`)
+        .then((response) => {
+          metagraph = blitzboard.tryPgParse(response.data.properties.pg[0]);
+          openMetagraph(metagraph);
+        })
+        .catch((error) => {
+          console.log(error);
+          toastr.error(
+            `Failed to retrieve graph from ${backendUrl}...: ${error}`,
+            "",
+            { preventDuplicates: true, timeOut: 3000 }
+          );
+        });
+    } else {
+      metagraph = blitzboard.tryPgParse(
+        JSON.parse(localStorage.getItem("saved-graph-抽象グラフ")).pg
+      );
+      openMetagraph(metagraph);
+    }
 
-    if (!metaBlitzboard)
-      metaBlitzboard = new Blitzboard(q("#metagraph-modeless-graph"));
-    metaGraphModeless.show({ backdrop: false });
-    metaBlitzboard.setGraph(metagraph, false);
-    configOnModal = parseConfig(configEditor.getValue());
-    addHighlightOptionOnModal(configOnModal);
+    function openMetagraph(metagraph) {
+      if (!metaBlitzboard)
+        metaBlitzboard = new Blitzboard(q("#metagraph-modeless-graph"));
+      metaGraphModeless.show({ backdrop: false });
+      metaBlitzboard.setGraph(metagraph, false);
+      configOnModal = parseConfig(configEditor.getValue());
+      addHighlightOptionOnModal(configOnModal);
 
-    metaBlitzboard.setConfig(configOnModal, true);
-    adjustNodeAppearanceInMetaGraph();
+      metaBlitzboard.setConfig(configOnModal, true);
+      adjustNodeAppearanceInMetaGraph();
+    }
   });
 
   q("#export-csv-btn").addEventListener("click", () => {
@@ -1713,37 +1736,37 @@ $(() => {
       }
       updateGraphList(callback);
       registerArticle();
+
+      if (name === "抽象グラフ" && blitzboard.graph) {
+        let params = {
+          nodes: blitzboard.graph.nodes.map((n) => {
+            return {
+              name: n.id,
+              properties: n.properties,
+            };
+          }),
+          edges: blitzboard.graph.edges.map((e) => {
+            return {
+              from: e.from,
+              to: e.to,
+              properties: e.properties,
+            };
+          }),
+        };
+        // Register current graph as an abstract graph
+        fetch(`${vectorDBUrl}/register_abstract_nodes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params),
+        }).then((response) => {
+          toastr.success("抽象グラフを更新しました", "", {
+            preventDuplicates: true,
+            timeOut: 3000,
+          });
+        });
+      }
     } else {
       saveToBackend(callback);
-    }
-
-    if (name === "抽象グラフ" && blitzboard.graph) {
-      let params = {
-        nodes: blitzboard.graph.nodes.map((n) => {
-          return {
-            name: n.id,
-            properties: n.properties,
-          };
-        }),
-        edges: blitzboard.graph.edges.map((e) => {
-          return {
-            from: e.from,
-            to: e.to,
-            properties: e.properties,
-          };
-        }),
-      };
-      // Register current graph as an abstract graph
-      fetch(`${vectorDBUrl}/register_abstract_nodes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      }).then((response) => {
-        toastr.success("抽象グラフを更新しました", "", {
-          preventDuplicates: true,
-          timeOut: 3000,
-        });
-      });
     }
   }
 
@@ -1831,6 +1854,35 @@ $(() => {
             });
         }
       });
+
+    if (graphName === "抽象グラフ" && blitzboard.graph) {
+      let params = {
+        nodes: blitzboard.graph.nodes.map((n) => {
+          return {
+            name: n.id,
+            properties: n.properties,
+          };
+        }),
+        edges: blitzboard.graph.edges.map((e) => {
+          return {
+            from: e.from,
+            to: e.to,
+            properties: e.properties,
+          };
+        }),
+      };
+      // Register current graph as an abstract graph
+      fetch(`${vectorDBUrl}/register_abstract_nodes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      }).then((response) => {
+        toastr.success("抽象グラフを更新しました", "", {
+          preventDuplicates: true,
+          timeOut: 3000,
+        });
+      });
+    }
   }
 
   function confirmToSaveGraph(callback = null) {
@@ -2038,6 +2090,7 @@ $(() => {
     const markerMap = {};
     for (let node of Object.keys(extractionInfo.nodes)) {
       let nodeInfo = extractionInfo.nodes[node];
+      if (!nodeInfo.originalPhrase) continue;
       let cursor = extractionEditor.getSearchCursor(nodeInfo.originalPhrase);
       if (cursor.findNext()) {
         extractionMarkers.push(
