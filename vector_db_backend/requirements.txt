@@ -1,6 +1,7 @@
 flask
 python-dotenv
-langchain
+langchain==0.3.19
 langchain_openai
 flask-cors
 faiss-cpu
+langchain_community
