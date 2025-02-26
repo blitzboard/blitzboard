@@ -89,6 +89,10 @@ lerna-debug.log
 .DS_Store
 Thumbs.db
 
+.vscode
+.python-version
+__pycache__
+
 .ipynb_checkpoints
 vector_db_backend/articles
 vector_db_backend/*.faiss
