@@ -181,6 +181,8 @@ $(() => {
             extraction: "Extract",
             alignColumn: "Align column",
             extractEvent: "Extract events",
+            extractGraph: "Extract graph",
+            updateMetagraph: "Update metagraph",
             refineEvent: "Refine events",
             completeEvent: "Complete events",
             refineRelation: "Refine relationships",
@@ -1129,14 +1131,16 @@ $(() => {
   function adjustNodeAppearanceInMetaGraph() {
     for (let node of blitzboard.graph.nodes) {
       let extractionPhase = extractionInfo.nodes[node.id]?.phase;
-      if (extractionPhase) {
+      if (extractionPhase || metaGraphModeless._isShown) {
         let color = null;
         if (extractionPhase === "refine") {
           color = "rgb(255, 49, 132)";
         } else if (extractionPhase === "refine-with-no-change") {
-          color = "rgb(255, 142, 49)";
+          color = "rgb(132, 49, 255)";
         } else if (extractionPhase === "completion") {
           color = "rgb(49, 255, 132)";
+        } else {
+          color = "rgb(49, 132, 255)";
         }
         if (color)
           blitzboard.nodeDataSet.update({
@@ -1148,21 +1152,28 @@ $(() => {
 
     if (metaGraphModeless._isShown) {
       let nodesOnlyInMetaGraph = new Set();
+      let mapFromInstanceToMeta = {};
       for (let node of metaBlitzboard.graph.nodes) {
         nodesOnlyInMetaGraph.add(node.id);
+        instanceNodeIds = node.properties?.["インスタンス"] || [];
+        for (let instanceNode of instanceNodeIds) {
+          mapFromInstanceToMeta[instanceNode] = node.id;
+        }
       }
       for (let node of blitzboard.graph.nodes) {
         let nodeProp = blitzboard.nodeDataSet.get(node.id);
-        if (metaBlitzboard.nodeDataSet.get(node.id)) {
+        let metaNode = mapFromInstanceToMeta[node.id];
+        if (metaNode) {
           let color = nodeProp.color;
-          nodesOnlyInMetaGraph.delete(node.id);
+          nodesOnlyInMetaGraph.delete(metaNode);
           let positionInInstanceGraph = blitzboard.network.getPosition(node.id);
           metaBlitzboard.nodeDataSet.update({
-            id: node.id,
+            id: metaNode,
             x: positionInInstanceGraph.x,
             y: positionInInstanceGraph.y,
             color: color,
             fixed: true,
+            chosen: nodeProp.chosen,
           });
         }
       }
@@ -1183,8 +1194,7 @@ $(() => {
 
   $(".modal-content").resizable({});
 
-  $(document).on("click", "#metagraph-modeless-btn", (e) => {
-    let metagraph;
+  function retrieveMetaGraph(callback) {
     if (remoteMode) {
       metagraphId = savedGraphs.find((g) => g.name === "抽象グラフ").id;
       console.log({ metagraphId });
@@ -1192,7 +1202,7 @@ $(() => {
         .get(`${backendUrl}/get/?graph=${metagraphId}`)
         .then((response) => {
           metagraph = blitzboard.tryPgParse(response.data.properties.pg[0]);
-          openMetagraph(metagraph);
+          callback(metagraph);
         })
         .catch((error) => {
           console.log(error);
@@ -1203,11 +1213,25 @@ $(() => {
           );
         });
     } else {
-      metagraph = blitzboard.tryPgParse(
-        JSON.parse(localStorage.getItem("saved-graph-抽象グラフ")).pg
-      );
-      openMetagraph(metagraph);
+      try {
+        metagraph = blitzboard.tryPgParse(
+          JSON.parse(localStorage.getItem("saved-graph-抽象グラフ")).pg
+        );
+      } catch (e) {
+        toastr.error(
+          `Failed to retrieve graph from local storage...: ${e}`,
+          "",
+          { preventDuplicates: true, timeOut: 3000 }
+        );
+        metagraph = "";
+      }
+
+      callback(metagraph);
     }
+  }
+
+  $(document).on("click", "#metagraph-modeless-btn", (e) => {
+    retrieveMetaGraph(openMetagraph);
 
     function openMetagraph(metagraph) {
       if (!metaBlitzboard)
@@ -1216,7 +1240,6 @@ $(() => {
       metaBlitzboard.setGraph(metagraph, false);
       configOnModal = parseConfig(configEditor.getValue());
       addHighlightOptionOnModal(configOnModal);
-
       metaBlitzboard.setConfig(configOnModal, true);
       adjustNodeAppearanceInMetaGraph();
     }
@@ -1694,11 +1717,60 @@ $(() => {
     updateFilterByUI();
   });
 
-  function saveCurrentGraph(callback = null) {
+  function saveGraph(graph) {
+    if (!remoteMode) {
+      saveGraphLocal(graph);
+    } else {
+      let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving(
+        graph.pgJson.nodes,
+        graph.pgJson.edges
+      );
+
+      let remoteGraph = {
+        id: graph.id,
+        properties: {
+          name: [graph.name],
+          pg: [graph.pg],
+          config: [graph.config],
+          lastUpdate: [Date.now()],
+          updatedBy: ["blitzboard"],
+        },
+        pg: {
+          nodes: tmpNodes,
+          edges: tmpEdges,
+        },
+      };
+
+      saveGraphToBackend(remoteGraph);
+    }
+  }
+
+  function saveGraphLocal(graph, callback) {
+    while (i < savedGraphs.length - 1 && savedGraphs[++i].name !== graph.name);
+    if (i < savedGraphs.length) {
+      savedGraphs[i] = graph;
+    }
+    try {
+      localStorage.setItem("saved-graph-" + graph.name, JSON.stringify(graph));
+    } catch (e) {
+      toastr.warning("Failed to save graph in local storage: " + e.message, {
+        preventDuplicates: true,
+      });
+    }
+    updateGraphList(callback);
+    registerArticle();
+
+    if (graph.name === "抽象グラフ" && graph.pgJson) {
+      saveMetagraph(graph.pgJson);
+    }
+  }
+
+  function saveCurrentGraphLocal(callback) {
     let name = currentGraphMetadata.name;
     if (!name) {
       name = newGraphName();
     }
+
     let i = -1;
     let layoutMap = {};
     if (nodeLayout?.graph) {
@@ -1713,60 +1785,24 @@ $(() => {
       layoutMap = nodeLayout;
     }
     localStorage.setItem("nodeLayout", JSON.stringify(layoutMap));
-    if (!remoteMode) {
-      let graph = {
-        pg: editor.getValue(),
-        config: configEditor.getValue(),
-        layout: layoutMap,
-        id: name,
-        extractionInfo,
-        name: name,
-        date: Date.now(),
-      };
-      while (i < savedGraphs.length - 1 && savedGraphs[++i].name !== name);
-      if (i < savedGraphs.length) {
-        savedGraphs[i] = graph;
-      }
-      try {
-        localStorage.setItem("saved-graph-" + name, JSON.stringify(graph));
-      } catch (e) {
-        toastr.warning("Failed to save graph in local storage: " + e.message, {
-          preventDuplicates: true,
-        });
-      }
-      updateGraphList(callback);
-      registerArticle();
+    let graph = {
+      pg: editor.getValue(),
+      config: configEditor.getValue(),
+      layout: layoutMap,
+      id: name,
+      extractionInfo,
+      name: name,
+      date: Date.now(),
+      pgJson: blitzboard.graph,
+    };
+    saveGraphLocal(graph, callback);
+  }
 
-      if (name === "抽象グラフ" && blitzboard.graph) {
-        let params = {
-          nodes: blitzboard.graph.nodes.map((n) => {
-            return {
-              name: n.id,
-              properties: n.properties,
-            };
-          }),
-          edges: blitzboard.graph.edges.map((e) => {
-            return {
-              from: e.from,
-              to: e.to,
-              properties: e.properties,
-            };
-          }),
-        };
-        // Register current graph as an abstract graph
-        fetch(`${vectorDBUrl}/register_abstract_nodes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        }).then((response) => {
-          toastr.success("抽象グラフを更新しました", "", {
-            preventDuplicates: true,
-            timeOut: 3000,
-          });
-        });
-      }
+  function saveCurrentGraph(callback = null) {
+    if (!remoteMode) {
+      saveCurrentGraphLocal(callback);
     } else {
-      saveToBackend(callback);
+      saveCurrentGraphToBackend(callback);
     }
   }
 
@@ -1792,97 +1828,108 @@ $(() => {
       });
   }
 
-  function saveToBackend(callback = null) {
+  function saveGraphToBackend(graph, callback, isCurrentGraph = false) {
+    let graphName = graph.name;
+
+    axios.get(`${backendUrl}/get/?graph=${graph.id}`).then((response) => {
+      let props = response.data?.properties;
+      if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
+        Swal.fire({
+          text: i18nTranslate("conflictErrorBeforeSaving"),
+          icon: "error",
+        });
+      } else {
+        let now = Date.now();
+        lastUpdate = now;
+
+        let graphIndex = savedGraphs.findIndex(
+          (savedGraph) => savedGraph.id === graph.id
+        );
+
+        let alreadySaved = graphIndex >= 0;
+
+        let action = alreadySaved ? "update" : "create";
+        if (!alreadySaved) {
+          delete graph.id;
+        }
+
+        axios
+          .post(`${backendUrl}/${action}`, graph)
+          .then((res) => {
+            toastr.success(`${graphName} has been saved!`, "", {
+              preventDuplicates: true,
+              timeOut: 3000,
+            });
+            registerArticle();
+            setUnsavedStatus(false);
+            if (!alreadySave && isCurrentGraph)
+              currentGraphMetadata.id = res.data.graphId;
+            updateGraphList(callback);
+          })
+          .catch((error) => {
+            toastr.error(`Failed to save ${graphName} ..`, "", {
+              preventDuplicates: true,
+              timeOut: 3000,
+            });
+          });
+      }
+    });
+
+    if (graphName === "抽象グラフ" && blitzboard.graph) {
+      saveMetagraph(blitzboard.graph);
+    }
+  }
+
+  function saveCurrentGraphToBackend(callback = null) {
     let [tmpNodes, tmpEdges] = nodesAndEdgesForSaving();
-    let graphName = currentGraphMetadata.name;
     let configValue = configEditor.getValue();
     let pgValue = editor.getValue();
 
-    axios
-      .get(`${backendUrl}/get/?graph=${currentGraphMetadata.id}`)
-      .then((response) => {
-        let props = response.data?.properties;
-        if (props?.lastUpdate && props.lastUpdate[0] > lastUpdate) {
-          Swal.fire({
-            text: i18nTranslate("conflictErrorBeforeSaving"),
-            icon: "error",
-          });
-        } else {
-          let now = Date.now();
-          lastUpdate = now;
+    let savedData = {
+      id: currentGraphMetadata.id,
+      properties: {
+        name: [currentGraphMetadata.name],
+        pg: [pgValue],
+        config: [configValue],
+        lastUpdate: [now],
+        updatedBy: ["blitzboard"],
+      },
+      pg: {
+        nodes: tmpNodes,
+        edges: tmpEdges,
+      },
+    };
 
-          let savedData = {
-            properties: {
-              name: [currentGraphMetadata.name],
-              pg: [pgValue],
-              config: [configValue],
-              lastUpdate: [now],
-              updatedBy: ["blitzboard"],
-            },
-            pg: {
-              nodes: tmpNodes,
-              edges: tmpEdges,
-            },
-          };
-          let alreadySaved =
-            savedGraphs.findIndex(
-              (graph) => graph.id === currentGraphMetadata.id
-            ) >= 0;
+    saveGraphToBackend(savedData, callback, true);
+  }
 
-          let action = alreadySaved ? "update" : "create";
-          if (alreadySaved) {
-            savedData.id = currentGraphMetadata.id;
-          }
+  function saveMetagraph(graph) {
+    let params = {
+      nodes: graph.nodes.map((n) => {
+        return {
+          name: n.id,
+          properties: n.properties,
+        };
+      }),
+      edges: graph.edges.map((e) => {
+        return {
+          from: e.from,
+          to: e.to,
+          properties: e.properties,
+        };
+      }),
+    };
 
-          axios
-            .post(`${backendUrl}/${action}`, savedData)
-            .then((res) => {
-              toastr.success(`${graphName} has been saved!`, "", {
-                preventDuplicates: true,
-                timeOut: 3000,
-              });
-              registerArticle();
-              setUnsavedStatus(false);
-              if (!alreadySaved) currentGraphMetadata.id = res.data.graphId;
-              updateGraphList(callback);
-            })
-            .catch((error) => {
-              toastr.error(`Failed to save ${graphName} ..`, "", {
-                preventDuplicates: true,
-                timeOut: 3000,
-              });
-            });
-        }
+    fetch(`${vectorDBUrl}/register_abstract_nodes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    }).then((response) => {
+      toastr.success("抽象グラフを更新しました", "", {
+        preventDuplicates: true,
+        timeOut: 3000,
       });
-
-    if (graphName === "抽象グラフ" && blitzboard.graph) {
-      let params = {
-        nodes: blitzboard.graph.nodes.map((n) => {
-          return {
-            name: n.id,
-            properties: n.properties,
-          };
-        }),
-        edges: blitzboard.graph.edges.map((e) => {
-          return {
-            from: e.from,
-            to: e.to,
-            properties: e.properties,
-          };
-        }),
-      };
-      // Register current graph as an abstract graph
-      fetch(`${vectorDBUrl}/register_abstract_nodes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      }).then((response) => {
-        toastr.success("抽象グラフを更新しました", "", {
-          preventDuplicates: true,
-          timeOut: 3000,
-        });
-      });
-    }
+    });
   }
 
   function confirmToSaveGraph(callback = null) {
@@ -1990,7 +2037,7 @@ $(() => {
 
   q("#save-btn").addEventListener("click", () => {
     if (remoteMode) {
-      saveToBackend();
+      saveCurrentGraphToBackend();
     }
   });
 
@@ -2157,216 +2204,6 @@ $(() => {
   window.addEventListener("scroll", updatePositionOfConnectorLines);
   extractionEditor.on("scroll", updatePositionOfConnectorLines);
 
-  q("#extract-btn").addEventListener("click", async function (e) {
-    extractionInfo = structuredClone(emptyExtractionInfo);
-    blitzboard.showLoader();
-    let originalText = extractionEditor.getValue();
-    clearExtractionHighlights();
-    let targetButton = this;
-
-    function updateHighlightAndGetNewPG(events) {
-      let newPG = "";
-      if (!events || events.length === 0) return "";
-      let addedNodes = new Set();
-      extractionInfo = structuredClone(emptyExtractionInfo);
-      for (let event of events) {
-        if (!event.name || addedNodes.has(event.name)) continue;
-        addedNodes.add(event.name);
-        nodeText = nodeToLine(event.name, [], event.properties);
-        newPG += nodeText;
-        if (!event.original_phrase) continue;
-
-        extractionInfo.nodes[event.name] = {
-          originalPhrase: event.original_phrase,
-          phase: "firstExtraction",
-        };
-      }
-      debouncedRenderExtractionInfo();
-      return newPG;
-    }
-
-    function whileStreaming(response) {
-      let newPG = updateHighlightAndGetNewPG(response.events);
-      byProgram = true;
-      editor.setValue(newPG);
-      byProgram = false;
-    }
-
-    function onCompletion(response) {
-      let newPG = updateHighlightAndGetNewPG(response.events);
-      editor.setValue(newPG);
-      blitzboard.hideLoader();
-    }
-    changeUiStateBeforeExtraction(targetButton);
-    await extractEvents(originalText, whileStreaming, onCompletion)
-      .catch((e) => {
-        console.error(e);
-        toastr.error(`Failed to extract events: ${e}`, "", {
-          preventDuplicates: true,
-          timeOut: 3000,
-        });
-        blitzboard.hideLoader();
-      })
-      .finally(() => {
-        changeUiStateAfterExtraction(targetButton);
-      });
-  });
-
-  q("#refine-event-btn").addEventListener("click", async function (e) {
-    blitzboard.showLoader();
-    changeUiStateBeforeExtraction(e.target);
-    // Update all nodes with the latest abstract graph
-    let newPG = "";
-    let refinedNodeNames = [];
-    let newNodes = [];
-    for (let node of blitzboard.graph.nodes) {
-      let resp = await fetch(
-        `${vectorDBUrl}/search_matched_nodes?node=${node.id}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(node),
-        }
-      );
-      resp = await resp.json();
-      if (resp.length === 0) {
-        // No matched node in the metagraph
-        newNodes.push(node);
-      } else {
-        for (let matchedNode of resp) {
-          properties = Object.assign({}, node.properties);
-          let missingProps = [];
-          for (let prop of Object.keys(matchedNode.properties)) {
-            if (!properties[prop]) {
-              missingProps.push(prop);
-            }
-          }
-          if (missingProps.length > 0) {
-            let propResult = await fetch(
-              `${vectorDBUrl}/extract_missing_props`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  node: matchedNode.name,
-                  props: missingProps,
-                  article: extractionEditor.getValue(),
-                }),
-              }
-            );
-            propResult = await propResult.json();
-            for (let prop of Object.keys(propResult)) {
-              if (propResult[prop]) properties[prop] = propResult[prop];
-            }
-          }
-          const refinedName = matchedNode.name;
-
-          if (refinedNodeNames.includes(refinedName)) {
-            let nodeToMerge = newNodes.find((n) => n.id === refinedName);
-            nodeToMerge.properties = Object.assign(
-              properties,
-              nodeToMerge.properties
-            );
-            if (!extractionInfo.nodes[node.id]) {
-              extractionInfo.nodes[node.id] = {};
-            }
-            extractionInfo.nodes[node.id].phase = "invalidate";
-
-            if (!extractionInfo.nodes[refinedName]) {
-              extractionInfo.nodes[refinedName] = {};
-            }
-            extractionInfo.nodes[refinedName].phase = "refine";
-          } else {
-            const newNode = {
-              id: refinedName,
-              labels: node.labels,
-              properties: properties,
-            };
-            newNodes.push(newNode);
-            refinedNodeNames.push(refinedName);
-            if (refinedName !== node.id && extractionInfo.nodes[node.id]) {
-              extractionInfo.nodes[refinedName] = extractionInfo.nodes[node.id];
-              extractionInfo.nodes[refinedName].phase = "refine";
-              delete extractionInfo.nodes[node.id];
-            }
-            if (refinedName === node.id && extractionInfo.nodes[refinedName]) {
-              extractionInfo.nodes[refinedName].phase = "refine-with-no-change";
-            }
-          }
-          renderExtractionInfo();
-        }
-      }
-    }
-    for (let node of newNodes) {
-      newPG += nodeToLine(node.id, node.labels, node.properties);
-    }
-    renderExtractionInfo();
-    editor.setValue(newPG);
-    blitzboard.hideLoader();
-    changeUiStateAfterExtraction(e.target);
-  });
-
-  q("#complete-event-btn").addEventListener("click", async function (e) {
-    blitzboard.showLoader();
-    changeUiStateBeforeExtraction(e.target);
-    let newPG = editor.getValue() + "\n";
-    let params = {
-      existing_nodes: blitzboard.graph.nodes.map((n) => n.id),
-      article: extractionEditor.getValue(),
-    };
-    let resp = await fetch(`${vectorDBUrl}/extract_missing_nodes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    });
-    resp = await resp.json();
-    for (let node of resp) {
-      newPG += nodeToLine(node.name, [], node.properties);
-      extractionInfo.nodes[node.name] = {
-        originalPhrase: node.original_phrase,
-        phase: "completion",
-      };
-    }
-    editor.setValue(newPG);
-    blitzboard.hideLoader();
-    changeUiStateAfterExtraction(e.target);
-    renderExtractionInfo();
-  });
-
-  q("#refine-relation-btn").addEventListener("click", async function (e) {
-    blitzboard.showLoader();
-    changeUiStateBeforeExtraction(e.target);
-    let params = {
-      nodes: blitzboard.graph.nodes.map((n) => n.id),
-    };
-    let newPG = editor.getValue();
-    let resp = await fetch(`${vectorDBUrl}/edges_between_nodes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    });
-    resp = await resp.json();
-    const existingEdges = blitzboard.graph.edges;
-    for (let edge of resp) {
-      if (
-        !existingEdges.find((e) => e.from === edge.from && e.to === edge.to)
-      ) {
-        newPG +=
-          "\n" + edgeToLine(edge.from, edge.to, "->", [], edge.properties);
-        extractionInfo.edges.push({
-          from: edge.from,
-          to: edge.to,
-        });
-      }
-    }
-
-    editor.setValue(newPG);
-    changeUiStateAfterExtraction(e.target);
-    updateGraph(newPG);
-    blitzboard.hideLoader();
-    renderExtractionInfo();
-  });
-
   function changeUiStateBeforeExtraction(target) {
     $(".btn-about-extraction").prop("disabled", true);
     $(target).find(".extract-icon").hide();
@@ -2381,56 +2218,88 @@ $(() => {
     extractionEditor.setOption("readOnly", false);
   }
 
-  q("#extract-relation-btn").addEventListener("click", async function (e) {
-    blitzboard.showLoader();
-    let article = extractionEditor.getValue();
-    let events = blitzboard.graph.nodes.map((n) => n.id);
-    let oldPG = editor.getValue();
-    if (!oldPG.endsWith("\n")) oldPG += "\n";
-    let targetButton = this;
+  q("#extract-graph-btn").addEventListener("click", async function (e) {
+    function updateMetagraph(metagraph) {
+      params = {
+        instance_graph: blitzboard.graph,
+        metagraph: metagraph,
+      };
 
-    function updateHighlightAndGetNewPG(relationships) {
-      let newPG = "";
-      if (!relationships || relationships.length === 0) return "";
-      clearExtractionHighlights();
-      extractionInfo.edges = [];
-      for (let relation of relationships) {
-        newPG += `${relation.cause.quoteIfNeeded()} -> ${relation.result.quoteIfNeeded()}\n`;
-        extractionInfo.edges.push({
-          from: relation.cause,
-          to: relation.result,
+      fetch(
+        `${vectorDBUrl}/update_metagraph
+        `,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params),
+        }
+      )
+        .then((response) => {
+          response.body
+            .getReader()
+            .read()
+            .then((result) => {
+              const metagraphText = new TextDecoder("utf-8").decode(
+                result.value
+              );
+              const pg = json2pg.translate(metagraphText);
+              let saveData = {
+                pg: pg,
+                config: configEditor.getValue(),
+                id: "抽象グラフ",
+                name: "抽象グラフ",
+                date: Date.now(),
+                pgJson: JSON.parse(metagraphText),
+              };
+              console.log({ saveData });
+              saveGraph(saveData);
+              blitzboard.hideLoader();
+            });
+        })
+        .catch((e) => {
+          toastr.error(`Failed to extract disaster relationships: ${e}`, "", {
+            preventDuplicates: true,
+            timeOut: 3000,
+          });
+          blitzboard.hideLoader();
         });
-      }
-      debouncedRenderExtractionInfo();
-      return newPG;
     }
 
-    function whileStreaming(response) {
-      if (!response.relations) return;
-      let newPG = updateHighlightAndGetNewPG(response.relations);
-      byProgram = true;
-      editor.setValue(oldPG + newPG);
-      byProgram = false;
-    }
+    function extractGraph(metagraph) {
+      blitzboard.showLoader();
+      params = {
+        article: extractionEditor.getValue(),
+        metagraph,
+      };
 
-    function onCompletion(response) {
-      if (!response.relations) return;
-      let newPG = updateHighlightAndGetNewPG(response.relations);
-      editor.setValue(oldPG + newPG);
-      blitzboard.hideLoader();
-    }
-    changeUiStateBeforeExtraction(targetButton);
-    await extractRelationships(events, article, whileStreaming, onCompletion)
-      .catch((e) => {
-        toastr.error(`Failed to extract disaster relationships: ${e}`, "", {
-          preventDuplicates: true,
-          timeOut: 3000,
-        });
-        blitzboard.hideLoader();
+      fetch(`${vectorDBUrl}/extract_instance_graph`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
       })
-      .finally(() => {
-        changeUiStateAfterExtraction(targetButton);
-      });
+        .then((response) => {
+          response.body
+            .getReader()
+            .read()
+            .then((result) => {
+              console.log({ result });
+              let text = new TextDecoder("utf-8").decode(result.value);
+              text = json2pg.translate(text);
+              byProgram = true;
+              editor.setValue(text);
+              byProgram = false;
+              updateMetagraph(metagraph);
+            });
+        })
+        .catch((e) => {
+          toastr.error(`Failed to extract disaster relationships: ${e}`, "", {
+            preventDuplicates: true,
+            timeOut: 3000,
+          });
+          blitzboard.hideLoader();
+        });
+    }
+    retrieveMetaGraph(extractGraph);
   });
 
   $(".modeless-close-btn").on("click", (e) => {
