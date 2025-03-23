@@ -2215,69 +2215,6 @@ $(() => {
     $("#export-btn").dropdown("toggle");
   });
 
-  q("#export-pgql-btn").addEventListener("click", () => {
-    let pg = pgParser.parse(editor.getValue());
-    let graphName = currentGraphMetadata.name;
-    let graphNamePGQL = graphName
-      .replace("'", "")
-      .replace(" ", "_")
-      .replace("-", "_")
-      .toLowerCase(); // must be simple SQL name
-    let output = "";
-    output = output + "CREATE PROPERTY GRAPH " + graphNamePGQL + ";\n";
-    pg.nodes.forEach((node) => {
-      let node_label =
-        node.labels[0] === undefined ? "UNDEFINED" : node.labels[0];
-      let query = "";
-      query = query + "INSERT INTO " + graphNamePGQL + " ";
-      query = query + 'VERTEX v LABELS ("' + node_label.toUpperCase() + '") '; // Restriction: single vertex label
-      query = query + "PROPERTIES (";
-      query = query + "v.id = '" + node.id + "'"; // ID is stored as a string property
-      let json = '{"ID":["' + node.id + '"]';
-      for (let entry of Object.entries(node.properties)) {
-        json = json + ', "' + entry[0].toUpperCase() + '":["' + entry[1] + '"]'; // values are always stored as sting
-      }
-      json = json + "}";
-      query = query + ", v.json = '" + json + "'";
-      query = query + ");";
-      output = output + query + "\n";
-    });
-    pg.edges.forEach((edge) => {
-      let edge_label =
-        edge.labels[0] === undefined ? "UNDEFINED" : edge.labels[0];
-      let query = "";
-      query = query + "INSERT INTO " + graphNamePGQL + " ";
-      query =
-        query +
-        'EDGE e BETWEEN src AND dst LABELS ("' +
-        edge_label.toUpperCase() +
-        '") '; // Restriction: single vertex label
-      query = query + "PROPERTIES (";
-      query = query + "e.direction = '" + edge.direction + "'";
-      let json = '{"FROM":["' + edge.from + '"], "TO":["' + edge.to + '"]';
-      for (let entry of Object.entries(edge.properties)) {
-        json = json + ', "' + entry[0].toUpperCase() + '":["' + entry[1] + '"]'; // values are always stored as sting
-      }
-      json = json + "}";
-      query = query + ", e.json = '" + json + "'";
-      query = query + ") ";
-      query = query + "FROM MATCH ( (src), (dst) ) ON " + graphNamePGQL + " ";
-      query =
-        query +
-        "WHERE src.id = '" +
-        edge.from +
-        "' AND dst.id = '" +
-        edge.to +
-        "';";
-      output = output + query + "\n";
-    });
-    saveAs(
-      new Blob([output], { type: "text/plain" }),
-      "graph_" + currentTimeString() + ".pgql"
-    );
-    $("#export-btn").dropdown("toggle");
-  });
-
   q("#export-sql-btn").addEventListener("click", () => {
     let pg = pgParser.parse(editor.getValue());
     let graphName = currentGraphMetadata.name;
