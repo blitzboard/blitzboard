@@ -996,15 +996,13 @@ $(() => {
                   });
                   `;
 
-    content = JSON.stringify(blitzboard.graph);
-
     let name =
       (currentGraphMetadata.name.startsWith("Untitled")
         ? "graph"
         : currentGraphMetadata.name) +
       "_" +
       currentTimeString();
-    saveAs(new Blob([content], { type: "text/plain" }), name + ".json");
+    saveAs(new Blob([content], { type: "text/plain" }), name + ".js");
     $("#export-btn").dropdown("toggle");
   });
 
