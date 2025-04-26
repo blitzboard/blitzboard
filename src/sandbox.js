@@ -612,6 +612,9 @@ $(() => {
         { className: "syntax-error-line", message: e.message }
       )
     );
+
+    // Scroll to the error position
+    scrollToLine(e.location);
     toastr.error(e.message, "PG SyntaxError", { preventDuplicates: true });
   });
 
@@ -961,6 +964,7 @@ $(() => {
       } else {
         toastr.error(e.toString(), "Error occured while rendering", {
           preventDuplicates: true,
+          timeOut: 3000,
         });
       }
       return null;
