@@ -1953,6 +1953,22 @@ module.exports = class Blitzboard {
           this.config.node.onHover(this.getNode(e.node));
         }
 
+        let nodeId = node.id;
+        blitzboard.upstreamNodes = blitzboard.getUpstreamNodes(nodeId);
+        blitzboard.downstreamNodes = blitzboard.getDownstreamNodes(nodeId);
+        let nodeSet = new Set([
+          ...blitzboard.upstreamNodes,
+          ...blitzboard.downstreamNodes,
+        ]);
+        let updateData = [];
+        for (let edgeId of blitzboard.edgeDataSet.getIds()) {
+          let edge = blitzboard.edgeDataSet.get(edgeId);
+          if (nodeSet.has(edge.from) && nodeSet.has(edge.to))
+            updateData.push(edge.id);
+        }
+        blitzboard.network.selectEdges(updateData);
+        blitzboard.network.redraw();
+
         this.elementWithTooltip = {
           node: node,
         };
@@ -2275,6 +2291,9 @@ module.exports = class Blitzboard {
           color: null,
         });
       }
+
+      blitzboard.upstreamNodes = new Set();
+      blitzboard.downstreamNodes = new Set();
       this.hideTooltip();
     });
 
