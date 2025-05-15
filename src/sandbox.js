@@ -134,6 +134,7 @@ $(() => {
     candidateLabels = new Set(),
     candidateIds = new Set();
   let additionalAutocompleteTargets = [];
+  let edgeMapForAutoComplete = {};
   let dateTimeFormat = new Intl.DateTimeFormat("default", {
     year: "numeric",
     month: "numeric",
@@ -1379,7 +1380,7 @@ $(() => {
             { preventDuplicates: true, timeOut: 3000 }
           );
         });
-
+      // Retrieve candidate nodes for autocomplete
       axios
         .get(
           `${backendUrl}/query_table?query=SELECT v.id, COUNT(*) AS cnt FROM MATCH (v) ON x2 GROUP BY v.id ORDER BY cnt DESC`
@@ -1393,6 +1394,26 @@ $(() => {
           console.log(error);
           toastr.error(
             `Failed to retrieve candidate nodes from ${backendUrl}...: ${error}`,
+            "",
+            { preventDuplicates: true, timeOut: 3000 }
+          );
+        });
+
+      // Retrieve candidate edges for autocomplete
+      axios
+        .get(
+          `${backendUrl}/query_table?query=SELECT v1.id as src_id, v2.id as dst_id, COUNT(*) as cnt FROM MATCH (v1)-[e]->(v2)  GROUP BY v1.id, v2.id ORDER BY cnt DESC`
+        )
+        .then((response) => {
+          for (let record of response.data.table.records) {
+            edgeMapForAutoComplete[record.SRC_ID] ||= [];
+            edgeMapForAutoComplete[record.SRC_ID].push(record.DST_ID);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+          toastr.error(
+            `Failed to retrieve candidate edges from ${backendUrl}...: ${error}`,
             "",
             { preventDuplicates: true, timeOut: 3000 }
           );
@@ -2815,6 +2836,7 @@ $(() => {
 
     let list = [];
 
+    // Hint for properties
     if (propHints && typeof curWord === "string" && curWord.includes(":")) {
       let idx = curWord.lastIndexOf(":");
       let currentProp = curWord.substring(0, idx).trim();
@@ -2861,6 +2883,8 @@ $(() => {
         }
       }
     }
+    const MAX_LIST_LENGTH = 20;
+
     for (let candidateList of [
       candidateIds,
       candidatePropNames,
@@ -2874,10 +2898,34 @@ $(() => {
           candidate !== curWord
         )
           list.push(candidate);
-        if (list.length >= 20) break;
+        if (list.length >= MAX_LIST_LENGTH) break;
       }
-      if (list.length >= 20) break;
+      if (list.length >= MAX_LIST_LENGTH) break;
     }
+
+    if (list.length < MAX_LIST_LENGTH) {
+      if (
+        curWord == "" &&
+        curLine.includes("->") &&
+        curLine.indexOf("->") < cur.ch
+      ) {
+        let srcNode = curLine.split("->")[0].trim();
+        let candidates = edgeMapForAutoComplete[srcNode];
+        if (candidates) {
+          let from = CodeMirror.Pos(cur.line, cur.ch);
+          let to = CodeMirror.Pos(cur.line, cur.ch);
+          return {
+            list: candidates.map((c) => ({
+              displayText: c,
+              text: c,
+            })),
+            from,
+            to,
+          };
+        }
+      }
+    }
+
     return {
       list: list,
       from: CodeMirror.Pos(cur.line, start),
